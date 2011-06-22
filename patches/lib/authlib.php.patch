@@ -1,0 +1,17 @@
+diff --git a/lib/authlib.php b/lib/authlib.php
+index 076242a..20bd4d7 100644
+--- a/lib/authlib.php
++++ b/lib/authlib.php
+@@ -78,6 +78,12 @@ class auth_plugin_base {
+     );
+ 
+     /**
++     * moodle custom fields to sync with
++     * @var array()
++     */
++    var $custom_fields = array();
++    
++    /**
+ 
+      * This is the primary method that is used by the authenticate_user_login()
+      * function in moodlelib.php. This method should return a boolean indicating

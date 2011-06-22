@@ -1,0 +1,14 @@
+diff --git a/admin/user.php b/admin/user.php
+index 3a7b1f9..b9ef0b0 100644
+--- a/admin/user.php
++++ b/admin/user.php
+@@ -49,6 +49,9 @@
+ 
+         if ($result == AUTH_CONFIRM_OK or $result == AUTH_CONFIRM_ALREADY) {
+             notify(get_string('userconfirmed', '', fullname($user, true)) );
++            //EDIT1 remote-learner Can. edit
++            events_trigger('user_updated', $user);
++			//END1 edit
+         } else {
+             notify(get_string('usernotconfirmed', '', fullname($user, true)));
+         }

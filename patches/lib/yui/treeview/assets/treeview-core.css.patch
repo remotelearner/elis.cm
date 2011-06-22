@@ -1,0 +1,14 @@
+diff --git a/lib/yui/treeview/assets/treeview-core.css b/lib/yui/treeview/assets/treeview-core.css
+index 7922b6d..86609ea 100755
+--- a/lib/yui/treeview/assets/treeview-core.css
++++ b/lib/yui/treeview/assets/treeview-core.css
+@@ -1,6 +1,6 @@
+ /*
+-Copyright (c) 2008, Yahoo! Inc. All rights reserved.
++Copyright (c) 2010, Yahoo! Inc. All rights reserved.
+ Code licensed under the BSD License:
+-http://developer.yahoo.net/yui/license.txt
+-version: 2.6.0
++http://developer.yahoo.com/yui/license.html
++version: 2.8.2r1
+ */

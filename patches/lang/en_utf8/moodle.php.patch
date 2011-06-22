@@ -1,0 +1,13 @@
+diff --git a/lang/en_utf8/moodle.php b/lang/en_utf8/moodle.php
+index 6526131..2c20988 100644
+--- a/lang/en_utf8/moodle.php
++++ b/lang/en_utf8/moodle.php
+@@ -767,7 +767,7 @@ $string['guestsyes'] = 'Allow guests without the key';
+ $string['guestuser'] = 'Guest User';
+ $string['guestuserinfo'] = 'This user is a special user that allows read-only access to some courses.';
+ $string['healthcenter'] = 'Health Center';
+-$string['healthnoproblemsfound'] = 'There is no health problem found!';
++$string['healthnoproblemsfound'] = 'This site has no apparent problems.';
+ $string['healthproblemsdetected'] = 'Health Problems Detected!';
+ $string['healthproblemsolution'] = 'Health Problem Solution';
+ $string['healthreturntomain'] = 'Continue';

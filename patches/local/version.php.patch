@@ -1,0 +1,12 @@
+diff --git a/local/version.php b/local/version.php
+index 435bda5..32f2751 100644
+--- a/local/version.php
++++ b/local/version.php
+@@ -24,6 +24,6 @@
+  *
+  */
+ 
+-$local_version = 2011033100;
++$local_version = 2011050200;
+ 
+ ?>

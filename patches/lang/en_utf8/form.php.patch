@@ -1,0 +1,11 @@
+diff --git a/lang/en_utf8/form.php b/lang/en_utf8/form.php
+index 822729c..fd5da48 100644
+--- a/lang/en_utf8/form.php
++++ b/lang/en_utf8/form.php
+@@ -37,4 +37,6 @@ $string['security'] = 'Security';
+ $string['display'] = 'Display';
+ 
+ $string['selectallornone'] = 'Select all/none';
++
++$string['disabled'] = 'Disabled'; //RL edit
+ ?>

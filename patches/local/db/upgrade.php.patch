@@ -1,0 +1,37 @@
+diff --git a/local/db/upgrade.php b/local/db/upgrade.php
+index f1dfbfa..49ba898 100644
+--- a/local/db/upgrade.php
++++ b/local/db/upgrade.php
+@@ -51,6 +51,32 @@ function xmldb_local_upgrade($oldversion) {
+         $result = $result && change_field_precision($table, $field);
+     }
+ 
++    if ($result && $oldversion < 2011050200) {
++        /// Define index finalgrade_idx (not unique) to be added to grade_grades
++        $table = new XMLDBTable('grade_grades');
++        $index = new XMLDBIndex('finalgrade_idx');
++        $index->setAttributes(XMLDB_INDEX_NOTUNIQUE, array('finalgrade'));
++        $result = $result && add_index($table, $index);
++
++        /// Define index itemtype_idx (not unique) to be added to grade_items
++        $table = new XMLDBTable('grade_items');
++        $index = new XMLDBIndex('itemtype_idx');
++        $index->setAttributes(XMLDB_INDEX_NOTUNIQUE, array('itemtype'));
++        $result = $result && add_index($table, $index);
++
++        /// Define index itemmodule_idx (not unique) to be added to grade_items
++        $table = new XMLDBTable('grade_items');
++        $index = new XMLDBIndex('itemmodule_idx');
++        $index->setAttributes(XMLDB_INDEX_NOTUNIQUE, array('itemmodule'));
++        $result = $result && add_index($table, $index);
++
++        /// Define index course_idx (not unique) to be added to forum_discussion
++        $table = new XMLDBTable('forum_discussions');
++        $index = new XMLDBIndex('course_idx');
++        $index->setAttributes(XMLDB_INDEX_NOTUNIQUE, array('course'));
++        $result = $result && add_index($table, $index);
++    }
++
+     return $result;
+ }
+ 

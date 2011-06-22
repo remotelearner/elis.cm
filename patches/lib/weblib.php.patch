@@ -1,0 +1,130 @@
+diff --git a/lib/weblib.php b/lib/weblib.php
+index f76a261..3371695 100644
+--- a/lib/weblib.php
++++ b/lib/weblib.php
+@@ -1234,7 +1234,7 @@ $targetwindow='self', $selectlabel='', $optionsextra=NULL, $gobutton=NULL) {
+     if ($gobutton) {
+         // Using the no-JavaScript version
+         $javascript = '';
+-    } else if (check_browser_version('MSIE') || (check_browser_version('Opera') && !check_browser_operating_system("Linux"))) {
++    } else if (check_browser_version('MSIE') && !check_browser_version('MSIE',8.0) || (check_browser_version('Opera') && !check_browser_operating_system("Linux"))) {
+         //IE and Opera fire the onchange when ever you move into a dropdown list with the keyboard.
+         //onfocus will call a function inside dropdown.js. It fixes this IE/Opera behavior.
+         //Note: There is a bug on Opera+Linux with the javascript code (first mouse selection is inactive),
+@@ -3142,7 +3142,7 @@ function current_theme() {
+     global $CFG, $USER, $SESSION, $COURSE, $FULLME;
+ 
+     if (empty($CFG->themeorder)) {
+-        $themeorder = array('page', 'course', 'category', 'session', 'user', 'site');
++        $themeorder = array('page', 'course', 'category', 'session', 'user', 'organization', 'site');
+     } else {
+         $themeorder = $CFG->themeorder;
+     }
+@@ -3197,6 +3197,75 @@ function current_theme() {
+                     }
+                 }
+                 break;
++            case 'organization':
++
++                /**
++                 * Note: Much of this code is already implemented in the curriculum classes
++                 *       but we can't use the appropriate methods because curriculum/config.php
++                 *       needs the moodle config.php before CURMAN_DIRLOCATION is defined :-(
++                 */
++                require_once($CFG->dirroot . '/curriculum/lib/lib.php');
++                require_once($CFG->libdir . '/ddllib.php');
++
++                if(!table_exists(new XMLDBTable('crlm_user'))) {
++                    continue;
++                }
++
++                //reimplementation of cm_get_crlmuserid
++                $select = 'SELECT cu.id ';
++                $from   = 'FROM '.$CFG->prefix.'user mu ';
++                $join   = 'INNER JOIN '.$CFG->prefix.'crlm_user cu ON cu.idnumber = mu.idnumber ';
++                $where  = 'WHERE mu.id = '.$USER->id;
++                $userid =  get_field_sql($select.$from.$join.$where);
++                //end of reimiplementation
++
++                if(empty($userid)) {
++                    continue;
++                }
++
++                //get all assigned clusters
++                $select = 'SELECT clst.id ';
++                $tables = "FROM {$CFG->prefix}crlm_usercluster uclst ";
++                $join   = "JOIN {$CFG->prefix}crlm_cluster clst
++                           ON uclst.clusterid = clst.id ";
++                $where  = "WHERE uclst.userid = {$userid}";
++
++                $sql = $select . $tables . $join . $where;
++
++                $highest_priority_theme = null;
++                $highest_priority = 0;
++
++                if($usercluster_records = get_records_sql($sql)) {
++
++                    //retrieve the cluster context level
++                    $cluster_context_level = context_level_base::get_custom_context_level('cluster', 'block_curr_admin');
++
++                    if ($cluster_context_level) {
++                        foreach($usercluster_records as $usercluster_record) {
++                            $context_instance = get_context_instance($cluster_context_level, $usercluster_record->id);
++
++                            //reimplementation of field_data::get_for_context
++                            $cluster_theme = cm_get_field_data($context_instance, 'cluster_theme');
++                            $cluster_themepriority = (int)cm_get_field_data($context_instance, 'cluster_themepriority');
++                            //end of reimplementation
++
++                            if(!empty($cluster_theme) && file_exists($CFG->dirroot . '/theme/' . $cluster_theme) && $cluster_themepriority !== null) {
++                                //update chosen theme is appropriate
++                                if($cluster_themepriority > $highest_priority || empty($highest_priority_theme)) {
++                                    $highest_priority_theme = $cluster_theme;
++                                    $highest_priority = $cluster_themepriority;
++                                }
++                            }
++                        }
++                    }
++
++                }
++
++                if(!empty($highest_priority_theme)) {
++                    $theme = $highest_priority_theme;
++                }
++
++                break;
+             case 'site':
+                 if (isloggedin() and isset($CFG->mnet_localhost_id) and $USER->mnethostid != $CFG->mnet_localhost_id && $mnet_peer->force_theme == 1 && $mnet_peer->theme != '') {
+                     $theme = $mnet_peer->theme;
+@@ -4927,16 +4996,16 @@ function print_table($table, $return=false) {
+ 
+     if (!empty($table->data)) {
+         $oddeven = 1;
+-        $keys=array_keys($table->data);
+-        $lastrowkey = end($keys);
++        //$keys=array_keys($table->data);
++        //$lastrowkey = end($keys);
+         foreach ($table->data as $key => $row) {
+             $oddeven = $oddeven ? 0 : 1;
+             if (!isset($table->rowclass[$key])) {
+                 $table->rowclass[$key] = '';
+             }
+-            if ($key == $lastrowkey) {
+-                $table->rowclass[$key] .= ' lastrow';
+-            }
++            //if ($key == $lastrowkey) {
++            //    $table->rowclass[$key] .= ' lastrow';
++            //}
+             $output .= '<tr class="r'.$oddeven.' '.$table->rowclass[$key].'">'."\n";
+             if ($row == 'hr' and $countcols) {
+                 $output .= '<td colspan="'. $countcols .'"><div class="tabledivider"></div></td>';
+@@ -4963,6 +5032,9 @@ function print_table($table, $return=false) {
+             }
+             $output .= '</tr>'."\n";
+         }
++        // add the "lastrow" class to the last <tr> element
++        $pos = strrpos($output, '<tr class="');
++        $output = substr($output, 0, $pos+11).'lastrow '.substr($output, $pos+11);
+     }
+     $output .= '</table>'."\n";
+ 

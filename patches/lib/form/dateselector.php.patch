@@ -1,0 +1,44 @@
+diff --git a/lib/form/dateselector.php b/lib/form/dateselector.php
+index 650b294..73c28fe 100644
+--- a/lib/form/dateselector.php
++++ b/lib/form/dateselector.php
+@@ -81,7 +81,9 @@ class MoodleQuickForm_date_selector extends MoodleQuickForm_group
+         $this->_elements[] =& MoodleQuickForm::createElement('select', 'year', get_string('year', 'form'), $years, $this->getAttributes(), true);
+         // If optional we add a checkbox which the user can use to turn if on
+         if($this->_options['optional']) {
+-            $this->_elements[] =& MoodleQuickForm::createElement('checkbox', 'off', null, get_string('disable'), $this->getAttributes(), true);
++            // RL edit begin disable check given a name and disable static display added when freezing
++            $this->_elements['optional'] =& MoodleQuickForm::createElement('checkbox', 'off', null, get_string('disable'), $this->getAttributes(), true);
++            // RL edit end
+         }
+         foreach ($this->_elements as $element){
+             if (method_exists($element, 'setHiddenLabel')){
+@@ -166,9 +168,28 @@ class MoodleQuickForm_date_selector extends MoodleQuickForm_group
+     // }}}
+     // {{{ accept()
+ 
++   /**
++    * RL edit
++    * Accepts a renderer
++    *
++    * @param object     An HTML_QuickForm_Renderer object
++    * @param bool       Whether a group is required
++    * @param string     An error message associated with a group
++    * @access public
++    * @return void
++    */
+     function accept(&$renderer, $required = false, $error = null)
+     {
++        //only display a disable static element or don't display the optional check box if this element is frozen
++        if($this->isFrozen() && $this->_options['optional'] && $this->_elements['optional']->getChecked()){ 
++            $this->_elements = array();
++            $this->_elements[] =& MoodleQuickForm::createElement('static', 'disabled', '', get_string('disabled', 'form'));
++        } else if($this->isFrozen() && isset($this->_elements['optional'])) {
++            unset($this->_elements['optional']);
++        }
++
+         $renderer->renderElement($this, $required, $error);
++        //RL edit end
+     }
+ 
+     // }}}

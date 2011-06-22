@@ -1,0 +1,13 @@
+diff --git a/lib/formslib.php b/lib/formslib.php
+index 759f546..acdd963 100644
+--- a/lib/formslib.php
++++ b/lib/formslib.php
+@@ -1424,7 +1424,7 @@ function validate_' . $this->_formName . '(frm) {
+         $iname = $this->getAttribute('id').'items';
+         $js = '<script type="text/javascript">'."\n";
+         $js .= '//<![CDATA['."\n";
+-        $js .= "var $iname = Array();\n";
++        $js .= "$iname = Array();\n";
+ 
+         foreach ($this->_dependencies as $dependentOn => $conditions){
+             $js .= "{$iname}['$dependentOn'] = Array();\n";

@@ -1,0 +1,63 @@
+<!-- No config needed -->
+<?php
+/**
+ * Curriculum Management Authentication plug-in
+ *
+ * ELIS(TM): Enterprise Learning Intelligence Suite
+ * Copyright (C) 2008-2009 Remote-Learner.net Inc (http://www.remote-learner.net)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package    elis
+ * @subpackage curriculummanagement
+ * @author     Remote-Learner.net Inc
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
+ * @copyright  (C) 2008-2010 Remote Learner.net Inc http://www.remote-learner.net
+ *
+ */
+
+    global $CFG;
+    // set to defaults if undefined
+    if (!isset($config->crlm_fromemail)) {
+        $config->crlm_fromemail = $CFG->supportemail;
+    }
+
+    if (!isset($config->crlm_emailadmins)) {
+        $config->crlm_emailadmins = $CFG->supportemail;
+    }
+
+?>
+
+<table cellspacing="0" cellpadding="5" border="0">
+<tr>
+   <td colspan="3">
+        <h2 class="main"><?php print_string('auth_crlmsettings', 'auth_crlm') ?> </h2>
+   </td>
+</tr>
+<tr>
+    <td align="right"><label for="crlm_fromemail"><?php print_string('auth_crlmfromemail', 'auth_crlm') ?></label></td>
+    <td><?php print_textfield ('crlm_fromemail', $config->crlm_fromemail); ?></td>
+    <td><?php print_string('auth_crlmfromemailconfig', 'auth_crlm') ?></td>
+</tr>
+<tr>
+    <td align="right"><label for="crlm_emailadmins"><?php print_string('auth_crlmemailadmins', 'auth_crlm') ?></label></td>
+    <td><?php print_textarea(false, 4, 50, 0, 0, 'crlm_emailadmins', $config->crlm_emailadmins); ?></td>
+    <td><?php print_string('auth_crlmemailadminsconfig', 'auth_crlm') ?></td>
+</tr>
+<?php
+
+//print_auth_lock_options('email', $user_fields, get_string('auth_fieldlocks_help', 'auth'), false, false);
+
+?>
+</table>

@@ -1,0 +1,26 @@
+diff --git a/admin/index.php b/admin/index.php
+index 9c4ef6e..ea89391 100644
+--- a/admin/index.php
++++ b/admin/index.php
+@@ -484,9 +484,21 @@
+ /// Check all admin report plugins and upgrade if necessary
+     upgrade_plugins('report', $CFG->admin.'/report', "$CFG->wwwroot/$CFG->admin/index.php");
+ 
++/// Remote Learner Edit -- BEGIN
++
+ /// Check all ELIS report plugins and upgrade if necessary
+     upgrade_plugins('elis', 'elis', "$CFG->wwwroot/$CFG->admin/index.php");
+ 
++/// Check all portfolio plugins and upgrade if necessary
++//    upgrade_plugins('portfolio', 'file/portfolio', "$CFG->wwwroot/$CFG->admin/index.php");
++
++/// Check all cluster plugins and upgrade if necessary
++    upgrade_plugins('crlm_cluster', 'curriculum/cluster', "$CFG->wwwroot/$CFG->admin/index.php");
++
++/// Check all curriculum plugins and upgrade if necessary
++    upgrade_plugins('crlm', 'curriculum/plugins', "$CFG->wwwroot/$CFG->admin/index.php");
++
++/// Remote Learner Edit -- END
+ 
+ /// just make sure upgrade logging is properly terminated
+     upgrade_log_finish();

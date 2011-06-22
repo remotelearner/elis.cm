@@ -1,0 +1,42 @@
+diff --git a/backup/backuplib.php b/backup/backuplib.php
+index f487749..1b753f4 100644
+--- a/backup/backuplib.php
++++ b/backup/backuplib.php
+@@ -2347,6 +2347,10 @@
+         }
+         $result = preg_replace_callback($search, 'backup_process_filephp_uses', $result);
+ 
++        // RL Edit begin
++        //in case if for whatever reason we try to make a backup of a course that has never been edited before
++        //this can happen in elis if users just want to have courses auto generated and make an empty base course
++        if(!empty($mypreferences->mods)) {
+         foreach ($mypreferences->mods as $name => $info) {
+         /// We only include the corresponding backuplib.php if it hasn't been included before
+         /// This will save some load under PHP5. MDL-8700.
+@@ -2361,6 +2365,8 @@
+                 $result = $function_name($result,$mypreferences);
+             }
+         }
++        }
++        // RL Edit end
+ 
+         // For the current course format call its encode_content_links method (if it exists)
+         static $format_function_name;
+@@ -3402,7 +3408,7 @@
+             }
+         }
+         //Now, zip all the backup directory contents
+-        if ($status) {
++        if ($status && empty($preferences->elis_skip_zip)) {
+             if (!defined('BACKUP_SILENTLY')) {
+                 echo "<li>".get_string("zippingbackup").'</li>';
+             }
+@@ -3418,7 +3424,7 @@
+         }
+ 
+         //Now, copy the zip file to course directory
+-        if ($status) {
++        if ($status && empty($preferences->elis_skip_zip)) {
+             if (!defined('BACKUP_SILENTLY')) {
+                 echo "<li>".get_string("copyingzipfile").'</li>';
+             }

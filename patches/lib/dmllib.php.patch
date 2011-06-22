@@ -1,0 +1,14 @@
+diff --git a/lib/dmllib.php b/lib/dmllib.php
+index b477635..f403cf3 100644
+--- a/lib/dmllib.php
++++ b/lib/dmllib.php
+@@ -507,7 +507,8 @@ function get_record_sql($sql, $expectmultiple=false, $nolimit=false) {
+             notify('Very strange error in get_record_sql !');
+             print_object($rs);
+         }
+-        print_continue("$CFG->wwwroot/$CFG->admin/config.php");
++        //EDIT1 RL-Canada redirecting to admin/index.php instead of config.php since config.php does not exist
++        print_continue("$CFG->wwwroot/$CFG->admin/"); //php file config.php DNE in this dir
+     }
+ }
+ 

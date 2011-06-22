@@ -1,0 +1,25 @@
+diff --git a/admin/uploaduser.php b/admin/uploaduser.php
+index 52834a5..fca0843 100755
+--- a/admin/uploaduser.php
++++ b/admin/uploaduser.php
+@@ -494,6 +494,9 @@ if ($formdata = $mform->is_cancelled()) {
+                 }
+                 // save custom profile fields data from csv file
+                 profile_save_data(addslashes_recursive($existinguser));
++				//BEGIN1 remote-learner Can. edit
++                events_trigger('user_updated', $existinguser);
++				//END1 
+             }
+ 
+             if ($bulk == 2 or $bulk == 3) {
+@@ -560,6 +563,10 @@ if ($formdata = $mform->is_cancelled()) {
+             // save custom profile fields data
+             profile_save_data($user);
+ 
++			//EDIT2 remote-learner Can. edit
++            events_trigger('user_created', $user);
++			//END2
++
+             // make sure user context exists
+             get_context_instance(CONTEXT_USER, $user->id);
+ 

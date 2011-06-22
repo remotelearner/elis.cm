@@ -1,0 +1,17 @@
+diff --git a/lib/eventslib.php b/lib/eventslib.php
+index 384ba61..2a51ebf 100755
+--- a/lib/eventslib.php
++++ b/lib/eventslib.php
+@@ -50,6 +50,12 @@ function events_load_def($component) {
+         } else if ($compparts[0] == 'gradereport') {
+             $defpath = $CFG->dirroot.'/grade/report/'.$compparts[1].'/db/events.php'; 
+         
++        } else if ($compparts[0] == 'crlm_cluster') {
++            $defpath = $CFG->dirroot.'/curriculum/cluster/'.$compparts[1].'/db/events.php';
++
++        } else if ($compparts[0] == 'crlm') {
++            $defpath = $CFG->dirroot.'/curriculum/plugins/'.$compparts[1].'/db/events.php';
++
+         } else {
+             $defpath = $CFG->dirroot.'/'.$component.'/db/events.php';
+         }

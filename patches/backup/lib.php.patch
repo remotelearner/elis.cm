@@ -1,0 +1,13 @@
+diff --git a/backup/lib.php b/backup/lib.php
+index 9298747..6ef4710 100644
+--- a/backup/lib.php
++++ b/backup/lib.php
+@@ -257,7 +257,7 @@
+             }
+             //Now, delete temp directory (if exists)
+             $file_path = $CFG->dataroot."/temp/backup/".$preferences->backup_unique_code;
+-            if (is_dir($file_path)) {
++            if (is_dir($file_path) && empty($preferences->elis_skip_zip)) {
+                 $status = delete_dir_contents($file_path);
+                 //There is nothing, delete the directory itself
+                 if ($status) {

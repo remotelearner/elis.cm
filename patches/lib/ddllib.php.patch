@@ -1,0 +1,18 @@
+diff --git a/lib/ddllib.php b/lib/ddllib.php
+index 9826f2b..9885502 100644
+--- a/lib/ddllib.php
++++ b/lib/ddllib.php
+@@ -828,6 +828,13 @@ function get_db_directories() {
+         }
+     }
+ 
++/// Now curriculum management plugins (curriculum/plugins/xxx/db)
++    if ($plugins = get_list_of_plugins('curriculum/plugins', 'db')) {
++        foreach ($plugins as $plugin) {
++            $dbdirs[] = $CFG->dirroot.'/curriculum/plugins/'.$plugin.'/db';
++        }
++    }
++
+ /// Local database changes, if the local folder exists.
+     if (file_exists($CFG->dirroot . '/local')) {
+         $dbdirs[] = $CFG->dirroot.'/local/db';

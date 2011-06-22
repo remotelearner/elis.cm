@@ -1,0 +1,22 @@
+diff --git a/backup/restorelib.php b/backup/restorelib.php
+index 84f5f2a..72de90c 100644
+--- a/backup/restorelib.php
++++ b/backup/restorelib.php
+@@ -8206,6 +8206,9 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
+         global $CFG, $USER;
+         $status = true;
+ 
++        // Remote-Learner - add - storing the restore code (mode)
++        $restoretocode = $restore->restoreto;
++
+         //Checks for the required files/functions to restore every module
+         //and include them
+         if ($allmods = get_records("modules") ) {
+@@ -8306,6 +8309,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
+                     //Put the destination course_id
+                 }
+                 $restore->course_id = $course_header->course_id;
++                $GLOBALS['restore'] = $restore;
+             }
+ 
+             if ($status = restore_open_html($restore,$course_header)){

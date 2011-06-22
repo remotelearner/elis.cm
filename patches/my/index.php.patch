@@ -1,0 +1,31 @@
+diff --git a/my/index.php b/my/index.php
+index 28f6b18..15e0296 100644
+--- a/my/index.php
++++ b/my/index.php
+@@ -6,6 +6,7 @@
+     require_once($CFG->libdir.'/blocklib.php');
+     require_once($CFG->dirroot.'/course/lib.php');
+     require_once('pagelib.php');
++    require_once($CFG->dirroot . '/curriculum/lib/lib.php');
+     
+     require_login();
+ 
+@@ -47,6 +48,18 @@
+         $USER->editing = $edit;
+     }
+ 
++/// Remote Learner Edit -- BEGIN
++
++/// Load up the dashboard interface if this user is NOT an admin who is editing and actually
++/// has a valid CM access level associated to them.
++    if (!has_capability('moodle/site:config', get_context_instance(CONTEXT_SYSTEM, SITEID))
++        && empty($USER->editing) && cm_determine_access($USER->id) && cm_mymoodle_redirect()) {
++        include $CFG->dirroot . '/curriculum/index.php';
++        return;
++    }
++
++/// Remote Learner Edit -- END
++
+     $PAGE->print_header($mymoodlestr);
+ 
+     echo '<table id="layout-table">';

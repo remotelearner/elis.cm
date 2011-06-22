@@ -1,0 +1,31 @@
+<html> 
+  <body onload="resizeReportWindow()"> 
+    <script type="text/javascript"> 
+
+      function resizeReportWindow() {
+           var width = getParam('width');
+           var height = getParam('height');
+
+           var report_frame = parent.parent.document.getElementById("reportframe"); 
+           if(report_frame.width != width - 50) {
+               report_frame.width = width;
+           }
+           if(report_frame.height != height - 50) {
+               report_frame.height = height;
+           }
+      }
+
+      function getParam(name) {
+          name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+          var regexS = "[\\?&]"+name+"=([^&#]*)";
+          var regex = new RegExp( regexS );
+          var results = regex.exec( window.location.href );
+          if( results == null )
+              return "";
+          else
+              return results[1];
+      }
+      
+    </script>   
+  </body> 
+</html>

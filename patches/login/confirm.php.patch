@@ -1,0 +1,13 @@
+diff --git a/login/confirm.php b/login/confirm.php
+index cc86086..0885173 100644
+--- a/login/confirm.php
++++ b/login/confirm.php
+@@ -48,6 +48,8 @@
+                 error("Something serious is wrong with the database");
+             }
+ 
++            events_trigger('user_updated', $USER);
++
+             set_moodle_cookie($USER->username);
+ 
+             if ( ! empty($SESSION->wantsurl) ) {   // Send them where they were going

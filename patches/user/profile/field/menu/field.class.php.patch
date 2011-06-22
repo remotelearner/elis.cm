@@ -1,0 +1,36 @@
+diff --git a/user/profile/field/menu/field.class.php b/user/profile/field/menu/field.class.php
+index ec514f9..28f7f2e 100644
+--- a/user/profile/field/menu/field.class.php
++++ b/user/profile/field/menu/field.class.php
+@@ -20,12 +20,12 @@ class profile_field_menu extends profile_field_base {
+             $this->options[''] = get_string('choose').'...';
+         }
+         foreach($options as $key => $option) {
+-            $this->options[$key] = format_string($option);//multilang formatting
++            $this->options[$option] = format_string($option);//multilang formatting
+         }
+ 
+         /// Set the data key
+         if ($this->data !== NULL) {
+-            $this->datakey = (int)array_search($this->data, $this->options);
++            $this->datakey = array_search($this->data, $this->options);
+         }
+     }
+ 
+@@ -52,13 +52,11 @@ class profile_field_menu extends profile_field_base {
+     }
+ 
+     /**
+-     * The data from the form returns the key. This should be converted to the
+-     * respective option string to be saved in database
+-     * Overwrites base class accessor method
+-     * @param   integer   the key returned from the select input in the form
++     * Verify that the value specified is a valid value
++     * @param   mixed   the profile field value
+      */
+     function edit_save_data_preprocess($key) {
+-        return isset($this->options[$key]) ? addslashes($this->options[$key]) : NULL;
++        return isset($this->options[stripslashes($key)]) ? $key : NULL;
+     }
+ 
+     /**
