@@ -96,7 +96,7 @@ class student extends datarecord {
         $this->add_property('completestatusid', 'int');
         $this->completestatusid = key(student::$completestatusid_values);
         $this->add_property('grade', 'int');
-        $this->add_property('credits', 'int');
+        $this->add_property('credits', 'float');
         $this->add_property('locked', 'int');
 
         if (is_numeric($studentdata)) {

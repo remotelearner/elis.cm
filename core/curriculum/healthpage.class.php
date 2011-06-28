@@ -452,7 +452,6 @@ class completion_export_check extends crlm_health_check_base {
     function exists() {
         global $CFG;
         $exists = is_dir($CFG->dirroot.'/blocks/completion_export');
-        var_dump($exists);
         return is_dir($CFG->dirroot.'/blocks/completion_export');
     }
 

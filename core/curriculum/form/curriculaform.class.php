@@ -70,7 +70,7 @@ class cmCurriculaForm extends cmform {
         $mform->setHelpButton('description', array('curriculaform/description', get_string('curriculum_description', 'block_curr_admin'), 'block_curr_admin'));
 
         $mform->addElement('text', 'reqcredits', get_string('required_credits', 'block_curr_admin') . ':');
-        $mform->setType('reqcredits', PARAM_TEXT);
+        $mform->setType('reqcredits', PARAM_NUMBER);
         $mform->addRule('reqcredits', null, 'maxlength', 10);
         $mform->setHelpButton('reqcredits', array('curriculaform/reqcredits', get_string('required_credits', 'block_curr_admin'), 'block_curr_admin'));
 

@@ -168,7 +168,12 @@ class clusterpage extends managementpage {
     }
 
     function can_do_subcluster() {
-        return $this->_has_capability('block/curr_admin:cluster:edit');
+        //obtain the contexts where editing is allowed for the subcluster
+        $subclusterid = $this->required_param('subclusterid', PARAM_INT);
+        $context = get_context_instance(context_level_base::get_custom_context_level('cluster', 'block_curr_admin'), $subclusterid);
+
+        //make sure editing is allowed on both clusters
+        return $this->_has_capability('block/curr_admin:cluster:edit') && has_capability('block/curr_admin:cluster:edit', $context);
     }
 
     function can_do_delete() {
@@ -199,7 +204,9 @@ class clusterpage extends managementpage {
      * cluster tree parameter for reports)
      */
     function can_do_viewreport() {
-        global $CFG;
+        global $CFG, $CURMAN;
+
+        $id = $this->required_param('id', PARAM_INT);
 
         //needed for execution mode constants
         require_once($CFG->dirroot . '/blocks/php_report/php_report_base.php');
@@ -208,11 +215,43 @@ class clusterpage extends managementpage {
         $execution_mode = $this->optional_param('execution_mode', php_report::EXECUTION_MODE_SCHEDULED, PARAM_INT);
 
         //check the correct capability
-        if ($execution_mode == php_report::EXECUTION_MODE_SCHEDULED) {
-            return $this->_has_capability('block/php_report:schedule');
-        } else {
-            return $this->_has_capability('block/php_report:view');
+        $capability = ($execution_mode == php_report::EXECUTION_MODE_SCHEDULED) ? 'block/php_report:schedule' : 'block/php_report:view';
+        if ($this->_has_capability($capability)) {
+            return true;
         }
+
+        /*
+         * Start of cluster hierarchy extension
+         */
+        $viewable_clusters = cluster::get_viewable_clusters($capability);
+
+        $cluster_context_level = context_level_base::get_custom_context_level('cluster', 'block_curr_admin');
+
+        $like = sql_ilike();
+        $parent_path = sql_concat('parent_context.path', "'/%'");
+
+        //if the user has no additional access through parent clusters, then they can't view this cluster
+        if (empty($viewable_clusters)) {
+            return false;
+        }
+
+        $cluster_filter = implode(',', $viewable_clusters);
+
+        //determine if this cluster is the parent of some accessible child cluster
+        $sql = "SELECT parent_context.instanceid
+                FROM {$CURMAN->db->prefix_table('context')} parent_context
+                JOIN {$CURMAN->db->prefix_table('context')} child_context
+                  ON child_context.path {$like} {$parent_path}
+                  AND parent_context.contextlevel = {$cluster_context_level}
+                  AND child_context.contextlevel = {$cluster_context_level}
+                  AND child_context.instanceid IN ({$cluster_filter})
+                  AND parent_context.instanceid = {$id}";
+
+        return record_exists_sql($sql);
+
+        /*
+         * End of cluster hierarchy extension
+         */
     }
 
     function can_do_default() {
@@ -291,12 +330,18 @@ class clusterpage extends managementpage {
         $this->print_list_view($items, $numitems, $columns, $filter=null, $alphaflag=true, $searchflag=true);
 
         if ($this->optional_param('id', 0, PARAM_INT)) {
-            echo '<div align="center">';
-            echo get_string('cluster_subcluster_prompt','block_curr_admin') . ': ';
-            $non_parent_clusters = cluster_get_possible_sub_clusters($this->optional_param('id', 0, PARAM_INT));
-            $url = $this->get_new_page(array('action'=>'subcluster','id'=>$this->optional_param('id', 0, PARAM_INT)))->get_url() . '&amp;subclusterid=';
-            popup_form($url, $non_parent_clusters, 'assignsubcluster', '', 'Choose...');
-            echo '</div>';
+            //get the non-parent clusters that are accessible based on the edit capability
+            $contexts = clusterpage::get_contexts('block/curr_admin:cluster:edit');
+            $non_parent_clusters = cluster_get_possible_sub_clusters($this->optional_param('id', 0, PARAM_INT), $contexts);
+
+            //display the dropdown if there are one or more available clusters
+            if (count($non_parent_clusters) > 0) {
+                echo '<div align="center">';
+                echo get_string('cluster_subcluster_prompt','block_curr_admin') . ': ';
+                $url = $this->get_new_page(array('action'=>'subcluster','id'=>$this->optional_param('id', 0, PARAM_INT)))->get_url() . '&amp;subclusterid=';
+                popup_form($url, $non_parent_clusters, 'assignsubcluster', '', 'Choose...');
+                echo '</div>';
+            }
         }
     }
 

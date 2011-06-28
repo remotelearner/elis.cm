@@ -425,22 +425,20 @@
                     $data->enddate = 0;
                 }
 
-                $timezoneoffset = get_user_timezone_offset();
-                if ($timezoneoffset > 13) {
-                    $timezoneoffset = (float)date('Z')/3600;
-                }
                 if(!empty($data->starttime) and
                    !isset($mform->_submitValues['starttime']['timeenable'])) {
-                    $data->starttimehour = (int)($data->starttime / HOURSECS) + $timezoneoffset;
-                    $data->starttimeminute = ($data->starttime % HOURSECS) / MINSECS;
+                    $timearray = usergetdate($data->starttime);
+                    $data->starttimehour = (int)$timearray['hours'];
+                    $data->starttimeminute = (int)$timearray['minutes'];
                 } else {
                     $data->starttimehour = $data->starttimeminute = 0;
                 }
 
                 if(!empty($data->endtime) and
                    !isset($mform->_submitValues['endtime']['timeenable'])) {
-                    $data->endtimehour = (int)($data->endtime / HOURSECS) + $timezoneoffset;
-                    $data->endtimeminute = ($data->endtime % HOURSECS) / MINSECS;
+                    $timearray = usergetdate($data->endtime);
+                    $data->endtimehour = (int)$timearray['hours'];
+                    $data->endtimeminute = (int)$timearray['minutes'];
                 } else {
                     $data->endtimehour = $data->endtimeminute = 0;
                 }

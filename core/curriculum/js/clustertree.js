@@ -388,7 +388,7 @@ function clustertree_toggle_highlight(instanceid, node, ideal_state, uniqueid, t
 	
 	if (node.hasChildren()) {
 		//node has expanded children, so put them into the same state
-	    for (i = 0; i < node.children.length; i++) {
+	    for (var i = 0; i < node.children.length; i++) {
 	        clustertree_toggle_highlight(instanceid, node.children[i], ideal_state, uniqueid, tree_view, store);
 	    }
 	}

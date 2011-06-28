@@ -64,7 +64,7 @@ class curriculum extends datarecord {
         $this->add_property('idnumber', 'string', true);
         $this->add_property('name', 'string', true);
         $this->add_property('description', 'string');
-        $this->add_property('reqcredits', 'int');
+        $this->add_property('reqcredits', 'float');
         $this->add_property('iscustom', 'int');
         $this->add_property('timecreated', 'int');
         $this->add_property('timemodified', 'int');

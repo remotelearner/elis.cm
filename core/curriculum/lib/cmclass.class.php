@@ -1115,14 +1115,16 @@ function cmclass_get_listing($sort = 'crsname', $dir = 'ASC', $startrec = 0,
 
     $select = 'SELECT cls.*, cls.starttimehour as starttimehour, cls.starttimeminute as starttimeminute, ' .
               'cls.endtimehour as endtimehour, cls.endtimeminute as endtimeminute, crs.name as crsname, env.name as envname, ' .
-              'env.description as envdescription, clsmoodle.moodlecourseid as moodlecourseid ';
+              'env.description as envdescription, clsmoodle.moodlecourseid as moodlecourseid, mcrs.fullname as moodlecourse ';
     $tables = 'FROM '.$CURMAN->db->prefix_table(CLSTABLE).' cls ';
     $join   = 'JOIN ' . $CURMAN->db->prefix_table(CRSTABLE) . ' crs ' .
               'ON crs.id = cls.courseid ' .
               'LEFT JOIN ' . $CURMAN->db->prefix_table(ENVTABLE) . ' env ' .
               'ON env.id = cls.environmentid ' .
               'LEFT JOIN ' . $CURMAN->db->prefix_table(CLSMOODLETABLE) . ' clsmoodle ' .
-              'ON clsmoodle.classid = cls.id ';
+              'ON clsmoodle.classid = cls.id ' .
+              'LEFT JOIN ' . $CURMAN->db->prefix_table('course') . ' mcrs ' .
+              'ON clsmoodle.moodlecourseid = mcrs.id ';
 
     //class associated to a particular cluster via a track
     if(!empty($clusterid)) {

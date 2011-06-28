@@ -241,6 +241,8 @@ class curriculumcourse extends datarecord {
      * @return <type>
      */
     public function create_prerequisite_form($formid='', $extraclass='', $rows=2, $cols=40) {
+        require_once(CURMAN_DIRLOCATION . '/coursepage.class.php');
+
         $config_data = array();
         $config_data['formid'] = $formid;
         $config_data['rows'] = $rows;
@@ -259,7 +261,13 @@ class curriculumcourse extends datarecord {
             }
 
             $config_data['existingPrerequisites'] = $existingPrerequisites;
+        }
 
+        $contexts = coursepage::get_contexts('block/curr_admin:course:view');
+        $courseListing = course_get_listing('crs.name', 'ASC', 0, 0, '', '', $contexts);
+        unset($courseListing[$this->courseid]);
+
+        if (!empty($courseListing)) {
             $availablePrerequisites = array();
 
             foreach ($courseListing as $crsid => $crs) {
@@ -301,6 +309,8 @@ class curriculumcourse extends datarecord {
     }
 
     public function create_corequisite_form($formid = '', $extraclass = '', $rows = '2', $cols = '40') {
+        require_once(CURMAN_DIRLOCATION . '/coursepage.class.php');
+
         $config_data = array();
         $config_data['formid'] = $formid;
         $config_data['rows'] = $rows;
@@ -319,6 +329,13 @@ class curriculumcourse extends datarecord {
             }
 
             $config_data['existingCorequisites'] = $existingCorequisites;
+        }
+
+        $contexts = coursepage::get_contexts('block/curr_admin:course:view');
+        $courseListing = course_get_listing('crs.name', 'ASC', 0, 0, '', '', $contexts);
+        unset($courseListing[$this->courseid]);
+
+        if (!empty($courseListing)) {
 
             $availableCorequisites = array();
 

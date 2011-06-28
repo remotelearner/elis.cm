@@ -1603,6 +1603,50 @@ function xmldb_block_curr_admin_upgrade($oldversion = 0) {
         $result = $result && add_index($table, $index);
     }
 
+    if ($result && $oldversion < 2011050201) {
+        // make sure that hours are within 24 hours
+        $sql = "UPDATE {$CFG->prefix}crlm_class
+                   SET starttimehour = MOD(starttimehour, 24),
+                       endtimehour = MOD(endtimehour, 24)";
+        $result = $result && execute_sql($sql);
+    }
+
+    if ($result && $oldversion < 2011050202) {
+
+    /// Changing type of field credits on table crlm_class_enrolment to number
+        $table = new XMLDBTable('crlm_class_enrolment');
+        $field = new XMLDBField('credits');
+        $field->setAttributes(XMLDB_TYPE_NUMBER, '10, 2', XMLDB_UNSIGNED, null, null, null, null, '0', 'grade');
+
+    /// Launch change of type for field credits
+        $result = $result && change_field_type($table, $field);
+
+    /// Changing type of field credits on table crlm_curriculum_assignment to number
+        $table = new XMLDBTable('crlm_curriculum_assignment');
+        $field = new XMLDBField('credits');
+        $field->setAttributes(XMLDB_TYPE_NUMBER, '10, 2', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null, null, '0', 'timeexpired');
+
+    /// Launch change of type for field credits
+        $result = $result && change_field_type($table, $field);
+
+
+    /// Changing type of field reqcredits on table crlm_curriculum to number
+        $table = new XMLDBTable('crlm_curriculum');
+        $field = new XMLDBField('reqcredits');
+        $field->setAttributes(XMLDB_TYPE_NUMBER, '10, 2', XMLDB_UNSIGNED, null, null, null, null, null, 'description');
+
+    /// Launch change of type for field reqcredits
+        $result = $result && change_field_type($table, $field);
+
+        // update student class credits with decimal credits
+        $sql = "UPDATE mdl_crlm_class_enrolment e, mdl_crlm_class cls, mdl_crlm_course c
+                   SET e.credits = c.credits
+                 WHERE e.classid = cls.id
+                   AND cls.courseid = c.id
+                   AND e.credits = cast(c.credits as unsigned)";
+        $result = $result && execute_sql($sql);
+    }
+
     return $result;
 }
 

@@ -170,7 +170,7 @@ function manual_field_save_form_data($form, $field, $data) {
 /**
  * Add an element to a form for a field.
  */
-function manual_field_add_form_element($form, $context, $field) {
+function manual_field_add_form_element($form, $context, $field, $check_required = true) {
     $mform = $form->_form;
     $manual = new field_owner($field->owners['manual']);
     if (!empty($manual->param_edit_capability)) {
@@ -189,6 +189,12 @@ function manual_field_add_form_element($form, $context, $field) {
     $control = $manual->param_control;
     require_once(CURMAN_DIRLOCATION . "/plugins/manual/field_controls/{$control}.php");
     call_user_func("{$control}_control_display", $form, $field);
+    if ($check_required) {
+        $manual_params = unserialize($manual->params);
+        if (!empty($manual_params['required'])) {
+            $mform->addRule("field_{$field->shortname}", null, 'required', null, 'client'); // TBD
+        }
+    }
 }
 
 /**

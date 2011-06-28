@@ -75,7 +75,7 @@ class curriculumstudent extends datarecord {
         $this->add_property('completed', 'int');
         $this->add_property('timecompleted', 'int');
         $this->add_property('timeexpired', 'int');
-        $this->add_property('credits', 'int');
+        $this->add_property('credits', 'float');
         $this->add_property('locked', 'int');
         $this->add_property('timecreated', 'int');
         $this->add_property('timemodified', 'int');

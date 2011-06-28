@@ -162,9 +162,11 @@ function user_activity_etl_cron() {
  *
  * @return array the initial task state
  */
-function user_activity_task_init() {
+function user_activity_task_init( $output_mtrace = true ) {
     require_once(dirname(__FILE__) . '/../../config.php');
-    mtrace('Calculating user activity from Moodle log');
+    if ($output_mtrace) {
+        mtrace('Calculating user activity from Moodle log');
+    }
     global $CURMAN;
 
     if (isset($CURMAN->config->user_activity_state)) {

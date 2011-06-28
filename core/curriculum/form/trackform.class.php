@@ -92,14 +92,12 @@ class trackform extends cmform {
         $mform->addElement('date_selector', 'enddate', get_string('track_enddate', 'block_curr_admin') . ':', array('optional'=>true));
         $mform->setHelpButton('startdate', array('trackform/startdate', get_string('startdate', 'block_curr_admin'), 'block_curr_admin'));
 
-        if (!empty($this->_customdata->id)) {
-            $trackassignobj = new trackassignmentclass(array('trackid' =>$this->_customdata['id']));
+        if (!empty($this->_customdata['obj']->id)) {
+            $trackassignobj = new trackassignmentclass(array('trackid' =>$this->_customdata['obj']->id));
         }
 
         // Only show auto-create checkbox if the track does not have any classes assigned
-        // FIXME: this conditional appears to be broken
-        //if (empty($this->id) or 0 == $trackassignobj->count_assigned_classes_from_track()) {
-        if(!isset($this->_customdata['obj'])) {
+        if (!isset($trackassignobj) or 0 == $trackassignobj->count_assigned_classes_from_track()) {
             $mform->addElement('checkbox', 'autocreate', get_string('track_autocreate', 'block_curr_admin') . ':');
             $mform->setHelpButton('autocreate', array('trackform/autocreate', get_string('track_autocreate', 'block_curr_admin'), 'block_curr_admin'));
         }
@@ -165,6 +163,9 @@ class trackform extends cmform {
     }
 
     function freeze() {
+        if (isset($this->_form->_elementIndex['autocreate'])) {
+            $this->_form->removeElement('autocreate');
+        }
         parent::freeze();
     }
 }

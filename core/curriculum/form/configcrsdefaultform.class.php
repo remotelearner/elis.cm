@@ -62,7 +62,7 @@ require_once(CURMAN_DIRLOCATION . '/form/cmform.class.php');
             $mform->setType('crsdftlength', PARAM_INT);
 
             $mform->addElement('text', 'crsdftcredits', get_string('credits', 'block_curr_admin') . ':');
-            $mform->setType('crsdftcredits', PARAM_TEXT);
+            $mform->setType('crsdftcredits', PARAM_NUMBER);
             $mform->addRule('crsdftcredits', null, 'maxlength', 10);
 
             $grades = range(0,100,1);

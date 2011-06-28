@@ -1491,6 +1491,65 @@ class cm_user_curriculum_filter extends user_filter_select {
 }
 
 /**
+ * Checks a text filter against several fields
+ */
+class cm_user_filter_text_OR extends user_filter_text {
+    var $_fields;
+
+    /**
+     * Constructor
+     * @param string $name the name of the filter instance
+     * @param string $label the label of the filter instance
+     * @param boolean $advanced advanced form element flag
+     * @param string $alias an alias to use for the form elements
+     * @param array $fields an array of user table field names
+     */
+    function cm_user_filter_text_OR($name, $label, $advanced, $alias, $fields) {
+        parent::user_filter_text($name, $label, $advanced, $alias);
+        $this->_fields = $fields;
+    }
+
+    /**
+     * Returns the condition to be used with SQL where
+     * @param array $data filter settings
+     * @return string the filtering condition or null if the filter is disabled
+     */
+    function get_sql_filter($data) {
+        $operator = $data['operator'];
+        $value    = addslashes($data['value']);
+        $field    = $this->_field;
+
+        if ($operator != 5 and $value === '') {
+            return '';
+        }
+
+        $ilike = sql_ilike();
+
+        switch($operator) {
+            case 0: // contains
+                $res = "$ilike '%$value%'"; break;
+            case 1: // does not contain
+                $res = "NOT $ilike '%$value%'"; break;
+            case 2: // equal to
+                $res = "$ilike '$value'"; break;
+            case 3: // starts with
+                $res = "$ilike '$value%'"; break;
+            case 4: // ends with
+                $res = "$ilike '%$value'"; break;
+            case 5: // empty
+                $res = "=''"; break;
+            default:
+                return '';
+        }
+        $conditions = array();
+        foreach ($this->_fields as $field) {
+            $conditions[] = $field.' '.$res;
+        }
+        return '(' . implode(' OR ', $conditions) . ')';
+    }
+}
+
+/**
  * User filtering wrapper class.
  */
 class cm_user_filtering extends user_filtering {
@@ -1547,22 +1606,12 @@ class cm_user_filtering extends user_filtering {
     function get_field($fieldname, $advanced) {
         global $CURMAN, $USER;
 
-        if ($CURMAN->db->_dbconnection->databaseType == 'postgres7') {
-            $IFNULL = 'COALESCE(usr.mi, \'\')';
-        } else {
-            $IFNULL = 'IFNULL(usr.mi, \'\')';
-        }
-
-        if ($CURMAN->db->_dbconnection->databaseType == 'postgres7') {
-            $FULLNAME = 'usr.firstname || \' \' || COALESCE(usr.mi, \'\') || \' \' || usr.lastname';
-        } else {
-            $FULLNAME = 'CONCAT(usr.firstname,\' \',IFNULL(usr.mi, \'\'),\' \',usr.lastname)';
-        }
-
         switch ($fieldname) {
         case 'username':    return new user_filter_text('username', get_string('username'), $advanced, 'usr.username');
-        case 'realname':    return new user_filter_text('realname', get_string('fullname'),
-                                                        $advanced, sql_concat('usr.firstname',"' '",$IFNULL,"' '",'usr.lastname'));
+        case 'realname':    return new cm_user_filter_text_OR('realname', get_string('fullname'),
+                                                              $advanced, 'fullname',
+                                                              array(sql_concat('usr.firstname',"' '","COALESCE(usr.mi, '')","' '",'usr.lastname'),
+                                                                    sql_concat('usr.firstname',"' '",'usr.lastname')));
         case 'lastname':    return new user_filter_text('lastname', get_string('lastname'), $advanced, 'usr.lastname');
         case 'firstname':   return new user_filter_text('firstname', get_string('firstname'), $advanced, 'usr.firstname');
         case 'idnumber':    return new user_filter_text('idnumber', get_string('idnumber'), $advanced, 'usr.idnumber');

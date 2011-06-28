@@ -218,6 +218,28 @@ class cm_time_selector extends MoodleQuickForm_group {
         } else if($this->isFrozen() && isset($this->_elements[2])) {
             // Remove the frozen checkbox when frozen
             unset($this->_elements[2]);
+
+            // output in a more readable format if frozen
+            if (!empty($this->display_12h)) {
+                $value = $this->getValue();
+                $hour = isset($value['hour']) ? current($value['hour']) : 0;
+                $minute = sprintf('%02d', isset($value['minute']) ? current($value['minute']) : 0);
+                $ampm = $hour >= 12 ? 'pm' : 'am';
+                if ($hour >= 12) {
+                    $hour -= 12;
+                }
+                if ($hour == 0) {
+                    $hour = 12;
+                }
+                $output = "{$hour}:{$minute} {$ampm}";
+            } else {
+                $value = $this->getValue();
+                $hour = sprintf('%02d', isset($value['hour']) ? current($value['hour']) : 0);
+                $minute = sprintf('%02d', isset($value['minute']) ? current($value['minute']) : 0);
+                $output = "{$hour}:{$minute}";
+            }
+            $renderer->renderElement(MoodleQuickForm::createElement('static', $this->getName(), $this->getLabel(), $output), $required, $error);
+            return;
         }
 
         $renderer->renderElement($this, $required, $error);

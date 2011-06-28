@@ -234,6 +234,7 @@ abstract class managementpage extends newpage {
 
         $page         = optional_param('page', 0, PARAM_INT);
         $perpage      = optional_param('perpage', 30, PARAM_INT);
+        $id           = optional_param('id', 0, PARAM_INT);
 
         $params = array(
 			'search' => stripslashes($namesearch),
@@ -242,6 +243,9 @@ abstract class managementpage extends newpage {
 			'perpage' => $perpage,
 			/*'namesearch' => $namesearch*/
         );
+        if (!empty($id)) {
+            $params['id'] = $id;
+        }
         if (!empty($sort)) {
             $params['sort'] = $sort;
         }

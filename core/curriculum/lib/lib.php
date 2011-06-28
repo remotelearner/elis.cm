@@ -944,6 +944,12 @@
                 $coursegradeitem = grade_item::fetch_course_item($moodlecourse->id);
                 $gis[$coursegradeitem->id] = $coursegradeitem;
 
+                if ($coursegradeitem->grademax == 0) {
+                    // no maximum course grade, so we can't calculate the
+                    // student's grade
+                    continue;
+                }
+
                 if (!empty($elements)) {
                     // get current completion element grades if we have any
                     // IMPORTANT: this record set must be sorted using the Moodle
@@ -1033,7 +1039,7 @@
                                 if ($cmclass->course->completion_grade <= $sturec->grade) {
                                     $sturec->completetime = $usergradeinfo->get_dategraded();
                                     $sturec->completestatusid = STUSTATUS_PASSED;
-                                    $sturec->credits = (int) $cmclass->course->credits;
+                                    $sturec->credits = floatval($cmclass->course->credits);
                                 } else {
                                     $sturec->completetime = 0;
                                     $sturec->completestatusid = STUSTATUS_NOTCOMPLETE;

@@ -147,7 +147,11 @@ function usermanagement_get_students($type = 'student', $sort = 'name', $dir = '
     }
 
     if ($sort) {
-        $sort = 'ORDER BY '.$sort .' '. $dir.' ';
+        if ($sort == 'name') {
+            $sort = "ORDER BY lastname {$dir}, firstname {$dir} ";
+        } else {
+            $sort = "ORDER BY {$sort} {$dir} ";
+        }
     }
 
     if (!empty($perpage)) {
@@ -325,7 +329,11 @@ function usermanagement_get_users($sort = 'name', $dir = 'ASC',
     }
 
     if ($sort) {
-        $sort = 'ORDER BY '.$sort .' '. $dir.' ';
+        if ($sort == 'name') {
+            $sort = "ORDER BY lastname {$dir}, firstname {$dir} ";
+        } else {
+            $sort = "ORDER BY {$sort} {$dir} ";
+        }
     }
 
     if (!empty($perpage)) {
