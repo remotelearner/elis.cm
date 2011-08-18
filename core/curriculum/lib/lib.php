@@ -144,6 +144,9 @@
             'default_track_role_id' => 0,
 
             'autocreated_unknown_is_yes' => 1,
+
+            //legacy settings
+            'legacy_show_inactive_users' => 0,
         );
 
         // include defaults from plugins
@@ -944,6 +947,12 @@
                 $coursegradeitem = grade_item::fetch_course_item($moodlecourse->id);
                 $gis[$coursegradeitem->id] = $coursegradeitem;
 
+                if ($coursegradeitem->grademax == 0) {
+                    // no maximum course grade, so we can't calculate the
+                    // student's grade
+                    continue;
+                }
+
                 if (!empty($elements)) {
                     // get current completion element grades if we have any
                     // IMPORTANT: this record set must be sorted using the Moodle
@@ -1033,7 +1042,7 @@
                                 if ($cmclass->course->completion_grade <= $sturec->grade) {
                                     $sturec->completetime = $usergradeinfo->get_dategraded();
                                     $sturec->completestatusid = STUSTATUS_PASSED;
-                                    $sturec->credits = (int) $cmclass->course->credits;
+                                    $sturec->credits = floatval($cmclass->course->credits);
                                 } else {
                                     $sturec->completetime = 0;
                                     $sturec->completestatusid = STUSTATUS_NOTCOMPLETE;
@@ -1390,7 +1399,7 @@
             require_once (CURMAN_DIRLOCATION . '/plugins/moodle_profile/custom_fields.php');
             foreach ($fields as $field) {
                 $field = new field($field);
-                if (isset($field->owner['moodle_profile']) && $field->owner['moodle_profile']->exclude == cm_moodle_profile::sync_from_moodle) {
+                if (isset($field->owners['moodle_profile']) && $field->owners['moodle_profile']->exclude == cm_moodle_profile::sync_from_moodle) {
                     $fieldname = "field_{$field->shortname}";
                     $cu->$fieldname = $mu->{"profile_field_{$field->shortname}"};
                 }

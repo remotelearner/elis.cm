@@ -224,11 +224,15 @@ class usertrack extends datarecord {
         $join    = 'LEFT JOIN ' . $CURMAN->db->prefix_table(USRTABLE) . ' usr '.
             'ON usr.id = usrtrk.userid ';
         $where   = 'WHERE usrtrk.trackid = '.$trackid.' ';
-        $group   = 'GROUP BY usrtrk.id ';
+        //$group   = 'GROUP BY usrtrk.id ';
         $sort    = 'ORDER BY name ASC ';
         $limit   = '';
 
-        $sql = $select.$tables.$join.$where.$group.$sort.$limit;
+        if (empty($CURMAN->config->legacy_show_inactive_users)) {
+            $where .= ' AND usr.inactive = 0 ';
+        }
+
+        $sql = $select.$tables.$join.$where./*$group.*/$sort.$limit;
 
         return $CURMAN->db->get_records_sql($sql);
     }

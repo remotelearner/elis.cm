@@ -138,7 +138,7 @@ class course extends datarecord {
 //                                                                 //
 /////////////////////////////////////////////////////////////////////
     public function setUrl($url = null, $action = array()) {
-        if(!($url instanceof noodle_url)) {
+        if(!($url instanceof moodle_url)) {
             $url = new moodle_url($url, $action);
         }
 

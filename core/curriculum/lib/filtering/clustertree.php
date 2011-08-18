@@ -24,6 +24,7 @@
  *
  */
 
+require_once($CFG->dirroot.'/curriculum/config.php');
 require_once(CURMAN_DIRLOCATION . '/lib/menuitem.class.php');
 require_once($CFG->dirroot . '/blocks/curr_admin/lib.php');
 require_once(CURMAN_DIRLOCATION . '/lib/contexts.php');

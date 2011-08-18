@@ -214,14 +214,14 @@ class health_duplicate_enrolments extends crlm_health_check_base {
         return healthpage::SEVERITY_CRITICAL;
     }
     function title() {
-        return 'Duplicate enrolment records';
+        return 'Duplicate class enrolment records';
     }
     function description() {
-        return "There were {$this->count} duplicate enrolments records in the ELIS enrolments table.";
+        return "There were {$this->count} duplicate class enrolment records in the ELIS enrolments table.";
     }
     function solution() {
-        $msg = 'The duplicate enrolments need to be removed directly from the database.  <b>DO NOT</b> try to remove them via the UI.<br/><br/>'
-             . 'Recommended to escalate to development for solution.';
+        $msg = 'The duplicate class enrolments need to be removed directly from the database.  <b>DO NOT</b> try to remove them via the UI.<br/><br/>'
+             . 'Run the script fix_duplicate_enrolments.php to remove all duplicate class enrolments.';
         return $msg;
     }
 }
@@ -452,7 +452,6 @@ class completion_export_check extends crlm_health_check_base {
     function exists() {
         global $CFG;
         $exists = is_dir($CFG->dirroot.'/blocks/completion_export');
-        var_dump($exists);
         return is_dir($CFG->dirroot.'/blocks/completion_export');
     }
 

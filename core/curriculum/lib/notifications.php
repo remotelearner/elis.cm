@@ -478,7 +478,7 @@ function cm_assign_student_from_mdl($eventdata) {
     require_once CURMAN_DIRLOCATION . '/lib/classmoodlecourse.class.php';
     require_once CURMAN_DIRLOCATION . '/lib/student.class.php';
     $classes = $CURMAN->db->get_records(CLSMDLTABLE, 'moodlecourseid', $context->instanceid);
-    if (count($classes) == 1) { // only if course is associated with one class
+    if (is_array($classes) && (count($classes) == 1)) { // only if course is associated with one class
         $class = current($classes);
         if (!get_record(STUTABLE, 'classid', $class->classid, 'userid', $cmuserid)) {
             $sturec = new Object();
@@ -697,7 +697,7 @@ function cm_notify_track_assign_handler($eventdata){
     }
 
     $users = array();
-    
+
     if ($sendtorole) {
         /// Get all users with the notify_trackenrol capability.
         if ($roleusers = get_users_by_capability($context, 'block/curr_admin:notify_trackenrol')) {

@@ -16,25 +16,26 @@ function checkbox_control_display($form, $field, $as_filter=false) {
         $mform = $form;
         $form->_customdata = null;
     }
-    
-    if ($field->datatype == 'bool') {
+
+    if ($field->datatype == 'bool' || $field->datatype == 'int' || $field->datatype == 'num') {
         $checkbox = $mform->addElement('advcheckbox', "field_{$field->shortname}", $field->name);
         manual_field_add_help_button($mform, "field_{$field->shortname}", $field);
     } else {
-        //if ($as_filter || $field->multivalued) {
+        if ($as_filter || $field->multivalued) {
             require_once(CURMAN_DIRLOCATION.'/plugins/manual/field_controls/menu.php');
             return menu_control_display($form, $field, $as_filter);
-        //}
-        //  FIXME: this doesn't work
+        }
         $manual = new field_owner($field->owners['manual']);
         $options = explode("\n", $manual->param_options);
         $controls = array();
         foreach ($options as $option) {
+            $option = trim($option);
             if ($field->multivalued) {
-                $cb = $controls[] = &MoodleQuickForm::createElement('checkbox', "field_{$field->shortname}", null, $option);
+                //  FIXME: this doesn't work
+                $cb = $controls[] = &$mform->createElement('checkbox', "field_{$field->shortname}", null, $option);
                 $cb->updateAttributes(array('value'=>$option));
             } else {
-                $controls[] = &MoodleQuickForm::createElement('radio', "field_{$field->shortname}", null, $option, $option);
+                $controls[] = &$mform->createElement('radio', "field_{$field->shortname}", null, $option, $option);
             }
         }
         $mform->addGroup($controls, "field_{$field->shortname}", $field->name, '<br />', false);

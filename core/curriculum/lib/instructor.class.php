@@ -660,6 +660,10 @@ function instructor_get_listing($classid, $sort = 'name', $dir = 'ASC', $startre
     $on      = 'ON ins.userid = usr.id ';
     $where   = 'ins.classid = \'' . $classid . '\'';
 
+    if (empty($CURMAN->config->legacy_show_inactive_users)) {
+        $where .= ' AND usr.inactive = 0';
+    }
+
     if (!empty($namesearch)) {
         $namesearch = trim($namesearch);
         $where .= (!empty($where) ? ' AND ' : '') . "($FULLNAME $LIKE '%$namesearch%') OR " .
@@ -711,6 +715,10 @@ function instructor_count_records($classid, $namesearch = '', $alpha='') {
     $join    = 'LEFT JOIN ' . $CURMAN->db->prefix_table(USRTABLE) . ' usr ';
     $on      = 'ON ins.userid = usr.id ';
     $where   = 'ins.classid = \'' . $classid . '\'';
+
+    if (empty($CURMAN->config->legacy_show_inactive_users)) {
+        $where .= ' AND usr.inactive = 0';
+    }
 
     if (!empty($namesearch)) {
         $namesearch = trim($namesearch);

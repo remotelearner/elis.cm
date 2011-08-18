@@ -25,6 +25,7 @@
  */
 
 require_once($CFG->dirroot.'/user/filters/lib.php');
+require_once($CFG->dirroot.'/curriculum/config.php');
 require_once(CURMAN_DIRLOCATION . '/lib/filtering/custom_field_multiselect.php');
 
 /**
@@ -87,10 +88,9 @@ class generalized_filter_custom_field_multiselect_data {
                 break;
             case 'init':
                 // Pull filter params if report is not being scheduled
-                if (isset($SESSION->php_reports[$this->_block_instance]) && !$scheduled) {
-                    // First unset the override flag
-                    $user_preferences = php_report_filtering_get_user_preferences($this->get_report_name($SESSION->php_reports[$this->_block_instance]->inner_report));
-                    $report_index = 'php_report_'.$this->get_report_name($SESSION->php_reports[$this->_block_instance]->inner_report).'/field'.$this->_block_instance;
+                if (!$scheduled) {
+                    $user_preferences = php_report_filtering_get_user_preferences($this->_block_instance);
+                    $report_index = 'php_report_'.$this->_block_instance.'/field'.$this->_block_instance;
                 }
                 if ($scheduled) {
                     // accept current fieldidlist if in schedule mode

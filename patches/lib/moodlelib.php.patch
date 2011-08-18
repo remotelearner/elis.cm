@@ -1,8 +1,8 @@
 diff --git a/lib/moodlelib.php b/lib/moodlelib.php
-index d892bb7..0cadcde 100644
+index f3d109b..09729a3 100644
 --- a/lib/moodlelib.php
 +++ b/lib/moodlelib.php
-@@ -2984,6 +2984,9 @@ function create_user_record($username, $password, $auth='manual') {
+@@ -2985,6 +2985,9 @@ function create_user_record($username, $password, $auth='manual') {
  
      if (insert_record('user', $newuser)) {
          $user = get_complete_user_data('username', $newuser->username, $CFG->mnet_localhost_id);
@@ -12,7 +12,7 @@ index d892bb7..0cadcde 100644
          if(!empty($CFG->{'auth_'.$newuser->auth.'_forcechangepassword'})){
              set_user_preference('auth_forcepasswordchange', 1, $user->id);
          }
-@@ -2993,6 +2996,54 @@ function create_user_record($username, $password, $auth='manual') {
+@@ -2994,6 +2997,54 @@ function create_user_record($username, $password, $auth='manual') {
      return false;
  }
  
@@ -67,7 +67,7 @@ index d892bb7..0cadcde 100644
  /**
   * Will update a local user record from an external source
   *
-@@ -3226,6 +3277,7 @@ function authenticate_user_login($username, $password) {
+@@ -3227,6 +3278,7 @@ function authenticate_user_login($username, $password) {
  
              if (!$authplugin->is_internal()) {            // update user record from external DB
                  $user = update_user_record($username, get_auth_plugin($user->auth));

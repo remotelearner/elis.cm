@@ -42,7 +42,11 @@ class user_activity_health_empty extends crlm_health_check_base {
     }
 
     function title() {
-        return 'ETL process has not run yet';
+        if ($this->inprogress) {
+            return 'ETL process is in progress';
+        } else {
+            return 'ETL process has not run yet';
+        }
     }
 
     function severity() {
@@ -55,7 +59,13 @@ class user_activity_health_empty extends crlm_health_check_base {
 
     function description() {
         if ($this->inprogress) {
-            return "The ETL process has not completed running.  Certain reports (such as the site-wide time summary) may show incomplete data until the ETL process has completed.";
+            require_once(dirname(__FILE__) .'/etl.php');
+            $state = user_activity_task_init(false);
+            $last_time = (int)$state['starttime'];
+            $records_done = count_records_select('log', "time < $last_time");
+            $records_togo = count_records_select('log', "time >= $last_time");
+            return "The ETL process has not completed running.  Certain reports (such as the site-wide time summary) may show incomplete data until the ETL process has completed.
+Currently, <b>{$records_done}</b> records have been processed and <b>{$records_togo}</b> records remain to be processed.";
         } else {
             return "The ETL process has not been run.  This prevents certain reports (such as the
 site-wide time summary) from working.";

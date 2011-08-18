@@ -1495,14 +1495,86 @@ function xmldb_block_curr_admin_upgrade($oldversion = 0) {
     }
 
     if ($result && $oldversion < 2011011802) {
-        // delete duplicate records
-        $sql = "DELETE FROM g
-                 USING mdl_crlm_class_graded g, mdl_crlm_class_graded g2
-                 WHERE g.userid = g2.userid
-                       AND g.classid = g2.classid
-                       AND g.completionid = g2.completionid
-                       AND g.id < g2.id";
-        execute_sql($sql);
+        // Delete duplicate class completion element grades
+        $xmldbtable = new XMLDBTable('crlm_class_graded_temp');
+
+        if (table_exists($xmldbtable)) {
+            drop_table($xmldbtable);
+        }
+
+        // Create a temporary table
+        $result = $result && execute_sql("CREATE TABLE {$CFG->prefix}crlm_class_graded_temp LIKE {$CFG->prefix}crlm_class_graded");
+
+        // Store the unique values in the temporary table
+        $sql = "INSERT INTO {$CFG->prefix}crlm_class_graded_temp
+                SELECT MAX(id) ".sql_as()." id, classid, userid, completionid, grade, locked, timegraded, timemodified
+                FROM {$CFG->prefix}crlm_class_graded
+                GROUP BY classid, userid, completionid, locked";
+
+        // Detect if there are still duplicates in the temporary table
+        $sql = "SELECT COUNT(*) ".sql_as()." count, classid, userid, completionid, grade, locked, timegraded, timemodified
+                FROM {$CFG->prefix}crlm_class_graded_temp
+                GROUP BY classid, userid, completionid
+                ORDER BY count DESC, classid ASC, userid ASC, completionid ASC";
+
+        if ($dupcount = get_record_sql($sql, true)) {
+            if ($dupcount->count > 1) {
+                        if ($rs = get_recordset_sql($sql)) {
+                    while ($dupe = rs_fetch_next_record($rs)) {
+                        if ($dupe->count <= 1) {
+                            continue;
+                        }
+
+                        $classid = $dupe->classid;
+                        $userid  = $dupe->userid;
+                        $goodid  = 0; // The ID of the record we will keep
+
+                        // Look for the earliest locked grade record for this user and keep that (if any are locked)
+                        $sql2 = "SELECT id, grade, locked, timegraded
+                                 FROM mdl_crlm_class_graded
+                                 WHERE classid = $classid
+                                 AND userid = $userid
+                                 ORDER BY timegraded ASC";
+
+                        if ($rs2 = get_recordset_sql($sql2)) {
+                            while ($rec = rs_fetch_next_record($rs2)) {
+                                // Store the last record ID just in case we need it for cleanup
+                                $lastid = $rec->id;
+
+                                // Don't bother looking at remaining records if we have found a record to keep
+                                if (!empty($goodid)) {
+                                    continue;
+                                }
+
+                                if ($rec->locked = 1) {
+                                    $goodid = $rec->id;
+                                }
+                            }
+
+                            rs_close($rs2);
+
+                            // We need to make sure we have a record ID to keep, if we found no "complete" and locked
+                            // records, let's just keep the last record we saw
+                            if (empty($goodid)) {
+                                $goodid = $lastid;
+                            }
+
+                            $select = 'classid = '.$classid.' AND userid = '.$userid.' AND id != '.$goodid;
+                        }
+
+                        if (!empty($select)) {
+                            $result = $result && delete_records_select('crlm_class_graded_temp', $select);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Drop the real table
+        $result = $result && execute_sql("DROP TABLE {$CFG->prefix}crlm_class_graded");
+
+        // Replace the real table with the temporary table that now only contains unique values.
+        $result = $result && execute_sql("ALTER TABLE {$CFG->prefix}crlm_class_graded_temp RENAME TO {$CFG->prefix}crlm_class_graded");
     }
 
     if ($result && $oldversion < 2011050200) {
@@ -1601,6 +1673,60 @@ function xmldb_block_curr_admin_upgrade($oldversion = 0) {
         $index = new XMLDBIndex('userid_ix');
         $index->setAttributes(XMLDB_INDEX_NOTUNIQUE, array('userid'));
         $result = $result && add_index($table, $index);
+    }
+
+    if ($result && $oldversion < 2011050201) {
+        // make sure that hours are within 24 hours
+        $sql = "UPDATE {$CFG->prefix}crlm_class
+                   SET starttimehour = MOD(starttimehour, 24),
+                       endtimehour = MOD(endtimehour, 24)";
+        $result = $result && execute_sql($sql);
+    }
+
+    if ($result && $oldversion < 2011050202) {
+
+    /// Changing type of field credits on table crlm_class_enrolment to number
+        $table = new XMLDBTable('crlm_class_enrolment');
+        $field = new XMLDBField('credits');
+        $field->setAttributes(XMLDB_TYPE_NUMBER, '10, 2', XMLDB_UNSIGNED, null, null, null, null, '0', 'grade');
+
+    /// Launch change of type for field credits
+        $result = $result && change_field_type($table, $field);
+
+    /// Changing type of field credits on table crlm_curriculum_assignment to number
+        $table = new XMLDBTable('crlm_curriculum_assignment');
+        $field = new XMLDBField('credits');
+        $field->setAttributes(XMLDB_TYPE_NUMBER, '10, 2', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null, null, '0', 'timeexpired');
+
+    /// Launch change of type for field credits
+        $result = $result && change_field_type($table, $field);
+
+
+    /// Changing type of field reqcredits on table crlm_curriculum to number
+        $table = new XMLDBTable('crlm_curriculum');
+        $field = new XMLDBField('reqcredits');
+        $field->setAttributes(XMLDB_TYPE_NUMBER, '10, 2', XMLDB_UNSIGNED, null, null, null, null, null, 'description');
+
+    /// Launch change of type for field reqcredits
+        $result = $result && change_field_type($table, $field);
+
+        // update student class credits with decimal credits
+        if ($CFG->dbfamily == 'postgres') {
+            $sql = "UPDATE {$CFG->prefix}crlm_class_enrolment
+                       SET credits = CAST(c.credits AS numeric)
+                      FROM {$CFG->prefix}crlm_class_enrolment e, {$CFG->prefix}crlm_class cls, {$CFG->prefix}crlm_course c
+                     WHERE e.classid = cls.id
+                       AND cls.courseid = c.id
+                       AND e.credits = CAST(c.credits AS integer)";
+        } else {
+            $sql = "UPDATE {$CFG->prefix}crlm_class_enrolment e, {$CFG->prefix}crlm_class cls, {$CFG->prefix}crlm_course c
+                       SET e.credits = c.credits
+                     WHERE e.classid = cls.id
+                       AND cls.courseid = c.id
+                       AND e.credits = CAST(c.credits AS unsigned)";
+        }
+
+        $result = $result && execute_sql($sql);
     }
 
     return $result;

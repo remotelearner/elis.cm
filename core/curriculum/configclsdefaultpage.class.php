@@ -67,6 +67,12 @@ class configclsdefaultpage extends newpage {
         $configform->set_data($CURMAN->config);
 
         if ($configdata = $configform->get_data()) {
+            if (isset($configdata->clsdftstarttime)) {
+                $configdata->clsdftstarttime = $configdata->clsdftstarttime % DAYSECS;
+            }
+            if (isset($configdata->clsdftendtime)) {
+                $configdata->clsdftendtime = $configdata->clsdftendtime % DAYSECS;
+            }
             $this->_config_set_value($configdata, 'clsdftidnumber', 0);
             $this->_config_set_value($configdata, 'clsdftstartdate', 0);
             $this->_config_set_value($configdata, 'clsdftenddate', 0);

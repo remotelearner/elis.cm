@@ -21,6 +21,12 @@
 
     require_capability('block/enrol_survey:take', $context);
 
+    /* TBD: avoid error from $u->update() below
+    if (cm_get_crlmuserid($USER->id) === false) {
+        print_error(get_string('noelisuser', 'block_enrol_survey'));
+    }
+    */
+
     $survey_form = new survey_form($CFG->wwwroot . '/blocks/enrol_survey/survey.php?id=' . $instanceid);
 
     if ($survey_form->is_cancelled()){

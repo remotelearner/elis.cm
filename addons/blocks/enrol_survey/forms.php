@@ -121,7 +121,7 @@ class survey_form extends moodleform {
             if(in_array($k, $profile_fields)) {
                 if(strcmp($k, 'country') === 0) {
                     $type = 'select';
-                    get_list_of_countries();
+                    $extra = get_list_of_countries();
                 } else {
                     $type = 'text';
                 }

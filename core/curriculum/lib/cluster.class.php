@@ -187,15 +187,17 @@ class cluster extends datarecord {
                 $select = "id='{$cluster_data->parent}'";
                 $parent_cnt = $CURMAN->db->count_records_select(CLSTTABLE, $select);
 
+                $newclusterdata = new stdClass;
+                $newclusterdata->id = $promote_id;
                 if ($parent_cnt < 1) {
                 /// Parent not found so this cluster will be top-level
-                    $cluster_data->parent = 0;
-                    $cluster_data->depth = 1;
+                    $newclusterdata->parent = 0;
+                    $newclusterdata->depth = 1;
                 } else {
                 /// A child cluster found so lets lower the depth
-                    $cluster_data->depth = $lower_depth;
+                    $newclusterdata->depth = $lower_depth;
                 }
-                $result = update_record(CLSTTABLE, $cluster_data);
+                $result = update_record(CLSTTABLE, $newclusterdata);
 
                 $cluster_context_level = context_level_base::get_custom_context_level('cluster', 'block_curr_admin');
                 $sql = "UPDATE {$CFG->prefix}context
@@ -447,19 +449,26 @@ class cluster extends datarecord {
      *
      * @return  int array  The ids of the applicable clusters
      */
-    public static function get_viewable_clusters() {
+    public static function get_viewable_clusters($capabilities = null) {
         global $USER;
 
+        if ($capabilities === null ) {
+            $capabilities = array('block/curr_admin:cluster:view', 'block/curr_admin:cluster:edit');
+        }
+        if (!is_array($capabilities)) {
+            $capabilities = array($capabilities);
+        }
+
+        $clusters = array();
         //retrieve the context at which the current user has the sufficient capability
-        $viewable_contexts = get_contexts_by_capability_for_user('cluster', 'block/curr_admin:cluster:view', $USER->id);
-        $editable_contexts = get_contexts_by_capability_for_user('cluster', 'block/curr_admin:cluster:edit', $USER->id);
+        foreach ($capabilities as $capability) {
+            $contexts = get_contexts_by_capability_for_user('cluster', $capability, $USER->id);
+            //convert context sets to cluster ids
+            $clusters[] = empty($contexts->contexts['cluster']) ? array() : $contexts->contexts['cluster'];
+        }
 
-        //convert context sets to cluster ids
-        $viewable_clusters = empty($viewable_contexts->contexts['cluster']) ? array() : $viewable_contexts->contexts['cluster'];
-        $editable_clusters = empty($editable_contexts->contexts['cluster']) ? array() : $editable_contexts->contexts['cluster'];
-
-        //merge the two sets to get our final result
-        $result = array_unique(array_merge($viewable_clusters, $editable_clusters));
+        //merge the sets to get our final result
+        $result = array_unique(call_user_func_array('array_merge', $clusters));
 
         return $result;
     }
@@ -829,9 +838,10 @@ function cluster_deassign_all_user($userid) {
  * Gets cluster IDs and names of all non child clusters of target cluster
  *
  * @param int $target_cluster_id Target cluster id
+ * @param object $contexts Cluster contexts for filtering, if applicable
  * @return array Returned results with key as cluster id and value as cluster name
  */
-function cluster_get_non_child_clusters($target_cluster_id) {
+function cluster_get_non_child_clusters($target_cluster_id, $contexts = null) {
     global $CURMAN;
     $return = array(0=>get_string('cluster_top_level','block_curr_admin'));
 
@@ -853,6 +863,11 @@ function cluster_get_non_child_clusters($target_cluster_id) {
              WHERE ctx.path NOT LIKE '{$target_cluster_path}/%'
                    AND ctx.instanceid != {$target_cluster_id}";
 
+    if ($contexts !== null) {
+        //append context condition
+        $sql .= ' AND '.$contexts->sql_filter_for_context_level('clst.id', 'cluster');
+    }
+
     $clusters = $CURMAN->db->get_records_sql($sql);
     $clusters = empty($clusters) ? array() : $clusters;
 
@@ -871,8 +886,9 @@ function cluster_get_non_child_clusters($target_cluster_id) {
  *
  * @param int $target_cluster_id Target cluster id
  * @return array Returned results with key as cluster id and value as cluster name
+ * @param object $contexts Cluster contexts for filtering, if applicable
  */
-function cluster_get_possible_sub_clusters($target_cluster_id) {
+function cluster_get_possible_sub_clusters($target_cluster_id, $contexts = null) {
     global $CURMAN;
     $return = array();
 
@@ -885,14 +901,17 @@ function cluster_get_possible_sub_clusters($target_cluster_id) {
     // get parent contexts as a comma-separated list of context IDs
     $parent_contexts = strtr(substr($cluster_context_instance->path,1), '/', ',');
 
-    $clusters = cluster_get_listing();
-
     $sql = "SELECT clst.id, clst.name
               FROM {$CURMAN->db->prefix_table(CLSTTABLE)} clst
               JOIN {$CURMAN->db->prefix_table('context')} ctx ON ctx.instanceid = clst.id
                    AND ctx.contextlevel = {$cluster_context_level}
              WHERE ctx.id NOT IN ({$parent_contexts})
                    AND clst.parent != {$target_cluster_id}";
+
+    if ($contexts !== null) {
+        //append context condition
+        $sql .= ' AND '.$contexts->sql_filter_for_context_level('clst.id', 'cluster');
+    }
 
     $clusters = $CURMAN->db->get_records_sql($sql);
     $clusters = empty($clusters) ? array() : $clusters;

@@ -24,7 +24,8 @@
 *  @copyright  (C) 2008-2010 Remote Learner.net Inc http://www.remote-learner.net
 */
 
-require_once(CURMAN_DIRLOCATION . '/form/cmform.class.php');
+require_once(CURMAN_DIRLOCATION.'/form/cmform.class.php');
+require_once(CURMAN_DIRLOCATION.'/clusterpage.class.php');
 
 /**
  * form for adding clusters to cmclasses
@@ -53,7 +54,13 @@ class clusterform extends cmform {
         $mform->setHelpButton('display', array('clusterform/display', get_string('cluster_description', 'block_curr_admin'), 'block_curr_admin'));
 
         $current_cluster_id = (isset($this->_customdata['obj']->id)) ? $this->_customdata['obj']->id : '';
-        $non_child_clusters = cluster_get_non_child_clusters($current_cluster_id);
+
+        //obtain the non-child clusters that we could become the child of, with availability
+        //determined based on the edit capability
+        $contexts = clusterpage::get_contexts('block/curr_admin:cluster:edit');
+        $non_child_clusters = cluster_get_non_child_clusters($current_cluster_id, $contexts);
+
+        //parent dropdown
         $mform->addElement('select', 'parent', get_string('cluster_parent', 'block_curr_admin') . ':', $non_child_clusters);
         $mform->setHelpButton('parent', array('clusterform/parent', get_string('cluster_parent', 'block_curr_admin'), 'block_curr_admin'));
 

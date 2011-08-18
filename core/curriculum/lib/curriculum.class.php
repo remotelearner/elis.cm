@@ -64,7 +64,7 @@ class curriculum extends datarecord {
         $this->add_property('idnumber', 'string', true);
         $this->add_property('name', 'string', true);
         $this->add_property('description', 'string');
-        $this->add_property('reqcredits', 'int');
+        $this->add_property('reqcredits', 'float');
         $this->add_property('iscustom', 'int');
         $this->add_property('timecreated', 'int');
         $this->add_property('timemodified', 'int');
@@ -697,6 +697,100 @@ function curriculum_get_listing($sort='name', $dir='ASC', $startrec=0, $perpage=
     $sql = $select.$tables.$join.$on.$where.$sort.$limit;
 
     return $CURMAN->db->get_records_sql($sql);
+}
+
+/**
+ * Gets a curriculum listing with specific sort and other filters as a recordset.
+ *
+ * @param   string        $sort        Field to sort on.
+ * @param   string        $dir         Direction of sort.
+ * @param   int           $startrec    Record number to start at.
+ * @param   int           $perpage     Number of records per page.
+ * @param   string        $namesearch  Search string for curriculum name.
+ * @param   string        $alpha       Start initial of curriculum name filter.
+ * @param   array         $contexts    Contexts to search (in the form return by
+ * @param   int           $userid      The id of the user we are assigning to curricula
+ *
+ * @return  recordset                  Returned recordset.
+ */
+function curriculum_get_listing_recordset($sort='name', $dir='ASC', $startrec=0, $perpage=0, $namesearch='',
+                                          $alpha='', $contexts = null, $userid = 0) {
+    global $USER, $CURMAN;
+
+    $LIKE = $CURMAN->db->sql_compare();
+
+    $select = 'SELECT cur.*, (SELECT COUNT(*) FROM ' . $CURMAN->db->prefix_table(CURCRSTABLE) .
+              ' WHERE curriculumid = cur.id ) as courses ';
+    $tables = 'FROM ' . $CURMAN->db->prefix_table(CURTABLE) . ' cur ';
+    $join   = '';
+    $on     = '';
+
+    $where = array("cur.iscustom = '0'");
+    if ($contexts !== null && !empty($namesearch)) {
+        $namesearch = trim($namesearch);
+        $where[] = "(name $LIKE  '%$namesearch%')";
+    }
+
+    if ($alpha) {
+        $where[] = "(name $LIKE '$alpha%')";
+    }
+
+    if ($contexts !== null) {
+        $where[] = $contexts->sql_filter_for_context_level('cur.id', 'curriculum');
+    }
+
+    if(!empty($userid)) {
+        //get the context for the "indirect" capability
+        $context = cm_context_set::for_user_with_capability('cluster', 'block/curr_admin:curriculum:enrol_cluster_user', $USER->id);
+
+        $clusters = cluster_get_user_clusters($userid);
+        $allowed_clusters = $context->get_allowed_instances($clusters, 'cluster', 'clusterid');
+
+        $curriculum_context = cm_context_set::for_user_with_capability('curriculum', 'block/curr_admin:curriculum:enrol', $USER->id);
+        $curriculum_filter = $curriculum_context->sql_filter_for_context_level('cur.id', 'curriculum');
+
+        if(empty($allowed_clusters)) {
+            $where[] = $curriculum_filter;
+        } else {
+            $allowed_clusters_list = implode(',', $allowed_clusters);
+
+            //this allows both the indirect capability and the direct curriculum filter to work
+            $where[] = "(
+                          cur.id IN (
+                            SELECT clstcur.curriculumid
+                            FROM {$CURMAN->db->prefix_table(CLSTCURTABLE)} clstcur
+                            WHERE clstcur.clusterid IN ({$allowed_clusters_list})
+                          )
+                          OR
+                          {$curriculum_filter}
+                        )";
+        }
+
+    }
+
+    if (!empty($where)) {
+        $where = 'WHERE '.implode(' AND ',$where).' ';
+    } else {
+        $where = '';
+    }
+
+    if ($sort) {
+        $sort = 'ORDER BY '.$sort .' '. $dir.' ';
+    }
+
+    if (!empty($perpage)) {
+        if ($CURMAN->db->_dbconnection->databaseType == 'postgres7') {
+            $limit = 'LIMIT ' . $perpage . ' OFFSET ' . $startrec;
+        } else {
+            $limit = 'LIMIT '.$startrec.', '.$perpage;
+        }
+    } else {
+        $limit = '';
+    }
+
+    $sql = $select.$tables.$join.$on.$where.$sort.$limit;
+
+    return get_recordset_sql($sql);
 }
 
 /**

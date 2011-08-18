@@ -29,5 +29,5 @@
     $CURMAN->version = 2010040503;  // YYYYMMDD      = date of the version release
                                     //         XX    = micro-increments between releases
 
-    $CURMAN->release = '1.9.0.1 (Build: 20110531)';     // Human-friendly version name
+    $CURMAN->release = '1.9.2 (Build: 20110816)';     // Human-friendly version name
 

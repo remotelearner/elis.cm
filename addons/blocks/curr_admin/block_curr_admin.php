@@ -49,7 +49,7 @@ class block_curr_admin extends block_base {
         global $PAGE, $CURMAN;
         require_once CURMAN_DIRLOCATION.'/version.php';
         $this->title            = get_string('blockname', 'block_curr_admin');
-        $this->version          = 2011050200;
+        $this->version          = 2011050202;
         $this->release          = $CURMAN->release;
         $this->cron             = 300;
         $this->currentdepth     = 0;

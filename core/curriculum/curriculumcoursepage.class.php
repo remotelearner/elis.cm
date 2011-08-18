@@ -168,7 +168,8 @@ class curriculumcoursepage extends curriculumcoursebasepage {
             }
 
             foreach ($prereqs as $prereq) {
-                if ($curcrs->add_prerequisite($prereq, !empty($form_data->add_to_curriculum))) {
+                if (coursepage::_has_capability('block/curr_admin:course:view', $prereq)
+                    && $curcrs->add_prerequisite($prereq, !empty($form_data->add_to_curriculum))) {
                     $added++;
                 }
             }
@@ -232,7 +233,8 @@ class curriculumcoursepage extends curriculumcoursebasepage {
             /// Process requested corequisite additions.
             $coreqs = isset($form_data->coreqs)? $form_data->coreqs: array();
             foreach ($coreqs as $coreq) {
-                if ($curcrs->add_corequisite($coreq, !empty($form_data->add_to_curriculum))) {
+                if (coursepage::_has_capability('block/curr_admin:course:view', $prereq)
+                    && $curcrs->add_corequisite($coreq, !empty($form_data->add_to_curriculum))) {
                     $added++;
                 }
             }
