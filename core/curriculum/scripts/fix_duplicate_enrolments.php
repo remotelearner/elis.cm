@@ -44,7 +44,7 @@ if (execute_sql("CREATE TABLE {$CURMAN->db->prefix_table($tempname)} LIKE {$CURM
 // Step 1. -- attempt to move unique values into the temporary table in a way that should leave some duplicates but
 //            will remove the vast majority of the them
 $sql = "INSERT INTO {$CURMAN->db->prefix_table($tempname)}
-        SELECT id, classid, userid, enrolmenttime, MIN(completetime) ".sql_as()." completetime, completestatusid,
+        SELECT id, classid, userid, enrolmenttime, MIN(completetime) AS completetime, completestatusid,
                grade, credits, locked
         FROM {$CURMAN->db->prefix_table($tablename)}
         GROUP BY classid, userid, completestatusid, grade, credits, locked";
@@ -56,7 +56,7 @@ if (!execute_sql($sql, false)) {
 }
 
 // Step 2. -- detect if we still have any duplicates remaining
-$sql = "SELECT COUNT(*) ".sql_as()." count, classid, userid, enrolmenttime, completetime, completestatusid, grade, credits, locked
+$sql = "SELECT COUNT(*) AS count, classid, userid, enrolmenttime, completetime, completestatusid, grade, credits, locked
         FROM {$CURMAN->db->prefix_table($tablename)}
         GROUP BY classid, userid
         ORDER BY count DESC, classid ASC, userid ASC";

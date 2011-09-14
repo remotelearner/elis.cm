@@ -1,5 +1,5 @@
 diff --git a/lib/dmllib.php b/lib/dmllib.php
-index b477635..f403cf3 100644
+index 30694b7..6945874 100644
 --- a/lib/dmllib.php
 +++ b/lib/dmllib.php
 @@ -507,7 +507,8 @@ function get_record_sql($sql, $expectmultiple=false, $nolimit=false) {

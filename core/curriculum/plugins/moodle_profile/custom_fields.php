@@ -69,7 +69,7 @@ function sync_profile_field_to_moodle($field) {
             SELECT usr.id AS userid, {$mfieldid} AS fieldid, src.data
               FROM {$CURMAN->db->prefix_table('user')} usr
                    $joins
-         LEFT JOIN {$CURMAN->db->prefix_table($dest)} dest ON dest.userid = usr.id AND dest.fieldid = {$field->id}
+         LEFT JOIN {$CURMAN->db->prefix_table($dest)} dest ON dest.userid = usr.id AND dest.fieldid = {$mfieldid}
              WHERE dest.id IS NULL";
     $CURMAN->db->execute_sql($sql, false);
 

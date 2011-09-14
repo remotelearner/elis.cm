@@ -631,7 +631,11 @@ class currentclasstable extends display_table {
 
     function get_class($item) {
         if (!isset($this->current_class) || !isset($this->current_class->courseid) || $this->current_class->courseid != $item->courseid) {
-            $this->current_class = student_get_class_from_course($item->courseid, $this->cuserid);
+            if (!empty($item->classid)) {
+                $this->current_class = get_record('crlm_class', 'id', $item->classid);
+            } else {
+                $this->current_class = false;
+            }
         }
         return $this->current_class;
     }
@@ -843,12 +847,33 @@ class addclasstable extends display_table {
 
     // TODO: fix time-of-day display
     function get_item_display_timeofday($column, $class) {
+        global $CURMAN;
         if ((!empty($class->starttimehour) || !empty($class->starttimeminute)) &&
             (!empty($class->endtimehour) || !empty($class->endtimeminute))) {
 
-            return sprintf("%d:%02d - %d:%02d", $class->starttimehour,
-                           $class->starttimeminute, $class->endtimehour,
-                           $class->endtimeminute);
+            if ($CURMAN->config->time_format_12h) {
+                $starthour = $class->starttimehour;
+                $startampm = $starthour >= 12 ? 'pm' : 'am';
+                if ($starthour > 12) {
+                    $starthour -= 12;
+                } else if ($starthour == 0) {
+                    $starthour = 12;
+                }
+                $endhour = $class->endtimehour;
+                $endampm = $endhour >= 12 ? 'pm' : 'am';
+                if ($endhour > 12) {
+                    $endhour -= 12;
+                } else if ($endhour == 0) {
+                    $endhour = 12;
+                }
+                return sprintf("%d:%02d %s - %d:%02d %s",
+                               $starthour, $class->starttimeminute, $startampm,
+                               $endhour, $class->endtimeminute, $endampm);
+            } else {
+                return sprintf("%d:%02d - %d:%02d",
+                               $class->starttimehour, $class->starttimeminute,
+                               $class->endtimehour, $class->endtimeminute);
+            }
         } else {
             return 'n/a';
         }

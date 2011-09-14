@@ -770,7 +770,7 @@ class management_page_table extends display_table {
                 if($item->endtimehour / 12 > 1) {
                     return ($item->endtimehour % 12) . ':' . sprintf("%02d pm", $item->endtimeminute);
                 } else if($item->endtimehour == 12) {
-                    return 12 . ':' . sprintf("%02d pm", $item->starttimeminute);
+                    return 12 . ':' . sprintf("%02d pm", $item->endtimeminute);
                 } else if($item->endtimehour == 0) {
                     return 12 . ':' . sprintf("%02d am", $item->endtimeminute);
                 } else {

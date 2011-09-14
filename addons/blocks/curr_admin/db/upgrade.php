@@ -1507,12 +1507,12 @@ function xmldb_block_curr_admin_upgrade($oldversion = 0) {
 
         // Store the unique values in the temporary table
         $sql = "INSERT INTO {$CFG->prefix}crlm_class_graded_temp
-                SELECT MAX(id) ".sql_as()." id, classid, userid, completionid, grade, locked, timegraded, timemodified
+                SELECT MAX(id) AS id, classid, userid, completionid, grade, locked, timegraded, timemodified
                 FROM {$CFG->prefix}crlm_class_graded
                 GROUP BY classid, userid, completionid, locked";
 
         // Detect if there are still duplicates in the temporary table
-        $sql = "SELECT COUNT(*) ".sql_as()." count, classid, userid, completionid, grade, locked, timegraded, timemodified
+        $sql = "SELECT COUNT(*) AS count, classid, userid, completionid, grade, locked, timegraded, timemodified
                 FROM {$CFG->prefix}crlm_class_graded_temp
                 GROUP BY classid, userid, completionid
                 ORDER BY count DESC, classid ASC, userid ASC, completionid ASC";

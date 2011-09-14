@@ -225,10 +225,9 @@ class cm_time_selector extends MoodleQuickForm_group {
                 $hour = isset($value['hour']) ? current($value['hour']) : 0;
                 $minute = sprintf('%02d', isset($value['minute']) ? current($value['minute']) : 0);
                 $ampm = $hour >= 12 ? 'pm' : 'am';
-                if ($hour >= 12) {
+                if ($hour > 12) {
                     $hour -= 12;
-                }
-                if ($hour == 0) {
+                } else if ($hour == 0) {
                     $hour = 12;
                 }
                 $output = "{$hour}:{$minute} {$ampm}";

@@ -2554,7 +2554,7 @@ function student_get_class_from_course($crsid, $userid) {
             WHERE stu.userid = $userid
             AND cls.courseid = $crsid";
 
-    return $CURMAN->db->get_record_sql($sql);
+    return $CURMAN->db->get_records_sql($sql);
 }
 
 ?>

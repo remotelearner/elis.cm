@@ -346,7 +346,7 @@ function user_activity_task_process(&$state) {
     // possibly skip the last time when calculating the total number of
     // records, since we are purposely skipping anything less than $endtime
     $lasttime = get_field_select('log', 'MAX(time)', 'TRUE');
-    $totalrec = get_field_select('log', 'MAX(id)', 'time < {$lasttime}');
+    $totalrec = get_field_select('log', 'MAX(id)', "time < {$lasttime}");
     $totalrec = max($totalrec, $endrec);
     return array($endrec ? $endrec - $state['startrec'] : 0, $totalrec ? $totalrec - $state['startrec'] : 0);
 }

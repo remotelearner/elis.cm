@@ -1,5 +1,5 @@
 diff --git a/lang/en_utf8/moodle.php b/lang/en_utf8/moodle.php
-index 6526131..2c20988 100644
+index 55cc552..3fabd5e 100644
 --- a/lang/en_utf8/moodle.php
 +++ b/lang/en_utf8/moodle.php
 @@ -767,7 +767,7 @@ $string['guestsyes'] = 'Allow guests without the key';

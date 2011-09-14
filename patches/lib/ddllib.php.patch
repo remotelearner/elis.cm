@@ -1,5 +1,5 @@
 diff --git a/lib/ddllib.php b/lib/ddllib.php
-index 9826f2b..9885502 100644
+index 1b0bad5..5f644d6 100644
 --- a/lib/ddllib.php
 +++ b/lib/ddllib.php
 @@ -828,6 +828,13 @@ function get_db_directories() {
