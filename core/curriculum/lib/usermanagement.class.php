@@ -351,6 +351,57 @@ function usermanagement_get_users($sort = 'name', $dir = 'ASC',
     return $CURMAN->db->get_records_sql($sql);
 }
 
+function usermanagement_get_users_recordset($sort = 'name', $dir = 'ASC',
+                                            $startrec = 0, $perpage = 0, $extrasql = '', $contexts = null) {
+    global $CURMAN, $CFG;
+
+    if (empty($CURMAN->db)) {
+        return NULL;
+    }
+
+    $LIKE     = $CURMAN->db->sql_compare();
+    $FULLNAME = sql_concat('usr.firstname', "' '", 'usr.lastname');
+    $select  = 'SELECT usr.id, usr.idnumber as idnumber, usr.country, usr.language, usr.timecreated, '.
+               $FULLNAME . ' as name ';
+    $tables  = 'FROM ' . $CURMAN->db->prefix_table(USRTABLE) . ' usr ';
+    $where   = array();
+
+    if (!empty($extrasql)) {
+        $where[] = $extrasql;
+    }
+
+    if ($contexts !== null) {
+        $where[] = $contexts->sql_filter_for_context_level('usr.id', 'user');
+    }
+
+    if (!empty($where)) {
+        $where = 'WHERE '.implode(' AND ',$where).' ';
+    } else {
+        $where = '';
+    }
+
+    if ($sort) {
+        if ($sort == 'name') {
+            $sort = "ORDER BY lastname {$dir}, firstname {$dir} ";
+        } else {
+            $sort = "ORDER BY {$sort} {$dir} ";
+        }
+    }
+
+    if (!empty($perpage)) {
+        if ($CURMAN->db->_dbconnection->databaseType == 'postgres7') {
+            $limit = 'LIMIT ' . $perpage . ' OFFSET ' . $startrec;
+        } else {
+            $limit = 'LIMIT '.$startrec.', '.$perpage;
+        }
+    } else {
+        $limit = '';
+    }
+
+    $sql = $select.$tables.$where.$sort.$limit;
+
+    return get_recordset_sql($sql);
+}
 
 /**
  * Count the number of users

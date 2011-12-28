@@ -217,7 +217,7 @@ class customfieldpage extends newpage {
         if ($confirm) {
             $category->delete();
             $tmppage = new customfieldpage(array('level' => $level));
-            redirect($tmppage->get_url(), get_string('category_deleted', 'block_curr_admin', $category));
+            redirect($tmppage->get_url(), get_string('field_category_deleted', 'block_curr_admin', $category));
         } else {
             notice_yesno(get_string('confirm_delete_category', 'block_curr_admin', $category),
                          'index.php', 'index.php',

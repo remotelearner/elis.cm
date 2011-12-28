@@ -284,6 +284,7 @@ $string['notifytrackenrolmessagedef'] = "%%%%userenrolname%%%% has been enrolled
 // Authentication plug-in strings.
 
 // Tag form strings.
+$string['tag'] = 'tag';
 $string['tag_edit'] = 'Edit Tag';
 $string['tag_name'] = 'Name';
 $string['tag_description'] = 'Description';
@@ -1256,4 +1257,7 @@ $string['tab_archived_learning_plans'] = 'Archived Learning Plans';
 $string['noncurriculacourses'] = 'Non-curricula Courses';
 
 $string['na'] = 'NA';
+
+$string['legacy_settings'] = 'Legacy settings';
+$string['legacy_show_inactive_users'] = 'Show inactive users';
 ?>

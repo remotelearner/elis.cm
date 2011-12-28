@@ -234,9 +234,9 @@ class studentcurriculumpage extends associationpage2 {
         $sql = "SELECT curass.id, curass.curriculumid curid, curass.completed, curass.timecompleted, curass.credits, cur.idnumber, cur.name, cur.description, cur.reqcredits, curcrscnt.count as numcourses
                   FROM {$CURMAN->db->prefix_table(CURASSTABLE)} curass
                   JOIN {$CURMAN->db->prefix_table(CURTABLE)} cur ON cur.id = curass.curriculumid
-                  JOIN (SELECT curriculumid, COUNT(courseid) AS count
-                          FROM {$CURMAN->db->prefix_table(CURCRSTABLE)}
-                      GROUP BY curriculumid) curcrscnt ON cur.id = curcrscnt.curriculumid
+                  LEFT JOIN (SELECT curriculumid, COUNT(courseid) AS count
+                               FROM {$CURMAN->db->prefix_table(CURCRSTABLE)}
+                           GROUP BY curriculumid) curcrscnt ON cur.id = curcrscnt.curriculumid
                  WHERE curass.userid = {$id}
               ORDER BY {$sortclause}";
         $where = "id IN (SELECT curriculumid FROM {$CFG->prefix}".CURASSTABLE." WHERE userid={$id})";
@@ -306,6 +306,15 @@ class user_curriculum_selection_table extends selection_table {
 
     function get_item_display_timecompleted($column, $item) {
         return $this->get_date_item_display($column, $item);
+    }
+
+    function get_item_display_numcourses($column, $item) {
+        if (empty($item->$column)) {
+            //this handles a NULL count coming from the DB
+            return '0';
+        }
+
+        return $item->$column;
     }
 
     function is_sortable_timecompleted() {
@@ -541,6 +550,10 @@ class curriculumstudentpage extends associationpage2 {
         if ($extrasql) {
             $where .= " AND $extrasql";
             $sql .= " AND $extrasql";
+        }
+        if (empty($CURMAN->config->legacy_show_inactive_users)) {
+            $where .= ' AND usr.inactive = 0';
+            $sql .= ' AND usr.inactive = 0';
         }
 
         $sql .= " ORDER BY {$sortclause}";

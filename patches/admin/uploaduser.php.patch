@@ -1,5 +1,5 @@
 diff --git a/admin/uploaduser.php b/admin/uploaduser.php
-index 52834a5..fca0843 100755
+index f917566..52b3ae5 100755
 --- a/admin/uploaduser.php
 +++ b/admin/uploaduser.php
 @@ -494,6 +494,9 @@ if ($formdata = $mform->is_cancelled()) {
@@ -14,7 +14,7 @@ index 52834a5..fca0843 100755
              if ($bulk == 2 or $bulk == 3) {
 @@ -560,6 +563,10 @@ if ($formdata = $mform->is_cancelled()) {
              // save custom profile fields data
-             profile_save_data($user);
+             profile_save_data(addslashes_recursive($user));
  
 +			//EDIT2 remote-learner Can. edit
 +            events_trigger('user_created', $user);

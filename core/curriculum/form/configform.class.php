@@ -182,6 +182,12 @@ require_once(CURMAN_DIRLOCATION . '/lib/certificate.php');
             $mform->addElement('advcheckbox', 'autocreated_unknown_is_yes', get_string('autocreated_unknown_is_yes', 'block_curr_admin'), null, null, array(0, 1));
             $mform->setHelpButton('autocreated_unknown_is_yes', array('config/autocreated_unknown_is_yes', get_string('autocreated_unknown_is_yes', 'block_curr_admin'), 'block_curr_admin'));
 
+            // legacy settings
+            $mform->addElement('header', 'legacy', get_string('legacy_settings', 'block_curr_admin'));
+
+            $mform->addElement('advcheckbox', 'legacy_show_inactive_users', get_string('legacy_show_inactive_users', 'block_curr_admin'), null, null, array(0, 1));
+            $mform->setHelpButton('legacy_show_inactive_users', array('config/legacy_show_inactive_users', get_string('legacy_show_inactive_users', 'block_curr_admin'), 'block_curr_admin'));
+
             $this->add_action_buttons();
         }
 

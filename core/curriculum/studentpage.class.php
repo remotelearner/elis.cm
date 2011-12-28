@@ -552,18 +552,18 @@ class studentpage extends associationpage {
      * @param int $numitems max number of students
      */
     function print_num_items($classid, $max) {
-        $students = cmclass::count_students_by_section($classid);
+        $students = cmclass::get_completion_counts($classid);
 
         if(!empty($students[STUSTATUS_FAILED])) {
-            echo '<div style="float:right;">' . get_string('num_students_failed', 'block_curr_admin') . ': ' . $students[STUSTATUS_FAILED]->c . '</div><br />';
+            echo '<div style="float:right;">' . get_string('num_students_failed', 'block_curr_admin') . ': ' . $students[STUSTATUS_FAILED] . '</div><br />';
         }
 
         if(!empty($students[STUSTATUS_PASSED])) {
-            echo '<div style="float:right;">' . get_string('num_students_passed', 'block_curr_admin') . ': ' . $students[STUSTATUS_PASSED]->c . '</div><br />';
+            echo '<div style="float:right;">' . get_string('num_students_passed', 'block_curr_admin') . ': ' . $students[STUSTATUS_PASSED] . '</div><br />';
         }
 
         if(!empty($students[STUSTATUS_NOTCOMPLETE])) {
-            echo '<div style="float:right;">' . get_string('num_students_not_complete', 'block_curr_admin') . ': ' . $students[STUSTATUS_NOTCOMPLETE]->c . '</div><br />';
+            echo '<div style="float:right;">' . get_string('num_students_not_complete', 'block_curr_admin') . ': ' . $students[STUSTATUS_NOTCOMPLETE] . '</div><br />';
         }
 
         if(!empty($max)) {

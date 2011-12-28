@@ -188,7 +188,8 @@ $core_health_checks = array(
     'health_user_sync',
     'cluster_orphans_check',
     'track_classes_check',
-    'completion_export_check'
+    'completion_export_check',
+    'duplicate_moodle_profile',
     );
 
 /**
@@ -214,14 +215,14 @@ class health_duplicate_enrolments extends crlm_health_check_base {
         return healthpage::SEVERITY_CRITICAL;
     }
     function title() {
-        return 'Duplicate enrolment records';
+        return 'Duplicate class enrolment records';
     }
     function description() {
-        return "There were {$this->count} duplicate enrolments records in the ELIS enrolments table.";
+        return "There were {$this->count} duplicate class enrolment records in the ELIS enrolments table.";
     }
     function solution() {
-        $msg = 'The duplicate enrolments need to be removed directly from the database.  <b>DO NOT</b> try to remove them via the UI.<br/><br/>'
-             . 'Recommended to escalate to development for solution.';
+        $msg = 'The duplicate class enrolments need to be removed directly from the database.  <b>DO NOT</b> try to remove them via the UI.<br/><br/>'
+             . 'Run the script fix_duplicate_enrolments.php to remove all duplicate class enrolments.';
         return $msg;
     }
 }
@@ -470,6 +471,39 @@ class completion_export_check extends crlm_health_check_base {
     function solution() {
         global $CFG;
         return "The completion export block should be automatically removed when the site is properly upgraded via CVS or git.  If it is still present, go to the <a href=\"{$CFG->wwwroot}/admin/blocks.php\">Manage blocks</a> page and delete the completion export block, and then remove the <tt>{$CFG->dirroot}/blocks/completion_export</tt> directory.";
+    }
+}
+
+/**
+ * Checks for duplicate CM enrolment records.
+ */
+class duplicate_moodle_profile extends crlm_health_check_base {
+    function __construct() {
+        require_once CURMAN_DIRLOCATION . '/lib/student.class.php';
+        global $CURMAN;
+        $concat = sql_concat('fieldid', "'/'", 'userid');
+        $sql = "SELECT $concat, COUNT(*)-1 AS dup
+                  FROM {$CURMAN->db->prefix_table('user_info_data')} dat
+              GROUP BY fieldid, userid
+                HAVING COUNT(*) > 1";
+        $this->counts = $CURMAN->db->get_records_sql($sql);
+    }
+    function exists() {
+        return !empty($this->counts);
+    }
+    function severity() {
+        return healthpage::SEVERITY_ANNOYANCE;
+    }
+    function title() {
+        return 'Duplicate Moodle profile field records';
+    }
+    function description() {
+        $count = array_reduce($this->counts, create_function('$a,$b', 'return $a + $b->dup;'), 0);
+        return "There were {$count} duplicate Moodle profile field records.";
+    }
+    function solution() {
+        $msg = 'Run the script fix_duplicate_moodle_profile.php to remove all duplicate profile field records.';
+        return $msg;
     }
 }
 ?>

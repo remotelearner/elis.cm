@@ -170,6 +170,9 @@ class configpage extends newpage {
             // autocreate settings
             self::config_set_value($configdata, 'autocreated_unknown_is_yes', 0);
 
+            // legacy settings
+            self::config_set_value($configdata, 'legacy_show_inactive_users', 0);
+
             //trigger events
             if(!empty($configdata->cluster_groups) && empty($old_cluster_groups)) {
                 events_trigger('crlm_cluster_groups_enabled', 0);

@@ -81,7 +81,7 @@ class datarecord {
                     break;
 
                 case 'float':
-                    $this->prop = 0.0;
+                    $this->$prop = 0.0;
                     break;
 
                 default:

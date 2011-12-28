@@ -226,7 +226,7 @@ class userform extends cmform {
     }
 
     function validation($data, $files) {
-        global $CFG;
+        global $CFG, $CURMAN;
         $errors = parent::validation($data, $files);
 
         // Use a default for 'id' if we're doing an add
@@ -278,10 +278,12 @@ class userform extends cmform {
         }
 
         foreach ($fields as $field) {
+            $field = new field($field);
             if ($field->forceunique) {
-                $fielddata = $CURMAN->db->get_record(FIELDDATATABLE, 'fieldid', $field->id, 'data', $data["field_{$field->shortname}"]);
+                $fielddata = $CURMAN->db->get_record($field->data_table(), 'fieldid', $field->id, 'data', $data["field_{$field->shortname}"]);
+                print_object($fielddata);
                 if ($fielddata && $fielddata->contextid != $contextid) {
-                    $err["field_{$field->shortname}"] = get_string('valuealreadyused');
+                    $errors["field_{$field->shortname}"] = get_string('valuealreadyused');
                 }
             }
         }

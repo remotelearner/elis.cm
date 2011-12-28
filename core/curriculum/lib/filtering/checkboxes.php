@@ -142,7 +142,8 @@ class generalized_filter_checkboxes extends generalized_filter_type {
                 if ($retval !== '') {
                     $retval .= ',';
                 }
-                $retval .= $key;
+                $retval .= empty($this->_options['numeric'])
+                           ? "'". $key ."'" : $key;
                 //error_log("checkboxes.php::check_data(): formdata->{$formfield} ($value) is CHECKED");
             }
         }
@@ -153,7 +154,8 @@ class generalized_filter_checkboxes extends generalized_filter_type {
                 if ($retval !== '') {
                     $retval .= ', ';
                 }
-                $retval .= $key;
+                $retval .= empty($this->_options['numeric'])
+                           ? "'". $default ."'" : $default;
             }
         }
 

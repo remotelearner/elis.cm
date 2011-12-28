@@ -833,7 +833,7 @@ class user extends datarecord {
     static function get_current_classes_in_curriculum($userid, $curid) {
         global $CURMAN;
 
-        $select = 'SELECT curcrs.*, crs.name AS coursename ';
+        $select = 'SELECT curcrs.*, crs.name AS coursename, cls.id AS classid ';
         $tables = 'FROM ' . $CURMAN->db->prefix_table(CURCRSTABLE) . ' curcrs ';
         $join   = 'INNER JOIN ' . $CURMAN->db->prefix_table(CRSTABLE) . ' crs ON curcrs.courseid = crs.id ';
         // Next two are to limit to currently enrolled courses
@@ -859,7 +859,7 @@ class user extends datarecord {
     static function get_non_curriculum_classes($userid) {
         global $CURMAN;
 
-        $select = 'SELECT curcrs.*, crs.name AS coursename, crs.id AS courseid ';
+        $select = 'SELECT curcrs.*, crs.name AS coursename, crs.id AS courseid, cls.id AS classid ';
         $tables = 'FROM ' . $CURMAN->db->prefix_table(CLSENROLTABLE) . ' clsenrol ';
         $join   = 'INNER JOIN ' . $CURMAN->db->prefix_table('crlm_class') . ' cls ON cls.id = clsenrol.classid ';
         $join  .= 'INNER JOIN ' . $CURMAN->db->prefix_table('crlm_course') . ' crs ON crs.id = cls.courseid ';
@@ -1027,30 +1027,32 @@ class user extends datarecord {
                             $course_obj = new course($course->courseid);
                             $coursedesc = $course_obj->syllabus;
 
-                            if ($classdata = student_get_class_from_course($course->courseid, $this->id)) {
-                                if (!in_array($classdata->id, $classids)) {
-                                    $classids[] = $classdata->id;
-                                }
+                            if ($cdata = student_get_class_from_course($course->courseid, $this->id)) {
+                                foreach ($cdata as $classdata) {
+                                    if (!in_array($classdata->id, $classids)) {
+                                        $classids[] = $classdata->id;
+                                    }
 
-                                if ($classdata->completestatusid == STUSTATUS_PASSED) {
-                                    $completecourses++;
-                                }
+                                    if ($classdata->completestatusid == STUSTATUS_PASSED) {
+                                        $completecourses++;
+                                    }
 
-                                if ($mdlcrs = moodle_get_course($classdata->id)) {
-                                    $coursename = '<a href="' . $CFG->wwwroot . '/course/view.php?id=' .
-                                                  $mdlcrs . '">' . $course->coursename . '</a>';
-                                } else {
-                                    $coursename = $course->coursename;
-                                }
+                                    if ($mdlcrs = moodle_get_course($classdata->id)) {
+                                        $coursename = '<a href="' . $CFG->wwwroot . '/course/view.php?id=' .
+                                            $mdlcrs . '">' . $course->coursename . '</a>';
+                                    } else {
+                                        $coursename = $course->coursename;
+                                    }
 
-                                $data[] = array(
-                                    $coursename,
-                                    $coursedesc,
-                                    $classdata->grade,
-                                    $classdata->completestatusid == STUSTATUS_PASSED ? get_string('yes') : get_string('no'),
-                                    $classdata->completestatusid == STUSTATUS_PASSED && !empty($classdata->completetime) ?
+                                    $data[] = array(
+                                        $coursename,
+                                        $coursedesc,
+                                        $classdata->grade,
+                                        $classdata->completestatusid == STUSTATUS_PASSED ? get_string('yes') : get_string('no'),
+                                        $classdata->completestatusid == STUSTATUS_PASSED && !empty($classdata->completetime) ?
                                         date('M j, Y', $classdata->completetime) : get_string('na','block_curr_admin')
-                                );
+                                    );
+                                }
                             } else {
                                 $data[] = array(
                                     $course->coursename,
@@ -1070,9 +1072,11 @@ class user extends datarecord {
                     // Keep note of the classid's regardless if set archived or not for later use in determining non-curricula courses
                     if ($courses = curriculumcourse_get_listing($usercur->curid, 'curcrs.position, crs.name', 'ASC')) {
                         foreach ($courses as $course) {
-                            if ($classdata = student_get_class_from_course($course->courseid, $this->id)) {
-                                if (!in_array($classdata->id, $classids)) {
-                                    $classids[] = $classdata->id;
+                            if ($cdata = student_get_class_from_course($course->courseid, $this->id)) {
+                                foreach ($cdata as $classdata) {
+                                    if (!in_array($classdata->id, $classids)) {
+                                        $classids[] = $classdata->id;
+                                    }
                                 }
                             }
                         }
@@ -1165,7 +1169,7 @@ class user extends datarecord {
         /// Completed non-curricula course data
         if ($tab != 'archivedlp') {
             if (!empty($classids)) {
-                $sql = "SELECT stu.id, crs.name as coursename, stu.completetime, stu.grade, stu.completestatusid
+                $sql = "SELECT stu.id, stu.classid, crs.name as coursename, stu.completetime, stu.grade, stu.completestatusid
                         FROM " . $CURMAN->db->prefix_table(STUTABLE) . " stu
                         INNER JOIN " . $CURMAN->db->prefix_table(CLSTABLE) . " cls ON cls.id = stu.classid
                         INNER JOIN " . $CURMAN->db->prefix_table(CRSTABLE) . " crs ON crs.id = cls.courseid
@@ -1174,7 +1178,7 @@ class user extends datarecord {
                         "NOT IN (" . implode(", ", $classids) . ")") . "
                         ORDER BY crs.name ASC, stu.completetime ASC";
             } else {
-                $sql = "SELECT stu.id, crs.name as coursename, stu.completetime, stu.grade, stu.completestatusid
+                $sql = "SELECT stu.id, stu.classid, crs.name as coursename, stu.completetime, stu.grade, stu.completestatusid
                         FROM " . $CURMAN->db->prefix_table(STUTABLE) . " stu
                         INNER JOIN " . $CURMAN->db->prefix_table(CLSTABLE) . " cls ON cls.id = stu.classid
                         INNER JOIN " . $CURMAN->db->prefix_table(CRSTABLE) . " crs ON crs.id = cls.courseid
@@ -1194,7 +1198,7 @@ class user extends datarecord {
                 $table->data = array();
 
                 foreach ($classes as $class) {
-                    if ($mdlcrs = moodle_get_course($class->id)) {
+                    if ($mdlcrs = moodle_get_course($class->classid)) {
                         $coursename = '<a href="' . $CFG->wwwroot . '/course/view.php?id=' .
                                       $mdlcrs . '">' . $class->coursename . '</a>';
                     } else {

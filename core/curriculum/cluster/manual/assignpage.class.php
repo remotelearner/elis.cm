@@ -276,13 +276,20 @@ class clusteruserpage extends userclusterbasepage {
         $sql = "SELECT DISTINCT ca.userid, usr.idnumber, $FULLNAME AS name, usr.email, ca.autoenrol, ca.leader
                   FROM {$CURMAN->db->prefix_table(CLSTASSTABLE)} ca
             INNER JOIN {$CURMAN->db->prefix_table(USRTABLE)} usr ON usr.id = ca.userid
-                 WHERE ca.clusterid = $id AND plugin <> 'manual'
-                 ORDER BY $sort $dir";
+                 WHERE ca.clusterid = $id AND plugin <> 'manual'";
+        if (empty($CURMAN->config->legacy_show_inactive_users)) {
+            $sql .= ' AND usr.inactive = 0';
+        }
+        $sql .= " ORDER BY $sort $dir";
         $items = new recordset_iterator(get_recordset_sql($sql));
 
         $sql = "SELECT COUNT(DISTINCT ca.userid)
                   FROM {$CURMAN->db->prefix_table(CLSTASSTABLE)} ca
+            INNER JOIN {$CURMAN->db->prefix_table(USRTABLE)} usr ON usr.id = ca.userid
                  WHERE ca.clusterid = $id AND plugin <> 'manual'";
+        if (empty($CURMAN->config->legacy_show_inactive_users)) {
+            $sql .= ' AND usr.inactive = 0';
+        }
         $count = count_records_sql($sql);
 
         echo '<h2>' . get_string('autoassign_user_header', 'block_curr_admin') . "</h2>\n" ;
@@ -313,7 +320,11 @@ class clusteruserpage extends userclusterbasepage {
 
         $sql = "SELECT COUNT(DISTINCT ca.userid)
                   FROM {$CURMAN->db->prefix_table(CLSTASSTABLE)} ca
+            INNER JOIN {$CURMAN->db->prefix_table(USRTABLE)} usr ON usr.id = ca.userid
                  WHERE ca.clusterid = $id AND plugin = 'manual'";
+        if (empty($CURMAN->config->legacy_show_inactive_users)) {
+            $sql .= ' AND usr.inactive = 0';
+        }
         $count = count_records_sql($sql);
 
         echo '<div style="float:right;">' . get_string('items_found', 'block_curr_admin', $count) . '</div>';
@@ -335,8 +346,11 @@ class clusteruserpage extends userclusterbasepage {
         $sql = "SELECT ca.id, ca.userid, usr.idnumber, $FULLNAME AS name, usr.email, ca.autoenrol, ca.leader
                   FROM {$CURMAN->db->prefix_table(CLSTASSTABLE)} ca
             INNER JOIN {$CURMAN->db->prefix_table(USRTABLE)} usr ON usr.id = ca.userid
-                 WHERE ca.clusterid = $id AND plugin = 'manual'
-             ORDER BY $sort $dir";
+                 WHERE ca.clusterid = $id AND plugin = 'manual'";
+        if (empty($CURMAN->config->legacy_show_inactive_users)) {
+            $sql .= ' AND usr.inactive = 0';
+        }
+        $sql .= " ORDER BY $sort $dir";
         return get_recordset_sql($sql);
     }
 

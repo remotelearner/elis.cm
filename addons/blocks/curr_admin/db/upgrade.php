@@ -1495,14 +1495,86 @@ function xmldb_block_curr_admin_upgrade($oldversion = 0) {
     }
 
     if ($result && $oldversion < 2011011802) {
-        // delete duplicate records
-        $sql = "DELETE FROM g
-                 USING mdl_crlm_class_graded g, mdl_crlm_class_graded g2
-                 WHERE g.userid = g2.userid
-                       AND g.classid = g2.classid
-                       AND g.completionid = g2.completionid
-                       AND g.id < g2.id";
-        execute_sql($sql);
+        // Delete duplicate class completion element grades
+        $xmldbtable = new XMLDBTable('crlm_class_graded_temp');
+
+        if (table_exists($xmldbtable)) {
+            drop_table($xmldbtable);
+        }
+
+        // Create a temporary table
+        $result = $result && execute_sql("CREATE TABLE {$CFG->prefix}crlm_class_graded_temp LIKE {$CFG->prefix}crlm_class_graded");
+
+        // Store the unique values in the temporary table
+        $sql = "INSERT INTO {$CFG->prefix}crlm_class_graded_temp
+                SELECT MAX(id) AS id, classid, userid, completionid, grade, locked, timegraded, timemodified
+                FROM {$CFG->prefix}crlm_class_graded
+                GROUP BY classid, userid, completionid, locked";
+
+        // Detect if there are still duplicates in the temporary table
+        $sql = "SELECT COUNT(*) AS count, classid, userid, completionid, grade, locked, timegraded, timemodified
+                FROM {$CFG->prefix}crlm_class_graded_temp
+                GROUP BY classid, userid, completionid
+                ORDER BY count DESC, classid ASC, userid ASC, completionid ASC";
+
+        if ($dupcount = get_record_sql($sql, true)) {
+            if ($dupcount->count > 1) {
+                        if ($rs = get_recordset_sql($sql)) {
+                    while ($dupe = rs_fetch_next_record($rs)) {
+                        if ($dupe->count <= 1) {
+                            continue;
+                        }
+
+                        $classid = $dupe->classid;
+                        $userid  = $dupe->userid;
+                        $goodid  = 0; // The ID of the record we will keep
+
+                        // Look for the earliest locked grade record for this user and keep that (if any are locked)
+                        $sql2 = "SELECT id, grade, locked, timegraded
+                                 FROM mdl_crlm_class_graded
+                                 WHERE classid = $classid
+                                 AND userid = $userid
+                                 ORDER BY timegraded ASC";
+
+                        if ($rs2 = get_recordset_sql($sql2)) {
+                            while ($rec = rs_fetch_next_record($rs2)) {
+                                // Store the last record ID just in case we need it for cleanup
+                                $lastid = $rec->id;
+
+                                // Don't bother looking at remaining records if we have found a record to keep
+                                if (!empty($goodid)) {
+                                    continue;
+                                }
+
+                                if ($rec->locked = 1) {
+                                    $goodid = $rec->id;
+                                }
+                            }
+
+                            rs_close($rs2);
+
+                            // We need to make sure we have a record ID to keep, if we found no "complete" and locked
+                            // records, let's just keep the last record we saw
+                            if (empty($goodid)) {
+                                $goodid = $lastid;
+                            }
+
+                            $select = 'classid = '.$classid.' AND userid = '.$userid.' AND id != '.$goodid;
+                        }
+
+                        if (!empty($select)) {
+                            $result = $result && delete_records_select('crlm_class_graded_temp', $select);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Drop the real table
+        $result = $result && execute_sql("DROP TABLE {$CFG->prefix}crlm_class_graded");
+
+        // Replace the real table with the temporary table that now only contains unique values.
+        $result = $result && execute_sql("ALTER TABLE {$CFG->prefix}crlm_class_graded_temp RENAME TO {$CFG->prefix}crlm_class_graded");
     }
 
     if ($result && $oldversion < 2011050200) {
@@ -1639,11 +1711,21 @@ function xmldb_block_curr_admin_upgrade($oldversion = 0) {
         $result = $result && change_field_type($table, $field);
 
         // update student class credits with decimal credits
-        $sql = "UPDATE mdl_crlm_class_enrolment e, mdl_crlm_class cls, mdl_crlm_course c
-                   SET e.credits = c.credits
-                 WHERE e.classid = cls.id
-                   AND cls.courseid = c.id
-                   AND e.credits = cast(c.credits as unsigned)";
+        if ($CFG->dbfamily == 'postgres') {
+            $sql = "UPDATE {$CFG->prefix}crlm_class_enrolment
+                       SET credits = CAST(c.credits AS numeric)
+                      FROM {$CFG->prefix}crlm_class_enrolment e, {$CFG->prefix}crlm_class cls, {$CFG->prefix}crlm_course c
+                     WHERE e.classid = cls.id
+                       AND cls.courseid = c.id
+                       AND e.credits = CAST(c.credits AS integer)";
+        } else {
+            $sql = "UPDATE {$CFG->prefix}crlm_class_enrolment e, {$CFG->prefix}crlm_class cls, {$CFG->prefix}crlm_course c
+                       SET e.credits = c.credits
+                     WHERE e.classid = cls.id
+                       AND cls.courseid = c.id
+                       AND e.credits = CAST(c.credits AS unsigned)";
+        }
+
         $result = $result && execute_sql($sql);
     }
 

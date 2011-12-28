@@ -25,6 +25,7 @@
  */
 
 require_once('../../config.php');
+require_once($CFG->dirroot.'/curriculum/config.php');
 require_once($CFG->dirroot . '/blocks/curr_admin/lib.php');
 require_once($CFG->dirroot . '/curriculum/lib/cluster.class.php');
 require_once($CFG->dirroot . '/curriculum/lib/menuitem.class.php');

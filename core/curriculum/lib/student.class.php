@@ -1526,6 +1526,10 @@ class student extends datarecord {
         $on      = 'ON stu.userid = usr.id ';
         $where   = 'stu.classid = \'' . $classid . '\'';
 
+        if (empty($CURMAN->config->legacy_show_inactive_users)) {
+            $where .= ' AND usr.inactive = 0';
+        }
+
         if (!empty($namesearch)) {
             $namesearch = trim($namesearch);
             $where .= (!empty($where) ? ' AND ' : '') . "(($FULLNAME $LIKE '%$namesearch%') OR " .
@@ -1586,9 +1590,13 @@ class student extends datarecord {
 
         $select  = 'SELECT COUNT(stu.id) ';
         $tables  = 'FROM ' . $CURMAN->db->prefix_table(STUTABLE) . ' stu ';
-        $join    = 'LEFT JOIN ' . $CURMAN->db->prefix_table(USRTABLE) . ' usr ';
+        $join    = 'JOIN ' . $CURMAN->db->prefix_table(USRTABLE) . ' usr ';
         $on      = 'ON stu.userid = usr.id ';
         $where   = 'stu.completestatusid = ' . STUSTATUS_NOTCOMPLETE . ' AND stu.classid = \'' . $classid . '\'';
+
+        if (empty($CURMAN->config->legacy_show_inactive_users)) {
+            $where .= ' AND usr.inactive = 0';
+        }
 
         if (!empty($namesearch)) {
             $namesearch = trim($namesearch);
@@ -1629,21 +1637,26 @@ class student extends datarecord {
 
         $select  = 'SELECT COUNT(stu.id) ';
         $tables  = 'FROM ' . $CURMAN->db->prefix_table(STUTABLE) . ' stu ';
-        $join    = 'LEFT JOIN ' . $CURMAN->db->prefix_table(USRTABLE) . ' usr ';
+        $join    = 'JOIN ' . $CURMAN->db->prefix_table(USRTABLE) . ' usr ';
         $on      = 'ON stu.userid = usr.id ';
-        $where   = 'stu.classid = \'' . $classid . '\'';
+        $where   = array('stu.classid = \'' . $classid . '\'');
 
         if (!empty($namesearch)) {
             $namesearch = trim($namesearch);
-            $where .= (!empty($where) ? ' AND ' : '') . "($FULLNAME $LIKE '%$namesearch%') ";
+            $where[] = "($FULLNAME $LIKE '%$namesearch%')";
         }
 
         if ($alpha) {
-            $where .= (!empty($where) ? ' AND ' : '') . "(usr.lastname $LIKE '$alpha%') ";
+            $where[] = "(usr.lastname $LIKE '$alpha%')";
+        }
+        if (empty($CURMAN->config->legacy_show_inactive_users)) {
+            $where[] = 'usr.inactive = 0';
         }
 
         if (!empty($where)) {
-            $where = 'WHERE '.$where.' ';
+            $where = 'WHERE ' . implode(' AND ', $where);
+        } else {
+            $where = '';
         }
 
         $sql = $select . $tables . $join . $on . $where;
@@ -2541,7 +2554,7 @@ function student_get_class_from_course($crsid, $userid) {
             WHERE stu.userid = $userid
             AND cls.courseid = $crsid";
 
-    return $CURMAN->db->get_record_sql($sql);
+    return $CURMAN->db->get_records_sql($sql);
 }
 
 ?>

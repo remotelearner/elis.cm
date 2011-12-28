@@ -25,6 +25,7 @@
  */
 
 require_once($CFG->dirroot.'/user/filters/lib.php');
+require_once($CFG->dirroot.'/curriculum/config.php');
 require_once(CURMAN_DIRLOCATION . '/lib/filtering/custom_field_multiselect.php');
 
 /**

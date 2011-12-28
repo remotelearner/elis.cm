@@ -144,6 +144,9 @@
             'default_track_role_id' => 0,
 
             'autocreated_unknown_is_yes' => 1,
+
+            //legacy settings
+            'legacy_show_inactive_users' => 0,
         );
 
         // include defaults from plugins
@@ -1396,7 +1399,7 @@
             require_once (CURMAN_DIRLOCATION . '/plugins/moodle_profile/custom_fields.php');
             foreach ($fields as $field) {
                 $field = new field($field);
-                if (isset($field->owner['moodle_profile']) && $field->owner['moodle_profile']->exclude == cm_moodle_profile::sync_from_moodle) {
+                if (isset($field->owners['moodle_profile']) && $field->owners['moodle_profile']->exclude == cm_moodle_profile::sync_from_moodle) {
                     $fieldname = "field_{$field->shortname}";
                     $cu->$fieldname = $mu->{"profile_field_{$field->shortname}"};
                 }

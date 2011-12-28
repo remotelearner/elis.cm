@@ -1,18 +1,32 @@
-<?php // $Id: fix_cluster_orphans.php,v 1.0 2010/12/01 10:30:23 mvidberg Exp $
-
+<?php
 /**
- * Fix ELIS sub-clusters that have had their parent clusters deleted by changing them to top-level clusters.
+ * ELIS(TM): Enterprise Learning Intelligence Suite
+ * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
- * @version   $Id: fix_cluster_orphans.php,v 1.0 2010/12/01 10:30:23 mvidberg Exp $
- * @package   codelibrary
- * @copyright 2010 Remote Learner - http://www.remote-learner.net/
- * @author    Marko Vidberg <marko.vidberg@remote-learner.net>
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package    elis
+ * @subpackage curriculummanagement
+ * @author     Remote-Learner.net Inc
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
+ * @copyright  (C) 2008-2011 Remote Learner.net Inc http://www.remote-learner.net
+ *
  */
 
     require_once '../config.php';
     require_once '../lib/cluster.class.php';
-    
+
     if (isset($_SERVER['REMOTE_ADDR'])) {
         die('no web access');
     }
@@ -22,9 +36,9 @@
     }
 
     mtrace("Begin cluster fixes...");
-    
+
     $clusters = cluster_get_listing('id', 'ASC', 0);
-    
+
     $clusters_fixed_cnt = 0;
     foreach ($clusters as $clusid => $clusdata) {
         if ($clusdata->parent > 0) {
@@ -32,12 +46,14 @@
             $parent_cnt = $CURMAN->db->count_records_select(CLSTTABLE, $select);
             if ($parent_cnt < 1) {
                 mtrace('Cluster ID:'.$clusid.' Name:'.$clusdata->name.' converted to top-level');
-                $clusdata->parent = 0;
-                $clusdata->depth = 1;
-                
+                $newclusdata = new stdClass;
+                $newclusdata->id = $clusdata->id;
+                $newclusdata->parent = 0;
+                $newclusdata->depth = 1;
+
                 // Update the records in crlm_cluster table
-                $result = update_record(CLSTTABLE, $clusdata);
-                
+                $result = update_record(CLSTTABLE, $newclusdata);
+
                 // Blank out the depth and path for associated records and child records in context table
                 $cluster_context_level = context_level_base::get_custom_context_level('cluster', 'block_curr_admin');
                 $cluster_context_instance = get_context_instance($cluster_context_level, $clusid);
@@ -47,7 +63,7 @@
                         WHERE id={$instance_id} OR path LIKE '%/{$instance_id}/%'";
                 $feedback = "";
                 execute_sql($sql, $feedback);
-                
+
                 $clusters_fixed_cnt++;
             }
         }
@@ -59,7 +75,7 @@
     } else {
         mtrace("No orphaned clusters found!");
     }
-    
+
     mtrace("Done.");
 
     exit;

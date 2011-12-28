@@ -156,13 +156,26 @@ class cmclass extends datarecord {
      *
      * @see course::get_completion_counts()
      */
-    public function get_completion_counts() {
+    public function get_completion_counts($clsid = null) {
         global $CURMAN;
+
+        if($clsid === null) {
+            if(empty($this->id)) {
+                return array();
+            }
+            $clsid = $this->id;
+        }
+
+        if (empty($CURMAN->config->legacy_show_inactive_users)) {
+            $inactive = 'AND usr.inactive = 0';
+        } else {
+            $inactive = '';
+        }
 
         $sql = "SELECT cce.completestatusid status, COUNT(cce.completestatusid) count
         FROM {$CURMAN->db->prefix_table(STUTABLE)} cce
-        INNER JOIN {$CURMAN->db->prefix_table(CLSTABLE)} cc ON cc.id = cce.classid
-        WHERE cc.id = {$this->id}
+        INNER JOIN {$CURMAN->db->prefix_table(USRTABLE)} usr ON cce.userid = usr.id
+        WHERE cce.classid = {$clsid} {$inactive}
         GROUP BY cce.completestatusid";
 
         $rows = $CURMAN->db->get_records_sql($sql);
@@ -174,10 +187,7 @@ class cmclass extends datarecord {
         }
 
         foreach($rows as $row) {
-            // We add the counts to the existing array, which should be as good as an assignment
-            // because we never have duplicate statuses.  Of course, stranger things have happened.
-
-            $ret[$row->status] += $row->count;
+            $ret[$row->status] = $row->count;
         }
 
         return $ret;
@@ -944,27 +954,6 @@ class cmclass extends datarecord {
         }
     }
 
-    public function count_students_by_section($clsid = 0){
-        global $CURMAN;
-
-        if(!$clsid) {
-            if(empty($this->id)) {
-                return array();
-            }
-
-            $clsid = $this->id;
-        }
-
-        $select     = 'SELECT stu.completestatusid, COUNT(stu.id) as c ';
-        $from       = 'FROM ' . $CURMAN->db->prefix_table(STUTABLE) . ' stu ';
-        $where      = 'WHERE stu.classid = ' . $clsid . ' ';
-        $groupby    = 'GROUP BY stu.completestatusid ';
-
-        $sql = $select . $from . $where . $groupby;
-
-        return $CURMAN->db->get_records_sql($sql);
-    }
-    
     /**
      * Returns an array of cluster ids that are associated to the supplied class through tracks and
      * the current user has access to enrol users into

@@ -58,7 +58,9 @@ class block_enrol_survey extends block_base {
             $this->content->text .= "<a href=$CFG->wwwroot/blocks/enrol_survey/edit_survey.php?id={$this->instance->id}>$editpage</a><br />";
         }
 
-        if(has_capability('block/enrol_survey:take', $context)) {
+        if(has_capability('block/enrol_survey:take', $context) &&
+           cm_get_crlmuserid($USER->id) !== false) {
+            // MUST have ELIS user record to take survey! see: survey.php
             if(!empty($this->config->force_user) && !is_survey_taken($USER->id, $this->instance->id)) {
                 redirect("$CFG->wwwroot/blocks/enrol_survey/survey.php?id={$this->instance->id}");
             }

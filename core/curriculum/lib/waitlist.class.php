@@ -97,6 +97,10 @@ class waitlist extends datarecord {
         $on      = 'ON watlst.userid = usr.id ';
         $where   = 'watlst.classid = ' . $clsid . ' ';
 
+        if (empty($CURMAN->config->legacy_show_inactive_users)) {
+            $where .= ' AND usr.inactive = 0';
+        }
+
         if (!empty($namesearch)) {
             $namesearch = trim($namesearch);
             $where     .= (!empty($where) ? ' AND ' : '') . "($FULLNAME $LIKE '%$namesearch%') ";
@@ -175,6 +179,10 @@ class waitlist extends datarecord {
         $where = 'watlist.classid = \'' . $clsid . '\'';
 
         $FULLNAME = sql_concat('usr.firstname', "' '", 'usr.lastname');
+
+        if (empty($CURMAN->config->legacy_show_inactive_users)) {
+            $where .= ' AND usr.inactive = 0';
+        }
 
         if (!empty($namesearch)) {
             $namesearch = trim($namesearch);

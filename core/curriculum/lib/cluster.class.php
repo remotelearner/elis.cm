@@ -187,15 +187,17 @@ class cluster extends datarecord {
                 $select = "id='{$cluster_data->parent}'";
                 $parent_cnt = $CURMAN->db->count_records_select(CLSTTABLE, $select);
 
+                $newclusterdata = new stdClass;
+                $newclusterdata->id = $promote_id;
                 if ($parent_cnt < 1) {
                 /// Parent not found so this cluster will be top-level
-                    $cluster_data->parent = 0;
-                    $cluster_data->depth = 1;
+                    $newclusterdata->parent = 0;
+                    $newclusterdata->depth = 1;
                 } else {
                 /// A child cluster found so lets lower the depth
-                    $cluster_data->depth = $lower_depth;
+                    $newclusterdata->depth = $lower_depth;
                 }
-                $result = update_record(CLSTTABLE, $cluster_data);
+                $result = update_record(CLSTTABLE, $newclusterdata);
 
                 $cluster_context_level = context_level_base::get_custom_context_level('cluster', 'block_curr_admin');
                 $sql = "UPDATE {$CFG->prefix}context

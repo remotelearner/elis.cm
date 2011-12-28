@@ -203,12 +203,12 @@ function user_activity_task_process(&$state) {
     $starttime = $state['starttime'];
 
     // find the record ID corresponding to our start time
-    $startrec = get_field_select('log', 'MAX(id)', "time <= {$starttime}");
+    $startrec = get_field_select('log', 'MIN(id)', "time >= {$starttime}");
     $startrec = empty($startrec) ? 0 : $startrec;
 
     // find the last record that's close to our chunk size, without
     // splitting a second between runs
-    $endtime = get_field_select('log', 'MAX(time)', 'id <= '.($startrec + USERACT_RECORD_CHUNK));
+    $endtime = get_field_select('log', 'MIN(time)', 'id >= '.($startrec + USERACT_RECORD_CHUNK));
     if (!$endtime) {
         $endtime = time();
     }
@@ -343,7 +343,11 @@ function user_activity_task_process(&$state) {
     $state['starttime'] = $endtime;
 
     $endrec = get_field_select('log', 'MAX(id)', "time < {$endtime}");
-    $totalrec = get_field_select('log', 'MAX(id)', 'TRUE');
+    // possibly skip the last time when calculating the total number of
+    // records, since we are purposely skipping anything less than $endtime
+    $lasttime = get_field_select('log', 'MAX(time)', 'TRUE');
+    $totalrec = get_field_select('log', 'MAX(id)', "time < {$lasttime}");
+    $totalrec = max($totalrec, $endrec);
     return array($endrec ? $endrec - $state['startrec'] : 0, $totalrec ? $totalrec - $state['startrec'] : 0);
 }
 
