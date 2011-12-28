@@ -1,0 +1,2 @@
+id,auth,confirmed,policyagreed,mnethostid,username,password,idnumber,firstname,lastname,email,phone1,phone2,city,country,lang
+100,manual,1,1,1,__phpunit_test1__,12345678,__idnumber__phpunit_test1__,User,Test1,test1@phpunit.example.com,123-4567,,Somewhere,CA,EN

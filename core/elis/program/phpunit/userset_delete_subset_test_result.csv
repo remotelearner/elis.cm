@@ -1,0 +1,3 @@
+name,display,parent,depth,id,field__elis_userset_classification,field__elis_userset_themepriority,field__elis_userset_theme,field_userset_group,field_userset_groupings,field__elis_userset_display_priority
+Parent set 1,Some parent user set,0,1,1,regular,0,,0,0,0
+Sub set 2,Some other sub set,1,2,3,,,,,,

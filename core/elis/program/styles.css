@@ -1,0 +1,89 @@
+/* Health Centre */
+div#healthnoproblemsfound {
+    width: 60%;
+    margin: auto;
+    padding: 1em;
+    border: 1px black solid;
+    -moz-border-radius: 6px;
+}
+dl.healthissues {
+    width: 60%;
+    margin: auto;
+}
+dl.critical dt, dl.critical dd {
+    background-color: #a71501;
+}
+dl.significant dt, dl.significant dd {
+    background-color: #d36707;
+}
+dl.annoyance dt, dl.annoyance dd {
+    background-color: #dba707;
+}
+dl.notice dt, dl.notice dd {
+    background-color: #e5db36;
+}
+dt.solution, dd.solution, div#healthnoproblemsfound {
+    background-color: #5BB83E !important;
+}
+dl.healthissues dt, dl.healthissues dd {
+    margin: 0px;
+    padding: 1em;
+    border: 1px black solid;
+}
+dl.healthissues dt {
+    font-weight: bold;
+    border-bottom: none;
+    padding-bottom: 0.5em;
+}
+dl.healthissues dd {
+    border-top: none;
+    padding-top: 0.5em;
+    margin-bottom: 10px;
+}
+dl.healthissues dd form {
+    margin-top: 0.5em;
+    text-align: right;
+}
+form#healthformreturn {
+    text-align: center;
+    margin: 2em;
+}
+dd.solution p {
+    padding: 0px;
+    margin: 1em 0px;
+}
+dd.solution li {
+    margin-top: 1em;
+}
+
+.dashboard_curricula_block {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 10px 20px 10px 20px;
+    border: 1px black solid;
+}
+
+/* Clustertree nested fieldset */
+.mform .nested {
+    width: 95%;
+    margin-left: 2.5%;
+}
+
+/* ELIS-3725: IE7 unchecked clustertree turns green on reload */
+/* Note: left off '.ie' because all browsers showed some green artifacts */
+.curr_manageclusters,
+span.curr_cluster_instance,
+td.ygtvcell,
+td.ygtvtp,
+td.ygtvcontent {
+    background-color: white; /* TBD */
+}
+
+/* Make sure assigned / unassigned tabs are flush with the left of the page in IE7 */
+.elis_page .tabrow1 {
+    left: 0px;
+}
+/* Hide weird horizontal bar in IE7 */
+.elis_page .tabtree .tabrow1 LI.here .empty {
+    display: none;
+}
