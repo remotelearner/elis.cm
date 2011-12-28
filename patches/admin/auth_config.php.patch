@@ -1,5 +1,5 @@
 diff --git a/admin/auth_config.php b/admin/auth_config.php
-index 1e300bf..4203db4 100644
+index 0281b12..4203db4 100644
 --- a/admin/auth_config.php
 +++ b/admin/auth_config.php
 @@ -51,6 +51,9 @@ if ($frm = data_submitted() and confirm_sesskey()) {
@@ -12,7 +12,37 @@ index 1e300bf..4203db4 100644
  //$user_fields = array("firstname", "lastname", "email", "phone1", "phone2", "institution", "department", "address", "city", "country", "description", "idnumber", "lang");
  
  /// Get the auth title (from core or own auth lang files)
-@@ -100,7 +103,8 @@ print_simple_box_start('center', '80%', '', 5, 'informationbox');
+@@ -70,11 +73,38 @@ echo "<input type=\"hidden\" name=\"auth\" value=\"".$auth."\" />\n";
+ // auth plugin description
+ print_simple_box_start('center', '80%');
+ print_heading($authtitle);
++
++// ELIS release version
++if (!property_exists($authplugin, 'release')) {
++    // check for version.php file in auth directory
++    $versionfile = "{$CFG->dirroot}/auth/{$auth}/version.php";
++    if (file_exists($versionfile)) {
++        if (is_readable($versionfile)) {
++            $module = new stdClass;
++            $plugin = new stdClass;
++            include($versionfile);
++            if (property_exists($module, 'release')) {
++                $authplugin->release = $module->release;
++            } else if (property_exists($plugin, 'release')) {
++                $authplugin->release = $plugin->release;
++            }
++        } else {
++            error_log("admin/auth_config.php: version file '$versionfile' not readable!");
++        }
++    }
++}
++if (property_exists($authplugin, 'release')) {
++    echo '<center><div class="settingsform elisrelease"><p>';
++    echo get_string('elis_release', 'block_elis_info').$authplugin->release;
++    echo '</p></div></center>';
++}
++
+ print_simple_box_start('center', '80%', '', 5, 'informationbox');
  echo $authdescription;
  print_simple_box_end();
  echo "<hr />\n";
@@ -22,7 +52,7 @@ index 1e300bf..4203db4 100644
  print_simple_box_end();
  echo '<p style="text-align: center"><input type="submit" value="' . get_string("savechanges") . "\" /></p>\n";
  echo "</div>\n";
-@@ -115,7 +119,8 @@ exit;
+@@ -89,7 +119,8 @@ exit;
  // but some may want a custom one if they are offering
  // other options
  // Note: lockconfig_ fields have special handling.
@@ -32,7 +62,7 @@ index 1e300bf..4203db4 100644
  
      echo '<tr><td colspan="3">';
      if ($retrieveopts) {
-@@ -202,6 +207,65 @@ function print_auth_lock_options ($auth, $user_fields, $helptext, $retrieveopts,
+@@ -176,6 +207,65 @@ function print_auth_lock_options ($auth, $user_fields, $helptext, $retrieveopts,
          }
          echo '</tr>';
      }

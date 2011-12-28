@@ -1,8 +1,18 @@
 diff --git a/lib/weblib.php b/lib/weblib.php
-index 8a1a8e1..27329fc 100644
+index 78a7ad2..27329fc 100644
 --- a/lib/weblib.php
 +++ b/lib/weblib.php
-@@ -1234,7 +1234,7 @@ $targetwindow='self', $selectlabel='', $optionsextra=NULL, $gobutton=NULL) {
+@@ -94,6 +94,9 @@ define('REQUIREJS_AFTERHEADER',  2);
+ global $ALLOWED_TAGS;
+ $ALLOWED_TAGS =
+ '<p><br><b><i><u><font><table><tbody><thead><tfoot><span><div><tr><td><th><ol><ul><dl><li><dt><dd><h1><h2><h3><h4><h5><h6><hr><img><a><strong><emphasis><em><sup><sub><address><cite><blockquote><pre><strike><param><acronym><nolink><lang><tex><algebra><math><mi><mn><mo><mtext><mspace><ms><mrow><mfrac><msqrt><mroot><mstyle><merror><mpadded><mphantom><mfenced><msub><msup><msubsup><munder><mover><munderover><mmultiscripts><mtable><mtr><mtd><maligngroup><malignmark><maction><cn><ci><apply><reln><fn><interval><inverse><sep><condition><declare><lambda><compose><ident><quotient><exp><factorial><divide><max><min><minus><plus><power><rem><times><root><gcd><and><or><xor><not><implies><forall><exists><abs><conjugate><eq><neq><gt><lt><geq><leq><ln><log><int><diff><partialdiff><lowlimit><uplimit><bvar><degree><set><list><union><intersect><in><notin><subset><prsubset><notsubset><notprsubset><setdiff><sum><product><limit><tendsto><mean><sdev><variance><median><mode><moment><vector><matrix><matrixrow><determinant><transpose><selector><annotation><semantics><annotation-xml><tt><code>';
++if (defined('NANOGONG')) {
++    $ALLOWED_TAGS .= '<nanogong>';
++}
+ 
+ /**
+  * Allowed protocols - array of protocols that are safe to use in links and so on
+@@ -1231,7 +1234,7 @@ $targetwindow='self', $selectlabel='', $optionsextra=NULL, $gobutton=NULL) {
      if ($gobutton) {
          // Using the no-JavaScript version
          $javascript = '';
@@ -11,7 +21,7 @@ index 8a1a8e1..27329fc 100644
          //IE and Opera fire the onchange when ever you move into a dropdown list with the keyboard.
          //onfocus will call a function inside dropdown.js. It fixes this IE/Opera behavior.
          //Note: There is a bug on Opera+Linux with the javascript code (first mouse selection is inactive),
-@@ -3142,7 +3142,7 @@ function current_theme() {
+@@ -3139,7 +3142,7 @@ function current_theme() {
      global $CFG, $USER, $SESSION, $COURSE, $FULLME;
  
      if (empty($CFG->themeorder)) {
@@ -20,7 +30,7 @@ index 8a1a8e1..27329fc 100644
      } else {
          $themeorder = $CFG->themeorder;
      }
-@@ -3197,6 +3197,75 @@ function current_theme() {
+@@ -3194,6 +3197,75 @@ function current_theme() {
                      }
                  }
                  break;
@@ -96,7 +106,7 @@ index 8a1a8e1..27329fc 100644
              case 'site':
                  if (isloggedin() and isset($CFG->mnet_localhost_id) and $USER->mnethostid != $CFG->mnet_localhost_id && $mnet_peer->force_theme == 1 && $mnet_peer->theme != '') {
                      $theme = $mnet_peer->theme;
-@@ -4927,16 +4996,16 @@ function print_table($table, $return=false) {
+@@ -4924,16 +4996,16 @@ function print_table($table, $return=false) {
  
      if (!empty($table->data)) {
          $oddeven = 1;
@@ -118,7 +128,7 @@ index 8a1a8e1..27329fc 100644
              $output .= '<tr class="r'.$oddeven.' '.$table->rowclass[$key].'">'."\n";
              if ($row == 'hr' and $countcols) {
                  $output .= '<td colspan="'. $countcols .'"><div class="tabledivider"></div></td>';
-@@ -4963,6 +5032,9 @@ function print_table($table, $return=false) {
+@@ -4960,6 +5032,9 @@ function print_table($table, $return=false) {
              }
              $output .= '</tr>'."\n";
          }

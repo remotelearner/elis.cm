@@ -1,5 +1,5 @@
 diff --git a/lib/form/dateselector.php b/lib/form/dateselector.php
-index 650b294..73c28fe 100644
+index 3687e61..73c28fe 100644
 --- a/lib/form/dateselector.php
 +++ b/lib/form/dateselector.php
 @@ -81,7 +81,9 @@ class MoodleQuickForm_date_selector extends MoodleQuickForm_group
@@ -13,6 +13,22 @@ index 650b294..73c28fe 100644
          }
          foreach ($this->_elements as $element){
              if (method_exists($element, 'setHiddenLabel')){
+@@ -125,11 +127,11 @@ class MoodleQuickForm_date_selector extends MoodleQuickForm_group
+                     $value = time();
+                 }
+                 if (!is_array($value)) {
+-                    $currentdate = usergetdate($value);
++                    $currentdate = usergetdate($value, $this->_options['timezone']);
+                     $value = array(
+-                        'day' => $currentdate['mday'],
+-                        'month' => $currentdate['mon'],
+-                        'year' => $currentdate['year']);
++                        'day' => (int)$currentdate['mday'],
++                        'month' => (int)$currentdate['mon'],
++                        'year' => (int)$currentdate['year']);
+                     // If optional, default to off, unless a date was provided
+                      if($this->_options['optional']) {
+                         $value['off'] = ($requestvalue == 0) ? true : false;
 @@ -166,9 +168,28 @@ class MoodleQuickForm_date_selector extends MoodleQuickForm_group
      // }}}
      // {{{ accept()
