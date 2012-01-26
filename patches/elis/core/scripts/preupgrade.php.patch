@@ -1,0 +1,12 @@
+diff --git a/elis/core/scripts/preupgrade.php b/elis/core/scripts/preupgrade.php
+index e9dbe43..93d6624 100644
+--- a/elis/core/scripts/preupgrade.php
++++ b/elis/core/scripts/preupgrade.php
+@@ -251,6 +251,7 @@ if ($status) {
+ mtrace(' ... '.get_string('done', 'elis_core')."!\n");
+ 
+ 
++
+ /*
+  * Remove two ELIS auth plugins that are no longer present if they are enabled (Alfresco SSO and ELIS dummy plugin).
+  */

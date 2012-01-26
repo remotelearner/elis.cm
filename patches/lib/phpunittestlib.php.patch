@@ -1,0 +1,21 @@
+diff --git a/lib/phpunittestlib.php b/lib/phpunittestlib.php
+index d3edabf..91b7803 100644
+--- a/lib/phpunittestlib.php
++++ b/lib/phpunittestlib.php
+@@ -400,13 +400,13 @@ function _private_execute_sql($sql, $localdb = null) {
+     global $CFG;
+ 
+     if (null == $localdb) {
+-        global $db;
+-        $localdb = $db;
++        global $DB;
++        $localdb = $DB;
+     }
+     if ($CFG->dbfamily == 'oracle') {
+         $sql = trim($sql, ';');
+     }
+-    if (!$rs = $localdb->Execute($sql)) {
++    if (!$rs = $localdb->execute($sql)) {
+         echo '<p>SQL ERROR: ', $localdb->ErrorMsg(), ". STATEMENT: $sql</p>";
+     }
+     return $rs;
