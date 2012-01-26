@@ -1,22 +1,8 @@
 diff --git a/lib/ddllib.php b/lib/ddllib.php
-index e9c42ea..5f644d6 100644
+index 1b0bad5..5f644d6 100644
 --- a/lib/ddllib.php
 +++ b/lib/ddllib.php
-@@ -807,6 +807,13 @@ function get_db_directories() {
-         }
-     }
- 
-+/// Now, elis plugins (elis/xxx/db)
-+    if ($plugins = get_list_of_plugins('elis', 'db')) {
-+        foreach ($plugins as $plugin) {
-+            $dbdirs[] = $CFG->dirroot.'/elis/'.$plugin.'/db';
-+        }
-+    }
-+
- /// Now, enrolment plugins (enrol/xxx/db)
-     if ($plugins = get_list_of_plugins('enrol', 'db')) {
-         foreach ($plugins as $plugin) {
-@@ -821,6 +828,13 @@ function get_db_directories() {
+@@ -828,6 +828,13 @@ function get_db_directories() {
          }
      }
  

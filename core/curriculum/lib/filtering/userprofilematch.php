@@ -96,7 +96,7 @@
  * @version $Id$
  * @package curriculum/lib/filtering
  * @license  http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright (C) 2008-2011 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
  */
 
 require_once($CFG->dirroot.'/user/filters/lib.php');

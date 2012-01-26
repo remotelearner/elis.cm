@@ -1,16 +1,16 @@
 diff --git a/admin/index.php b/admin/index.php
-index 0874183..94f0bf9 100644
+index 66a29b2..94f0bf9 100644
 --- a/admin/index.php
 +++ b/admin/index.php
-@@ -484,6 +484,21 @@
+@@ -484,9 +484,21 @@
  /// Check all admin report plugins and upgrade if necessary
      upgrade_plugins('report', $CFG->admin.'/report', "$CFG->wwwroot/$CFG->admin/index.php");
  
 +/// Remote Learner Edit -- BEGIN
 +
-+/// Check all ELIS report plugins and upgrade if necessary
-+    upgrade_plugins('elis', 'elis', "$CFG->wwwroot/$CFG->admin/index.php");
-+
+ /// Check all ELIS report plugins and upgrade if necessary
+     upgrade_plugins('elis', 'elis', "$CFG->wwwroot/$CFG->admin/index.php");
+ 
 +/// Check all portfolio plugins and upgrade if necessary
 +//    upgrade_plugins('portfolio', 'file/portfolio', "$CFG->wwwroot/$CFG->admin/index.php");
 +

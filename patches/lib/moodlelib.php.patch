@@ -1,25 +1,8 @@
 diff --git a/lib/moodlelib.php b/lib/moodlelib.php
-index cac0785..09729a3 100644
+index 6a409ef..391d7b5 100644
 --- a/lib/moodlelib.php
 +++ b/lib/moodlelib.php
-@@ -1141,7 +1141,6 @@ function make_timestamp($year, $month=1, $day=1, $hour=0, $minute=0, $second=0,
-     }
- 
-     return $time;
--
- }
- 
- /**
-@@ -1475,7 +1474,7 @@ function get_user_timezone($tz = 99) {
- 
-     $tz = 99;
- 
--    while(($tz == '' || $tz == 99 || $tz == NULL) && $next = each($timezones)) {
-+    while(($tz === '' || $tz == 99 || $tz === NULL) && $next = each($timezones)) {
-         $tz = $next['value'];
-     }
- 
-@@ -2986,6 +2985,9 @@ function create_user_record($username, $password, $auth='manual') {
+@@ -2985,6 +2985,9 @@ function create_user_record($username, $password, $auth='manual') {
  
      if (insert_record('user', $newuser)) {
          $user = get_complete_user_data('username', $newuser->username, $CFG->mnet_localhost_id);
@@ -29,7 +12,7 @@ index cac0785..09729a3 100644
          if(!empty($CFG->{'auth_'.$newuser->auth.'_forcechangepassword'})){
              set_user_preference('auth_forcepasswordchange', 1, $user->id);
          }
-@@ -2995,6 +2997,54 @@ function create_user_record($username, $password, $auth='manual') {
+@@ -2994,6 +2997,54 @@ function create_user_record($username, $password, $auth='manual') {
      return false;
  }
  
@@ -84,7 +67,7 @@ index cac0785..09729a3 100644
  /**
   * Will update a local user record from an external source
   *
-@@ -3228,6 +3278,7 @@ function authenticate_user_login($username, $password) {
+@@ -3227,6 +3278,7 @@ function authenticate_user_login($username, $password) {
  
              if (!$authplugin->is_internal()) {            // update user record from external DB
                  $user = update_user_record($username, get_auth_plugin($user->auth));
@@ -92,43 +75,3 @@ index cac0785..09729a3 100644
              }
          } else {
              // if user not found, create him
-@@ -5297,18 +5348,24 @@ function clean_getstring_data( $a ) {
- function places_to_search_for_lang_strings() {
-     global $CFG;
- 
--    return array(
-+    static $places = null;
-+
-+    if ($places === null) {
-+        $places = array(
-         '__exceptions' => array('moodle', 'langconfig'),
-         'assignment_' => array('mod/assignment/type'),
-         'auth_' => array('auth'),
-         'block_' => array('blocks'),
-+        'crlm_' => array('curriculum/plugins'),
-         'datafield_' => array('mod/data/field'),
-         'datapreset_' => array('mod/data/preset'),
-+        'elis_' => array('elis'),
-         'enrol_' => array('enrol'),
-         'filter_' => array('filter'),
-         'format_' => array('course/format'),
-         'qtype_' => array('question/type'),
-         'report_' => array($CFG->admin.'/report', 'course/report', 'mod/quiz/report'),
-+        'rlreport_' => array('blocks/php_report/instances'),
-         'resource_' => array('mod/resource/type'),
-         'gradereport_' => array('grade/report'),
-         'gradeimport_' => array('grade/import'),
-@@ -5317,6 +5374,13 @@ function places_to_search_for_lang_strings() {
-         'profilefield_' => array('user/profile/field'),
-         '' => array('mod')
-     );
-+        $elis_plugins = get_list_of_plugins('elis');
-+        foreach ($elis_plugins as $plugin) {
-+            $places["elis:{$plugin}_"] = array('elis/{$plugin}/plugins');
-+        }
-+    }
-+
-+    return $places;
- }
- 
- /**

@@ -1,5 +1,5 @@
 diff --git a/auth/ldap/auth.php b/auth/ldap/auth.php
-index 011e197..b3a29f3 100644
+index d1ce83b..5424bba 100644
 --- a/auth/ldap/auth.php
 +++ b/auth/ldap/auth.php
 @@ -89,6 +89,14 @@ class auth_plugin_ldap extends auth_plugin_base {

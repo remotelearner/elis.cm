@@ -1,8 +1,8 @@
 diff --git a/lang/en_utf8/moodle.php b/lang/en_utf8/moodle.php
-index 55cc552..3fabd5e 100644
+index 0d8c27b..be61ec7 100644
 --- a/lang/en_utf8/moodle.php
 +++ b/lang/en_utf8/moodle.php
-@@ -767,7 +767,7 @@ $string['guestsyes'] = 'Allow guests without the key';
+@@ -768,7 +768,7 @@ $string['guestsyes'] = 'Allow guests without the key';
  $string['guestuser'] = 'Guest User';
  $string['guestuserinfo'] = 'This user is a special user that allows read-only access to some courses.';
  $string['healthcenter'] = 'Health Center';

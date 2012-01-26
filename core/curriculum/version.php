@@ -3,7 +3,7 @@
  * Keeps track of the current version of ELIS.
  *
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2010 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,12 +22,12 @@
  * @subpackage curriculummanagement
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2010 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
-    $CURMAN->version = 2010040503;  // YYYYMMDD      = date of the version release
-                                    //         XX    = micro-increments between releases
+$CURMAN->version = 2010040503;  // YYYYMMDD      = date of the version release
+                                //         XX    = micro-increments between releases
 
-    $CURMAN->release = '1.9.2.3 (Build: 20111212)';     // Human-friendly version name
+$CURMAN->release = '1.9.2.4 (Build: 20120125)';     // Human-friendly version name
 
