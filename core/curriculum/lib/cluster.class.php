@@ -543,7 +543,7 @@ function cluster_get_listing($sort='name', $dir='ASC', $startrec=0, $perpage=0, 
                 $parent_path = sql_concat('parent_context.path', "'/%'");
                 $cluster_filter = implode(',', $viewable_clusters);
 
-                $sql_condition = "id IN (
+                $sql_condition = "clst.id IN (
                                       SELECT parent_context.instanceid
                                       FROM {$CURMAN->db->prefix_table('context')} parent_context
                                       JOIN {$CURMAN->db->prefix_table('context')} child_context
@@ -559,7 +559,7 @@ function cluster_get_listing($sort='name', $dir='ASC', $startrec=0, $perpage=0, 
          * End of cluster hierarchy extension
          */
 
-        $context_filter = $extrafilters['contexts']->sql_filter_for_context_level('id', 'cluster');
+        $context_filter = $extrafilters['contexts']->sql_filter_for_context_level('clst.id', 'cluster');
 
         //extend the basic context filter by potentially enabling access to parent clusters
         $where_conditions[] = "($context_filter OR $sql_condition)";
@@ -573,7 +573,7 @@ function cluster_get_listing($sort='name', $dir='ASC', $startrec=0, $perpage=0, 
         require_once (CURMAN_DIRLOCATION . '/plugins/cluster_classification/lib.php');
         $contextlevel = context_level_base::get_custom_context_level('cluster', 'block_curr_admin');
         $field = new field(field::get_for_context_level_with_name($contextlevel, CLUSTER_CLASSIFICATION_FIELD));
-        $where_conditions[] = "id IN (SELECT ctx.instanceid
+        $where_conditions[] = "clst.id IN (SELECT ctx.instanceid
                                         FROM {$CURMAN->db->prefix_table('context')} ctx
                                         JOIN (SELECT ctx.id AS contextid, IFNULL(fdata.data, fdefault.data) AS data
                                                 FROM {$CURMAN->db->prefix_table('context')} ctx
@@ -590,7 +590,7 @@ function cluster_get_listing($sort='name', $dir='ASC', $startrec=0, $perpage=0, 
         $allowed_clusters = $context->get_allowed_instances($clusters, 'cluster', 'clusterid');
 
         $curriculum_context = cm_context_set::for_user_with_capability('cluster', 'block/curr_admin:cluster:enrol', $USER->id);
-        $curriculum_filter = $curriculum_context->sql_filter_for_context_level('id', 'cluster');
+        $curriculum_filter = $curriculum_context->sql_filter_for_context_level('clst.id', 'cluster');
 
         if(empty($allowed_clusters)) {
             $where_conditions[] = $curriculum_filter;
@@ -605,7 +605,7 @@ function cluster_get_listing($sort='name', $dir='ASC', $startrec=0, $perpage=0, 
             //this allows both the indirect capability and the direct curriculum filter to work
             $where_conditions[] = "(
                                      (
-                                     id IN (
+                                     clst.id IN (
                                        SELECT childctxt.instanceid
                                        FROM
                                          {$CURMAN->db->prefix_table(CLSTTABLE)} clst
@@ -640,6 +640,7 @@ function cluster_get_listing($sort='name', $dir='ASC', $startrec=0, $perpage=0, 
     foreach($sort_fields as $key => $value) {
         $new_value = trim($value);
         if($display_priority_enabled && $new_value == 'priority') {
+            $priority_key = $key;
             $sort_clauses[$key] = $new_value . ' DESC';
         } else {
             $sort_clauses[$key] = $new_value . ' ' . $dir;
@@ -654,6 +655,10 @@ function cluster_get_listing($sort='name', $dir='ASC', $startrec=0, $perpage=0, 
     $where = '';
     if(!empty($where_conditions)) {
         $where = 'WHERE ' . implode(' AND ', $where_conditions) . ' ';
+    }
+
+    if (isset($priority_key) && !context_level_base::get_custom_context_level('cluster', 'block_curr_admin')) {
+        unset($sort_clauses[$priority_key]);
     }
 
     $sort_clause = 'ORDER BY ' . implode($sort_clauses, ', ') . ' ';

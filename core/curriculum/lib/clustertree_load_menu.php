@@ -26,12 +26,13 @@
 
 //require necessary dependencies 
 require_once('../../config.php');
+require_once($CFG->dirroot . '/curriculum/config.php');
 require_once($CFG->dirroot . '/blocks/curr_admin/lib.php');
 require_once($CFG->dirroot . '/curriculum/lib/cluster.class.php');
 require_once($CFG->dirroot . '/curriculum/lib/menuitem.class.php');
 require_once($CFG->dirroot . '/curriculum/lib/filtering/lib.php');
 require_once($CFG->dirroot . '/curriculum/lib/filtering/clustertree.php');
-//needed for execution mode constants
+// Needed for execution mode constants
 require_once($CFG->dirroot.'/blocks/php_report/php_report_base.php');
 
 /**

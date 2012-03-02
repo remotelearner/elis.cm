@@ -23,12 +23,12 @@
  * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
-
 require_once CURMAN_DIRLOCATION . '/lib/datarecord.class.php';
 require_once CURMAN_DIRLOCATION . '/lib/course.class.php';
 require_once CURMAN_DIRLOCATION . '/lib/curriculum.class.php';
 require_once CURMAN_DIRLOCATION . '/lib/curriculumcourse.class.php';
 require_once CURMAN_DIRLOCATION . '/lib/student.class.php';
+require_once CURMAN_DIRLOCATION . '/lib/certificate.php';
 
 
 define('CURASSTABLE', 			     'crlm_curriculum_assignment');
@@ -77,6 +77,7 @@ class curriculumstudent extends datarecord {
         $this->add_property('timeexpired', 'int');
         $this->add_property('credits', 'float');
         $this->add_property('locked', 'int');
+        $this->add_property('certificatecode', 'string');
         $this->add_property('timecreated', 'int');
         $this->add_property('timemodified', 'int');
 
@@ -136,6 +137,8 @@ class curriculumstudent extends datarecord {
             }
         }
 
+        $this->certificatecode = null;
+
         $result = $this->data_insert_record();
 
         return $result;
@@ -182,6 +185,54 @@ class curriculumstudent extends datarecord {
             $this->locked = $locked ? 1 : 0;
         }
 
+        // Get the certificate code.  This batch of code tries to ensure
+        // that the random string is unique trying
+        if (empty($this->certificatecode)) {
+
+            $this->certificatecode = null;
+            $counter        = 0;
+            $attempts       = 10;
+            $maximumchar    = 15;
+            $addchar        = 0;
+
+            // This loop will try to generate a unique string 11 times.  On the 11th attempt
+            // if string is still not unique then it will add to the length of the string
+            // If the length of the string exceed the maximum length set by $maximumchar
+            // then stop the loop and return an error
+            do {
+                $code = cm_certificate_generate_code($addchar);
+                $exists = curriculum_code_exists($code);
+
+                if (!$exists) {
+                    $this->certificatecode = $code;
+                    break;
+                }
+
+                // If the counter is equal to the number of attempts
+                if ($counter == $attempts) {
+                    // Set counter back to zero and add a character to the string
+                    $counter = 0;
+                    $addchar++;
+                }
+
+                // increment counter otherwise this is an infinite loop
+                $counter++;
+            } while($maximumchar >= $addchar);
+
+            // Check if the length has exceeded the maximum length
+            if ($maximumchar < $addchar) {
+
+                if (!cm_certificate_email_random_number_fail($this)) {
+
+                    $message = get_string('certificate_email_fail', 'block_curr_admin');
+                    notify($message);
+                }
+
+                print_error('certificate_code_error', 'block_curr_admin');
+            }
+
+        }
+
         if ($this->update()) {
             /// Does the user receive a notification?
             $sendtouser       = $CURMAN->config->notify_curriculumcompleted_user;
@@ -201,7 +252,7 @@ class curriculumstudent extends datarecord {
                 print_error('nouser', 'block_curr_admin');
                 return true;
             }
-            
+
             $message = new notification();
 
             /// Set up the text of the message
@@ -216,6 +267,7 @@ class curriculumstudent extends datarecord {
             $eventlog->event = 'curriculum_completed';
             $eventlog->instance = $this->id;    /// Store the assignment id.
             if ($sendtouser) {
+            	//todo: figure out why a log object is passed in here
                 $message->send_notification($text, $this->user, null, $eventlog);
             }
 
@@ -238,7 +290,7 @@ class curriculumstudent extends datarecord {
             foreach ($users as $user) {
                 $message->send_notification($text, $user, $enroluser);
             }
-            
+
         }
     }
 
@@ -311,6 +363,7 @@ class curriculumstudent extends datarecord {
         $eventlog = new Object();
         $eventlog->event = 'curriculum_notcompleted';
         $eventlog->instance = $curstudent->id;    /// Store the assignment id.
+        $eventlog->fromuserid = $curstudent->userid;
         if ($sendtouser) {
             $message->send_notification($text, $curstudent->user, null, $eventlog);
         }
@@ -332,7 +385,7 @@ class curriculumstudent extends datarecord {
         }
 
         foreach ($users as $user) {
-            $message->send_notification($text, $user, $enroluser);
+            $message->send_notification($text, $user, $enroluser, $eventlog);
         }
 
         return true;
@@ -656,6 +709,19 @@ function calculate_curriculum_expiry($curass, $curid = 0, $userid = 0) {
 
     // Get the time of expiry start plus the delta value for the actual expiration.
     return strtotime($strtimedelta, $timenow);
+}
+
+function curriculum_code_exists($code) {
+    global $CURMAN;
+
+    if (empty($code)) {
+        return true;
+    }
+
+    $exists = record_exists(CURASSTABLE, 'certificatecode', $code);
+
+    return $exists;
+
 }
 
 ?>

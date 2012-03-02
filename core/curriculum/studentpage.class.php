@@ -63,7 +63,7 @@ class studentpage extends associationpage {
     function can_do_add() {
         $id = $this->required_param('id');
         $users = optional_param('users', array());
-        
+
         foreach($users as $uid => $user) {
             if(!student::can_manage_assoc($uid, $id)) {
                 return false;
@@ -463,7 +463,7 @@ class studentpage extends associationpage {
         $this->print_alpha();
         $this->print_search();
 
-        $this->print_list_view($stus, $columns);
+        $this->print_list_view($stus, $columns, array(), 'users'); // TBD: students ?
 
         print_paging_bar($numstus, $page, $perpage,
                          "index.php?s=stu&amp;section=curr&amp;id=$clsid&amp;sort=$sort&amp;" .
@@ -632,5 +632,9 @@ class student_table extends association_page_table {
         }
 
         return $moodle_link_begin.$item->name.$moodle_link_end;
+    }
+
+    function get_item_display_grade($column, $item) {
+        return cm_display_grade($item->grade);
     }
 }

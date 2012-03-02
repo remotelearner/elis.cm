@@ -24,12 +24,14 @@
  *
  */
 
+require_once($CFG->dirroot . '/curriculum/config.php');
 require_once CURMAN_DIRLOCATION . '/lib/datarecord.class.php';
 
 define ('CLUSTERCLASSTABLE', 'crlm_cluster_classification');
 
 class clusterclassification extends datarecord {
     var $verbose_name = 'cluster classification';
+    private $recordcount = 0;
 
     function clusterclassification($data = false) {
         parent::datarecord();
@@ -99,6 +101,64 @@ class clusterclassification extends datarecord {
         }
 
         return true;
+    }
+
+    public function cluster_classification_listing($namesearch = '', $alpha = '', $startrec = 0, $perpage = 0, $sort = 'name', $dir = 'ASC') {
+        global $CURMAN;
+
+        $LIKE = $CURMAN->db->sql_compare();
+
+        $select = "SELECT clusterclass.* ";
+        $table = 'FROM '. $CURMAN->db->prefix_table(CLUSTERCLASSTABLE).' clusterclass ';
+        $where = array();
+
+        if (!empty($namesearch)) {
+           $where[] = "((clusterclass.name $LIKE '%$namesearch%') OR (clusterclass.shortname $LIKE '%$namesearch%'))";
+        }
+
+        if (!empty($alpha)) {
+            $where[] = "((clusterclass.name $LIKE '%$alpha%') OR (clusterclass.shortname $LIKE '%$alpha%'))";
+        }
+
+        if (!empty($where)) {
+            $where = 'WHERE '. implode(' AND ', $where) .' ';
+        } else {
+            $where = '';
+        }
+
+        if ($sort == 'name' && ($dir == 'ASC' || $dir = 'DESC')) {
+            $sort = "ORDER BY name $dir ";
+        } else if ($sort == 'shortname' && ($dir == 'ASC' || $dir = 'DESC')) {
+            $sort = "ORDER BY shortname $dir ";
+        } else {
+            $sort = "ORDER BY name ASC ";
+        }
+
+        if (!empty($perpage)) {
+            if ($CURMAN->db->_dbconnection->databaseType == 'postgres7') {
+                $limit = 'LIMIT '. $perpage .' OFFSET '. $startrec;
+            } else {
+                $limit = 'LIMIT '. $startrec .', '. $perpage;
+            }
+        } else {
+            $limit = '';
+        }
+
+        $sql = $select . $table . $where . $sort . $limit;
+
+        $records = $CURMAN->db->get_records_sql($sql);
+
+        if(empty($records)) {
+            $this->recordcount = 0;
+        } else {
+            $this->recordcount = count($records);
+        }
+
+        return $records;
+    }
+
+    public function get_record_count() {
+        return $this->recordcount;
     }
 
     public function set_from_data($data) {

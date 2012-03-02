@@ -480,7 +480,12 @@ abstract class managementpage extends newpage {
      * Specify default values for the action_add form.
      */
     function get_default_object_for_add() {
-        return NULL;
+        $data_class = new $this->data_class();
+        if (method_exists($data_class,'default_custom_fields')) {
+          $fields = $data_class->default_custom_fields();
+          return $fields;
+        }
+        return null;
     }
 
     /**

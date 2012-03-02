@@ -311,10 +311,16 @@ class course extends datarecord {
 
         $sql = "SELECT cce.completestatusid status, COUNT(cce.completestatusid) count
         FROM {$CURMAN->db->prefix_table(STUTABLE)} cce
+        JOIN {$CURMAN->db->prefix_table(USRTABLE)} usr ON cce.userid = usr.id
         INNER JOIN {$CURMAN->db->prefix_table(CLSTABLE)} cc ON cc.id = cce.classid
         INNER JOIN {$CURMAN->db->prefix_table(CRSTABLE)} cco ON cco.id = cc.courseid
-        WHERE cco.id = {$this->id}
-        GROUP BY cce.completestatusid";
+        WHERE cco.id = {$this->id} ";
+
+        if (empty($CURMAN->config->legacy_show_inactive_users)) {
+            $sql .= 'AND usr.inactive = 0 ';
+        }
+
+        $sql .= 'GROUP BY cce.completestatusid';
 
         $rows = $CURMAN->db->get_records_sql($sql);
 
@@ -556,7 +562,7 @@ class course extends datarecord {
                   "INNER JOIN {$CFG->prefix}crlm_class ccl ON ccl.courseid = cc.id " .
                   "INNER JOIN {$CFG->prefix}crlm_class_enrolment cce ON cce.classid = ccl.id " .
                   "LEFT JOIN {$CFG->prefix}user u ON u.idnumber = cu.idnumber " .
-                  "LEFT JOIN {$CFG->prefix}crlm_notification_log cnl ON cnl.userid = cu.id AND cnl.instance = cce.id AND cnl.event = 'course_recurrence' ";
+                  "LEFT JOIN {$CFG->prefix}crlm_notification_log cnl ON cnl.fromuserid = cu.id AND cnl.instance = cce.id AND cnl.event = 'course_recurrence' ";
         $where  = "WHERE (cce.completestatusid != ".STUSTATUS_NOTCOMPLETE.") AND (ccc.frequency > 0) ".
                   "AND ((cce.completetime + " .
             /// This construct is to select the number of seconds to add to determine the delta frequency based on the timeperiod
@@ -649,6 +655,7 @@ class course extends datarecord {
         $eventlog = new Object();
         $eventlog->event = 'course_recurrence';
         $eventlog->instance = $user->enrolmentid;
+        $eventlog->fromuserid = $user->id;
         if ($sendtouser) {
             $message->send_notification($text, $user, null, $eventlog);
         }

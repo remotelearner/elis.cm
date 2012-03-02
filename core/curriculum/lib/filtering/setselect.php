@@ -39,6 +39,10 @@ class generalized_filter_setselect extends generalized_filter_type {
 
     var $_numeric;
 
+    var $_default;
+
+    var $_anyvalue;
+
     /**
      * Constructor
      * @param string $name the name of the filter instance
@@ -54,6 +58,10 @@ class generalized_filter_setselect extends generalized_filter_type {
                                         : array('simpleselect', $label, 'filters'));
         $this->_field   = $field;
         $this->_options = $options['choices'];
+        $this->_default = isset($options['default']) ? $options['default']
+                                                     : null;
+        $this->_anyvalue = isset($options['anyvalue']) ? $options['anyvalue']
+                                                       : null;
         $this->_numeric = $options['numeric'];
     }
 
@@ -67,9 +75,22 @@ class generalized_filter_setselect extends generalized_filter_type {
             $choices[serialize($value)] = $key;
         }
 
-        $choices = array(''=>get_string('anyvalue', 'filters')) + $choices;
+        if (isset($this->_anyvalue)) {
+            $choices = array('0' => get_string('anyvalue', 'filters')) + $choices;
+        }
 
         $mform->addElement('select', $this->_uniqueid, $this->_label, $choices);
+        $data = $mform->exportValues($this->_uniqueid);
+        // ELIS-3474,ELIS-3475: since called from definition_after_data()
+        // we MUST check if data has been set or default will override!
+        if ((!is_array($data) || $data[$this->_uniqueid] === '')
+            && isset($this->_default)) {
+            $value = $this->_default;
+            if (is_array($value)) {
+                $value = serialize($value);
+            }
+            $mform->setDefault($this->_uniqueid, $value);
+        }
         $mform->setHelpButton($this->_uniqueid, $this->_filterhelp);
         if ($this->_advanced) {
             $mform->setAdvanced($this->_uniqueid);
@@ -84,11 +105,17 @@ class generalized_filter_setselect extends generalized_filter_type {
     function check_data($formdata) {
         $field = $this->_uniqueid;
 
-        if (array_key_exists($field, $formdata) and $formdata->$field !== '') {
-            $value = unserialize($formdata->$field);
-            return array('value'=>(array)$value);
+        if (array_key_exists($field, $formdata) && $formdata->$field !== '') {
+            $value = $formdata->$field;
+            if (isset($this->_anyvalue) && $formdata->$field === '0') {
+                $value = $this->_anyvalue;
+            }
+            if (is_string($value) && strpos($value, 'a:') === 0) { // TBD
+                //error_log("setselect.php::check_data(): unserializing value = {$value}");
+                $value = (array)unserialize($value);
+            }
+            return array('value' => $value);
         }
-
         return false;
     }
 
@@ -141,6 +168,16 @@ class generalized_filter_setselect extends generalized_filter_type {
         return get_string('selectlabel', 'filters', $a);
     }
 
+    /**
+     * Takes a set of submitted values and retuns this filter's default values
+     * for them in the same structure (used to reset the filtering form)
+     */
+    function get_default_values($filter_data) {
+        if (isset($this->_default)) {
+            return array($this->_uniqueid => $this->_default);
+        }
+        return parent::get_default_values($filter_data);
+    }
 }
 
 ?>

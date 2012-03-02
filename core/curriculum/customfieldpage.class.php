@@ -270,7 +270,8 @@ class customfieldpage extends newpage {
                 $fieldcontext->add();
             }
 
-            if (!empty($data->defaultdata)) {
+            //don't use !empty here because we might be storing a 0 or similar value
+            if ($data->defaultdata != '') {
                 // save the default value
                 $defaultdata = $data->defaultdata;
                 if ($field->multivalued) {

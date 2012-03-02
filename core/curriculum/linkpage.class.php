@@ -32,7 +32,13 @@ class linkpage extends newpage {
     var $section = 'admn';
 
     function can_do_default() {
-        return true;
+        global $USER;
+        $id = $this->required_param('id', PARAM_INT);
+        $cmuserid = cm_get_crlmuserid($USER->id);
+        if($cmuserid != 0 && ($cmuserid == $id)) {
+            return true;
+        }
+        return usermanagementpage::_has_capability('block/php_report:view');
     }
 
     function get_url() {

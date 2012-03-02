@@ -58,7 +58,6 @@ class clusteruserselectpage extends selectionpage {
 
         $FULLNAME = sql_concat('usr.firstname', "' '", 'usr.lastname');
 
-        $LIKE     = $CURMAN->db->sql_compare();
         $sql = "  FROM {$CURMAN->db->prefix_table(USRTABLE)} usr
        LEFT OUTER JOIN {$CURMAN->db->prefix_table(CLSTASSTABLE)} ca ON ca.userid = usr.id AND ca.clusterid = $id AND ca.plugin = 'manual'
                  WHERE ca.userid IS NULL";
@@ -68,7 +67,7 @@ class clusteruserselectpage extends selectionpage {
             $sql .= " AND $extrasql";
         }
 
-        if(!clusterpage::_has_capability('block/curr_admin:track:enrol')) {
+        if (!clusterpage::_has_capability('block/curr_admin:cluster:enrol')) {
             //perform SQL filtering for the more "conditional" capability
 
             //get the context for the "indirect" capability
@@ -76,7 +75,7 @@ class clusteruserselectpage extends selectionpage {
             
             $allowed_clusters = cluster::get_allowed_clusters($id);
 
-            if(empty($allowed_clusters)) {
+            if (empty($allowed_clusters)) {
                 $sql .= ' AND 0=1';
             } else {
                 $cluster_filter = implode(',', $allowed_clusters);

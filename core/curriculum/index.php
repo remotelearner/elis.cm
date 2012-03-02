@@ -183,7 +183,7 @@
 
     //calculate the path of curriculum entities corresponding to the most recent click
     $currentitypath = optional_param('currentitypath', '', PARAM_TEXT);
-    
+
     if (!empty($currentitypath)) {
         //parameter is set directly, so use it
         $USER->currentitypath = $currentitypath;
@@ -191,19 +191,20 @@
         //determine whether to unset the parameter based on comparing the current
         //page type with the last entity set
         $effective_entity_type = $page->get_page_context();
-        
+
         if (isset($USER->currentitypath)) {
+            $id = optional_param('id', 0, PARAM_INT); // TBV
             $parts = explode('/', $USER->currentitypath);
             $final_part = $parts[count($parts) - 1];
-            
+
             $parts = explode('-', $final_part);
-            
-            if ($parts[0] != $effective_entity_type) {
+
+            if (!$id || $parts[0] != $effective_entity_type) {
                 unset($USER->currentitypath);
             }
         }
     }
-    
+
     if ($page instanceof newpage) {
         global $CURMAN;
         $CURMAN->page = $page;

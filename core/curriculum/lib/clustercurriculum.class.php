@@ -24,7 +24,6 @@
  *
  */
 
-
 require_once CURMAN_DIRLOCATION . '/lib/datarecord.class.php';
 require_once CURMAN_DIRLOCATION . '/lib/user.class.php';
 require_once CURMAN_DIRLOCATION . '/lib/curriculum.class.php';
@@ -137,9 +136,10 @@ class clustercurriculum extends datarecord {
      * @param   int    $parentclusterid  If non-zero, a required direct-parent cluster
      * @param   int    $startrecord      The index of the record to start with
      * @param   int    $perpage          The number of records to include
+     * @param   array  $extrafilters     Additional filters to apply to the listing
      * @return  array                    The appropriate cluster records
      */
-    static function get_clusters($curriculumid = 0, $parentclusterid = 0, $sort = 'name', $dir = 'ASC', $startrec = 0, $perpage = 0) {
+    static function get_clusters($curriculumid = 0, $parentclusterid = 0, $sort = 'name', $dir = 'ASC', $startrec = 0, $perpage = 0, $extrafilters = array()) {
         global $CURMAN;
 
         if (empty($CURMAN->db)) {
@@ -148,7 +148,7 @@ class clustercurriculum extends datarecord {
 
         //require plugin code if enabled
         $display_priority_enabled = in_array('cluster_display_priority', get_list_of_plugins('curriculum/plugins'));
-        if($display_priority_enabled) {
+        if ($display_priority_enabled) {
             require_once(CURMAN_DIRLOCATION . '/plugins/cluster_display_priority/lib.php');
         }
 
@@ -158,7 +158,7 @@ class clustercurriculum extends datarecord {
                    'ON clst.id = clstcur.clusterid ';
 
         //handle empty sort case
-        if(empty($sort)) {
+        if (empty($sort)) {
             $sort = 'name';
             $dir = 'ASC';
         }
@@ -168,9 +168,9 @@ class clustercurriculum extends datarecord {
 
         //convert the fields into clauses
         $sort_clauses = array();
-        foreach($sort_fields as $key => $value) {
+        foreach ($sort_fields as $key => $value) {
             $new_value = trim($value);
-            if($display_priority_enabled && $new_value == 'priority') {
+            if ($display_priority_enabled && $new_value == 'priority') {
                 $sort_clauses[$key] = $new_value . ' DESC';
             } else {
                 $sort_clauses[$key] = $new_value . ' ' . $dir;
@@ -178,18 +178,22 @@ class clustercurriculum extends datarecord {
         }
 
         //determine if we are handling the priority field for ordering
-        if($display_priority_enabled && in_array('priority', $sort_fields)) {
+        if ($display_priority_enabled && in_array('priority', $sort_fields)) {
             cluster_display_priority_append_sort_data('clst.id', $select, $join);
         }
 
-        $where   = 'WHERE clstcur.curriculumid = '.$curriculumid.' ';
+        $where   = " WHERE clstcur.curriculumid = $curriculumid ";
 
         //apply the parent-cluster condition if applicable
-        if(!empty($parentclusterid)) {
+        if (!empty($parentclusterid)) {
             $where .= " AND clst.parent = {$parentclusterid} ";
         }
 
-        $group   = 'GROUP BY clstcur.id ';
+        if (!empty($extrafilters['contexts'])) {
+            $where .= ' AND '. $extrafilters['contexts']->sql_filter_for_context_level('clst.id', 'cluster'); // TBV
+        }
+
+        $group   = ' GROUP BY clstcur.id ';
 
         $sort_clause = 'ORDER BY ' . implode($sort_clauses, ', ') . ' ';
 
@@ -205,7 +209,6 @@ class clustercurriculum extends datarecord {
         }
 
         $sql = $select.$tables.$join.$where.$group.$sort_clause.$limit;
-
         return $CURMAN->db->get_records_sql($sql);
     }
 
@@ -213,11 +216,12 @@ class clustercurriculum extends datarecord {
      * Determine the number of clusters assigned to this curriculum
      *
      * @uses           $CURMAN
-     * @param   int    $curriculumid     The cluster id
-     * @param   int    $parentclusterid  If non-zero, a required direct-parent cluster
-     * @return  int                      The number of appropriate records
+     * @param   int    $curriculumid    The cluster id
+     * @param   int    $parentclusterid If non-zero, a required direct-parent cluster
+     * @param   array  $extrafilters    Additional filters to apply to the count
+     * @return  int                     The number of appropriate records
      */
-    function count_clusters($curriculumid = 0, $parentclusterid = 0) {
+    function count_clusters($curriculumid = 0, $parentclusterid = 0, $extrafilters = array()) {
         global $CURMAN;
 
         if (empty($CURMAN->db)) {
@@ -228,35 +232,52 @@ class clustercurriculum extends datarecord {
         $tables  = 'FROM ' . $CURMAN->db->prefix_table(CLSTCURTABLE) . ' clstcur ';
         $join    = 'LEFT JOIN ' . $CURMAN->db->prefix_table(CLSTTABLE) . ' clst '.
                    'ON clst.id = clstcur.clusterid ';
-        $where   = 'WHERE clstcur.curriculumid = '.$curriculumid.' ';
 
-        if(!empty($parentclusterid)) {
-            $where .= " AND clst.parent = {$parentclusterid} ";
+        $where   = " WHERE clstcur.curriculumid = $curriculumid";
+
+        if (!empty($parentclusterid)) {
+            $where .= " AND clst.parent = {$parentclusterid}";
         }
 
-        $sort    = 'ORDER BY clst.name ASC ';
-        $limit = '';
+        if (!empty($extrafilters['contexts'])) {
+            $where .= ' AND '. $extrafilters['contexts']->sql_filter_for_context_level('clst.id', 'cluster'); // TBV
+        }
 
-        $sql = $select.$tables.$join.$where.$sort.$limit;
+        $sort    = ' ORDER BY clst.name ASC ';
 
+        $sql = $select.$tables.$join.$where.$sort;
         return $CURMAN->db->count_records_sql($sql);
-
-
     }
 
 
     /**
      * Get a list of the curricula assigned to this cluster.
      *
-     * @uses             $CURMAN
-     * @param   int      $clusterid  The cluster id.
-     * @return  array                The associated curriculum records
+     * @uses          $CURMAN
+     * @param  int    $clusterid     The cluster id.
+     * @param  int    $startrec
+     * @param  int    $perpage
+     * @param  string $sort
+     * @param  string $dir           either 'ASC' or 'DESC'
+     * @param  array  $extrafilters  Additional filters to apply to the listing
+     * @return array  The associated curriculum records
      */
-    static function get_curricula($clusterid = 0, $startrec = 0, $perpage = 0, $sort = 'cur.name ASC') {
+    static function get_curricula($clusterid = 0, $startrec = 0, $perpage = 0, $sort = '', $dir = 'ASC', $extrafilters = array()) {
         global $CURMAN;
 
         if (empty($CURMAN->db)) {
             return NULL;
+        }
+
+        if (empty($sort)) {
+            $sort = 'name';
+            $dir = 'ASC';
+        }
+        if ($dir != 'DESC') {
+            $dir = 'ASC';
+        }
+        if (strpos($sort, 'ASC') !== false || strpos($sort, 'DESC') !== false) {
+            $dir = ''; // ELIS-4314: block_curr_admin passes: sort = 'cur.priority ASC, cur.name ASC'
         }
 
         $select  = 'SELECT clstcur.id, clstcur.curriculumid, cur.idnumber, cur.name, cur.description, cur.reqcredits, COUNT(curcrs.id) as numcourses, clstcur.autoenrol ';
@@ -265,9 +286,15 @@ class clustercurriculum extends datarecord {
                    'ON cur.id = clstcur.curriculumid ';
         $join   .= 'LEFT JOIN ' . $CURMAN->db->prefix_table(CURCRSTABLE) . ' curcrs '.
                    'ON curcrs.curriculumid = cur.id ';
-        $where   = 'WHERE clstcur.clusterid = '.$clusterid.' ';
-        $group   = 'GROUP BY clstcur.id ';
-        $sort    = "ORDER BY $sort ";
+
+        $where   = " WHERE clstcur.clusterid = {$clusterid} ";
+        if (!empty($extrafilters['contexts'])) {
+            $where .= ' AND '. $extrafilters['contexts']->sql_filter_for_context_level('cur.id', 'curriculum'); // TBV
+        }
+
+        $group   = ' GROUP BY clstcur.id ';
+        $sort    = "ORDER BY $sort $dir ";
+
         if (!empty($perpage)) {
             if ($CURMAN->db->_dbconnection->databaseType == 'postgres7') {
                 $limit = 'LIMIT ' . $perpage . ' OFFSET ' . $startrec;
@@ -279,7 +306,6 @@ class clustercurriculum extends datarecord {
         }
 
         $sql = $select.$tables.$join.$where.$group.$sort.$limit;
-
         return $CURMAN->db->get_records_sql($sql);
     }
 
@@ -288,9 +314,10 @@ class clustercurriculum extends datarecord {
      *
      * @uses             $CURMAN
      * @param   int      $clusterid  The id of the cluster to check associations from
+     * @param   array  $extrafilters  Additional filters to apply to the count
      * @return  int                  The number of associated curricula
      */
-    static function count_curricula($clusterid = 0) {
+    static function count_curricula($clusterid = 0, $extrafilters = array()) {
         global $CURMAN;
 
         if (empty($CURMAN->db)) {
@@ -301,20 +328,22 @@ class clustercurriculum extends datarecord {
         $tables  = 'FROM ' . $CURMAN->db->prefix_table(CLSTCURTABLE) . ' clstcur ';
         $join    = 'LEFT JOIN ' . $CURMAN->db->prefix_table(CURTABLE) . ' cur '.
                    'ON cur.id = clstcur.curriculumid ';
-        $where   = 'WHERE clstcur.clusterid = '.$clusterid.' ';
+        $where   = "WHERE clstcur.clusterid = $clusterid";
+        if (!empty($extrafilters['contexts'])) {
+            $where .= ' AND '. $extrafilters['contexts']->sql_filter_for_context_level('cur.id', 'curriculum'); // TBV
+        }
+
+        $groupby = ' GROUP BY cur.idnumber ';
         $sort    = 'ORDER BY cur.idnumber ASC ';
-        $groupby = 'GROUP BY cur.idnumber ';
 
         $sql = $select . $tables . $join . $where . $groupby . $sort;
-
         return $CURMAN->db->count_records_sql($sql);
     }
 
-	public static function delete_for_cluster($id) {
-    	global $CURMAN;
-
-    	return $CURMAN->db->delete_records(CLSTCURTABLE, 'clusterid', $id);
-	}
+    public static function delete_for_cluster($id) {
+        global $CURMAN;
+        return $CURMAN->db->delete_records(CLSTCURTABLE, 'clusterid', $id);
+    }
 
     /**
      * Updates the autoenrol flag for a particular cluster-curriculum association
@@ -324,8 +353,8 @@ class clustercurriculum extends datarecord {
      *
      * @return  object                   The updated record
      */
-	public static function update_autoenrol($association_id, $autoenrol) {
-	    global $CURMAN;
+    public static function update_autoenrol($association_id, $autoenrol) {
+        global $CURMAN;
 
         $db = $CURMAN->db;
 
@@ -489,11 +518,14 @@ class clustertrack extends datarecord {
      * @uses            $CURMAN
      * @param  int      $trackid            The track id
      * @param  int      $parent_cluster_id  Cluster that must be the parent of track's clusters
+     * @param  string   $sort               The sort field
+     * @param  string   $dir                either 'ASC' or 'DESC'
      * @param  int      $startrec           The index of the record to start with
      * @param  int      $perpage            How many records to include
+     * @param  array    $extrafilters       Additional filters to apply to the count/listing
      * @param  array                        The appropriate cluster records
      */
-    static function get_clusters($trackid = 0, $parent_cluster_id = 0, $sort = 'name', $dir = 'ASC', $startrec = 0, $perpage = 0) {
+    static function get_clusters($trackid = 0, $parent_cluster_id = 0, $sort = 'name', $dir = 'ASC', $startrec = 0, $perpage = 0, $extrafilters = array()) {
         global $CURMAN;
 
         if (empty($CURMAN->db)) {
@@ -502,7 +534,7 @@ class clustertrack extends datarecord {
 
         //require plugin code if enabled
         $display_priority_enabled = in_array('cluster_display_priority', get_list_of_plugins('curriculum/plugins'));
-        if($display_priority_enabled) {
+        if ($display_priority_enabled) {
             require_once(CURMAN_DIRLOCATION . '/plugins/cluster_display_priority/lib.php');
         }
 
@@ -512,7 +544,7 @@ class clustertrack extends datarecord {
                    'ON clst.id = clsttrk.clusterid ';
 
         //handle empty sort case
-        if(empty($sort)) {
+        if (empty($sort)) {
             $sort = 'name';
             $dir = 'ASC';
         }
@@ -522,9 +554,9 @@ class clustertrack extends datarecord {
 
         //convert the fields into clauses
         $sort_clauses = array();
-        foreach($sort_fields as $key => $value) {
+        foreach ($sort_fields as $key => $value) {
             $new_value = trim($value);
-            if($display_priority_enabled && $new_value == 'priority') {
+            if ($display_priority_enabled && $new_value == 'priority') {
                 $sort_clauses[$key] = $new_value . ' DESC';
             } else {
                 $sort_clauses[$key] = $new_value . ' ' . $dir;
@@ -532,16 +564,19 @@ class clustertrack extends datarecord {
         }
 
         //determine if we are handling the priority field for ordering
-        if($display_priority_enabled && in_array('priority', $sort_fields)) {
+        if ($display_priority_enabled && in_array('priority', $sort_fields)) {
             cluster_display_priority_append_sort_data('clst.id', $select, $join);
         }
 
-        $where   = 'WHERE clsttrk.trackid = '.$trackid.' ';
-        if(!empty($parent_cluster_id)) {
+        $where   = " WHERE clsttrk.trackid = $trackid ";
+        if (!empty($parent_cluster_id)) {
             $where .= " AND clst.parent = {$parent_cluster_id} ";
         }
-        $group   = 'GROUP BY clsttrk.id ';
+        if (!empty($extrafilters['contexts'])) {
+            $where .= ' AND '. $extrafilters['contexts']->sql_filter_for_context_level('clst.id', 'cluster'); // TBV
+        }
 
+        $group   = ' GROUP BY clsttrk.id ';
         $sort_clause = 'ORDER BY ' . implode($sort_clauses, ', ') . ' ';
 
         $limit = '';
@@ -556,7 +591,6 @@ class clustertrack extends datarecord {
         }
 
         $sql = $select.$tables.$join.$where.$group.$sort_clause.$limit;
-
         return $CURMAN->db->get_records_sql($sql);
     }
 
@@ -565,9 +599,10 @@ class clustertrack extends datarecord {
      *
      * @param   int  $trackid            The track to check associations for
      * @param   int  $parent_cluster_id  Cluster that must be the parent of track's clusters
-     * @return                           The number of associated records
+     * @param  array $extrafilters       Additional filters to apply to the count
+     * @return The number of associated records
      */
-    static function count_clusters($trackid = 0, $parent_cluster_id = 0) {
+    static function count_clusters($trackid = 0, $parent_cluster_id = 0, $extrafilters = array()) {
         global $CURMAN;
 
         if (empty($CURMAN->db)) {
@@ -578,25 +613,29 @@ class clustertrack extends datarecord {
         $tables  = 'FROM ' . $CURMAN->db->prefix_table(CLSTTRKTABLE) . ' clsttrk ';
         $join    = 'LEFT JOIN ' . $CURMAN->db->prefix_table(CLSTTABLE) . ' clst '.
                    'ON clst.id = clsttrk.clusterid ';
-        $where   = 'WHERE clsttrk.trackid = '.$trackid.' ';
-        if(!empty($parent_cluster_id)) {
-            $where .= " AND clst.parent = {$parent_cluster_id} ";
+        $where   = " WHERE clsttrk.trackid = {$trackid}";
+        if (!empty($parent_cluster_id)) {
+            $where .= " AND clst.parent = {$parent_cluster_id}";
         }
-        $sort    = 'ORDER BY clst.name ASC ';
+        if (!empty($extrafilters['contexts'])) {
+            $where .= ' AND '. $extrafilters['contexts']->sql_filter_for_context_level('clst.id', 'cluster'); // TBV
+        }
+
+        $sort    = ' ORDER BY clst.name ASC ';
 
         $sql = $select.$tables.$join.$where.$sort;
-
         return $CURMAN->db->count_records_sql($sql);
     }
-
 
     /**
      * Get a list of the tracks assigned to this cluster.
      *
      * @uses $CURMAN
      * @param int $clusterid The cluster id.
+     * @param string $sort The column to sort by
+     * @param string $dir The direction to sort in
      */
-    static function get_tracks($clusterid = 0) {
+    static function get_tracks($clusterid = 0, $sort = 'name', $dir = 'ASC') {
         global $CURMAN;
 
         if (empty($CURMAN->db)) {
@@ -608,7 +647,7 @@ class clustertrack extends datarecord {
         $join    = 'LEFT JOIN ' . $CURMAN->db->prefix_table(TRACKTABLE) . ' trk '.
           'ON trk.id = clsttrk.trackid ';
         $where   = 'WHERE clsttrk.clusterid = '.$clusterid.' ';
-        $sort    = 'ORDER BY trk.idnumber ASC ';
+        $sort    = 'ORDER BY ' . $sort . ' ' . $dir;
         $limit = '';
 
         $sql = $select.$tables.$join.$where.$sort.$limit;
@@ -616,17 +655,15 @@ class clustertrack extends datarecord {
         return $CURMAN->db->get_records_sql($sql);
     }
 
-	public static function delete_for_cluster($id) {
-    	global $CURMAN;
+    public static function delete_for_cluster($id) {
+        global $CURMAN;
+        return $CURMAN->db->delete_records(CLSTTRKTABLE, 'clusterid', $id);
+    }
 
-    	return $CURMAN->db->delete_records(CLSTTRKTABLE, 'clusterid', $id);
-	}
-
-	public static function delete_for_track($id) {
-    	global $CURMAN;
-
-    	return $CURMAN->db->delete_records(CLSTTRKTABLE, 'trackid', $id);
-	}
+    public static function delete_for_track($id) {
+        global $CURMAN;
+        return $CURMAN->db->delete_records(CLSTTRKTABLE, 'trackid', $id);
+    }
 
     /**
      * Updates the autoenrol flag for a particular cluster-track association
@@ -636,12 +673,12 @@ class clustertrack extends datarecord {
      *
      * @return  object                   The updated record
      */
-	public static function update_autoenrol($association_id, $autoenrol) {
-	    global $CURMAN;
+    public static function update_autoenrol($association_id, $autoenrol) {
+        global $CURMAN;
 
-	    $db = $CURMAN->db;
+        $db = $CURMAN->db;
 
-	    $old_autoenrol = get_field(CLSTTRKTABLE, 'autoenrol', 'id', $association_id);
+        $old_autoenrol = get_field(CLSTTRKTABLE, 'autoenrol', 'id', $association_id);
 
         //update the flag on the association record
 	    $update_record = new stdClass;
@@ -671,7 +708,7 @@ class clustertrack extends datarecord {
         }
 
         return $result;
-	}
+    }
 }
 
 ?>

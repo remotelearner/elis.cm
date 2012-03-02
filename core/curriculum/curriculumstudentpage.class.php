@@ -457,9 +457,11 @@ class curriculumstudentpage extends associationpage2 {
         }
 
         static $sortfields = array(
-            'name' => array('lastname', 'firstname'),
-            'idnumber' => 'idnumber',
-            );
+            'name'      => array('lastname', 'firstname'),
+            'idnumber'  => 'idnumber',
+            'country'   => 'country',
+            'language'  => 'language'
+        );
         if (!array_key_exists($sort, $sortfields)) {
             $sort = key($sortfields);
         }
@@ -488,7 +490,7 @@ class curriculumstudentpage extends associationpage2 {
             if(!empty($clusters)) {
                 foreach($clusters as $cluster) {
                     if($context->context_allowed($cluster->clusterid, 'cluster')) {
-                        $allowed_clusters[] = $cluster->id;
+                        $allowed_clusters[] = $cluster->clusterid;
                     }
                 }
             }

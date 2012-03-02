@@ -1,36 +1,8 @@
 diff --git a/lang/en_utf8/filters.php b/lang/en_utf8/filters.php
-index 4fde15f..7e59eba 100644
+index 4fde15f..6759cf5 100644
 --- a/lang/en_utf8/filters.php
 +++ b/lang/en_utf8/filters.php
-@@ -18,6 +18,27 @@ $string['datelabelisbetween'] = '$a->label is between $a->after and $a->before';
- $string['doesnotcontain'] = 'doesn\'t contain';
- $string['endswith'] = 'ends with';
- $string['firstaccess'] = 'First access';
-+
-+// Default user profile field labels for userprofilematch filter - can override
-+$string['fld_auth'] = 'Authentication';
-+$string['fld_city'] = 'City/town';
-+$string['fld_confirmed'] = 'Confirmed';
-+$string['fld_country'] = 'Country';
-+$string['fld_coursecat'] = 'Course category';
-+$string['fld_courserole'] = 'Course role';
-+$string['fld_email'] = 'Email address';
-+$string['fld_firstaccess'] = 'First access';
-+$string['fld_firstname'] = 'First name';
-+$string['fld_fullname'] = 'Full name';
-+$string['fld_idnumber'] = 'ID number';
-+$string['fld_lang'] = 'Preferred language';
-+$string['fld_lastaccess'] = 'Last access';
-+$string['fld_lastlogin'] = 'Last login';
-+$string['fld_lastname'] = 'Last name';
-+$string['fld_systemrole'] = 'System role';
-+$string['fld_timemodified'] = 'Last modified';
-+$string['fld_username'] = 'Username';
-+
- $string['globalrolelabel'] = '$a->label is $a->value';
- $string['includenever'] = 'Never included';
- $string['isanyvalue'] = 'is any value';
-@@ -37,3 +58,5 @@ $string['selectlabel'] = '$a->label $a->operator $a->value';
+@@ -37,3 +37,5 @@ $string['selectlabel'] = '$a->label $a->operator $a->value';
  $string['startswith'] = 'starts with';
  $string['textlabel'] = '$a->label $a->operator $a->value';
  $string['textlabelnovalue'] = '$a->label $a->operator';

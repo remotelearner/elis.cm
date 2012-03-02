@@ -53,6 +53,12 @@ class trackassignmentpage extends associationpage {
 
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
+
+        if (trackpage::_has_capability('block/curr_admin:track:view', $id)) {
+            //allow viewing but not managing associations
+            return true;
+        }
+
         return trackpage::_has_capability('block/curr_admin:associate', $id);
     }
 
@@ -120,19 +126,20 @@ class trackassignmentpage extends associationpage {
         $items = track_assignment_get_listing($id, $sort, $dir, $page*$perpage, $perpage, $namesearch, $alpha);
         $numitems = track_assignment_count_records($id, $namesearch, $alpha);
 
-        if (empty($items)) {
-            print_string('no_items_matching', 'block_curr_admin');
-        } else {
+        $this->print_alpha();
+        $this->print_search();
+
+        if ($numitems > 0) {
             $this->print_num_items($numitems);
-            $this->print_alpha();
-            $this->print_search();
 
             $formatters = $this->create_link_formatters(array('clsname'), 'cmclasspage', 'clsid');
 
-            $this->print_list_view($items, $columns, $formatters);
+            $this->print_list_view($items, $columns, $formatters, 'track_classes');
+        } else {
+            print_string('no_items_matching', 'block_curr_admin');
         }
 
-        if (empty($items)) {
+        if (empty($items) && empty($namesearch) && empty($alpha)) {
             echo '<div align="center">';
             $tmppage = new trackassignmentpage(array('action'=>'autocreate', 'id'=>$id));
             print_single_button(null, $tmppage->get_moodle_url()->params, get_string('track_autocreate_button', 'block_curr_admin'));

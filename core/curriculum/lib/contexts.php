@@ -84,7 +84,9 @@ class cm_context_set {
         $timenow = time();
         // find all contexts at the given context level where the user has a direct
         // role assignment
-        $contextlevelnum = context_level_base::get_custom_context_level($contextlevel, 'block_curr_admin');
+        if (!($contextlevelnum = context_level_base::get_custom_context_level($contextlevel, 'block_curr_admin'))) {
+            return $obj;
+        }
         $sql = "SELECT c.*
               FROM {$CURMAN->db->prefix_table('role_assignments')} ra
               JOIN {$CURMAN->db->prefix_table('context')} c ON ra.contextid = c.id

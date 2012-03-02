@@ -135,6 +135,13 @@ class cmclasspage extends managementpage {
     }
 
     function __construct($params=false) {
+        global $CFG;
+
+        $reports_installed = record_exists('block', 'name', 'php_report');
+        if ($reports_installed) {
+            require_once($CFG->dirroot .'/blocks/php_report/php_report_base.php');
+        }
+
         $this->tabs = array(
         array('tab_id' => 'view', 'page' => get_class($this), 'params' => array('action' => 'view'), 'name' => get_string('detail', 'block_curr_admin'), 'showtab' => true),
         array('tab_id' => 'edit', 'page' => get_class($this), 'params' => array('action' => 'edit'), 'name' => get_string('edit', 'block_curr_admin'), 'showtab' => true, 'showbutton' => true, 'image' => 'edit.gif'),
@@ -146,8 +153,17 @@ class cmclasspage extends managementpage {
         array('tab_id' => 'class_rolepage', 'page' => 'class_rolepage', 'name' => get_string('roles', 'role'), 'showtab' => true, 'showbutton' => false, 'image' => 'tag.gif'),
 
         array('tab_id' => 'delete', 'page' => get_class($this), 'params' => array('action' => 'delete'), 'name' => get_string('delete_label', 'block_curr_admin'), 'showbutton' => true, 'image' => 'delete.gif'),
-        array('tab_id' => 'class_reportlinkspage', 'page' => 'class_reportlinkspage', '', 'name' => get_string('classreportlinks', 'block_curr_admin'), 'showtab' => true, 'showbutton' => true, 'image' => 'report.gif')
         );
+
+        if ($reports_installed) {
+            $this->tabs[] = array('tab_id' => 'class_reportlinkspage',
+                                  'page' => 'class_reportlinkspage',
+                                  'params' => array('currentitypath' => 'rept/'. php_report::CATEGORY_CLASS .'/'),
+                                  'name' => get_string('classreportlinks', 'block_curr_admin'),
+                                  'showtab' => true,
+                                  'showbutton' => true,
+                                  'image' => 'report.gif');
+        }
 
         parent::__construct($params);
     }

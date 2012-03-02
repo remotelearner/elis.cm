@@ -255,7 +255,7 @@ class curriculumforcoursepage extends curriculumpage {
 
         $form = new $this->form_class($target->get_moodle_url());
 
-        if(!empty($this->data)) {
+        if (!empty($this->data)) {
             $data = $this->data;
             $data->idnumber .= ' -C';
             $data->name .= '-Curriculum';
@@ -276,18 +276,18 @@ class curriculumforcoursepage extends curriculumpage {
     }
 
     function action_savenew() {
+        $courseid = $this->required_param('courseid', PARAM_INT);
         $target = $this->get_new_page(array('action' => 'add'));
 
         $form = new $this->form_class($target->get_moodle_url());
-
         if ($form->is_cancelled()) {
-            $this->action_default();
-            return;
+            $coursepage = new coursecurriculumpage();
+            $target = $coursepage->get_new_page(array('id' => $courseid));
+            redirect($target->get_url(), '', 0.1);
         }
 
         $data = $form->get_data();
-
-        if($data) {
+        if ($data) {
             $obj = new $this->data_class();
             $obj->set_from_data($data);
             $obj->add();
@@ -296,7 +296,6 @@ class curriculumforcoursepage extends curriculumpage {
             $course->add_course_to_curricula(array($obj->id));
 
             $coursepage = new coursepage();
-
             $target = $coursepage->get_new_page(array('action' => 'view', 'id' => $course->id));
             redirect($target->get_url(), ucwords($obj->get_verbose_name())  . ' ' . $obj->to_string() . ' saved.');
         } else {

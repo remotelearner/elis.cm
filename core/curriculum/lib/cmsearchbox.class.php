@@ -48,8 +48,12 @@ class cmsearchbox {
         echo "<input type=\"text\" name=\"search\" value=\"" . s($search, true) . "\" size=\"20\" />";
         echo '<input type="submit" value="'.get_string('search').'" />';
 
+        //remove the "bare" parameter to prevent from loading only part of the page
+        $moodleurl = new moodle_url($target->get_url());
+        $moodleurl->remove_params('mode');
+
         if ($search) {
-            echo "<input type=\"button\" onclick=\"document.location='" . $target->get_url() . "';\" " .
+            echo "<input type=\"button\" onclick=\"document.location='" . $moodleurl->out() . "';\" " .
                  "value=\"Show all items\" />";
         }
 

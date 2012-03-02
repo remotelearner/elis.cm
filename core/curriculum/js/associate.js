@@ -127,8 +127,14 @@ function load_form(ev) {
     var target = YAHOO.util.Event.getTarget(ev);
     var data = YAHOO.util.Connect.setForm(target);
     var link = target.getAttribute('action');
+    //remove this next line?
     lastrequest = link + '?' + data;
-    YAHOO.util.Connect.asyncRequest("POST", link + "?mode=bare", set_content_callback, null);
+    //this is needed because some filters use post data and others use URL params
+    var separator = '&';
+    if (link.indexOf('?') == -1) {
+        separator = '?';
+    }
+    YAHOO.util.Connect.asyncRequest("POST", link + separator + "mode=bare", set_content_callback, null);
     YAHOO.util.Event.preventDefault(ev);
 }
 

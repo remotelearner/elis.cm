@@ -750,10 +750,12 @@ class curriculumcourse extends datarecord {
  * @param string $namesearch Search string for curriculum name.
  * @param string $descsearch Search string for curriculum description.
  * @param string $alpha Start initial of curriculum name filter.
+ * @param array $extrafilters Additional filters to apply to the count/listing
  * @return object array Returned records.
  */
-function curriculumcourse_get_listing($curid, $sort='position', $dir='ASC', $startrec=0, $perpage=0, $namesearch='',
-                         $alpha='') {
+function curriculumcourse_get_listing($curid, $sort='position', $dir='ASC',
+                                      $startrec=0, $perpage=0, $namesearch='',
+                                      $alpha='', $extrafilters = array()) {
     global $CURMAN;
 
     $LIKE = $CURMAN->db->sql_compare();
@@ -762,19 +764,23 @@ function curriculumcourse_get_listing($curid, $sort='position', $dir='ASC', $sta
     $tables = 'FROM ' . $CURMAN->db->prefix_table(CURCRSTABLE) . ' curcrs ';
     $join   = 'INNER JOIN ' . $CURMAN->db->prefix_table(CRSTABLE) . ' crs ';
     $on     = 'ON curcrs.courseid = crs.id ';
-    $where = 'curcrs.curriculumid = \'' . $curid . '\'';
+    $where  = "curcrs.curriculumid = $curid ";
 
     if (!empty($namesearch)) {
         $namesearch = trim($namesearch);
-        $where .= (!empty($where) ? ' AND ' : '') . "(crs.name $LIKE  '%$namesearch%') ";
+        $where .= " AND (crs.name $LIKE  '%{$namesearch}%') ";
     }
 
     if ($alpha) {
-        $where .= (!empty($where) ? ' AND ' : '') . "(crs.name $LIKE '$alpha%') ";
+        $where .= " AND (crs.name $LIKE '{$alpha}%') ";
+    }
+
+    if (!empty($extrafilters['contexts'])) {
+        $where .= ' AND '. $extrafilters['contexts']->sql_filter_for_context_level('crs.id', 'course'); // TBV
     }
 
     if (!empty($where)) {
-        $where = 'WHERE '.$where.' ';
+        $where = "WHERE $where ";
     }
 
     if ($sort) {
@@ -792,15 +798,21 @@ function curriculumcourse_get_listing($curid, $sort='position', $dir='ASC', $sta
     }
 
     $sql = $select.$tables.$join.$on.$where.$sort.$limit;
-
     return $CURMAN->db->get_records_sql($sql);
 }
 
-
-function curriculumcourse_count_records($curid, $namesearch = '', $alpha = '') {
+/**
+ * Gets the number of courses assigned to a particular curriculum
+ *
+ * @param   int     $curid         The id of the curriculum to obtain the listing for
+ * @param   string  $namesearch    Search string for course name
+ * @param   string  $alpha         Start initial of course name filter
+ * @param   array   $extrafilters  Additional filters to apply to the count
+ * @return  int                    The number of appropriate records
+ **/
+function curriculumcourse_count_records($curid, $namesearch = '', $alpha = '',
+                                        $extrafilters = array()) {
     global $CURMAN;
-
-    $select = '';
 
     $LIKE = $CURMAN->db->sql_compare();
 
@@ -808,7 +820,7 @@ function curriculumcourse_count_records($curid, $namesearch = '', $alpha = '') {
     $tables = 'FROM ' . $CURMAN->db->prefix_table(CURCRSTABLE) . ' curcrs ';
     $join   = 'INNER JOIN ' . $CURMAN->db->prefix_table(CRSTABLE) . ' crs ';
     $on     = 'ON curcrs.courseid = crs.id ';
-    $where = 'curcrs.curriculumid = \'' . $curid . '\'';
+    $where  = "curcrs.curriculumid = {$curid}";
 
     if (!empty($namesearch)) {
         $namesearch = trim($namesearch);
@@ -819,12 +831,12 @@ function curriculumcourse_count_records($curid, $namesearch = '', $alpha = '') {
         $where .= (!empty($where) ? ' AND ' : '') . "(crs.name $LIKE '$alpha%') ";
     }
 
-    if (!empty($where)) {
-        $where = 'WHERE '.$where.' ';
+    if (!empty($extrafilters['contexts'])) {
+        $where .= ' AND '. $extrafilters['contexts']->sql_filter_for_context_level('crs.id', 'course'); // TBV
     }
 
+    $where = "WHERE {$where} ";
     $sql = $select . $tables . $join . $on . $where;
-
     return $CURMAN->db->count_records_sql($sql);
 }
 
@@ -888,7 +900,6 @@ function curriculumcourse_get_curriculum_listing($crsid, $sort='position', $dir=
 
     return $CURMAN->db->get_records_sql($sql);
 }
-
 
 function curriculumcourse_count_curriculum_records($crsid, $namesearch = '', $alpha = '', $contexts = null) {
     global $CURMAN;

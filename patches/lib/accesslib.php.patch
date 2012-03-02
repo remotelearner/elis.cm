@@ -1,10 +1,18 @@
 diff --git a/lib/accesslib.php b/lib/accesslib.php
 old mode 100755
 new mode 100644
-index 0ab769e..f5c085b
+index 0ab769e..38841b8
 --- a/lib/accesslib.php
 +++ b/lib/accesslib.php
-@@ -171,6 +171,944 @@ $ACCESS = array(); // cache of caps for cron user switching and has_capability f
+@@ -129,6 +129,7 @@
+  */
+ 
+ require_once $CFG->dirroot.'/lib/blocklib.php';
++require_once $CFG->dirroot.'/lib/ddllib.php';
+ 
+ // permission definitions
+ define('CAP_INHERIT', 0);
+@@ -171,6 +172,946 @@ $ACCESS = array(); // cache of caps for cron user switching and has_capability f
  $RDEFS = array(); // role definitions cache - helps a lot with mem usage in cron
  
  /**
@@ -101,8 +109,8 @@ index 0ab769e..f5c085b
 +    private static function load_custom_context_levels() {
 +        if (context_level_base::$customctxlevels === null) {
 +            context_level_base::$customctxlevels = array();
-+            $ctxlevel = get_records('context_levels');
-+            if (!$ctxlevel) {
++            if (!table_exists(new XMLDBTable('context_levels')) ||
++                !($ctxlevel = get_records('context_levels'))) {
 +                return;
 +            }
 +            foreach($ctxlevel as $rec) {
@@ -557,7 +565,9 @@ index 0ab769e..f5c085b
 +
 +    public function get_context_info($instanceid) {
 +        global $CFG;
-+        $result = true;
++        $result    = true;
++        $basepath  = null;
++        $basedepth = 0;
 +        $sql = "SELECT ctx.path, ctx.depth
 +                  FROM {$CFG->prefix}context           ctx
 +                  JOIN {$CFG->prefix}course            c
@@ -949,7 +959,7 @@ index 0ab769e..f5c085b
   * Adds a context to the cache.
   * @param object $context Context object to be cached
   */
-@@ -1389,7 +2327,14 @@ function load_subcontext($userid, $context, &$accessdata) {
+@@ -1389,7 +2330,14 @@ function load_subcontext($userid, $context, &$accessdata) {
      $courseroles    = aggregate_roles_from_accessdata($context, $accessdata);
  
      // Do we have any interesting "local" roles?
@@ -965,7 +975,7 @@ index 0ab769e..f5c085b
      $wherelocalroles='';
      if (count($localroles)) {
          // Role defs for local roles in 'higher' contexts...
-@@ -1402,7 +2347,7 @@ function load_subcontext($userid, $context, &$accessdata) {
+@@ -1402,7 +2350,7 @@ function load_subcontext($userid, $context, &$accessdata) {
  
      // We will want overrides for all of them
      $whereroles = '';
@@ -974,7 +984,7 @@ index 0ab769e..f5c085b
          $whereroles = "rc.roleid IN ($roleids) AND";
      }
      $sql = "SELECT ctx.path, rc.roleid, rc.capability, rc.permission
-@@ -2029,180 +2974,66 @@ function assign_legacy_capabilities($capability, $legacyperms) {
+@@ -2029,180 +2977,66 @@ function assign_legacy_capabilities($capability, $legacyperms) {
  
          $systemcontext = get_context_instance(CONTEXT_SYSTEM);
  
@@ -1210,7 +1220,7 @@ index 0ab769e..f5c085b
      if ($basedepth != 0) {
          $context->depth = $basedepth+1;
      }
-@@ -2393,41 +3224,21 @@ function create_contexts($contextlevel=null, $buildpaths=true, $feedback=false)
+@@ -2393,41 +3227,21 @@ function create_contexts($contextlevel=null, $buildpaths=true, $feedback=false)
  function cleanup_contexts() {
      global $CFG;
  
@@ -1267,7 +1277,7 @@ index 0ab769e..f5c085b
      if ($rs = get_recordset_sql($sql)) {
          begin_sql();
          $tx = true;
-@@ -2502,7 +3313,6 @@ function preload_course_contexts($courseid) {
+@@ -2502,7 +3316,6 @@ function preload_course_contexts($courseid) {
  function get_context_instance($contextlevel, $instance=0) {
  
      global $context_cache, $context_cache_id, $CFG;
@@ -1275,7 +1285,7 @@ index 0ab769e..f5c085b
  
      if ($contextlevel === 'clearcache') {
          // TODO: Remove for v2.0
-@@ -2519,7 +3329,7 @@ function get_context_instance($contextlevel, $instance=0) {
+@@ -2519,7 +3332,7 @@ function get_context_instance($contextlevel, $instance=0) {
      }
  
  /// check allowed context levels
@@ -1284,7 +1294,7 @@ index 0ab769e..f5c085b
          // fatal error, code must be fixed - probably typo or switched parameters
          error('Error: get_context_instance() called with incorrect context level "'.s($contextlevel).'"');
      }
-@@ -3194,6 +4004,31 @@ function load_capability_def($component) {
+@@ -3194,6 +4007,31 @@ function load_capability_def($component) {
      return $capabilities;
  }
  
@@ -1316,7 +1326,7 @@ index 0ab769e..f5c085b
  
  /**
   * Gets the capabilities that have been cached in the database for this
-@@ -3293,6 +4128,24 @@ function update_capabilities($component='moodle') {
+@@ -3293,6 +4131,24 @@ function update_capabilities($component='moodle') {
  
      $storedcaps = array();
  
@@ -1341,7 +1351,7 @@ index 0ab769e..f5c085b
      $filecaps = load_capability_def($component);
      $cachedcaps = get_cached_capabilities($component);
      if ($cachedcaps) {
-@@ -3432,85 +4285,12 @@ function capabilities_cleanup($component, $newcapdef=NULL) {
+@@ -3432,85 +4288,12 @@ function capabilities_cleanup($component, $newcapdef=NULL) {
   * prints human readable context identifier.
   */
  function print_context_name($context, $withprefix = true, $short = false) {
@@ -1430,7 +1440,7 @@ index 0ab769e..f5c085b
  }
  
  
-@@ -3529,110 +4309,13 @@ function print_context_name($context, $withprefix = true, $short = false) {
+@@ -3529,110 +4312,13 @@ function print_context_name($context, $withprefix = true, $short = false) {
   * `component` varchar(100) NOT NULL,
   */
  function fetch_context_capabilities($context) {
@@ -1546,7 +1556,7 @@ index 0ab769e..f5c085b
  }
  
  
-@@ -3744,81 +4427,13 @@ function is_inside_frontpage($context) {
+@@ -3744,81 +4430,13 @@ function is_inside_frontpage($context) {
   * @return array of child records
   */
  function get_child_contexts($context) {
@@ -1632,7 +1642,7 @@ index 0ab769e..f5c085b
      }
  }
  
-@@ -3927,64 +4542,12 @@ function get_capability_string($capabilityname) {
+@@ -3927,64 +4545,12 @@ function get_capability_string($capabilityname) {
   * @param $contextlevel
   */
  function get_component_string($component, $contextlevel) {
@@ -1700,7 +1710,7 @@ index 0ab769e..f5c085b
  }
  
  /**
-@@ -5419,180 +5982,24 @@ function component_level_changed($cap, $comp, $contextlevel) {
+@@ -5419,180 +5985,24 @@ function component_level_changed($cap, $comp, $contextlevel) {
   */
  function build_context_path($force=false, $feedback=false) {
      global $CFG;

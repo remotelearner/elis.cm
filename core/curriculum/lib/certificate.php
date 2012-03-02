@@ -24,19 +24,26 @@
  *
  */
 
-//use the TCPDF library
-require_once($CFG->libdir . '/pdflib.php');
+define('CM_CERTIFICATE_CODE_LENGTH', 15);
 
 /**
  * Outputs a certificate for some sort of completion element
  *
  * @param  string  $person_fullname  The full name of the certificate recipient
  * @param  string  $entity_name      The name of the entity that is compelted
+ * @param  string  $certificatecode  The unique certificate code
  * @param  string  $date_string      Date /time the certification was achieved
- * @param  string  $expirydate       A string representing the time that the certificate expires (optional).
+ * @param  string  $curriculum_frequency the curriculum frequency
+ * @param  string  $expirydate       A string representing the time that the
+ * certificate expires (optional).
  */
-function certificate_output_completion($person_fullname, $entity_name, $date_string, $expirydate = '', $border = '', $seal = '') {
+function certificate_output_completion($person_fullname, $entity_name, $certificatecode = '', $date_string,
+                                       $expirydate = '', $curriculum_frequency = '', $border = '',
+                                       $seal = '', $template = '') {
     global $CFG, $COURSE;
+
+    //use the TCPDF library
+    require_once($CFG->libdir .'/pdflib.php');
 
     //global settings
     $borders = 0;
@@ -70,37 +77,16 @@ function certificate_output_completion($person_fullname, $entity_name, $date_str
         $pdf->Image($CFG->dataroot . '/' . $COURSE->id . '/curriculum/pix/certificate/seals/' . $seal, 8.0, 5.8);
     }
 
-    //add the header
-    $pdf->Ln(1.25);
-    $pdf->SetFont($font, '', $large_font_size);
-    $pdf->Cell(0, 1, get_string('certificate_title', 'block_curr_admin'), $borders, 1, 'C');
+    //include template
 
-    $pdf->Ln(0.25);
+    cm_certificate_check_data_path('templates');
 
-    $pdf->SetFont($font, '', $small_font_size);
-    $pdf->Cell(0, 0.5, get_string('certificate_certify', 'block_curr_admin'), $borders, 1, 'C');
-
-    //person's name
-    $pdf->SetFont($font, '', $large_font_size);
-    $pdf->Cell(0, 1, $person_fullname, $borders, 1, 'C');
-
-    $pdf->SetFont($font, '', $small_font_size);
-    $pdf->Cell(0, 0.5, get_string('certificate_has_completed', 'block_curr_admin'), $borders, 1, 'C');
-
-    //entity's name
-    $pdf->SetFont($font, '', $large_font_size);
-    $pdf->Cell(0, 1, $entity_name, $borders, 1, 'C');
-
-    //time issued
-    $pdf->SetFont($font, '', $small_font_size);
-    $pdf->Cell(0, 0.5, get_string('certificate_date', 'block_curr_admin', $date_string), $borders, 1, 'C');
-
-    // Expiry date (if applicable)
-    if (!empty($expirydate)) {
-        $pdf->SetFont($font, '', 11);
-        $pdf->Cell(0, 0.5, get_string('certificate_expires', 'block_curr_admin'), $borders, 1, 'C');
-        $pdf->Cell(0, 0.05, $expirydate, $borders, 1, 'C');
+    if (file_exists($CFG->dirroot . '/curriculum/pix/certificate/templates/' . $template)) {
+        include($CFG->dirroot . '/curriculum/pix/certificate/templates/' . $template);
+    } else if (file_exists($CFG->dataroot . '/' . $COURSE->id . '/curriculum/pix/certificate/templates/' . $template)) {
+        include($CFG->dirroot . '/curriculum/pix/certificate/templates/' . $template);
     }
+
 
     $pdf->Output();
 }
@@ -202,4 +188,114 @@ function cm_certificate_check_data_path($imagetype) {
         }
     }
 }
+
+function cm_certificate_get_templates() {
+    global $CFG, $COURSE;
+
+    // Add default templates
+    $my_path = "{$CFG->dirroot}/curriculum/pix/certificate/templates";
+    $templateoptions = array();
+    if (file_exists($my_path) && $handle = opendir($my_path)) {
+        while (false !== ($file = readdir($handle))) {
+            if (strpos($file, '.php',1)) {
+                $i = strpos($file, '.');
+                if($i > 1) {
+                    $templateoptions[$file] = substr($file, 0, $i);
+                }
+            }
+        }
+        closedir($handle);
+    }
+
+    // Add custom images
+    cm_certificate_check_data_path('templates');
+    $my_path = "{$CFG->dataroot}/{$COURSE->id}/curriculum/pix/certificate/templates";
+    if (file_exists($my_path) && $handle = opendir($my_path)) {
+        while (false !== ($file = readdir($handle))) {
+            if (strpos($file, '.php',1) ) {
+                $i = strpos($file, '.');
+                if($i > 1) {
+                    $templateoptions[$file] = substr($file, 0, $i);
+                }
+            }
+        }
+        closedir($handle);
+    }
+
+    // Sort templates
+    ksort($templateoptions);
+
+
+    return $templateoptions;
+
+}
+
+/**
+ * This function returns a random string of numbers and characters.
+ * The standard length of the string is CM_CERTIFICATE_CODE_LENGTH
+ * characters.  Pass a parameter to append more characters to the
+ * standard CM_CERTIFICATE_CODE_LENGTH characters
+ *
+ * @param int $append - The number of characters to append to the standard
+ * length of CM_CERTIFICATE_CODE_LENGTH
+ */
+function cm_certificate_generate_code($append = 0) {
+
+    $size = CM_CERTIFICATE_CODE_LENGTH + intval($append);
+    $code = random_string($size);
+
+    return $code;
+}
+
+/**
+ * This function sends a message to the development team indicating that
+ * the maximum number of attempts to generate a random string has been
+ * exhausted
+ */
+
+function cm_certificate_email_random_number_fail($tableobj = null) {
+
+    global $CFG;
+
+    if (empty($tableobj)) {
+        return false;
+    }
+
+    require_once($CFG->dirroot . '/message/lib.php');
+
+    //construct the message
+    $a = new stdClass;
+    $a->sitename = get_field('course', 'fullname', 'id', SITEID);
+    $a->url = $CFG->wwwroot;
+
+    $message_text = get_string('certificate_code_fail', 'block_curr_admin', $a) . "\n\n";
+    $message_text .= get_string('certificate_code_fail_text', 'block_curr_admin') . "\n";
+    $message_text .= get_string('certificate_code_fail_text_data', 'block_curr_admin', $tableobj) . "\n";
+
+    $message_html = nl2br($message_text);
+
+    //send message to rladmin user if possible
+    if($rladmin_user = get_record('user', 'username', 'rladmin')) {
+        $result = message_post_message($rladmin_user, $rladmin_user, addslashes($message_html), FORMAT_HTML, 'direct');
+
+        if($result === false) {
+            return $result;
+        }
+    }
+
+    //email to specified address
+    $user_obj = new stdClass;
+    $user_obj->email = CURR_ADMIN_DUPLICATE_EMAIL;
+    $user_obj->mailformat = FORMAT_HTML;
+    email_to_user($user_obj, get_admin(), get_string('certificate_code_fail', 'block_curr_admin', $a), $message_text, $message_html);
+
+    //output to screen if possible
+    if(!empty($output_to_screen)) {
+        echo $message_html;
+    }
+
+    return true;
+
+}
+
 ?>

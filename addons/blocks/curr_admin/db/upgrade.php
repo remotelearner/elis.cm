@@ -1494,89 +1494,6 @@ function xmldb_block_curr_admin_upgrade($oldversion = 0) {
         $result = $result && add_field($table, $field);
     }
 
-    if ($result && $oldversion < 2011011802) {
-        // Delete duplicate class completion element grades
-        $xmldbtable = new XMLDBTable('crlm_class_graded_temp');
-
-        if (table_exists($xmldbtable)) {
-            drop_table($xmldbtable);
-        }
-
-        // Create a temporary table
-        $result = $result && execute_sql("CREATE TABLE {$CFG->prefix}crlm_class_graded_temp LIKE {$CFG->prefix}crlm_class_graded");
-
-        // Store the unique values in the temporary table
-        $sql = "INSERT INTO {$CFG->prefix}crlm_class_graded_temp
-                SELECT MAX(id) AS id, classid, userid, completionid, grade, locked, timegraded, timemodified
-                FROM {$CFG->prefix}crlm_class_graded
-                GROUP BY classid, userid, completionid, locked";
-
-        // Detect if there are still duplicates in the temporary table
-        $sql = "SELECT COUNT(*) AS count, classid, userid, completionid, grade, locked, timegraded, timemodified
-                FROM {$CFG->prefix}crlm_class_graded_temp
-                GROUP BY classid, userid, completionid
-                ORDER BY count DESC, classid ASC, userid ASC, completionid ASC";
-
-        if ($dupcount = get_record_sql($sql, true)) {
-            if ($dupcount->count > 1) {
-                        if ($rs = get_recordset_sql($sql)) {
-                    while ($dupe = rs_fetch_next_record($rs)) {
-                        if ($dupe->count <= 1) {
-                            continue;
-                        }
-
-                        $classid = $dupe->classid;
-                        $userid  = $dupe->userid;
-                        $goodid  = 0; // The ID of the record we will keep
-
-                        // Look for the earliest locked grade record for this user and keep that (if any are locked)
-                        $sql2 = "SELECT id, grade, locked, timegraded
-                                 FROM mdl_crlm_class_graded
-                                 WHERE classid = $classid
-                                 AND userid = $userid
-                                 ORDER BY timegraded ASC";
-
-                        if ($rs2 = get_recordset_sql($sql2)) {
-                            while ($rec = rs_fetch_next_record($rs2)) {
-                                // Store the last record ID just in case we need it for cleanup
-                                $lastid = $rec->id;
-
-                                // Don't bother looking at remaining records if we have found a record to keep
-                                if (!empty($goodid)) {
-                                    continue;
-                                }
-
-                                if ($rec->locked = 1) {
-                                    $goodid = $rec->id;
-                                }
-                            }
-
-                            rs_close($rs2);
-
-                            // We need to make sure we have a record ID to keep, if we found no "complete" and locked
-                            // records, let's just keep the last record we saw
-                            if (empty($goodid)) {
-                                $goodid = $lastid;
-                            }
-
-                            $select = 'classid = '.$classid.' AND userid = '.$userid.' AND id != '.$goodid;
-                        }
-
-                        if (!empty($select)) {
-                            $result = $result && delete_records_select('crlm_class_graded_temp', $select);
-                        }
-                    }
-                }
-            }
-        }
-
-        // Drop the real table
-        $result = $result && execute_sql("DROP TABLE {$CFG->prefix}crlm_class_graded");
-
-        // Replace the real table with the temporary table that now only contains unique values.
-        $result = $result && execute_sql("ALTER TABLE {$CFG->prefix}crlm_class_graded_temp RENAME TO {$CFG->prefix}crlm_class_graded");
-    }
-
     if ($result && $oldversion < 2011050200) {
         /// Define index startdate_ix (not unique) to be added to crlm_class
         $table = new XMLDBTable('crlm_class');
@@ -1727,6 +1644,234 @@ function xmldb_block_curr_admin_upgrade($oldversion = 0) {
         }
 
         $result = $result && execute_sql($sql);
+    }
+
+    if ($result && $oldversion < 2011050203) {
+        //create a new column in the notification log table
+        //to store the user who triggered the notification
+        $table = new XMLDBTable('crlm_notification_log');
+        $field = new XMLDBField('fromuserid');
+        $field->setAttributes(XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null, null, 0, 'userid');
+        $field->comment = 'CM user id that triggered the notification.';
+        $result = $result && add_field($table, $field);
+
+        //populate data, assuming that the user who received the notification is the one whose
+        //criteria spawned it
+        //NOTE: this fudges data and the side-effect implies that if someone had received a notification
+        //for another user and satisfy the same criteria for the same instance for themself, they will not
+        //receive a similar notification
+        $sql = "UPDATE {$CFG->prefix}crlm_notification_log
+                SET fromuserid = userid";
+        $result = $result && execute_sql($sql);
+
+        if ($result) {
+            /// Define field certificatecode to be added to crlm_curriculum_assignment
+            $table = new XMLDBTable('crlm_curriculum_assignment');
+            $field = new XMLDBField('certificatecode');
+            $field->setAttributes(XMLDB_TYPE_CHAR, '40', null, null, null, null, null, null, 'locked');
+
+            /// Launch add field autocreated
+            $result = $result && add_field($table, $field);
+
+            /// Define index userid_ix (not unique) to be added to crlm_wait_list
+            $index = new XMLDBIndex('certificatecode_ix');
+            $index->setAttributes(XMLDB_INDEX_NOTUNIQUE, array('certificatecode'));
+            $result = $result && add_index($table, $index);
+        }
+    }
+
+    if ($result && $oldversion < 2011050204) {
+        $table = new XMLDBTable('crlm_notification_log');
+        $index = new XMLDBIndex('event_inst_fuser_ix');
+        $index->setAttributes(XMLDB_INDEX_NOTUNIQUE, array('fromuserid', 'instance', 'event'));
+
+        $result = add_index($table, $index);
+    }
+
+    if ($result && $oldversion < 2011050205) {
+        // Update the ELIS class enrolment grade value and completion score grade values so they store float
+        // (decimal) values
+        $table = new XMLDBTable('crlm_class_enrolment');
+        $field = new XMLDBField('grade');
+        $field->setAttributes(XMLDB_TYPE_NUMBER, '10', null, XMLDB_NOTNULL, null, null, null, '0');
+        $field->setDecimals(5);
+
+        $result = change_field_type($table, $field);
+
+
+        $table = new XMLDBTable('crlm_class_graded');
+        $result = $result && change_field_type($table, $field);
+
+        /*
+         * Find all of the completion grades that are synchronised from Moodle grade items that are not locked and
+         * where the ELIS completion score does not match the value in the Moodle gradebook and delete those
+         * completion scores so they can be re-synchronised from Moodle with the correct float values stored.
+         */
+
+        // Attempt to handle different DBs in the most efficient way possible
+        if ($CFG->dbfamily == 'postgres') {
+            $sql = "DELETE FROM {$CFG->prefix}crlm_class_graded
+                    WHERE id IN (
+                        SELECT ccg.id
+                        FROM mdl_crlm_user cu
+                        INNER JOIN {$CFG->prefix}crlm_class_enrolment cce ON cce.userid = cu.id
+                        INNER JOIN {$CFG->prefix}crlm_class_graded ccg ON (ccg.userid = cce.userid AND ccg.classid = cce.classid)
+                        INNER JOIN {$CFG->prefix}crlm_course_completion ccc ON ccc.id = ccg.completionid
+                        INNER JOIN {$CFG->prefix}crlm_class_moodle ccm ON ccm.classid = ccg.classid
+                        INNER JOIN {$CFG->prefix}user u ON u.idnumber = cu.idnumber
+                        INNER JOIN {$CFG->prefix}course c ON c.id = ccm.moodlecourseid
+                        INNER JOIN {$CFG->prefix}grade_items gi ON (gi.courseid = c.id AND gi.idnumber = ccc.idnumber)
+                        INNER JOIN {$CFG->prefix}grade_grades gg ON (gg.itemid = gi.id AND gg.userid = u.id)
+                        WHERE ccg.locked = 0
+                        AND ccc.idnumber != ''
+                        AND gi.itemtype != 'course'
+                        AND ccg.grade != gg.finalgrade
+                        AND gg.finalgrade IS NOT NULL
+                    )";
+
+            $result = $result && execute_sql($sql);
+        } else if ($CFG->dbfamily == 'mysql') {
+            $sql = "DELETE ccg
+                    FROM mdl_crlm_user cu
+                    INNER JOIN {$CFG->prefix}crlm_class_enrolment cce ON cce.userid = cu.id
+                    INNER JOIN {$CFG->prefix}crlm_class_graded ccg ON (ccg.userid = cce.userid AND ccg.classid = cce.classid)
+                    INNER JOIN {$CFG->prefix}crlm_course_completion ccc ON ccc.id = ccg.completionid
+                    INNER JOIN {$CFG->prefix}crlm_class_moodle ccm ON ccm.classid = ccg.classid
+                    INNER JOIN {$CFG->prefix}user u ON u.idnumber = cu.idnumber
+                    INNER JOIN {$CFG->prefix}course c ON c.id = ccm.moodlecourseid
+                    INNER JOIN {$CFG->prefix}grade_items gi ON (gi.courseid = c.id AND gi.idnumber = ccc.idnumber)
+                    INNER JOIN {$CFG->prefix}grade_grades gg ON (gg.itemid = gi.id AND gg.userid = u.id)
+                    WHERE ccg.locked = 0
+                    AND ccc.idnumber != ''
+                    AND gi.itemtype != 'course'
+                    AND ccg.grade != gg.finalgrade
+                    AND gg.finalgrade IS NOT NULL";
+
+            $result = $result && execute_sql($sql);
+        } else {
+            $sql = "SELECT ccg.id, ccg.grade
+                    FROM mdl_crlm_user cu
+                    INNER JOIN {$CFG->prefix}crlm_class_enrolment cce ON cce.userid = cu.id
+                    INNER JOIN {$CFG->prefix}crlm_class_graded ccg ON (ccg.userid = cce.userid AND ccg.classid = cce.classid)
+                    INNER JOIN {$CFG->prefix}crlm_course_completion ccc ON ccc.id = ccg.completionid
+                    INNER JOIN {$CFG->prefix}crlm_class_moodle ccm ON ccm.classid = ccg.classid
+                    INNER JOIN {$CFG->prefix}user u ON u.idnumber = cu.idnumber
+                    INNER JOIN {$CFG->prefix}course c ON c.id = ccm.moodlecourseid
+                    INNER JOIN {$CFG->prefix}grade_items gi ON (gi.courseid = c.id AND gi.idnumber = ccc.idnumber)
+                    INNER JOIN {$CFG->prefix}grade_grades gg ON (gg.itemid = gi.id AND gg.userid = u.id)
+                    WHERE ccg.locked = 0
+                    AND ccc.idnumber != ''
+                    AND gi.itemtype != 'course'
+                    AND ccg.grade != gg.finalgrade
+                    AND gg.finalgrade IS NOT NULL";
+
+            if ($rs = get_recordset_sql($sql)) {
+                while ($cg = rs_fetch_next_record($rs)) {
+                    $result = $result && delete_records('crlm_class_graded', 'id', $cg->id);
+                }
+
+                rs_close($rs);
+            }
+        }
+
+        // Force a re-synchronization of ELIS class grade data
+        require_once($CFG->dirroot.'/curriculum/lib/lib.php');
+        cm_synchronize_moodle_class_grades();
+    }
+
+    if ($result && $oldversion < 2011050206) {
+        /// Define table crlm_field_data to be dropped
+        $table = new XMLDBTable('crlm_field_map');
+
+        if (table_exists($table)) {
+            /// Launch drop table for crlm_field_data
+            $result = drop_table($table);
+        }
+    }
+
+    if ($result && $oldversion < 2011050207) {
+        // Delete duplicate class completion element grades
+        $xmldbtable = new XMLDBTable('crlm_class_graded_temp');
+
+        if (table_exists($xmldbtable)) {
+            drop_table($xmldbtable);
+        }
+
+        // Create a temporary table
+        $result = $result && execute_sql("CREATE TABLE {$CFG->prefix}crlm_class_graded_temp LIKE {$CFG->prefix}crlm_class_graded");
+
+        // Store the unique values in the temporary table
+        $sql = "INSERT INTO {$CFG->prefix}crlm_class_graded_temp
+                SELECT MAX(id) AS id, classid, userid, completionid, grade, locked, timegraded, timemodified
+                FROM {$CFG->prefix}crlm_class_graded
+                GROUP BY classid, userid, completionid, locked";
+
+        $result = $result && execute_sql($sql);
+
+        // Detect if there are still duplicates in the temporary table
+        $sql = "SELECT COUNT(*) AS count, classid, userid, completionid, grade, locked, timegraded, timemodified
+                FROM {$CFG->prefix}crlm_class_graded_temp
+                GROUP BY classid, userid, completionid
+                ORDER BY count DESC, classid ASC, userid ASC, completionid ASC";
+
+        if ($result && ($dupcount = get_record_sql($sql, true))) {
+            if ($dupcount->count > 1) {
+                if ($rs = get_recordset_sql($sql)) {
+                    while ($result && ($dupe = rs_fetch_next_record($rs))) {
+                        if ($dupe->count <= 1) {
+                            continue;
+                        }
+
+                        $classid = $dupe->classid;
+                        $userid  = $dupe->userid;
+                        $goodid  = 0; // The ID of the record we will keep
+
+                        // Look for the earliest locked grade record for this user and keep that (if any are locked)
+                        $sql2 = "SELECT id, grade, locked, timegraded
+                                 FROM mdl_crlm_class_graded
+                                 WHERE classid = $classid
+                                 AND userid = $userid
+                                 ORDER BY timegraded ASC";
+
+                        if ($rs2 = get_recordset_sql($sql2)) {
+                            while ($rec = rs_fetch_next_record($rs2)) {
+                                // Store the last record ID just in case we need it for cleanup
+                                $lastid = $rec->id;
+
+                                // Don't bother looking at remaining records if we have found a record to keep
+                                if (!empty($goodid)) {
+                                    continue;
+                                }
+
+                                if ($rec->locked = 1) {
+                                    $goodid = $rec->id;
+                                }
+                            }
+
+                            rs_close($rs2);
+
+                            // We need to make sure we have a record ID to keep, if we found no "complete" and locked
+                            // records, let's just keep the last record we saw
+                            if (empty($goodid)) {
+                                $goodid = $lastid;
+                            }
+
+                            $select = 'classid = '.$classid.' AND userid = '.$userid.' AND id != '.$goodid;
+                        }
+
+                        if (!empty($select)) {
+                            $result = $result && delete_records_select('crlm_class_graded_temp', $select);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Drop the real table
+        $result = $result && execute_sql("DROP TABLE {$CFG->prefix}crlm_class_graded");
+
+        // Replace the real table with the temporary table that now only contains unique values.
+        $result = $result && execute_sql("ALTER TABLE {$CFG->prefix}crlm_class_graded_temp RENAME TO {$CFG->prefix}crlm_class_graded");
     }
 
     return $result;

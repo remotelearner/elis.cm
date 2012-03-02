@@ -30,56 +30,55 @@
  * @param  function  fnLoadComplete  The function to call which will signify that loading is done
  */
 function loadNodeData(node, fnLoadComplete) {
-	
-	//URL of our script (wwwroot is pre-set by the calling PHP script)
-	var url = wwwroot + '/blocks/curr_admin/load_menu.php?data=' + node.contentElId;
+    //URL of our script (wwwroot is pre-set by the calling PHP script)
+    var url = wwwroot + '/blocks/curr_admin/load_menu.php?data=' + node.contentElId;
 
-	var callback = {
-	
-	    //success function
-	    success: function(o) {
-
+    var callback = {
+        //success function
+        success: function(o) {
             //YUI can fire multiple expand events for the same node
             //so make sure it hasn't already been loaded
-		    if(o.responseText != '' && node.children == '') {
-		        var responseObject = YAHOO.lang.JSON.parse(o.responseText);
-		    
-		        //loop through and append new child nodes
-		        for(var i = 0; i < responseObject.children.length; i++) {
-		            var childObject = responseObject.children[i];
-		            
-		            //this actually creates the node in the menu
+            if (o.responseText != '' && node.children == '') {
+                var responseObject = YAHOO.lang.JSON.parse(o.responseText);
+
+                //loop through and append new child nodes
+                for (var i = 0; i < responseObject.children.length; i++) {
+                    var childObject = responseObject.children[i];
+
+                    //this actually creates the node in the menu
                     var newNode = new YAHOO.widget.TextNode(childObject.label, node);
-                    
+                    if (responseObject.children[i].expanded) {
+                        newNode.expand();
+                    }
+
                     //information about parent elements is held in this value
                     newNode.contentElId = childObject.contentElId;
-                    
+
                     //CSS styling
                     newNode.labelStyle = childObject.labelStyle;
-                    
+
                     //specifies if we should not show the + icon
                     newNode.isLeaf = childObject.isLeaf;
-		        }
-		    }
-		    
-		    //indicate that loading is complete
-		    fnLoadComplete();
-	    },
-	    
-	    //failure function
-	    failure: function(o) {
-	    
-	        //DO NOT warn the user in any way because this failure can happen
-	    	//in an innocuous way if you navigate to another page while the menu is loading
-	    	
-	    	//indicate that loading is complete
-	    	fnLoadComplete();
-	    }
-         
-	}
+                }
+            }
 
-	//make the actual call
-	YAHOO.util.Connect.asyncRequest('GET', url, callback);
+            // indcate that loading is complete
+            fnLoadComplete();
+        },
+	    
+        //failure function
+        failure: function(o) {
+            //DO NOT warn the user in any way because this failure can happen
+            //in an innocuous way if you navigate to another page while the menu is loading
+
+            //indicate that loading is complete
+            fnLoadComplete();
+        }
+         
+    }
+
+    //make the actual call
+    YAHOO.util.Connect.asyncRequest('GET', url, callback);
 }
 
 /**
@@ -88,12 +87,10 @@ function loadNodeData(node, fnLoadComplete) {
  * @param  object  tree_object  The object representing tree contents
  */
 function render_curr_admin_tree(tree_object) {
-	
-	var curr_admin_tree = new YAHOO.widget.TreeView("block_curr_admin_tree", tree_object.children);
-	
-	//set up dynamic loading
-	curr_admin_tree.setDynamicLoad(loadNodeData);
-	
-	curr_admin_tree.render();
+    var curr_admin_tree = new YAHOO.widget.TreeView("block_curr_admin_tree", tree_object.children);
 
+    //set up dynamic loading
+    curr_admin_tree.setDynamicLoad(loadNodeData);
+
+    curr_admin_tree.render();
 }

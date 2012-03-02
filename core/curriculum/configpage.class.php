@@ -115,6 +115,7 @@ class configpage extends newpage {
             self::config_set_value($configdata, 'disablecertificates', 0);
             self::config_set_value($configdata, 'certificate_border_image', 'Fancy1-blue.jpg');
             self::config_set_value($configdata, 'certificate_seal_image', 'none');
+            self::config_set_value($configdata, 'certificate_template_file', 'default.php');
 
             // Interface settings
             self::config_set_value($configdata, 'time_format_12h', 0);

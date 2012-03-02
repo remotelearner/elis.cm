@@ -1,4 +1,4 @@
-<?php // $Id: fix_track_classes.php,v 1.0 2011/01/03 11:00:00 mvidberg Exp $
+<?php
 
 /**
  * Fix ELIS track classes that have had their parent curriculum courses deleted.
@@ -10,8 +10,8 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once '../config.php';
-require_once '../lib/student.class.php';;
+require_once dirname(dirname(__FILE__)).'/config.php';
+require_once dirname(dirname(__FILE__)).'/lib/student.class.php';
 
 if (isset($_SERVER['REMOTE_ADDR'])) {
     die('no web access');
@@ -27,8 +27,8 @@ $tempname  = STUTABLE.'_temp';
 $xmldbtable = new XMLDBTable($tempname);
 
 if (table_exists($xmldbtable)) {
-    if (!execute_sql("TRUNCATE TABLE {$CURMAN->db->prefix_table($tempname)}", false)) {
-        mtrace(' <<< Could not empty temporary table '.$tempname);
+    if (!drop_table($xmldbtable)) {
+        mtrace(' <<< Could not remove temporary table '.$tempname);
         exit;
     }
 }
@@ -44,7 +44,7 @@ if (execute_sql("CREATE TABLE {$CURMAN->db->prefix_table($tempname)} LIKE {$CURM
 // Step 1. -- attempt to move unique values into the temporary table in a way that should leave some duplicates but
 //            will remove the vast majority of the them
 $sql = "INSERT INTO {$CURMAN->db->prefix_table($tempname)}
-        SELECT id, classid, userid, enrolmenttime, MIN(completetime) AS completetime, completestatusid,
+        SELECT id, classid, userid, enrolmenttime, MIN(completetime) AS completetime, endtime, completestatusid,
                grade, credits, locked
         FROM {$CURMAN->db->prefix_table($tablename)}
         GROUP BY classid, userid, completestatusid, grade, credits, locked";

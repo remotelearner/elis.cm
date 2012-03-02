@@ -141,7 +141,8 @@ class notification extends message {
      * @param char $message The text of the message.
      * @param object $userto A Moodle generic user object, or a CM user class object that the message is to.
      * @param object $userfrom A Moodle generic user object, or a CM user class object that the message is from.
-     * @param object $logevent Information to log to 'crlm_notification_log'.
+     * @param object $logevent Information to log to 'crlm_notification_log'  (can include fields userto, fromuserid,
+     *                         instance, data, timecreated).
      *
      */
     public function send_notification($message='', $userto=null, $userfrom=null, $logevent=false) {
@@ -166,6 +167,7 @@ class notification extends message {
         }
 
         /// Check for the user object type. If a CM User was sent in, need to get the Moodle object.
+        //todo: convert this code to use "is_a"
         $tocmuserid = false;
         if (get_class($this->userto) == 'user') {
             $tocmuserid = $this->userto->id;
@@ -176,6 +178,7 @@ class notification extends message {
         if (get_class($this->userfrom) == 'user') {
             if (!($this->userfrom = cm_get_moodleuser($this->userfrom->id))) {
                 debugging(get_string('nomoodleuser', 'block_curr_admin'));
+                $this->userfrom = get_admin();
             }
         }
 
@@ -183,8 +186,10 @@ class notification extends message {
         $this->name    = ($this->name == '') ? $this->defname : $this->name;
         $this->subject = ($this->subject == '') ? $this->defsubject : $this->subject;
 
-        $eventname='message_send';
-        events_trigger($eventname, $this);
+        $eventname = 'message_send';
+        if (!empty($this->userto)) {
+            events_trigger($eventname, $this);
+        }
 
     /// Insert a notification log if we have data for it.
         if ($logevent !== false) {
@@ -194,10 +199,21 @@ class notification extends message {
                 if (isset($logevent->userid)) {
                     $newlog->userid = $logevent->userid;
                 } else if ($tocmuserid === false){
-                    $newlog->userid = cm_get_crlmuserid($this->userto->id);
+                    $newlog->userid = !empty($this->userto)
+                                      ? cm_get_crlmuserid($this->userto->id)
+                                      : 0; //TBD: this should never happen!?!
                 } else {
                     $newlog->userid = $tocmuserid;
                 }
+
+                //if the log entry specifies which user triggered the event,
+                //store that info
+                //NOTE: Do not use $userfrom because that is the message sender
+                //but not necessarily the user whose criteria triggered the event
+                if (isset($logevent->fromuserid)) {
+                    $newlog->fromuserid = $logevent->fromuserid;
+                }
+
                 if (isset($logevent->instance)) {
                     $newlog->instance = $logevent->instance;
                 }
@@ -457,7 +473,8 @@ function cm_assign_student_from_mdl($eventdata) {
     global $CURMAN, $CFG;
 
     /// We get all context assigns, so check that this is a class. If not, we're done.
-    if (!($context = get_context_instance_by_id($eventdata->contextid))) {
+    if (!($context = get_context_instance_by_id($eventdata->contextid)) &&
+        !($context = get_context_instance($eventdata->contextid, $eventdata->itemid))) {
         print_error('invalidcontext');
         return true;
     } else if ($context->contextlevel != CONTEXT_COURSE) {
@@ -528,10 +545,12 @@ function cm_notify_role_assign_handler($eventdata){
     }
 
     /// We get all context assigns, so check that this is a class. If not, we're done.
-    if (!($context = get_context_instance_by_id($eventdata->contextid))) {
+    if (!($context = get_context_instance_by_id($eventdata->contextid)) &&
+        !($context = get_context_instance($eventdata->contextid, $eventdata->itemid))) {
         print_error('invalidcontext');
         return true;
-    } else if ($context->contextlevel != CONTEXT_COURSE) {
+    } else if ($context->contextlevel == CONTEXT_SYSTEM) {
+        // TBD: ^above was != CONTEXT_COURSE
         return true;
     }
 
@@ -542,10 +561,23 @@ function cm_notify_role_assign_handler($eventdata){
     }
 
     /// Get the course record from the context id.
-    if (!($course = get_record('course', 'id', $context->instanceid))) {
+    $course = null;
+    if ($context->contextlevel == CONTEXT_COURSE &&
+        !($course = get_record('course', 'id', $context->instanceid))) {
         print_error('invalidcourse');
         return true;
-    }
+    } else {
+        if (empty($course) && $eventdata->contextid != context_level_base::get_custom_context_level('class', 'block_curr_admin')) { // TBD
+            //error_log("/curriculum/lib/notifications.php::pm_notify_role_assign_handler(); eventdata->contextid != context_level_base::get_custom_context_level('class', 'block_curr_admin')");
+            return true;
+        }
+        $name = !empty($course) ? $course->fullname
+                                : get_field('crlm_class', 'idnumber',
+                                            'id', $eventdata->itemid);
+        if (empty($name)) {
+            return true;
+        }
+     }
 
     $message = new notification();
 
@@ -554,7 +586,7 @@ function cm_notify_role_assign_handler($eventdata){
                 get_string('notifyclassenrolmessagedef', 'block_curr_admin') :
                 $CURMAN->config->notify_classenrol_message;
     $search = array('%%userenrolname%%', '%%classname%%');
-    $replace = array(fullname($enroluser), $course->fullname);
+    $replace = array(fullname($enroluser), $name);
     $text = str_replace($search, $replace, $text);
 
     if ($sendtouser) {
@@ -568,6 +600,9 @@ function cm_notify_role_assign_handler($eventdata){
         if ($roleusers = get_users_by_capability($context, 'block/curr_admin:notify_classenrol')) {
             $users = $users + $roleusers;
         }
+        if ($roleusers = get_users_by_capability(get_system_context(), 'block/curr_admin:notify_classenrol')) {
+            $users = $users + $roleusers;
+        }
     }
 
     if ($sendtosupervisor) {
@@ -579,6 +614,7 @@ function cm_notify_role_assign_handler($eventdata){
     }
 
     foreach ($users as $user) {
+        //error_log("/curriculum/lib/notifications.php::pm_notify_role_assign_handler(eventdata); Sending notification to user[{$user->id}]: {$user->email}");
         $message->send_notification($text, $user, $enroluser);
     }
 

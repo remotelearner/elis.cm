@@ -91,6 +91,32 @@ class curriculumcoursepage extends curriculumcoursebasepage {
 
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
+
+        if (curriculumpage::_has_capability('block/curr_admin:curriculum:view', $id)) {
+            //allow viewing but not managing associations
+            return true;
+        }
+
+        return curriculumpage::_has_capability('block/curr_admin:associate', $id);
+    }
+
+    /**
+     * Specifies whether the current user can edit prerequisites
+     *
+     * @return  boolean  true if allowed, otherwise false
+     */
+    function can_do_prereqedit() {
+        $id = $this->required_param('id', PARAM_INT);
+        return curriculumpage::_has_capability('block/curr_admin:associate', $id);
+    }
+
+    /**
+     * Specifies whether the current user can edit corequisites
+     *
+     * @return  boolean  true if allowed, otherwise false
+     */
+    function can_do_coreqedit() {
+        $id = $this->required_param('id', PARAM_INT);
         return curriculumpage::_has_capability('block/curr_admin:associate', $id);
     }
 
@@ -124,9 +150,11 @@ class curriculumcoursepage extends curriculumcoursebasepage {
         $this->print_alpha();
         $this->print_search();
 
-        $this->print_list_view($items, $columns, $formatters);
+        $this->print_list_view($items, $columns, $formatters, 'courses');
 
-        $this->print_add_button(array('id' => $id), get_string('curriculumcourse_assigncourse','block_curr_admin') );
+        if (coursepage::_has_capability('block/curr_admin:associate')) {
+            $this->print_add_button(array('id' => $id), get_string('curriculumcourse_assigncourse','block_curr_admin'));
+        }
     }
 
     function action_prereqedit() {
@@ -281,6 +309,12 @@ class coursecurriculumpage extends curriculumcoursebasepage {
 
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
+
+        if (coursepage::_has_capability('block/curr_admin:course:view', $id)) {
+            //allow viewing but not managing associations
+            return true;
+        }
+
         return coursepage::_has_capability('block/curr_admin:associate', $id);
     }
 
@@ -302,12 +336,13 @@ class coursecurriculumpage extends curriculumcoursebasepage {
             'frequency'  => get_string('frequency','block_curr_admin'),
             'timeperiod' => get_string('time_period','block_curr_admin'),
             'position'   => get_string('position','block_curr_admin'),
-            'buttons' => get_string('management','block_curr_admin')
+            'buttons'    => get_string('management','block_curr_admin')
         );
 
-        $contexts = curriculumpage::get_contexts('block/curr_admin:associate');
-        $items = curriculumcourse_get_curriculum_listing($id, $sort, $dir, 0, 0, $namesearch, $alpha, $contexts);
-        $numitems = curriculumcourse_count_curriculum_records($id, $namesearch, $alpha, $contexts);
+        // ELIS-3306: back porting ELIS-2442
+        //$contexts = curriculumpage::get_contexts('block/curr_admin:associate');
+        $items = curriculumcourse_get_curriculum_listing($id, $sort, $dir, 0, 0, $namesearch, $alpha /* , $contexts */);
+        $numitems = curriculumcourse_count_curriculum_records($id, $namesearch, $alpha /* , $contexts */);
 
         $formatters = $this->create_link_formatters(array('curriculumname'), 'curriculumpage', 'curriculumid');
 
@@ -315,14 +350,18 @@ class coursecurriculumpage extends curriculumcoursebasepage {
         $this->print_alpha();
         $this->print_search();
 
-        $this->print_list_view($items, $columns, $formatters);
+        $this->print_list_view($items, $columns, $formatters, 'curricula');
 
-        $this->print_add_button(array('id' => $id), get_string('course_assigncurriculum', 'block_curr_admin') );
+        if (coursepage::_has_capability('block/curr_admin:associate')) {
+            $this->print_add_button(array('id' => $id), get_string('course_assigncurriculum', 'block_curr_admin') );
+        }
 
-        echo '<div align="center">';
-        $options = array_merge(array('s' => 'cfc', 'id' => $id));
-        echo print_single_button('index.php', $options, get_string('makecurcourse', 'block_curr_admin'), 'get', '_self', true, get_string('makecurcourse', 'block_curr_admin'));
-        echo '</div>';
+        if (coursepage::_has_capability('block/curr_admin:curriculum:create')) {
+            echo '<div align="center">';
+            $options = array_merge(array('s' => 'cfc', 'id' => $id));
+            echo print_single_button('index.php', $options, get_string('makecurcourse', 'block_curr_admin'), 'get', '_self', true, get_string('makecurcourse', 'block_curr_admin'));
+            echo '</div>';
+        }
     }
 
     // disable prereq/coreq editing from the course page

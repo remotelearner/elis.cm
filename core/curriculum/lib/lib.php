@@ -1344,6 +1344,9 @@
         }
         if (empty($mu->idnumber)) {
             return true;
+        } else if (empty($mu->country)) {
+            //this is necessary because PM requires this field
+            return true;
         } else if ($cu = $CURMAN->db->get_record('crlm_user', 'idnumber', $mu->idnumber)) {
             $cu = new user(addslashes_recursive($cu));
 
@@ -1707,4 +1710,24 @@
 
         return $show_jasper_link;
     }
+
+    /**
+     * Given a float grade value, return a representation of the number meant for UI display
+     *
+     * An integer value will be returned without any decimals included and a true floating point value
+     * will be reduced to only displaying two decimal digits without any rounding.
+     *
+     * @param float $grade The floating point grade value
+     * @return string The grade value formatted for display
+     */
+    function cm_display_grade($grade) {
+        if (preg_match('/([0-9]+)([\.[0-9]+|\.0+])/', $grade, $matches)) {
+            if (count($matches) == 3) {
+                return ($matches[2] == 0 ? $matches[1] : sprintf("%0.2f", $matches[0]));
+            }
+        }
+
+        return $grade; // This probably isn't a float value
+    }
+
 ?>

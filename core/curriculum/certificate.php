@@ -26,7 +26,6 @@ else if(0 == (int)($curass->timecompleted)) {
 }
 else {
     $datecomplete = date("F j, Y", $curass->timecompleted);
-
     $dateexpired = '';
 
     if (!empty($CURMAN->config->enable_curriculum_expiration) && !empty($curass->timeexpired)) {
@@ -35,11 +34,15 @@ else {
 
     $border_image = (isset($CURMAN->config->certificate_border_image)) ? $CURMAN->config->certificate_border_image : 'Fancy1-blue.jpg';
     $seal_image = (isset($CURMAN->config->certificate_seal_image)) ? $CURMAN->config->certificate_seal_image : 'none';
+    $templates = (isset($CURMAN->config->certificate_template_file)) ? $CURMAN->config->certificate_template_file : 'default.php';
+
 
     certificate_output_completion($curass->user->to_string(), $curass->curriculum->to_string(),
-                                  $datecomplete, $dateexpired,
+                                  $curass->certificatecode, $datecomplete, $dateexpired,
+                                  $curass->curriculum->frequency,
                                   $border_image,
-                                  $seal_image);
+                                  $seal_image,
+                                  $templates);
 }
 
 ?>

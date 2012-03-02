@@ -158,41 +158,39 @@ class menuitemlisting {
                 }  else {
                     $cumulative_path .= '/' . $part;
                 }
-                
+
                 //load children for all nodes except for the lowest-level ones
                 if ($position_in_path < count($parts) - 1) {
-                
                     //automatically load all correct children
-                    if ($children = block_curr_admin_load_menu_children($current_parts[0], $current_parts[1], $parent_cluster_id, $parent_curriculum_id, $cumulative_path)) {
+                    if ($children = block_curr_admin_load_menu_children($current_parts[0], !isset($current_parts[1]) ? '' : $current_parts[1], $parent_cluster_id, $parent_curriculum_id, $cumulative_path)) {
                         foreach ($children as $child) {
-                        
                             $node = clone($child);
+                            $node->name = $cumulative_path .'/'. $node->name;
                             //make the loaded node a child of the current one
                             $node->parent = $current_element_id;
                             //ignore the bogus root element
                             if ($node->name !== 'root') {
-                                $this->listing[] = $node;
+                                $this->listing[$node->name] = $node;
                             }
                         }
                     }
-                    
                 }
-                
+
                 //force the parent element to expand
                 foreach ($this->listing as $listing_key => $listing_entry) {
-                    if ($listing_entry->name == $parent_element_id) {
+                    $el_name = (($start = strrpos($listing_entry->name, '/')) === false)
+                               ? $listing_entry->name
+                               : substr($listing_entry->name, $start + 1);
+                    if ($el_name == $parent_element_id) {
                         $this->listing[$listing_key]->forceexpand = true;
                     }
                 }
-                
+
                 $parent_element_id = $current_element_id;
-                
                 $position_in_path++;
-                
             }
 
         }
-
     }
 
 }
@@ -571,7 +569,7 @@ class treerepresentationnode {
 
         //recursively build the tree of children
         foreach($list_entries as $key => $value) {
-            if($value->parent == $name) {
+            if ($value->parent == $this->name) {
                 $this->children[] = new treerepresentationnode($value->name, $parent);
             }
         }

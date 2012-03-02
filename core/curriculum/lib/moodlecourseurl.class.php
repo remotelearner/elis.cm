@@ -49,7 +49,7 @@ class moodlecourseurl {
     var $_referenceId;
 
     function moodlecourseurl() {
-        $this->_templateType = get_string('moodlecourseurlclassname', 'block_curr_admin');
+        $this->_templateType = get_class($this);
         $this->_templateTypeString = get_string('moodlecourseurl', 'block_curr_admin');
         $this->_referenceTable =  'course';
     }

@@ -38,8 +38,10 @@ class enrolment_role_sync {
         require_once CURMAN_DIRLOCATION.'/lib/student.class.php';
         require_once CURMAN_DIRLOCATION.'/lib/instructor.class.php';
         global $CURMAN;
-        $context = get_context_instance_by_id($data->contextid);
-        if ($context->contextlevel == context_level_base::get_custom_context_level('class', 'block_curr_admin')) {
+        if (!($context = get_context_instance_by_id($data->contextid))) {
+            $context = get_context_instance($data->contextid, $data->itemid);
+        }
+        if (!empty($context) && $context->contextlevel == context_level_base::get_custom_context_level('class', 'block_curr_admin')) {
             $cmuserid = cm_get_crlmuserid($data->userid);
             if ($data->roleid == $CURMAN->config->enrolment_role_sync_student_role) {
                 // add enrolment record

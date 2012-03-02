@@ -26,8 +26,9 @@ class generalized_filter_courseclassselect extends generalized_filter_dependents
         global $USER;
 
         $options['numeric'] = true;
+        $this->_default = '0';
 
-        $choices_array = array('0'=>'Select a class');
+        $choices_array = array('0' => get_string('selectaclass', 'block_curr_admin'));
 
         $contexts = get_contexts_by_capability_for_user('class', 'block/php_report:view', $USER->id);
         if($records = cmclass_get_listing('crsname', 'ASC', 0, 0, '', '', 0, false, $contexts)) {
@@ -62,7 +63,7 @@ class generalized_filter_courseclassselect extends generalized_filter_dependents
     function get_main_options() {
         global $USER;
 
-        $courses_array = array('0'=>'Select a course');
+        $courses_array = array('0' => get_string('selectacourse', 'block_curr_admin'));
 
         // Fetch array of allowed classes
         $contexts = get_contexts_by_capability_for_user('class', 'block/php_report:view', $USER->id);
@@ -87,6 +88,5 @@ class generalized_filter_courseclassselect extends generalized_filter_dependents
 
         return $courses_array;
     }
-
 }
-
+?>

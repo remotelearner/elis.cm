@@ -105,11 +105,11 @@
                 $extra_params['s']         = 'crs'; // Want to set the url for the course
                 $extra_params['id']        = $this->_customdata['obj']->courseid; // Course id
                 $course_url = $this->get_moodle_url($extra_params);
-                
+
                 $course_name = '(' . $this->_customdata['obj']->course->idnumber . ')'.'<a href="'.$course_url.'" >'.$this->_customdata['obj']->course->name.'</a>';
                 $this->set_data(array('courseid' => $course_name));
                 $mform->setHelpButton('courseid', array('cmclassform/course', get_string('course', 'block_curr_admin'), 'block_curr_admin'));
-                
+
                 $this->add_track_multi_select($this->_customdata['obj']->courseid);
             }
 
@@ -319,7 +319,7 @@
 
             $cselect = array(get_string('none', 'block_curr_admin'));
 
-            $crss = $CURMAN->db->get_records_select('course', $select, 'fullname');
+            $crss = $CURMAN->db->get_records_select('course', $select, 'fullname', 'id,fullname');
             if(!empty($crss)) {
                 foreach ($crss as $crs) {
                     $cselect[$crs->id] = $crs->fullname;
@@ -389,7 +389,7 @@
 
             return $errors;
         }
-        
+
         /**
           * Create a url to the current page.
          *
@@ -399,19 +399,19 @@
         function get_moodle_url($extra = array()) {
             global $CFG;
             $params    = array();
-    
+
             $url = new moodle_url($CFG->wwwroot . '/curriculum/index.php', $params);
-    
+
             foreach($extra as $name=>$value) {
                 $url->param($name, $value);
             }
-    
+
             return $url->out();
         }
-        
+
         function get_data(){
             global $CFG;
-            
+
             $data = parent::get_data();
 
             if (!empty($data)) {

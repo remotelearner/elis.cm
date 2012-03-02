@@ -129,7 +129,7 @@ class usertrackpage extends usertrackbasepage {
 
         $formatters = $this->create_link_formatters(array('idnumber', 'name'), 'trackpage', 'trackid');
 
-        $this->print_list_view($items, $columns, $formatters);
+        $this->print_list_view($items, $columns, $formatters, 'tracks');
 
         //get the listing specifically for this user
         $this->print_dropdown(track_get_listing('name', 'ASC', 0, 0, '', '', 0, 0, $contexts, $id), $items, 'userid', 'trackid', 'savenew', 'idnumber');
@@ -176,7 +176,11 @@ class trackuserpage extends usertrackbasepage {
     }
 
     function action_default() {
-        $id = $this->required_param('id', PARAM_INT);
+        $id      = $this->required_param('id', PARAM_INT);
+        $sort    = $this->optional_param('sort', 'idnumber', PARAM_ALPHANUM);
+        $dir     = $this->optional_param('dir', 'ASC', PARAM_ALPHA);
+        $page    = $this->optional_param('page', 0, PARAM_INT);
+        $perpage = $this->optional_param('perpage', 30, PARAM_INT);
 
         $columns = array(
                 'idnumber'    => get_string('student_idnumber', 'block_curr_admin'),
@@ -186,10 +190,16 @@ class trackuserpage extends usertrackbasepage {
         );
 
         $items = usertrack::get_users($id);
+        $count = $items ? count($items) : 0;
+        $items = usertrack::get_users($id, $sort, $dir, $page, $perpage);
+        $baseurl = new moodle_url($this->get_url(),
+                           array('id' => $id, 'sort' => $sort, 'dir' => $dir,
+                                 'page' => $page, 'perpage' => $perpage));
+        print_paging_bar($count, $page, $perpage, $baseurl);
 
         $formatters = $this->create_link_formatters(array('idnumber', 'name'), 'usermanagementpage', 'userid');
 
-        $this->print_list_view($items, $columns, $formatters);
+        $this->print_list_view($items, $columns, $formatters, 'users');
 
         if ($this->can_do_add()) {
             $this->print_assign_link();

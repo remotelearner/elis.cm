@@ -126,7 +126,13 @@ class track extends datarecord {
         // For every course of the curricula determine which ones need -
         // to have their auto enrol flag set
         foreach ($curcourse as $recid => $curcourec) {
-            $idnumber = (!empty($curcourec->idnumber) ? $curcourec->idnumber.'-' : '') . $this->idnumber;
+            $idnumfmt = (!empty($curcourec->idnumber) ? $curcourec->idnumber .'-' : '') . $this->idnumber;
+            $idnumber = $idnumfmt;
+            $suffix = 1;
+            while ($CURMAN->db->record_exists(CLSTABLE, 'idnumber', $idnumber)) {
+                $idnumber = $idnumfmt .'.'. $suffix++;
+            }
+
             $classojb = new cmclass(array('courseid' => $curcourec->courseid,
                                           'idnumber' => $idnumber));
 
@@ -436,7 +442,7 @@ class track extends datarecord {
         }
 
         // copy classes
-        $clstrks = track_assignment_get_listing();
+        $clstrks = track_assignment_get_listing($this->id);
         if (!empty($clstrks)) {
             $objs['classes'] = array();
             if (!isset($options['classmap'])) {
@@ -604,16 +610,18 @@ class trackassignmentclass extends datarecord {
             if ($this->autoenrol && $this->is_autoenrollable()) {
                 // autoenrol all users in the track
                 $users = usertrack::get_users($this->trackid);
-                foreach ($users as $user) {
-                    $stu_record = new object();
-                    $stu_record->userid = $user->userid;
-                    $stu_record->user_idnumber = $user->idnumber;
-                    $stu_record->classid = $this->classid;
-                    $stu_record->enrolmenttime = time();
+                if (!empty($users)) {
+                    foreach ($users as $user) {
+                        $stu_record = new object();
+                        $stu_record->userid = $user->userid;
+                        $stu_record->user_idnumber = $user->idnumber;
+                        $stu_record->classid = $this->classid;
+                        $stu_record->enrolmenttime = time();
 
-                    $enrolment = new student($stu_record);
-                    // check prerequisites and enrolment limits
-                    $enrolment->add(array('prereq' => 1, 'waitlist' => 1));
+                        $enrolment = new student($stu_record);
+                        // check prerequisites and enrolment limits
+                        $enrolment->add(array('prereq' => 1, 'waitlist' => 1));
+                    }
                 }
             }
         } else {
@@ -789,16 +797,16 @@ function track_get_listing($sort='name', $dir='ASC', $startrec=0, $perpage=0, $n
     $tables = 'FROM ' . $CURMAN->db->prefix_table(TRACKTABLE) . ' trk JOIN ' .
         $CURMAN->db->prefix_table(CURTABLE) . ' cur ON trk.curid = cur.id ';
     $join   = '';
-    $on     = '';
+    $on     = ' ';
 
     $where = array('trk.defaulttrack = 0');
     if (!empty($namesearch)) {
         $namesearch = trim($namesearch);
-        $where[] = "(trk.name $LIKE  '%$namesearch%')";
+        $where[] = "(trk.name $LIKE  '%{$namesearch}%')";
     }
 
     if ($alpha) {
-        $where[] = "(trk.name $LIKE '$alpha%')";
+        $where[] = "(trk.name $LIKE '{$alpha}%')";
     }
 
     if ($curriculumid) {
@@ -844,11 +852,7 @@ function track_get_listing($sort='name', $dir='ASC', $startrec=0, $perpage=0, $n
         }
     }
 
-    if (!empty($where)) {
-        $where = 'WHERE '.implode(' AND ',$where).' ';
-    } else {
-        $where = '';
-    }
+    $where = 'WHERE '. implode(' AND ', $where) .' ';
 
     if ($sort) {
         $sort = 'ORDER BY '.$sort .' '. $dir.' ';
@@ -946,10 +950,13 @@ function track_get_list_from_curr($curid) {
  * @param int $perpage Number of records per page.
  * @param string $namesearch Search string for curriculum name.
  * @param string $alpha Start initial of curriculum name filter.
+ * @param array $extrafilters Additional filters to apply to the count/listing
  * @return object array Returned records.
  */
-function track_assignment_get_listing($trackid = 0, $sort='cls.idnumber', $dir='ASC', $startrec=0, $perpage=0, $namesearch='',
-                                      $alpha='') {
+function track_assignment_get_listing($trackid = 0, $sort = 'cls.idnumber',
+                                      $dir = 'ASC', $startrec = 0, $perpage = 0,
+                                      $namesearch = '', $alpha = '',
+                                      $extrafilters = array()) {
     global $CURMAN;
 
     $LIKE = $CURMAN->db->sql_compare();
@@ -970,21 +977,23 @@ function track_assignment_get_listing($trackid = 0, $sort='cls.idnumber', $dir='
     if ($trackid == 0) {
         $where = ' TRUE';
     } else {
-        $where = ' trkassign.trackid = '.$trackid;
+        $where = " trkassign.trackid = $trackid ";
     }
 
     if (!empty($namesearch)) {
         $namesearch = trim($namesearch);
-        $where .= (!empty($where) ? ' AND ' : '') . "(cls.idnumber $LIKE  '%$namesearch%') ";
+        $where .= " AND (cls.idnumber $LIKE '%{$namesearch}%') ";
     }
 
     if ($alpha) {
-        $where .= (!empty($where) ? ' AND ' : '') . "(cls.idnumber $LIKE '$alpha%') ";
+        $where .= " AND (cls.idnumber $LIKE '{$alpha}%') ";
     }
 
-    if (!empty($where)) {
-        $where = 'WHERE '.$where.' ';
+    if (!empty($extrafilters['contexts'])) {
+        $where .= ' AND '. $extrafilters['contexts']->sql_filter_for_context_level('cls.id', 'class'); // TBV
     }
+
+    $where = " WHERE $where ";
 
     if ($sort) {
         $sort = 'ORDER BY '.$sort .' '. $dir.' ';
@@ -1001,19 +1010,19 @@ function track_assignment_get_listing($trackid = 0, $sort='cls.idnumber', $dir='
     }
 
     $sql = $select.$tables.$join.$where.$sort.$limit;
-
     return $CURMAN->db->get_records_sql($sql);
 }
 
 /**
  * Gets the number of items in the track assignment listing
  *
- * @param   int     $trackid     The id of the track to obtain the listing for
- * @param   string  $namesearch  Search string for curriculum name
- * @param   string  $alpha       Start initial of curriculum name filter
- * @return  int                  The number of appropriate records
+ * @param  int    $trackid      The id of the track to obtain the listing for
+ * @param  string $namesearch   Search string for curriculum name
+ * @param  string $alpha        Start initial of curriculum name filter
+ * @param  array  $extrafilters  Additional filters to apply to the count
+ * @return int    The number of appropriate records
  */
-function track_assignment_count_records($trackid, $namesearch = '', $alpha = '') {
+function track_assignment_count_records($trackid, $namesearch = '', $alpha = '', $extrafilters = array()) {
     global $CURMAN;
 
     $LIKE = $CURMAN->db->sql_compare();
@@ -1030,22 +1039,22 @@ function track_assignment_count_records($trackid, $namesearch = '', $alpha = '')
                            WHERE t.trackid = $trackid
                         GROUP BY s.classid) enr ON enr.classid = cls.id ";
 
-    $where = ' trkassign.trackid = '.$trackid;
+    $where = " trkassign.trackid = {$trackid}";
     if (!empty($namesearch)) {
         $namesearch = trim($namesearch);
-        $where .= (!empty($where) ? ' AND ' : '') . "(cls.idnumber $LIKE  '%$namesearch%') ";
+        $where .= " AND (cls.idnumber $LIKE  '%{$namesearch}%') ";
     }
 
     if ($alpha) {
-        $where .= (!empty($where) ? ' AND ' : '') . "(cls.idnumber $LIKE '$alpha%') ";
+        $where .= " AND (cls.idnumber $LIKE '{$alpha}%') ";
     }
 
-    if (!empty($where)) {
-        $where = 'WHERE '.$where.' ';
+    if (!empty($extrafilters['contexts'])) {
+        $where .= ' AND '. $extrafilters['contexts']->sql_filter_for_context_level('cls.id', 'class'); // TBV
     }
 
+    $where = " WHERE {$where} ";
     $sql = $select.$tables.$join.$where;
-
     return $CURMAN->db->count_records_sql($sql);
 }
 ?>

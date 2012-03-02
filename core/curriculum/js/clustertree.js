@@ -198,7 +198,7 @@ function clustertree_loadNodeData(node, fnLoadComplete, uniqueid, tree_view, ins
         	clustertree_remove_selected_unexpanded(instanceid, node, uniqueid);
 
         	//remove from node from the listing of selected by unexpanded nodes, if appropriate
-        	clustertree_remove_from_list(instanceid, uniqueid + '_crlunexpanded', node.contentElId);
+        	clustertree_remove_from_list(instanceid, uniqueid + '_clrunexpanded', node.contentElId);
         	
 		    //indicate that loading is complete
 		    fnLoadComplete();
@@ -404,7 +404,7 @@ function clustertree_toggle_highlight(instanceid, node, ideal_state, uniqueid, t
  */
 function clustertree_tick_top_level_boxes(instanceid, uniqueid, tree_view) {
 	var values = clustertree_get_list_values(instanceid, uniqueid + '_listing');
-	var inner_nodes = tree_view.getNodesBy(clustertree_always_true);
+	inner_nodes = tree_view.getNodesBy(clustertree_always_true);
 
 	//match enabled elements to visible ones
 	for (var i = 0; i < values.length; i++) {
@@ -456,15 +456,24 @@ function clustertree_propagate_selected_unexpanded(instanceid, uniqueid, tree_vi
  * @param  TextNode  newNode     The newly revealed node
  */
 function clustertree_tick_selected_child(instanceid, uniqueid, tree_view, node, newNode) {
-	var values = clustertree_get_list_values(instanceid, uniqueid + '_listing');
-	
-	for (var i = 0; i < values.length; i++) {
-		if (newNode.contentElId == values[i] && newNode.highlightState != 1) {
-            tree_view.onEventToggleHighlight(newNode);
+    //if the parent element is cleared, don't select the new node
+    var clear_unexpanded_values = clustertree_get_list_values(instanceid, uniqueid + '_clrunexpanded');
+    for (var i = 0; i < clear_unexpanded_values.length; i++) {
+        if (node.contentElId == clear_unexpanded_values[i]) {
+            //set the child element as cleared
+            clustertree_append_to_list(instanceid, uniqueid + '_clrunexpanded', newNode.contentElId);
+            return;
+        }
+    }
 
+    //main work to select the new node
+    var values = clustertree_get_list_values(instanceid, uniqueid + '_listing');
+    for (var i = 0; i < values.length; i++) {
+        if (newNode.contentElId == values[i] && newNode.highlightState != 1) {
+            tree_view.onEventToggleHighlight(newNode);
             clustertree_append_to_list(instanceid, uniqueid + '_listing', newNode.contentElId);
-		}
-	}
+        }
+    }
 }
 
 /**

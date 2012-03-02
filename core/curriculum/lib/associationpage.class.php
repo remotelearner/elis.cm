@@ -287,14 +287,23 @@ class associationpage extends newpage {
      * @param $items array of records to print
      * @param $columns associative array of column id => column heading text
      * @param $formatters associative array of column id => formatting object, used to customize the display of columns
+     * @param $itemstr language string idenitifer for object - default = 'items'
      */
-    function print_list_view($items, $columns, $formatters=array()) {
+    function print_list_view($items, $columns, $formatters=array(), $itemstr = 'items') {
         global $CFG;
 
         $id = required_param('id', PARAM_INT);
+        $search = optional_param('search', null, PARAM_CLEAN);
+        $alpha = optional_param('alpha', null, PARAM_ALPHA);
 
         if (empty($items)) {
-            echo '<div>' . get_string('none', 'block_curr_admin') . '</div>';
+            $a = new stdClass;
+            $a->search = ($alpha || $search)
+                         ? get_string('matchingsearch', 'block_curr_admin')
+                         : '';
+            $a->obj = get_string($itemstr, 'block_curr_admin');
+            echo '<div>', get_string('noitems', 'block_curr_admin', $a),
+                 '</div>';
             return;
         }
 

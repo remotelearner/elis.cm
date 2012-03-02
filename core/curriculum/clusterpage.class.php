@@ -100,7 +100,11 @@ class clusterpage extends managementpage {
         if ($cached !== null) {
             return $cached;
         }
-        $context = get_context_instance(context_level_base::get_custom_context_level('cluster', 'block_curr_admin'), $id);
+        $context_level = context_level_base::get_custom_context_level('cluster', 'block_curr_admin');
+        if (empty($context_level)) {
+            return false;
+        }
+        $context = get_context_instance($context_level, $id);
         return has_capability($capability, $context);
     }
 

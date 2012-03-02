@@ -36,7 +36,7 @@ $trackid = required_param('track', PARAM_INT);
 $track = new track($trackid);
 $userid = optional_param('userid', 0,  PARAM_INT);
 // get searching/sorting parameters
-$sort = optional_param('sort','name',PARAM_ALPHA);
+$sort = optional_param('sort','lastname',PARAM_ALPHA);
 $alpha = optional_param('alpha','',PARAM_ALPHA);
 $namesearch = optional_param('namesearch','',PARAM_MULTILANG);
 $dir = optional_param('dir','ASC',PARAM_ALPHA);
@@ -79,10 +79,15 @@ window.opener.location = "<?php echo htmlspecialchars_decode($target->get_url())
 // find all users not enrolled in the track
 $FULLNAME = sql_concat('usr.firstname', "' '", 'usr.lastname');
 $LIKE     = $CURMAN->db->sql_compare();
-$select = 'SELECT usr.*, ' . $FULLNAME . ' AS name ';
+$select = 'SELECT usr.*, ' . $FULLNAME . ' AS name, usr.lastname AS lastname ';
 $sql = 'FROM ' . $CURMAN->db->prefix_table(USRTABLE) . ' usr '
     . 'LEFT OUTER JOIN ' . $CURMAN->db->prefix_table(USRTRKTABLE) . ' ut ON ut.userid = usr.id AND ut.trackid = ' . $trackid . ' '
     . 'WHERE ut.userid IS NULL ';
+
+if (empty($CURMAN->config->legacy_show_inactive_users)) {
+    $sql .= 'AND usr.inactive = 0 ';
+}
+
 if ($alpha) {
     $sql .= 'AND '.$FULLNAME.' '.$LIKE.' \''.$alpha.'%\' ';
 }
@@ -114,6 +119,9 @@ if(!trackpage::_has_capability('block/curr_admin:track:enrol', $trackid)) {
 $count = $CURMAN->db->count_records_sql('SELECT COUNT(usr.id) '.$sql);
 if ($sort) {
     $sql .= 'ORDER BY '.$sort.' '.$dir.' ';
+}
+if ($count < ($page * $perpage)) {
+    $page = 0;
 }
 if ($perpage) {
     if ($CURMAN->db->_dbconnection->databaseType == 'postgres7') {
@@ -207,12 +215,15 @@ if (empty($users)) {
     echo '<div>' . get_string('click_user_enrol_track', 'block_curr_admin') . '</div>';
     $table = null;
     $columns = array(
-        'idnumber'    => get_string('track_idnumber', 'block_curr_admin'),
-        'name'        => get_string('track_name', 'block_curr_admin'),
-        'email'       => get_string('email', 'block_curr_admin'),
+        'idnumber' => get_string('track_idnumber', 'block_curr_admin'),
+        'name'     => get_string('name', 'block_curr_admin'),
+        'email'    => get_string('email', 'block_curr_admin'),
         );
 
     foreach ($columns as $column => $cdesc) {
+        if ($column == 'name') {
+            $column = 'lastname';
+        }
         if ($sort != $column) {
             $columnicon = "";
             $columndir = "ASC";

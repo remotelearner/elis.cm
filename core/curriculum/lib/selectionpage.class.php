@@ -135,7 +135,15 @@ abstract class selectionpage extends newpage {
      * for example see: /curriculum/rolepage.class.php
      */
     function get_extra_page_params() {
-        return null;
+        $extra_params = array();
+        $sort = optional_param('sort', 'name', PARAM_ACTION);
+        $order = optional_param('dir', 'ASC', PARAM_ACTION);
+        if ($order != 'DESC') {
+            $order = 'ASC';
+        }
+        $extra_params['sort'] = $sort;
+        $extra_params['dir'] = $order;
+        return $extra_params;
     }
 
     protected function print_js_selection_table($table, $filter, $count, $form, $baseurl) {

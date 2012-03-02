@@ -33,7 +33,7 @@ class userform extends cmform {
     public function definition() {
         global $USER, $CFG, $COURSE;
 
-        if($this->_customdata['obj']) {
+        if ($this->_customdata['obj']) {
             $this->set_data($this->_customdata['obj']);
             $disabled = true;
         } else {
@@ -59,7 +59,7 @@ class userform extends cmform {
 
         $username_group = array();
 
-        if(empty($disabled)){
+        if (empty($disabled)){
             $mform->addRule('idnumber', null, 'required', null, 'client');
 
             $username_group[] =& $mform->createElement('text', 'username', get_string('username'));
@@ -211,10 +211,10 @@ class userform extends cmform {
                 $lastcat = $rec->categoryid;
                 $mform->addElement('header', "category_{$lastcat}", htmlspecialchars($rec->categoryname));
             }
-            manual_field_add_form_element($this, $context, $field);
+            manual_field_add_form_element($this, $context, $field, !$field->multivalued); // ELIS-4000: Multi-valued fields require custom validation in form
         }
 
-        if($this->_customdata['obj']) {
+        if ($this->_customdata['obj']) {
             $this->set_data($this->_customdata['obj']);
         }
 
@@ -230,7 +230,7 @@ class userform extends cmform {
         $errors = parent::validation($data, $files);
 
         // Use a default for 'id' if we're doing an add
-        if(!$data['id']) {
+        if (!$data['id']) {
             $data['id'] = 0;
         }
 
@@ -279,11 +279,61 @@ class userform extends cmform {
 
         foreach ($fields as $field) {
             $field = new field($field);
-            if ($field->forceunique) {
-                $fielddata = $CURMAN->db->get_record($field->data_table(), 'fieldid', $field->id, 'data', $data["field_{$field->shortname}"]);
-                print_object($fielddata);
+            $key = "field_{$field->shortname}";
+            if ($field->multivalued) {
+                $manual = new field_owner($field->owners['manual']);
+                $fielddata = isset($data[$key]) ? $data[$key] : array();
+                if ($manual->param_required) {
+                    if (empty($fielddata)) {
+                        $errors[$key] = get_string('required');
+                    } else if (!empty($manual->param_options)) {
+                        $options = explode("\n", $manual->param_options);
+                        array_walk($options, 'trim_cr'); // TBD: defined below
+                        foreach ($fielddata as $entry) {
+                            if (!in_array($entry, $options)) {
+                                $errors[$key] = get_string('required');
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!isset($errors[$key]) && $field->forceunique && $contextid) {
+                    $where = "contextid != $contextid AND fieldid = $field->id";
+                    if ($recs = get_records_select($field->data_table(), $where,
+                                                   'contextid, data')) {
+                        $curcontext = -1;
+                        $vals = null;
+                        foreach ($recs AS $rec) {
+                            if ($curcontext != $rec->contextid) {
+                                if (!empty($vals)) {
+                                    $adif = array_diff($vals, $fielddata);
+                                    if (empty($adif)) {
+                                        $errors[$key] = get_string('valuealreadyused');
+                                        // TBD^^^ "[These/This combination of] values already uesd!"
+                                        $vals = null;
+                                        break;
+                                    }
+                                }
+                                $curcontext = $rec->contextid;
+                                $vals = array();
+                            }
+                            $vals[] = $rec->data;
+                        }
+                        if (!empty($vals)) {
+                            $adif = array_diff($vals, $fielddata);
+                            if (empty($adif)) {
+                                $errors[$key] = get_string('valuealreadyused');
+                                // TBD^^^ "[These/This combination of] values already uesd!"
+                            }
+                        }
+                    }
+                }
+            } else if ($field->forceunique) {
+                // NON-MULTIVALUED case
+                $fielddata = $CURMAN->db->get_record($field->data_table(), 'fieldid', $field->id, 'data', $data[$key]);
+                //print_object($fielddata);
                 if ($fielddata && $fielddata->contextid != $contextid) {
-                    $errors["field_{$field->shortname}"] = get_string('valuealreadyused');
+                    $errors[$key] = get_string('valuealreadyused');
                 }
             }
         }
@@ -291,4 +341,9 @@ class userform extends cmform {
         return $errors;
     }
 }
+
+function trim_cr(&$item, $key) {
+    $item = trim($item, "\r\n");
+}
+
 ?>

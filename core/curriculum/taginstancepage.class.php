@@ -62,7 +62,7 @@ class taginstancebasepage extends associationpage {
 
         $formatters = $this->create_link_formatters(array('name'), 'tagpage', 'tagid');
 
-        $this->print_list_view($items, $columns, $formatters);
+        $this->print_list_view($items, $columns, $formatters, 'tags');
 
         $this->print_dropdown(tag_get_listing(), $items, 'instanceid', 'tagid');
     }

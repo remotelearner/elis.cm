@@ -158,11 +158,20 @@ class clustertrackpage extends clustertrackbasepage {
 
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
+
+        if (clusterpage::_has_capability('block/curr_admin:cluster:view', $id)) {
+            //allow viewing but not managing associations
+            return true;
+        }
+
         return clusterpage::_has_capability('block/curr_admin:associate', $id);
     }
 
     function action_default() {
         $id = $this->required_param('id', PARAM_INT);
+
+        $sort = $this->optional_param('sort', 'name', PARAM_CLEAN);
+        $dir = $this->optional_param('dir', 'ASC', PARAM_CLEAN);
 
         $columns = array(
             'idnumber'    => get_string('track_idnumber','block_curr_admin'),
@@ -173,11 +182,11 @@ class clustertrackpage extends clustertrackbasepage {
             'buttons'     => '',
         );
 
-        $items = clustertrack::get_tracks($id);
+        $items = clustertrack::get_tracks($id, $sort, $dir);
 
         $formatters = $this->create_link_formatters(array('idnumber', 'name'), 'trackpage', 'trackid');
 
-        $this->print_list_view($items, $columns, $formatters);
+        $this->print_list_view($items, $columns, $formatters, 'tracks');
 
         // find the tracks that the user can associate with this cluster
         $contexts = trackpage::get_contexts('block/curr_admin:associate');
@@ -210,6 +219,12 @@ class trackclusterpage extends clustertrackbasepage {
 
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
+
+        if (trackpage::_has_capability('block/curr_admin:track:view', $id)) {
+            //allow viewing but not managing associations
+            return true;
+        }
+
         return trackpage::_has_capability('block/curr_admin:associate', $id);
     }
 
@@ -232,7 +247,7 @@ class trackclusterpage extends clustertrackbasepage {
 
         $formatters = $this->create_link_formatters(array('name'), 'clusterpage', 'clusterid');
 
-        $this->print_list_view($items, $columns, $formatters);
+        $this->print_list_view($items, $columns, $formatters, 'clusters');
 
         // find the tracks that the user can associate with this cluster
         $contexts = clusterpage::get_contexts('block/curr_admin:associate');
@@ -243,7 +258,7 @@ class trackclusterpage extends clustertrackbasepage {
                 // some clusters exist, but don't have associate capability on
                 // any of them
                 echo '<div align="center"><br />';
-                print_string('no_associate_caps_clusters', 'block_curr_admin');
+                print_string('no_associate_caps_cluster', 'block_curr_admin');
                 echo '</div>';
             } else {
                 // no clusters at all

@@ -68,6 +68,7 @@ require_once(CURMAN_DIRLOCATION . '/lib/certificate.php');
             // Generate certificate border & seal image options
             $border_images = cm_certificate_get_borders();
             $seal_images = cm_certificate_get_seals();
+            $template_files = cm_certificate_get_templates();
 
             // Certificate settings
             $mform->addElement('header', 'certificates', get_string('certificates', 'block_curr_admin'));
@@ -76,6 +77,8 @@ require_once(CURMAN_DIRLOCATION . '/lib/certificate.php');
             $mform->setHelpButton('certificate_border_image', array('config/certificate_border_image', get_string('certificate_border_image', 'block_curr_admin'), 'block_curr_admin'));
             $mform->addElement('select', 'certificate_seal_image', get_string('certificate_seal_image', 'block_curr_admin'), $seal_images);
             $mform->setHelpButton('certificate_seal_image', array('config/certificate_seal_image', get_string('certificate_seal_image', 'block_curr_admin'), 'block_curr_admin'));
+            $mform->addElement('select', 'certificate_template_file', get_string('certificate_template_file', 'block_curr_admin'), $template_files);
+            $mform->setHelpButton('certificate_template_file', array('config/certificate_template_file', get_string('certificate_template_file', 'block_curr_admin'), 'block_curr_admin'));
 
             // Interface settings
             $mform->addElement('header', 'interfacesettings', get_string('interfacesettings', 'block_curr_admin'));

@@ -87,6 +87,7 @@ $string['curriculummanagement'] = 'Curriculum Management';
 $string['dashboard'] = 'Dashboard';
 $string['dataimport'] = 'Integration Point';
 $string['datecompleted'] = 'Completion Date';
+$string['done'] = 'done';
 $string['duplicateuserheader'] = 'Duplicate User Report for site $a->sitename with URL $a->url';
 $string['duplicateuseridnumber'] = 'User idnumber: ';
 $string['duplicateusernumclassenrol'] = 'Number of enrolled Curriculum users: ';
@@ -104,9 +105,8 @@ $string['duration_months'] = 'Months';
 $string['elisversion'] = 'ELIS Version';
 $string['add'] = 'Add';
 $string['elis_doc_class_link'] = '<strong>Documentation for ELIS</strong> &mdash; we have over 200
-pages of documentation for ELIS in our <a href=\"http://training.remote-learner.net/course/view.php?id=1090\">ELIS Support Course</a>.
-You can access this course by logging in as a guest.  If you have problems
-accessing this course, please contact your sales representative.';
+pages of documentation for ELIS in our <a href=\"http://rlcommunity.remote-learner.net/\">ELIS Support Course</a>.
+If you have problems accessing this course, please contact your sales representative.';
 $string['enddate'] = 'End Date';
 $string['endtime'] = 'End Time';
 $string['enrolreport'] = 'Enrollment report';
@@ -125,6 +125,7 @@ $string['instructorrole'] = 'Default Instructor Role';
 $string['instructors'] = 'Instructors';
 $string['ip_disabled_warning'] = 'WARNING! Integration Point functionality is an additional paid service and has not been enabled on this site. As such, the settings in this section will not be used. Please contact Remote-Learner for assistance on this topic via the link provided below.';
 $string['ip_instructions'] = 'ELIS IP is an additional paid service offered by Remote-Learner that allows for the import and export of completion data. If this Integration Point functionality is disabled, you may contact <a href=\"$a\" target=\"_blank\">Remote-Learner</a> to sign up. Once enabled, import and export file locations can be set up appropriately on this configuration screen.';
+$string['items'] = 'items';
 $string['learningplan'] = 'Learning Plan';
 $string['learningplanname'] = 'Learning Plan: $a';
 $string['learningplanintro'] = 'Learning Plan: You have completed $a->percent ($a->coursescomplete of $a->coursestotal) of your current learning plan.';
@@ -143,7 +144,9 @@ $string['managecurriculumcourses'] = 'Manage Curriculum Courses';
 $string['managetags'] = 'Manage Tags';
 $string['managetracks'] = 'Manage Tracks';
 $string['manageusers'] = 'Manage Users';
+$string['matchingsearch'] = ' matching your search term(s) were';
 $string['noclassyet'] = 'No Class Yet';
+$string['noitems'] = 'No {$a->obj}{$a->search} found';
 $string['nolearningplan'] = 'You do not currently have a learning plan assigned';
 $string['noarchivedplan'] = 'You do not currently have any archived learning plans';
 $string['noncomplete'] = 'Non-Complete';
@@ -174,7 +177,7 @@ $string['viewstationusers'] = 'View Station Users';
 $string['curr_admin:config'] = 'Configure curriculum management settings';
 $string['curr_admin:manageclasses'] = 'Manage Curriculum Classes';
 $string['curr_admin:managecourses'] = 'Manage Curriculum Courses';
-$string['curr_admin:managecurricula'] = 'Manage Curriculum Curricula';
+$string['curr_admin:managecurricula'] = 'Manage Curriculum Administration';
 $string['curr_admin:manageelements'] = 'Manage Curriculum Elements';
 $string['curr_admin:managefiles'] = 'Manage Curriculum Files';
 $string['curr_admin:manageusers'] = 'Manage Curriculum Users';
@@ -348,10 +351,10 @@ $string['grade_update_warning'] = '<div><strong>Note:</strong> updating grades f
 $string['curriculum_edit'] = 'Edit User';
 $string['curriculum_idnumber'] = 'ID Number';
 $string['curriculum_name'] = 'Name';
-$string['curriculum_description'] = 'Long description';
+$string['curriculum_description'] = 'Description';
 $string['curriculum_remcourse'] = 'Remove course';
 $string['curriculum_reqcredits'] = ' Required Credits';
-$string['curriculum_shortdescription'] = 'Short description';
+$string['curriculum_shortdescription'] = 'Description';
 $string['unassociated'] = 'Unassociated';
 $string['clustcpyclustname'] = 'Cluster';
 $string['clustcpycurname'] = 'Curriculum';
@@ -1080,7 +1083,7 @@ $string['restrict_to_elis_enrolment_plugin'] = 'Only allow enrolments to Moodle 
 $string['block_curr_admin_settings'] = 'Curriculum Administration Block Settings';
 $string['num_block_icons'] = 'Number of entity icons to display before collapsing';
 $string['error_num_block_icons'] = 'Please enter an integer value of one or more';
-$string['display_clusters_at_top_level'] = 'Display Clusters as the Top Level';
+$string['display_clusters_at_top_level'] = 'Display Clusters at the Top Level';
 $string['display_curricula_at_top_level'] = 'Display Curricula at the Top Level';
 
 $string['curr_admin'] = 'Curriculum Administration';
@@ -1198,7 +1201,64 @@ Instructor name: {$a->lastname}, {$a->firstname}
 Course: {$a->name} (ID: {$a->idnumber})
 Class ID: {$a->classidnumber}';
 
-$string['health_check_link'] = 'The <a href=\"$a/curriculum/index.php?s=health\">ELIS health page</a> may help diagnose potential problems with the site.';
+$string['health_check_link'] = 'The <a href=\"{$a}/curriculum/index.php?s=health\">ELIS health page</a> may help diagnose potential problems with the site.';
+$string['cron_notrun'] = '<b>Never!</b>';
+$string['health_clusterorphan'] = 'Orphaned clusters found!';
+$string['health_clusterorphandesc'] = 'There are {$a} sub-clusters which have had their parent clusters deleted.';
+$string['health_clusterorphandescnone'] = 'There were no orphaned clusters found.';
+$string['health_clusterorphansoln'] = '<p>From the command line change to the directory {$a}/curriculum/scripts<br/>
+                Run the script fix_cluster_orphans.php to convert all clusters with missing parent clusters to top-level.</p>';
+$string['health_compexport'] = 'Completion export';
+$string['health_compexportdesc'] = 'The Completion Export block, which conflicts with Integration Point, is present.';
+$string['health_compexportsoln'] = '<p>The completion export block should be automatically removed when the site is properly upgraded via CVS or git.
+        If it is still present, go to the <a href=\"{$a[0]}/admin/blocks.php\">Manage blocks</a> page and delete the completion export block,
+        and then remove the <tt>{$a[1]}/blocks/completion_export</tt> directory.</p>';
+$string['health_cron_block'] = '<b>Block \'{$a->name}\' last run:</b> $a->lastcron<br/>';
+$string['health_cron_elis'] = '<b>ELIS scheduled tasks last run:</b> $a';
+$string['health_cron_plugin'] = '<b>Plugin \'{$a->name}\' last run:</b> $a->lastcron<br/>';
+$string['health_cron_title'] = 'Last cron run times';
+$string['health_dangling_check'] = 'Checking for unlocked dangling completion element grades';
+$string['health_dangling_fixed_counts'] = 'Locked {$a->fixed} / {$a->total} completion element grades';
+$string['health_dangling_recalculate'] = 'Forcing recalculation of student class grades ... ';
+$string['health_danglingcompletionlocks'] = 'Dangling completion locks';
+$string['health_danglingcompletionlocksdesc'] = 'There are {$a} completion element grades that should be locked but will never be updated automatically.';
+$string['health_danglingcompletionlockssoln'] = '<p>Run the script fix_dangling_completion_locks.php to automatically lock the completion grades '.
+                                                'that will not be automatically locked.</p>';
+$string['health_dupenrol'] = 'Duplicate enrolment records';
+$string['health_dupenroldesc'] = 'There were {$a} duplicate enrolments records in the ELIS enrolments table.';
+$string['health_dupenrolsoln'] = 'The duplicate enrolments need to be removed directly from the database.  <b>DO NOT</b> try to remove them via the UI.<br/><br/>
+Recommended to escalate to development for solution.';
+$string['health_dupmenrol'] = 'Duplicate Moodle profile field records';
+$string['health_dupmenroldesc'] = 'There were {$a} duplicate Moodle profile field records.';
+$string['health_dupmenrolsoln'] = '<p>Run the script fix_duplicate_moodle_profile.php to remove all duplicate profile field records.</p>';
+$string['health_lostclass'] = 'Unassociated classes found in tracks';
+$string['health_lostclassdesc'] = 'Found {$a} classes that are attached to tracks when associated courses are not attached to the curriculum.';
+$string['health_lostclassdescnone'] = 'There were no issues found.';
+$string['health_lostclasssoln'] = '<p>Need to remove all classes in tracks that do not have an associated course in its associated curriculum by running the script linked below.<br/><br/>' .
+               '<a href=\"{$a}/curriculum/scripts/fix_track_classes.php\">Fix this now</a></p>';
+$string['health_stalecmclass'] = 'Stale CM Class - Moodle Course record';
+$string['health_stalecmclassdesc'] = 'There are {$a} records in the crlm_class_moodle table referencing nonexistent CM classes.';
+$string['health_stalecmclasssoln'] = '<p>These records need to be removed from the database.<br/>Suggested SQL:
+                DELETE FROM {$a[0]} WHERE classid NOT IN (
+                SELECT id FROM {$a[1]} ).</p>';
+$string['health_stalecmcourse'] = 'Stale CM Course - Moodle record';
+$string['health_stalecmcoursedesc'] = 'There were {$a[0]} records in the {$a[1]} table referencing nonexistent CM courses.';
+$string['health_stalecmcoursesoln'] = '<p>These records need to be removed from the database.<br/>Suggested SQL:
+                DELETE FROM {$a[0]} WHERE courseid NOT IN (
+                SELECT id FROM {$a[1]} ).</p>';
+$string['health_trackcheck'] = 'Unassociated class instances found in tracks';
+$string['health_trackcheckdesc'] = 'Found {$a} class instances that are attached to tracks when associated course descriptions are not attached to the program.';
+$string['health_trackcheckdescnone'] = 'There were no issues found.';
+$string['health_trackchecksoln'] = 'Need to remove all class instances in tracks that do not have an associated course descriptions in its associated program by running the script linked below.<br/><br/>' .
+               '<a href=\"{$a}/curriculum/scripts/fix_track_classes.php\">Fix this now</a>';
+$string['health_user_dupiddesc'] = 'There are $a user records with duplicate and/or empty idnumbers.';
+$string['health_user_dupidsoln'] = '<p>The Moodle user table contains users with duplicate and/or empty idnumbers. Please open a support ticket to have these fixed. Once this has been corrected, please re-check this page for updated status.</p>';
+$string['health_user_sync'] = 'User Records Mismatch - Synchronize Users';
+$string['health_user_syncdesc'] = 'There are $a extra user records for Moodle which don\'t exist for ELIS.';
+$string['health_user_syncsoln'] = 'Users need to be synchronized by running the script which is linked below.<br/><br/>
+                This process can take a long time, we recommend you run it during non-peak hours, and leave this window open until you see a success message.
+                If the script times out (stops loading before indicating success), please open a support ticket to have this run for you.<br/><br/>
+                <a href=\"{$a}/curriculum/scripts/migrate_moodle_users.php\">Fix this now</a>';
 
 // Auto-association editing page
 $string['info_group_association'] = 'Association Information';
@@ -1244,12 +1304,20 @@ $string['certificate_has_completed'] = 'has completed';
 $string['certificate_title'] = 'Certificate of Achievement';
 $string['certificate_border_image'] = 'Certificate border image';
 $string['certificate_seal_image'] = 'Certificate seal image';
+$string['certificate_template_file'] = 'Certificate template';
+$string['certificate_code_error'] = 'Error assigning certificate number';
+$string['certificate_code_fail'] = 'Certificate random string failure: $a->sitename with URL $a->url';
+$string['certificate_code_fail_text'] = 'All attempts at generating a random string have failed for record containing the following data:';
+$string['certificate_code_fail_text_data'] = 'Curriculum Id: $a->curriculumid, User Id: $a->userid';
+$string['certificate_email_fail'] = 'Failed to send email to Administrator';
 
 // Elis filter language for reports
 $string['and_all_children'] = '(and all children)';
 $string['cluster_tree_na'] = 'N/A';
 $string['report_filter_all'] = 'Show All';
 $string['report_filter_anyvalue'] = 'No filtering';
+$string['selectaclass'] = 'Select a class';
+$string['selectacourse'] = 'Select a course';
 
 // Learning plan dashboard
 $string['tab_current_learning_plans'] = 'Current Learning Plans';
@@ -1260,4 +1328,6 @@ $string['na'] = 'NA';
 
 $string['legacy_settings'] = 'Legacy settings';
 $string['legacy_show_inactive_users'] = 'Show inactive users';
+
+$string['nocourseassoc'] = 'There is no course associated with this curriculum.';
 ?>

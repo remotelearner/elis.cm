@@ -115,6 +115,16 @@ class waitlistpage extends selectionpage {
         }
     }
 
+    public function get_navigation_default() {
+        $id = $this->required_param('id', PARAM_INT);
+        $classpage = new cmclasspage(array('id' => $id, 'action' => 'view'));
+        return $classpage->get_navigation_view();
+    }
+
+    function get_title_default() {
+        return get_string('breadcrumb_waitlistpage', 'block_curr_admin');
+    }
+
     function process_selection($data) {
         global $CURMAN;
         $id = $this->required_param('id', PARAM_INT);

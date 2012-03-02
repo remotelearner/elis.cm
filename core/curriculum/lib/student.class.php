@@ -95,7 +95,7 @@ class student extends datarecord {
         $this->add_property('endtime', 'int');
         $this->add_property('completestatusid', 'int');
         $this->completestatusid = key(student::$completestatusid_values);
-        $this->add_property('grade', 'int');
+        $this->add_property('grade', 'float');
         $this->add_property('credits', 'float');
         $this->add_property('locked', 'int');
 
@@ -225,7 +225,7 @@ class student extends datarecord {
                 print_error('nouser', 'block_curr_admin');
                 return true;
             }
-            
+
             $message = new notification();
 
             /// Set up the text of the message
@@ -257,14 +257,14 @@ class student extends datarecord {
             }
 
             $users = array();
-            
+
             if ($sendtorole) {
                 /// Get all users with the notify_classcompleted capability.
                 if ($roleusers = get_users_by_capability($context, 'block/curr_admin:notify_classcomplete')) {
                     $users = $users + $roleusers;
                 }
             }
-            
+
             if ($sendtosupervisor) {
                 /// Get parent-context users.
                 if ($supervisors = cm_get_users_by_capability('user', $this->userid, 'block/curr_admin:notify_classcomplete')) {
@@ -296,7 +296,7 @@ class student extends datarecord {
      * check fails
      */
     function add($checks = array(), $notify = false) {
-        global $CURMAN, $CFG;
+        global $CURMAN, $CFG, $USER;
 
         $status = true;
 
@@ -323,7 +323,7 @@ class student extends datarecord {
                         $data = new stdClass;
                         $data->userid = $this->userid;
                         $data->classid = $this->classid;
-                        $data->trackid = $trackid;
+                        //$data->trackid = $trackid;
                         events_trigger('crlm_prereq_unsatisfied', $data);
                     }
 
@@ -378,7 +378,18 @@ class student extends datarecord {
             }
         }
 
-        $status = $this->data_insert_record();
+        $status = $this->data_insert_record(); // TBD: we should check this!
+
+        /// Get the Moodle user ID or create a new account for this user.
+        if (!($muserid = cm_get_moodleuserid($this->userid))) {
+            $user = new user($this->userid);
+
+            if (!$muserid = $user->synchronize_moodle_user(true, true)) {
+                $status = new Object();
+                $status->message = get_string('errorsynchronizeuser', 'block_curr_admin');
+                $muserid = false;
+            }
+        }
 
         /// Enrol them into the Moodle class.
         if ($moodlecourseid = moodle_get_course($this->classid)) {
@@ -399,17 +410,6 @@ class student extends datarecord {
                 if ($role = get_default_course_role($mcourse)) {
                     $context = get_context_instance(CONTEXT_COURSE, $mcourse->id);
 
-                    /// Get the Moodle user ID or create a new account for this user.
-                    if (!($muserid = cm_get_moodleuserid($this->userid))) {
-                        $user = new user($this->userid);
-
-                        if (!$muserid = $user->synchronize_moodle_user(true, true)) {
-                            $status = new Object();
-                            $status->message = get_string('errorsynchronizeuser', 'block_curr_admin');
-                            $muserid = false;
-                        }
-                    }
-
                     if (!empty($muserid)) {
                         if (!role_assign($role->id, $muserid, 0, $context->id, $timestart, $timeend, 0, 'manual')) {
                             $status = new Object();
@@ -418,6 +418,20 @@ class student extends datarecord {
                     }
                 }
             }
+        } else if (!empty($muserid)) {
+            $sturole = $CURMAN->config->enrolment_role_sync_student_role;
+            // ELIS-2776: must still trigger events for notifications
+            $ra = new stdClass();
+            $ra->roleid       = !empty($sturole)
+                                ? $sturole
+                                : get_field('role', 'id', 'shortname', 'student');
+            $ra->contextid    = context_level_base::get_custom_context_level('class', 'block_curr_admin'); // TBD
+            $ra->userid       = $muserid;
+            $ra->component    = ''; // TBD: 'enrol_elis'
+            $ra->itemid       = $this->classid; // TBD
+            $ra->timemodified = time();
+            $ra->modifierid   = empty($USER->id) ? 0 : $USER->id;
+            events_trigger('role_assigned', $ra);
         }
 
         return $status;
@@ -1509,20 +1523,17 @@ class student extends datarecord {
             if (empty($this->classid)) {
                 return 0;
             }
-
             $classid = $this->classid;
         }
 
         $LIKE     = $CURMAN->db->sql_compare();
-
         $FULLNAME = sql_concat('usr.firstname', "' '", 'usr.lastname');
-
 
         $select  = 'SELECT stu.* ';
         $select .= ', ' . $FULLNAME . ' as name, usr.idnumber ';
     //    $select .= ', ' . $FULLNAME . ' as name, usr.type as description ';
         $tables  = 'FROM ' . $CURMAN->db->prefix_table(STUTABLE) . ' stu ';
-        $join    = 'LEFT JOIN ' . $CURMAN->db->prefix_table(USRTABLE) . ' usr ';
+        $join    = 'JOIN ' . $CURMAN->db->prefix_table(USRTABLE) . ' usr ';
         $on      = 'ON stu.userid = usr.id ';
         $where   = 'stu.classid = \'' . $classid . '\'';
 
@@ -1532,20 +1543,22 @@ class student extends datarecord {
 
         if (!empty($namesearch)) {
             $namesearch = trim($namesearch);
-            $where .= (!empty($where) ? ' AND ' : '') . "(($FULLNAME $LIKE '%$namesearch%') OR " .
+            $where .= " AND (($FULLNAME $LIKE '%$namesearch%') OR " .
                       "(usr.idnumber $LIKE '%$namesearch%')) ";
         }
 
         if ($alpha) {
-            $where .= (!empty($where) ? ' AND ' : '') . "(usr.lastname $LIKE '$alpha%') ";
+            $where .= " AND (usr.lastname $LIKE '$alpha%') ";
         }
 
-        if (!empty($where)) {
-            $where = 'WHERE '.$where.' ';
-        }
+        $where = 'WHERE '. $where .' ';
 
         if ($sort) {
-            $sort = 'ORDER BY '.$sort .' '. $dir.' ';
+            if ($sort == 'name') { // TBV: ELIS-2772
+                $sort = "ORDER BY usr.lastname {$dir}, usr.firstname {$dir} ";
+            } else {
+                $sort = 'ORDER BY '.$sort .' '. $dir.' ';
+            }
         }
 
         if (!empty($perpage)) {
@@ -1581,7 +1594,6 @@ class student extends datarecord {
             if (empty($this->classid)) {
                 return 0;
             }
-
             $classid = $this->classid;
         }
 
@@ -1600,16 +1612,14 @@ class student extends datarecord {
 
         if (!empty($namesearch)) {
             $namesearch = trim($namesearch);
-            $where .= (!empty($where) ? ' AND ' : '') . "($FULLNAME $LIKE '%$namesearch%') ";
+            $where .= " AND ($FULLNAME $LIKE '%$namesearch%') ";
         }
 
         if ($alpha) {
-            $where .= (!empty($where) ? ' AND ' : '') . "(usr.lastname $LIKE '$alpha%') ";
+            $where .= " AND (usr.lastname $LIKE '$alpha%') ";
         }
 
-        if (!empty($where)) {
-            $where = 'WHERE '.$where.' ';
-        }
+        $where = 'WHERE '. $where .' ';
 
         $sql = $select . $tables . $join . $on . $where;
         return $CURMAN->db->count_records_sql($sql);
@@ -1628,7 +1638,6 @@ class student extends datarecord {
             if (empty($this->classid)) {
                 return 0;
             }
-
             $classid = $this->classid;
         }
 
@@ -1653,11 +1662,7 @@ class student extends datarecord {
             $where[] = 'usr.inactive = 0';
         }
 
-        if (!empty($where)) {
-            $where = 'WHERE ' . implode(' AND ', $where);
-        } else {
-            $where = '';
-        }
+        $where = 'WHERE ' . implode(' AND ', $where);
 
         $sql = $select . $tables . $join . $on . $where;
         return $CURMAN->db->count_records_sql($sql);
@@ -1692,12 +1697,16 @@ class student extends datarecord {
 
         if (!empty($namesearch)) {
             $namesearch = trim($namesearch);
-            $where     .= (!empty($where) ? ' AND ' : '') . "(($FULLNAME $LIKE '%$namesearch%') OR " .
+            $where     .= " AND (($FULLNAME $LIKE '%$namesearch%') OR " .
                           "(usr.idnumber $LIKE '%$namesearch%')) ";
         }
 
         if ($alpha) {
-            $where .= (!empty($where) ? ' AND ' : '') . "($FULLNAME $LIKE '$alpha%') ";
+            $where .= " AND ($FULLNAME $LIKE '$alpha%') ";
+        }
+
+        if (empty($CURMAN->config->legacy_show_inactive_users)) {
+            $where .= ' AND usr.inactive = 0 ';
         }
 
         $uids = array();
@@ -1707,7 +1716,7 @@ class student extends datarecord {
             }
         }
 
-        if($users = $this->get_waiting()) {
+        if ($users = $this->get_waiting()) {
             foreach ($users as $user) {
                 $uids[] = $user->id;
             }
@@ -1721,20 +1730,17 @@ class student extends datarecord {
         }
 
         if (!empty($uids)) {
-            $where .= (!empty($where) ? ' AND ' : '') . 'usr.id NOT IN ( ' .
-                      implode(', ', $uids) . ' ) ';
+            $where .= ' AND usr.id NOT IN ( '. implode(', ', $uids) .' ) ';
         }
 
-        if (!empty($where)) {
-            $where = 'WHERE '.$where.' ';
-        }
+        $where = 'WHERE '. $where .' ';
 
-        if(!cmclasspage::_has_capability('block/curr_admin:class:enrol', $this->classid)) {            
-            //perform SQL filtering for the more "conditional" capability            
+        if (!cmclasspage::_has_capability('block/curr_admin:class:enrol', $this->classid)) {
+            //perform SQL filtering for the more "conditional" capability
 
             $allowed_clusters = cmclass::get_allowed_clusters($this->classid);
-            
-            if(empty($allowed_clusters)) {
+
+            if (empty($allowed_clusters)) {
                 $where .= 'AND 0=1';
             } else {
                 $cluster_filter = implode(',', $allowed_clusters);
@@ -1743,9 +1749,13 @@ class student extends datarecord {
                              WHERE clusterid IN ({$cluster_filter}))";
             }
         }
-        
+
         if ($sort) {
-            $sort = 'ORDER BY '.$sort .' '. $dir.' ';
+            if ($sort == 'name') { // TBV: ELIS-2772
+                $sort = "ORDER BY usr.lastname {$dir}, usr.firstname {$dir} ";
+            } else {
+                $sort = 'ORDER BY '.$sort .' '. $dir.' ';
+            }
         }
 
         if (!empty($perpage)) {
@@ -1814,12 +1824,12 @@ class student extends datarecord {
         if (!empty($where)) {
             $where = 'WHERE '.$where.' ';
         }
-        
+
         if(!cmclasspage::_has_capability('block/curr_admin:class:enrol', $this->classid)) {
             //perform SQL filtering for the more "conditional" capability
 
             $allowed_clusters = cmclass::get_allowed_clusters($this->classid);
-            
+
             if(empty($allowed_clusters)) {
                 $where .= 'AND 0=1';
             } else {
@@ -2006,19 +2016,21 @@ class student extends datarecord {
         $text = empty($CURMAN->config->notify_classnotstarted_message) ?
                     get_string('notifyclassnotstartedmessagedef', 'block_curr_admin') :
                     $CURMAN->config->notify_classnotstarted_message;
-        $search = array('%%userenrolname%%', '%%classname%%');
-        $replace = array(fullname($student->user), $student->cmclass->course->name);
+        $search = array('%%userenrolname%%', '%%classname%%', '%%coursename%%');
+        $replace = array(fullname($student->user), $student->cmclass->idnumber,
+                         $student->cmclass->course->name);
         $text = str_replace($search, $replace, $text);
 
         $eventlog = new Object();
         $eventlog->event = 'class_notstarted';
         $eventlog->instance = $student->classid;
+        $eventlog->fromuserid = $student->userid;
         if ($sendtouser) {
             $message->send_notification($text, $student->user, null, $eventlog);
         }
 
         $users = array();
-        
+
         if ($sendtorole) {
             /// Get all users with the notify_classnotstart capability.
             if ($roleusers = get_users_by_capability($context, 'block/curr_admin:notify_classnotstart')) {
@@ -2028,13 +2040,15 @@ class student extends datarecord {
 
         if ($sendtosupervisor) {
             /// Get parent-context users.
-            if ($supervisors = cm_get_users_by_capability('user', $this->userid, 'block/curr_admin:notify_classnotstart')) {
+            if ($supervisors = cm_get_users_by_capability('user', $student->userid, 'block/curr_admin:notify_classnotstart')) {
                 $users = $users + $supervisors;
             }
         }
 
+        $userfrom = new user($student->userid);
+
         foreach ($users as $user) {
-            $message->send_notification($text, $user, $enroluser);
+            $message->send_notification($text, $user, $userfrom, $eventlog);
         }
 
         return true;
@@ -2055,9 +2069,10 @@ class student extends datarecord {
         /// Does the user receive a notification?
         $sendtouser = $CURMAN->config->notify_classnotcompleted_user;
         $sendtorole = $CURMAN->config->notify_classnotcompleted_role;
+        $sendtosupervisor = $CURMAN->config->notify_classnotcompleted_supervisor;
 
         /// If nobody receives a notification, we're done.
-        if (!$sendtouser && !$sendtorole) {
+        if (!$sendtouser && !$sendtorole && !$sendtosupervisor) {
             return true;
         }
 
@@ -2070,19 +2085,28 @@ class student extends datarecord {
             $context = get_system_context();
         }
 
+        /// Make sure this is a valid user.
+        $enroluser = new user($student->userid);
+        if (empty($enroluser->id)) {
+            print_error('nouser', 'block_curr_admin');
+            return true;
+        }
+
         $message = new notification();
 
         /// Set up the text of the message
         $text = empty($CURMAN->config->notify_classnotcompleted_message) ?
                     get_string('notifyclassnotcompletedmessagedef', 'block_curr_admin') :
                     $CURMAN->config->notify_classnotcompleted_message;
-        $search = array('%%userenrolname%%', '%%classname%%');
-        $replace = array(fullname($student->user), $student->cmclass->course->name);
+        $search = array('%%userenrolname%%', '%%classname%%', '%%coursename%%');
+        $replace = array(fullname($student->user), $student->cmclass->idnumber,
+                         $student->cmclass->course->name);
         $text = str_replace($search, $replace, $text);
 
         $eventlog = new Object();
         $eventlog->event = 'class_notcompleted';
         $eventlog->instance = $student->classid;
+        $eventlog->fromuserid = $student->userid;
         if ($sendtouser) {
             $message->send_notification($text, $student->user, null, $eventlog);
         }
@@ -2098,30 +2122,30 @@ class student extends datarecord {
 
         if ($sendtosupervisor) {
             /// Get parent-context users.
-            if ($supervisors = cm_get_users_by_capability('user', $this->userid, 'block/curr_admin:notify_classnotcomplete')) {
+            if ($supervisors = cm_get_users_by_capability('user', $student->userid, 'block/curr_admin:notify_classnotcomplete')) {
                 $users = $users + $supervisors;
             }
         }
 
         foreach ($users as $user) {
-            $message->send_notification($text, $user, $enroluser);
+            $message->send_notification($text, $user, $enroluser, $eventlog);
         }
 
         return true;
     }
-    
+
     /**
      * Determines whether the current user is allowed to create, edit, and delete associations
      * between a user and a class
-     * 
+     *
      * @param    int      $userid    The id of the user being associated to the class
      * @param    int      $classid   The id of the class we are associating the user to
-     * 
+     *
      * @return   boolean             True if the current user has the required permissions, otherwise false
      */
     public static function can_manage_assoc($userid, $classid) {
         global $USER;
-        
+
         if(!cmclasspage::can_enrol_into_class($classid)) {
             //the users who satisfty this condition are a superset of those who can manage associations
             return false;
@@ -2129,12 +2153,12 @@ class student extends datarecord {
             //current user has the direct capability
             return true;
         }
-        
+
         //get the context for the "indirect" capability
         $context = cm_context_set::for_user_with_capability('cluster', 'block/curr_admin:class:enrol_cluster_user', $USER->id);
-            
+
         $allowed_clusters = array();
-            
+
         $allowed_clusters = cmclass::get_allowed_clusters($classid);
 
         //query to get users associated to at least one enabling cluster
@@ -2150,7 +2174,7 @@ class student extends datarecord {
         if(record_exists_select(CLSTUSERTABLE, $select)) {
             return true;
         }
-        
+
         return false;
     }
 }
@@ -2183,7 +2207,7 @@ class student_grade extends datarecord {
         $this->add_property('classid', 'int');
         $this->add_property('userid', 'int');
         $this->add_property('completionid', 'int');
-        $this->add_property('grade', 'int');
+        $this->add_property('grade', 'float');
         $this->add_property('locked', 'int');
         $this->add_property('timegraded', 'int');
         $this->add_property('timemodified', 'int');
@@ -2425,9 +2449,7 @@ function student_get_listing($classid, $sort='name', $dir='ASC', $startrec=0, $p
     global $CURMAN;
 
     $LIKE     = $CURMAN->db->sql_compare();
-
     $FULLNAME = sql_concat('usr.firstname', "' '", 'usr.lastname');
-
 
     $select  = 'SELECT stu.* ';
     $select .= ', ' . $FULLNAME . ' as name, usr.idnumber ';
@@ -2439,20 +2461,26 @@ function student_get_listing($classid, $sort='name', $dir='ASC', $startrec=0, $p
 
     if (!empty($namesearch)) {
         $namesearch = trim($namesearch);
-        $where .= (!empty($where) ? ' AND ' : '') . "(($FULLNAME $LIKE '%$namesearch%') OR " .
+        $where .= " AND (($FULLNAME $LIKE '%$namesearch%') OR " .
                   "(usr.idnumber $LIKE '%$namesearch%')) ";
     }
 
     if ($alpha) {
-        $where .= (!empty($where) ? ' AND ' : '') . "(usr.lastname $LIKE '$alpha%') ";
+        $where .= " AND (usr.lastname $LIKE '$alpha%') ";
     }
 
-    if (!empty($where)) {
-        $where = 'WHERE '.$where.' ';
+    if (empty($CURMAN->config->legacy_show_inactive_users)) {
+        $where .= ' AND usr.inactive = 0 ';
     }
+
+    $where = 'WHERE '. $where .' ';
 
     if ($sort) {
-        $sort = 'ORDER BY '.$sort .' '. $dir.' ';
+        if ($sort == 'name') { // TBV: ELIS-2772
+            $sort = "ORDER BY usr.lastname {$dir}, usr.firstname {$dir} ";
+        } else {
+            $sort = 'ORDER BY '.$sort .' '. $dir.' ';
+        }
     }
 
     if (!empty($perpage)) {
@@ -2492,16 +2520,18 @@ function student_count_records($classid, $namesearch = '', $alpha = '') {
 
     if (!empty($namesearch)) {
         $namesearch = trim($namesearch);
-        $where .= (!empty($where) ? ' AND ' : '') . "($FULLNAME $LIKE '%$namesearch%') ";
+        $where .= " AND ($FULLNAME $LIKE '%$namesearch%') ";
     }
 
     if ($alpha) {
-        $where .= (!empty($where) ? ' AND ' : '') . "(usr.lastname $LIKE '$alpha%') ";
+        $where .= " AND (usr.lastname $LIKE '$alpha%') ";
     }
 
-    if (!empty($where)) {
-        $where = 'WHERE '.$where.' ';
+    if (empty($CURMAN->config->legacy_show_inactive_users)) {
+        $where .= ' AND usr.inactive = 0 ';
     }
+
+    $where = 'WHERE '. $where .' ';
 
     $sql = $select . $tables . $join . $on . $where;
     return $CURMAN->db->count_records_sql($sql);

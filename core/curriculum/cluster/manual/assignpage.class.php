@@ -174,7 +174,7 @@ class userclusterpage extends userclusterbasepage {
 
         $formatters = $this->create_link_formatters(array('name'), 'clusterpage', 'clusterid');
 
-        $this->print_list_view($items, $columns, $formatters);
+        $this->print_list_view($items, $columns, $formatters, 'clusters');
     }
 
     function print_manuallyassigned_table() {
@@ -192,7 +192,7 @@ class userclusterpage extends userclusterbasepage {
 
         $formatters = $this->create_link_formatters(array('name'), 'clusterpage', 'clusterid');
 
-        $this->print_list_view($items, $columns, $formatters);
+        $this->print_list_view($items, $columns, $formatters, 'clusters');
     }
 
     function get_manuallyassigned_items() {
@@ -298,7 +298,7 @@ class clusteruserpage extends userclusterbasepage {
 
         $formatters = $this->create_link_formatters(array('idnumber', 'name'), 'usermanagementpage', 'userid');
 
-        $this->print_list_view($items, $columns, $formatters);
+        $this->print_list_view($items, $columns, $formatters, 'users');
     }
 
     function print_manuallyassigned_table() {
@@ -331,7 +331,7 @@ class clusteruserpage extends userclusterbasepage {
 
         $formatters = $this->create_link_formatters(array('idnumber', 'name'), 'usermanagementpage', 'userid');
 
-        $this->print_list_view($items, $columns, $formatters);
+        $this->print_list_view($items, $columns, $formatters, 'users');
     }
 
     function get_manuallyassigned_items() {

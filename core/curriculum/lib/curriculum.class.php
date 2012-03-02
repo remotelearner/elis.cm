@@ -97,6 +97,18 @@ class curriculum extends datarecord {
         }
     }
 
+    // Retrieves only the custom field default data
+    public function default_custom_fields() {
+        $fields = array();
+        $level = context_level_base::get_custom_context_level('curriculum', 'block_curr_admin');
+        $fielddata = field_data::get_for_context(get_context_instance($level));
+        $fielddata = $fielddata ? $fielddata : array();
+        foreach ($fielddata as $name => $value) {
+            $fields["field_{$name}"] = $value;
+        }
+        return $fields;
+    }
+
     public function set_from_data($data) {
         $fields = field::get_for_context_level('curriculum', 'block_curr_admin');
         $fields = $fields ? $fields : array();
@@ -207,8 +219,8 @@ class curriculum extends datarecord {
         $select  = "SELECT cce.id as id, cce.credits AS curcredits, ".
                    "cur.id as curid, cur.reqcredits as reqcredits, ".
                    "cca.id as curassid, cca.userid, cca.curriculumid, cca.completed, cca.timecompleted, ".
-                   "cca.credits, cca.locked, cca.timecreated, cca.timemodified, cca.timeexpired, " .
-                   "ccc.courseid as courseid ";
+                   "cca.credits, cca.locked, cca.timecreated, cca.certificatecode, cca.timemodified, ".
+                   "cca.timeexpired, ccc.courseid as courseid ";
         /// >* This will return ALL class enrolment records for a user's curriculum assignment.
         $from    = "FROM {$CFG->prefix}crlm_curriculum_assignment cca ";
         $join    = "INNER JOIN {$CFG->prefix}crlm_user cu ON cu.id = cca.userid " .
@@ -287,11 +299,12 @@ class curriculum extends datarecord {
         }
 
 
-        $sendtouser = $CURMAN->config->notify_curriculumnotcompleted_user;
-        $sendtorole = $CURMAN->config->notify_curriculumnotcompleted_role;
+        $sendtouser       = $CURMAN->config->notify_curriculumnotcompleted_user;
+        $sendtorole       = $CURMAN->config->notify_curriculumnotcompleted_role;
+        $sendtosupervisor = $CURMAN->config->notify_curriculumnotcompleted_supervisor;
 
         /// If nobody receives a notification, we're done.
-        if (!$sendtouser && !$sendtorole) {
+        if (!$sendtouser && !$sendtorole && !$sendtosupervisor) {
             return true;
         }
 
@@ -305,7 +318,7 @@ class curriculum extends datarecord {
         $join    = "INNER JOIN {$CFG->prefix}crlm_user cu ON cu.id = cca.userid " .
                    "INNER JOIN {$CFG->prefix}crlm_curriculum cur ON cca.curriculumid = cur.id " .
         /// >*
-                   "LEFT JOIN {$CFG->prefix}crlm_notification_log cnl ON cnl.userid = cu.id AND cnl.instance = cca.id AND ".
+                   "LEFT JOIN {$CFG->prefix}crlm_notification_log cnl ON cnl.fromuserid = cu.id AND cnl.instance = cca.id AND ".
                    "cnl.event = 'curriculum_notcompleted' ";
         $where   = "WHERE (cca.completed = 0) AND (cur.timetocomplete != '') AND (cur.timetocomplete NOT LIKE '0h, 0d, 0w, 0m, 0y%') AND cnl.id IS NULL ";
         $order   = "ORDER BY cur.id, cca.id ASC ";
@@ -351,13 +364,17 @@ class curriculum extends datarecord {
 
         $sendtouser = $CURMAN->config->notify_curriculumrecurrence_user;
         $sendtorole = $CURMAN->config->notify_curriculumrecurrence_role;
+        $sendtosupervisor = $CURMAN->config->notify_curriculumrecurrence_supervisor;
 
         /// If nobody receives a notification, we're done.
-        if (!$sendtouser && !$sendtorole) {
+        if (!$sendtouser && !$sendtorole && !$sendtosupervisor) {
             return true;
         }
 
         $timenow = time();
+
+        // Notification offset from expiry time, in seconds
+        $notification_offset = DAYSECS * $CURMAN->config->notify_curriculumrecurrence_days;
 
         $sql = "SELECT cca.id AS enrolmentid, cc.name AS curriculumname,
                        cu.id AS userid, cu.idnumber AS useridnumber, cu.firstname AS firstname, cu.lastname AS lastname,
@@ -366,8 +383,8 @@ class curriculum extends datarecord {
                   JOIN {$CURMAN->db->prefix_table(CURTABLE)} cc ON cca.curriculumid = cc.id
                   JOIN {$CURMAN->db->prefix_table(USRTABLE)} cu ON cu.id = cca.userid
                   JOIN {$CURMAN->db->prefix_table('user')} mu ON cu.idnumber = mu.idnumber
-             LEFT JOIN {$CURMAN->db->prefix_table('crlm_notification_log')} cnl ON cnl.userid = cu.id AND cnl.instance = cca.id AND cnl.event = 'curriculum_recurrence'
-                 WHERE cnl.id IS NULL and cca.timeexpired > 0 AND cca.timeexpired < $timenow + {$CURMAN->config->notify_curriculumrecurrence_days}";
+             LEFT JOIN {$CURMAN->db->prefix_table('crlm_notification_log')} cnl ON cnl.fromuserid = cu.id AND cnl.instance = cca.id AND cnl.event = 'curriculum_recurrence'
+                 WHERE cnl.id IS NULL and cca.timeexpired > 0 AND cca.timeexpired < $timenow + {$notification_offset}";
 
         $usertempl = new user(); // used just for its properties.
 
@@ -440,6 +457,7 @@ class curriculum extends datarecord {
         $eventlog = new Object();
         $eventlog->event = 'curriculum_recurrence';
         $eventlog->instance = $user->enrolmentid;
+        $eventlog->fromuserid = $user->id;
         if ($sendtouser) {
             $message->send_notification($text, $user, null, $eventlog);
         }

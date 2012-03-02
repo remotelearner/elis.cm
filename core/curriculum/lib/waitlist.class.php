@@ -273,8 +273,11 @@ class waitlist extends datarecord {
         $user = cm_get_moodleuser($this->userid);
         $from = get_admin();
 
-        notification::notify($message, $user, $from);
-        email_to_user($user, $from, $subject, $message);
+        // Send a notification and e-mail only if the Moodle user exists
+        if($user != null) {
+            notification::notify($message, $user, $from);
+            email_to_user($user, $from, $subject, $message);
+        }
 
         parent::add();
     }

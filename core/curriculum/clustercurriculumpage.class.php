@@ -163,11 +163,20 @@ class clustercurriculumpage extends clustercurriculumbasepage {
 
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
+
+        if (clusterpage::_has_capability('block/curr_admin:cluster:view', $id)) {
+            //allow viewing but not managing associations
+            return true;
+        }
+
         return clusterpage::_has_capability('block/curr_admin:associate', $id);
     }
 
     function action_default() {
         $id = $this->required_param('id', PARAM_INT);
+
+        $sort = $this->optional_param('sort', 'name', PARAM_CLEAN);
+        $dir = $this->optional_param('dir', 'ASC', PARAM_CLEAN);
 
         $columns = array(
             'idnumber'    => 'ID Number',
@@ -180,11 +189,11 @@ class clustercurriculumpage extends clustercurriculumbasepage {
             'buttons'     => '',
         );
 
-        $items = clustercurriculum::get_curricula($id);
+        $items = clustercurriculum::get_curricula($id, 0, 0, $sort, $dir);
 
         $formatters = $this->create_link_formatters(array('idnumber', 'name'), 'curriculumpage', 'curriculumid');
 
-        $this->print_list_view($items, $columns, $formatters);
+        $this->print_list_view($items, $columns, $formatters, 'curricula');
 
         // find the curricula that the user can associate with this cluster
         $contexts = curriculumpage::get_contexts('block/curr_admin:associate');
@@ -203,6 +212,7 @@ class clustercurriculumpage extends clustercurriculumbasepage {
                 print_string('all_items_assigned', 'block_curr_admin');
                 echo '</div>';
             }
+            return; // TBD: DO NOT display copy curriculum button!
         } else {
             echo '<p align="center"><center>';
             echo get_string('clsaddcurr_instruction','block_curr_admin');
@@ -499,6 +509,12 @@ class curriculumclusterpage extends clustercurriculumbasepage {
 
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
+
+        if (curriculumpage::_has_capability('block/curr_admin:curriculum:view', $id)) {
+            //allow viewing but not managing associations
+            return true;
+        }
+
         return curriculumpage::_has_capability('block/curr_admin:associate', $id);
     }
 
@@ -522,7 +538,7 @@ class curriculumclusterpage extends clustercurriculumbasepage {
 
         $formatters = $this->create_link_formatters(array('name'), 'clusterpage', 'clusterid');
 
-        $this->print_list_view($items, $columns, $formatters);
+        $this->print_list_view($items, $columns, $formatters, 'clusters');
 
         $contexts = clusterpage::get_contexts('block/curr_admin:associate');
         $clusters = cluster_get_listing('name', 'ASC', 0, 0, '', '', array('contexts' =>$contexts));

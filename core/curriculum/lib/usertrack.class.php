@@ -207,14 +207,14 @@ class usertrack extends datarecord {
      * @uses $CURMAN
      * @param int $trackid The track id.
      */
-    static function get_users($trackid = 0) {
+    static function get_users($trackid = 0, $sort = '', $dir = 'ASC', $page = 0, $perpage = 0) {
         global $CURMAN;
 
         if (empty($CURMAN->db)) {
             return NULL;
         }
 
-        if(empty($trackid) && !empty($this->trackid)) {
+        if (empty($trackid) && !empty($this->trackid)) {
             $trackid = $this->trackid;
         }
 
@@ -225,16 +225,26 @@ class usertrack extends datarecord {
             'ON usr.id = usrtrk.userid ';
         $where   = 'WHERE usrtrk.trackid = '.$trackid.' ';
         //$group   = 'GROUP BY usrtrk.id ';
-        $sort    = 'ORDER BY name ASC ';
-        $limit   = '';
+
+        if ($dir != 'ASC') {
+            $dir = 'DESC';
+        }
+        if (empty($sort)) {
+            $sort = 'name';
+        }
+        if ($sort == 'name') { // TBV: ELIS-2772 & above
+           $sort = "ORDER BY usr.lastname {$dir}, usr.firstname {$dir} ";
+        } else {
+            $sort = 'ORDER BY '. $sort .' '. $dir .' ';
+        }
+        $limit = '';
 
         if (empty($CURMAN->config->legacy_show_inactive_users)) {
             $where .= ' AND usr.inactive = 0 ';
         }
 
         $sql = $select.$tables.$join.$where./*$group.*/$sort.$limit;
-
-        return $CURMAN->db->get_records_sql($sql);
+        return $CURMAN->db->get_records_sql($sql, $page * $perpage, $perpage);
     }
 
 

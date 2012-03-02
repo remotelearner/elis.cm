@@ -135,9 +135,21 @@ class field extends datarecord {
     }
 
     function delete() {
-        $result = parent::delete();
-        // FIXME: delete all field data associated with this field
-        return $result;
+      global $CURMAN;
+
+      // delete owner data
+      foreach ($this->owners as $owner) {
+        $CURMAN->db->delete_records(FIELDOWNERTABLE, 'id', $owner->id);
+      }
+
+      // delete context data
+      $CURMAN->db->delete_records(FIELDCONTEXTTABLE, 'fieldid', $this->id);
+
+      // delete the field's data
+      $CURMAN->db->delete_records($this->data_table(), 'fieldid', $this->id);
+
+      // delete the field
+      parent::delete();
     }
 
     /**
@@ -175,8 +187,9 @@ class field extends datarecord {
         if (!$contextlevel) {
             return false;
         }
-        if (!is_numeric($contextlevel)) {
-            $contextlevel = context_level_base::get_custom_context_level($contextlevel, 'block_curr_admin');
+        if (!is_numeric($contextlevel) &&
+            !($contextlevel = context_level_base::get_custom_context_level($contextlevel, 'block_curr_admin'))) {
+            return false;
         }
         $select = "id IN (SELECT fctx.fieldid
                             FROM {$CURMAN->db->prefix_table(FIELDCONTEXTTABLE)} fctx
@@ -266,6 +279,19 @@ class field extends datarecord {
         return $field;
     }
 
+    /**
+     * Get the default value of the field.
+     *
+     * @return mixed default value of field or false for none.
+     */
+    public function get_default() {
+        global $CURMAN;
+        if (empty($this->id)) { // TBD: or throw exception?
+            return false;
+        }
+        return $CURMAN->db->get_field_select($this->data_table(), 'data',
+                                "contextid IS NULL AND fieldid = {$this->id}");
+    }
 }
 
 /**
@@ -402,9 +428,24 @@ class field_category extends datarecord {
     }
 
     function delete() {
-        $result = parent::delete();
-        // FIXME: delete all fields associated with this category
-        return $result;
+      global $CURMAN;
+
+      $fields = $CURMAN->db->get_records(FIELDTABLE, 'categoryid', $this->id);
+      if (!empty($fields)) {
+          foreach ($fields as $field) {
+              $fieldobj = new field($field);
+              $fieldobj->delete();
+          }
+      }
+
+      // delete category context data
+      $CURMAN->db->delete_records(FIELDCATEGORYCONTEXTTABLE, 'categoryid', $this->id);
+
+      // delete field
+      $CURMAN->db->delete_records(FIELDTABLE, 'categoryid', $this->id);
+
+      // delete category
+      parent::delete();
     }
 
 }

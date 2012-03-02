@@ -182,6 +182,7 @@ class crlm_health_check_base {
 
 global $core_health_checks;
 $core_health_checks = array(
+    'cron_lastruntimes_check',
     'health_duplicate_enrolments',
     'health_stale_cm_class_moodle',
     'health_curriculum_course',
@@ -190,7 +191,73 @@ $core_health_checks = array(
     'track_classes_check',
     'completion_export_check',
     'duplicate_moodle_profile',
-    );
+    'dangling_completion_locks'
+);
+
+
+/**
+ * Checks for any passing completion scores that are unlocked and linked to Moodle grade items which do not exist.
+ */
+class dangling_completion_locks extends crlm_health_check_base {
+    function __construct() {
+        global $CURMAN, $CFG;
+
+        require_once CURMAN_DIRLOCATION.'/lib/student.class.php';
+
+        // Check for unlocked, passed completion scores which are not associated with a valid Moodle grade item
+        $sql = "SELECT COUNT('x')
+                FROM {$CURMAN->db->prefix_table(GRDTABLE)} ccg
+                INNER JOIN {$CURMAN->db->prefix_table(CRSCOMPTABLE)} ccc ON ccc.id = ccg.completionid
+                INNER JOIN {$CURMAN->db->prefix_table(CLSMOODLETABLE)} ccm ON ccm.classid = ccg.classid
+                INNER JOIN {$CFG->prefix}course c ON c.id = ccm.moodlecourseid
+                LEFT JOIN {$CFG->prefix}grade_items gi ON (gi.idnumber = ccc.idnumber AND gi.courseid = c.id)
+                WHERE ccg.locked = 0
+                AND ccc.idnumber != ''
+                AND ccg.grade >= ccc.completion_grade
+                AND gi.id IS NULL";
+
+        $this->count = $CURMAN->db->count_records_sql($sql);
+/*
+        // Check for unlocked, passed completion scores which are associated with a valid Moodle grade item
+        // XXX - NOTE: this is not currently being done as it may be that these values were manually unlocked on purpose
+        $sql = "SELECT COUNT('x')
+                FROM {$CURMAN->db->prefix_table(USRTABLE)} cu
+                INNER JOIN {$CURMAN->db->prefix_table(STUTABLE)} cce ON cce.userid = cu.id
+                INNER JOIN {$CURMAN->db->prefix_table(GRDTABLE)} ccg ON (ccg.userid = cce.userid AND ccg.classid = cce.classid)
+                INNER JOIN {$CURMAN->db->prefix_table(CRSCOMPTABLE)} ccc ON ccc.id = ccg.completionid
+                INNER JOIN {$CURMAN->db->prefix_table(CLSMOODLETABLE)} ccm ON ccm.classid = ccg.classid
+                INNER JOIN {$CFG->prefix}user u ON u.idnumber = cu.idnumber
+                INNER JOIN {$CFG->prefix}course c ON c.id = ccm.moodlecourseid
+                INNER JOIN {$CFG->prefix}grade_items gi ON (gi.courseid = c.id AND gi.idnumber = ccc.idnumber)
+                INNER JOIN {$CFG->prefix}grade_grades gg ON (gg.itemid = gi.id AND gg.userid = u.id)
+                WHERE ccg.locked = 0
+                AND ccg.grade >= ccc.completion_grade
+                AND gg.finalgrade >= ccc.completion_grade
+                AND ccc.idnumber != ''
+                AND gi.itemtype != 'course'
+                AND ccg.timemodified > gg.timemodified";
+
+        $this->count += $CURMAN->db->count_records_sql($sql);
+*/
+    }
+    function exists() {
+        return $this->count != 0;
+    }
+    function severity() {
+        return healthpage::SEVERITY_SIGNIFICANT;
+    }
+    function title() {
+        return get_string('health_danglingcompletionlocks','block_curr_admin');
+    }
+    function description() {
+        return get_string('health_danglingcompletionlocksdesc','block_curr_admin', $this->count);
+    }
+    function solution() {
+        $msg = get_string('health_danglingcompletionlockssoln','block_curr_admin');
+        return $msg;
+    }
+}
+
 
 /**
  * Checks for duplicate CM enrolment records.
@@ -215,14 +282,13 @@ class health_duplicate_enrolments extends crlm_health_check_base {
         return healthpage::SEVERITY_CRITICAL;
     }
     function title() {
-        return 'Duplicate class enrolment records';
+        return get_string('health_dupenrol','block_curr_admin');
     }
     function description() {
-        return "There were {$this->count} duplicate class enrolment records in the ELIS enrolments table.";
+        return get_string('health_dupenroldesc','block_curr_admin', $this->count);
     }
     function solution() {
-        $msg = 'The duplicate class enrolments need to be removed directly from the database.  <b>DO NOT</b> try to remove them via the UI.<br/><br/>'
-             . 'Run the script fix_duplicate_enrolments.php to remove all duplicate class enrolments.';
+        $msg = get_string('health_dupenrolsoln','block_curr_admin');
         return $msg;
     }
 }
@@ -249,16 +315,14 @@ class health_stale_cm_class_moodle extends crlm_health_check_base {
         return healthpage::SEVERITY_CRITICAL;
     }
     function title() {
-        return 'Stale CM Class - Moodle Course record';
+        return get_string('health_stalecmclass','block_curr_admin');
     }
     function description() {
-        return "There were {$this->count} records in the crlm_class_moodle table referencing nonexistent CM classes.";
+        return get_string('health_stalecmclassdesc','block_curr_admin', $this->count);
     }
     function solution() {
         global $CURMAN;
-        $msg = "These records need to be removed from the database.<br/>Suggested SQL:
-                DELETE FROM {$CURMAN->db->prefix_table(CLSMOODLETABLE)} WHERE classid NOT IN (
-                SELECT id FROM {$CURMAN->db->prefix_table(CLSTABLE)} )";
+        $msg = get_string('health_stalecmclasssoln','block_curr_admin', array($CURMAN->db->prefix_table(CLSMOODLETABLE),$CURMAN->db->prefix_table(CLSTABLE)));
         return $msg;
     }
 }
@@ -285,17 +349,15 @@ class health_curriculum_course extends crlm_health_check_base {
         return healthpage::SEVERITY_CRITICAL;
     }
     function title() {
-        return 'Stale CM Course - Moodle Curriculum record';
+        return get_string('health_stalecmcourse','block_curr_admin');
     }
     function description() {
         global $CURMAN;
-        return "There are {$this->count} records in the {$CURMAN->db->prefix_table(CURCRSTABLE)} table referencing nonexistent CM courses.";
+        return get_string('health_stalecmcoursedesc','block_curr_admin', array($this->count, $CURMAN->db->prefix_table(CURCRSTABLE)));
     }
     function solution() {
         global $CURMAN;
-        $msg = "These records need to be removed from the database.<br/>Suggested SQL:
-                DELETE FROM {$CURMAN->db->prefix_table(CURCRSTABLE)} WHERE courseid NOT IN (
-                SELECT id FROM {$CURMAN->db->prefix_table(CRSTABLE)} )";
+        $msg = get_string('health_stalecmcoursesoln','block_curr_admin', array($CURMAN->db->prefix_table(CURCRSTABLE), $CURMAN->db->prefix_table(CRSTABLE)));"";
         return $msg;
 
     }
@@ -314,30 +376,67 @@ class health_user_sync extends crlm_health_check_base {
                 AND confirmed = 1
                 AND mnethostid = {$CFG->mnet_localhost_id}
                 AND idnumber != ''
+                AND firstname != ''
+                AND lastname != ''
+                AND email != ''
+                AND country != ''
                 AND NOT EXISTS (SELECT 'x'
                                 FROM {$CFG->prefix}crlm_user cu
-                                WHERE cu.idnumber = {$CFG->prefix}user.idnumber)";
+                                WHERE cu.idnumber = {$CFG->prefix}user.idnumber)
+                AND NOT EXISTS (SELECT 'x'
+                                FROM {$CFG->prefix}crlm_user cu
+                                WHERE cu.username = {$CFG->prefix}user.username)";
 
         $this->count = $CURMAN->db->count_records_sql($sql);
+
+        $sql = "SELECT COUNT(*) FROM {$CFG->prefix}user usr
+                WHERE deleted = 0
+                  AND idnumber IN (
+                  SELECT idnumber FROM {$CFG->prefix}user
+                  WHERE username != 'guest' AND deleted = 0
+                  AND confirmed = 1 AND mnethostid = {$CFG->mnet_localhost_id} AND id != usr.id)";
+
+        $this->dupids = $CURMAN->db->count_records_sql($sql);
     }
     function exists() {
-        return $this->count != 0;
+        return $this->count != 0 || $this->dupids > 0;
     }
     function severity() {
         return healthpage::SEVERITY_CRITICAL;
     }
     function title() {
-        return 'User Records Mismatch - Synchronize Users';
+//        return 'User Records Mismatch - Synchronize Users';
+
+        return get_string('health_user_sync', 'block_curr_admin');
     }
     function description() {
-        return "There are {$this->count} extra user records for Moodle which don't exist for ELIS.";
+//        return "There are {$this->count} extra user records for Moodle which don't exist for ELIS.";
+        $msg = '';
+        if ($this->count > 0) {
+            $msg = get_string('health_user_syncdesc', 'block_curr_admin', $this->count);
+        }
+        if ($this->dupids > 0) {
+            if (!empty($msg)) {
+                $msg .= "<br/>\n";
+            }
+            $msg .= get_string('health_user_dupiddesc', 'block_curr_admin', $this->dupids);
+        }
+        return $msg;
     }
     function solution() {
         global $CFG;
-        $msg = 'Users need to be synchronized by running the script which is linked below.<br/><br/>'.
-               'This process can take a long time, we recommend you run it during non-peak hours, and leave this window open until you see a success message. '.
-               'If the script times out (stops loading before indicating success), please open a support ticket to have this run for you.<br/><br/>'.
-               '<a href="'.$CFG->wwwroot.'/curriculum/scripts/migrate_moodle_users.php">Fix this now</a>';
+
+        $msg = '';
+        if ($this->dupids > 0) {
+            $msg = get_string('health_user_dupidsoln', 'block_curr_admin');
+        }
+        if ($this->count > $this->dupids) {
+            // ELIS-3963: Only run migrate script if more mismatches then dups
+            if (!empty($msg)) {
+                $msg .= "<br/>\n";
+            }
+            $msg .= get_string('health_user_syncsoln', 'block_curr_admin', $CFG->wwwroot);
+        }
         return $msg;
     }
 }
@@ -347,13 +446,14 @@ class cluster_orphans_check extends crlm_health_check_base {
         global $CURMAN;
         $this->parentBad = array();
 
-        $clusters = cluster_get_listing('id', 'ASC', 0);
-        foreach ($clusters as $clusid => $clusdata) {
-            if ($clusdata->parent > 0) {
-                $select = "id='{$clusdata->parent}'";
-                $parentCnt = $CURMAN->db->count_records_select(CLSTTABLE, $select);
-                if ($parentCnt < 1) {
-                    $this->parentBad[] = $clusdata->name;
+        if ($clusters = cluster_get_listing('id', 'ASC', 0)) {
+            foreach ($clusters as $clusid => $clusdata) {
+                if ($clusdata->parent > 0) {
+                    $select = "id='{$clusdata->parent}'";
+                    $parentCnt = $CURMAN->db->count_records_select(CLSTTABLE, $select);
+                    if ($parentCnt < 1) {
+                        $this->parentBad[] = $clusdata->name;
+                    }
                 }
             }
         }
@@ -365,7 +465,7 @@ class cluster_orphans_check extends crlm_health_check_base {
     }
 
     function title() {
-        return 'Orphaned clusters found!';
+        return get_string('health_clusterorphan', 'block_curr_admin');
     }
 
     function severity() {
@@ -374,13 +474,14 @@ class cluster_orphans_check extends crlm_health_check_base {
 
     function description() {
         if (count($this->parentBad) > 0) {
-            $msg = 'There are '.count($this->parentBad).' sub-clusters which have had their parent clusters deleted.<br/><ul>';
+            $msg =  get_string('health_clusterorphandesc', 'block_curr_admin', count($this->parentBad));
+            $msg .= '<br/><ul>';
             foreach ($this->parentBad as $parentName) {
                 $msg .= '<li>'.$parentName.'</li>';
             }
             $msg .= '</ul>';
         } else {
-            $msg = 'There were no orphaned clusters found.'; // We should not reach here but put in just in case
+            $msg = get_string('health_clusterorphandescnone', 'block_curr_admin'); // We should not reach here but put in just in case
         }
 
         return $msg;
@@ -388,8 +489,7 @@ class cluster_orphans_check extends crlm_health_check_base {
 
     function solution() {
         global $CFG;
-        $msg = 'From the command line change to the directory '.$CFG->dirroot.'/curriculum/scripts<br/>
-                Run the script fix_cluster_orphans.php to convert all clusters with missing parent clusters to top-level.';
+        $msg = get_string('health_clusterorphansoln', 'block_curr_admin', $CFG->dirroot);
         return $msg;
     }
 }
@@ -421,7 +521,7 @@ class track_classes_check extends crlm_health_check_base {
     }
 
     function title() {
-        return 'Unassociated classes found in tracks';
+        return get_string('health_lostclass', 'block_curr_admin');
     }
 
     function severity() {
@@ -430,9 +530,10 @@ class track_classes_check extends crlm_health_check_base {
 
     function description() {
         if (count($this->unattachedClasses) > 0) {
-            $msg = 'Found '.count($this->unattachedClasses).' classes that are attached to tracks when associated courses are not attached to the curriculum.';
+            $msg = get_string('health_lostclassdesc', 'block_curr_admin', count($this->unattachedClasses));
+            '';
         } else {
-            $msg = 'There were no issues found.'; // We should not reach here but put in just in case
+            $msg = get_string('health_lostclassdescnone', 'block_curr_admin'); // We should not reach here but put in just in case
         }
 
         return $msg;
@@ -440,8 +541,7 @@ class track_classes_check extends crlm_health_check_base {
 
     function solution() {
         global $CFG;
-        $msg = 'Need to remove all classes in tracks that do not have an associated course in its associated curriculum by running the script linked below.<br/><br/>' .
-               '<a href="'.$CFG->wwwroot.'/curriculum/scripts/fix_track_classes.php">Fix this now</a>';
+        $msg = get_string('health_lostclasssoln', 'block_curr_admin', $CFG->wwwroot);
         return $msg;
     }
 }
@@ -457,7 +557,7 @@ class completion_export_check extends crlm_health_check_base {
     }
 
     function title() {
-        return 'Completion export';
+        return get_string('health_compexport', 'block_curr_admin');
     }
 
     function severity() {
@@ -465,12 +565,12 @@ class completion_export_check extends crlm_health_check_base {
     }
 
     function description() {
-        return 'The Completion Export block, which conflicts with Integration Point, is present.';
+        return get_string('health_compexportdesc', 'block_curr_admin');
     }
 
     function solution() {
         global $CFG;
-        return "The completion export block should be automatically removed when the site is properly upgraded via CVS or git.  If it is still present, go to the <a href=\"{$CFG->wwwroot}/admin/blocks.php\">Manage blocks</a> page and delete the completion export block, and then remove the <tt>{$CFG->dirroot}/blocks/completion_export</tt> directory.";
+        return get_string('health_compexportsoln', 'block_curr_admin', array($CFG->wwwroot,$CFG->dirroot));
     }
 }
 
@@ -495,15 +595,84 @@ class duplicate_moodle_profile extends crlm_health_check_base {
         return healthpage::SEVERITY_ANNOYANCE;
     }
     function title() {
-        return 'Duplicate Moodle profile field records';
+        return get_string('health_dupmenrol', 'block_curr_admin');
     }
     function description() {
         $count = array_reduce($this->counts, create_function('$a,$b', 'return $a + $b->dup;'), 0);
-        return "There were {$count} duplicate Moodle profile field records.";
+        return get_string('health_dupmenroldesc', 'block_curr_admin', $count);
     }
     function solution() {
-        $msg = 'Run the script fix_duplicate_moodle_profile.php to remove all duplicate profile field records.';
+        $msg = get_string('health_dupmenrolsoln', 'block_curr_admin');
+        '';
         return $msg;
     }
 }
+
+/**
+ * Checks the last cron run times of components
+ */
+class cron_lastruntimes_check extends crlm_health_check_base {
+    private $blocks = array('curr_admin'); // empty array for none ?
+    private $plugins = array(); // TBD
+
+    function exists() {
+        $threshold = time() - DAYSECS;
+        foreach ($this->blocks as $block) {
+            $lastcron = get_field('block', 'lastcron', 'name', $block);
+            if ($lastcron < $threshold) {
+                return true;
+            }
+        }
+        foreach ($this->plugins as $plugin) {
+            $lastcron = get_field('config_plugins', 'value', 'plugin', $plugin, 'name', 'lastcron');
+            if ($lastcron < $threshold) {
+                return true;
+            }
+        }
+        $lasteliscron = get_field('elis_scheduled_tasks', 'MAX(lastruntime)', '', '');
+        if ($lasteliscron < $threshold) {
+            return true;
+        }
+        return false;
+    }
+
+    function title() {
+        return get_string('health_cron_title', 'block_curr_admin');
+    }
+
+    function severity() {
+        return healthpage::SEVERITY_NOTICE;
+    }
+
+    function description() {
+        $description = '';
+        $threshold = time() - DAYSECS;
+        foreach ($this->blocks as $block) {
+            $lastcron = get_field('block', 'lastcron', 'name', $block);
+            if ($lastcron < $threshold) {
+                $a = new stdClass;
+                $a->name = $block;
+                $a->lastcron = $lastcron ? userdate($lastcron) : get_string('cron_notrun', 'block_curr_admin');
+                $description .= get_string('health_cron_block', 'block_curr_admin', $a);
+            }
+        }
+        foreach ($this->plugins as $plugin) {
+            $lastcron = get_field('config_plugins', 'value', 'plugin', $plugin, 'name', 'lastcron');
+            if ($lastcron < $threshold) {
+                $a = new stdClass;
+                $a->name = $plugin;
+                $a->lastcron = $lastcron ? userdate($lastcron) : get_string('cron_notrun', 'block_curr_admin');
+                $description .= get_string('health_cron_plugin', 'block_curr_admin', $a);
+            }
+        }
+        $lasteliscron = get_field('elis_scheduled_tasks', 'MAX(lastruntime)', '', '');
+        if ($lasteliscron < $threshold) {
+            $lastcron = $lasteliscron ? userdate($lasteliscron) : get_string('cron_notrun', 'block_curr_admin');
+            $description .= get_string('health_cron_elis', 'block_curr_admin', $lastcron);
+        }
+        return $description;
+    }
+
+}
+
 ?>

@@ -49,7 +49,7 @@ class block_curr_admin extends block_base {
         global $PAGE, $CURMAN;
         require_once CURMAN_DIRLOCATION.'/version.php';
         $this->title            = get_string('blockname', 'block_curr_admin');
-        $this->version          = 2011050202;
+        $this->version          = 2011050207;
         $this->release          = $CURMAN->release;
         $this->cron             = 300;
         $this->currentdepth     = 0;
@@ -99,6 +99,12 @@ class block_curr_admin extends block_base {
 
         require_once($CFG->libdir . '/adminlib.php');
         require_once($CFG->dirroot . '/my/pagelib.php');
+
+        // dependencies on page classes
+        require_once($CFG->dirroot .'/curriculum/clusterpage.class.php');
+        require_once($CFG->dirroot .'/curriculum/curriculumpage.class.php');
+        require_once($CFG->dirroot .'/curriculum/coursepage.class.php');
+        require_once($CFG->dirroot .'/curriculum/trackpage.class.php');
 
 // ELIS-1251 - Don't display a useless message if in the center column
 //        if ($this->instance->position == BLOCK_POS_CENTRE) {
@@ -160,22 +166,27 @@ class block_curr_admin extends block_base {
         /*****************************************
          * Clusters
          *****************************************/
-        if(!isset($CURMAN->config->display_clusters_at_top_level) || !empty($CURMAN->config->display_clusters_at_top_level)) {
+        if (!isset($CURMAN->config->display_clusters_at_top_level) || !empty($CURMAN->config->display_clusters_at_top_level)) {
             $manageclusters_css_class = block_curr_admin_get_item_css_class('manageclusters');
             $cluster_css_class = block_curr_admin_get_item_css_class('cluster_instance');
 
             require_once CURMAN_DIRLOCATION . '/lib/contexts.php';
             $context_result = cm_context_set::for_user_with_capability('cluster', 'block/curr_admin:cluster:view', $USER->id);
-            $extrafilters = array('contexts' => $context_result,'parent' => 0);
+            $extrafilters = array('contexts' => $context_result, 'parent' => 0);
             $num_records = cluster_count_records('', '', $extrafilters);
 
-            if($clusters = cluster_get_listing('priority, name', 'ASC', 0, $num_block_icons, '', '', array('parent' => 0))) {
-                foreach($clusters as $cluster) {
+            if ($clusters = cluster_get_listing('priority, name', 'ASC', 0, $num_block_icons, '', '', $extrafilters)) {
+                foreach ($clusters as $cluster) {
                     $params = array('id'     => $cluster->id,
                                     'action' => 'view');
 
-                    $cluster_count = cluster_count_records('', '', array('parent' => $cluster->id));
-                    $curriculum_count = clustercurriculum::count_curricula($cluster->id);
+                    // count sub-clusters
+                    $cluster_filter = array('contexts' => clusterpage::get_contexts('block/curr_admin:cluster:view'), 'parent' => $cluster->id);
+                    $cluster_count = cluster_count_records('', '', $cluster_filter);
+
+                    // count associated curricula
+                    $curriculum_filter = array('contexts' => curriculumpage::get_contexts('block/curr_admin:curriculum:view'));
+                    $curriculum_count = clustercurriculum::count_curricula($cluster->id, $curriculum_filter);
 
                     $isLeaf = empty($cluster_count) &&
                               empty($curriculum_count);
@@ -184,7 +195,7 @@ class block_curr_admin extends block_base {
                 }
             }
 
-            if($num_block_icons < $num_records) {
+            if ($num_block_icons < $num_records) {
                 $cm_entity_pages[] = block_curr_admin_get_menu_summary_item('cluster', $cluster_css_class, $num_records - $num_block_icons);
             }
         }
@@ -192,21 +203,29 @@ class block_curr_admin extends block_base {
         /*****************************************
          * Curricula
          *****************************************/
-        if(!empty($CURMAN->config->display_curricula_at_top_level)) {
+        if (!empty($CURMAN->config->display_curricula_at_top_level)) {
             $managecurricula_css_class = block_curr_admin_get_item_css_class('managecurricula');
             $curriculum_css_class = block_curr_admin_get_item_css_class('curriculum_instance');
 
             require_once CURMAN_DIRLOCATION . '/curriculumpage.class.php';
             $num_records = curriculum_count_records('', '', curriculumpage::get_contexts('block/curr_admin:curriculum:view'));
 
-            if($curricula = get_records(CURTABLE, '', '', 'priority ASC, name ASC', '*', 0, $num_block_icons)) {
-                foreach($curricula as $curriculum) {
+            if ($curricula = get_records(CURTABLE, '', '', 'priority ASC, name ASC', '*', 0, $num_block_icons)) {
+                foreach ($curricula as $curriculum) {
                     $params = array('id'     => $curriculum->id,
                                     'action' => 'view');
 
-                    $course_count = curriculumcourse_count_records($curriculum->id);
-                    $track_count = track_count_records('', '', $curriculum->id);
-                    $cluster_count = clustercurriculum::count_clusters($curriculum->id);
+                    // count associated courses
+                    $course_filter = array('contexts' => coursepage::get_contexts('block/curr_admin:course:view'));
+                    $course_count = curriculumcourse_count_records($curriculum->id, '', '', $course_filter);
+
+                    // count associated tracks
+                    $track_contexts = trackpage::get_contexts('block/curr_admin:track:view');
+                    $track_count = track_count_records('', '', $curriculum->id, 0, $track_contexts);
+
+                    // count associated clusters
+                    $cluster_filter = array('contexts' => clusterpage::get_contexts('block/curr_admin:cluster:view'));
+                    $cluster_count = clustercurriculum::count_clusters($curriculum->id, 0, $cluster_filter);
 
                     $isLeaf = empty($course_count) &&
                               empty($track_count) &&
@@ -216,7 +235,7 @@ class block_curr_admin extends block_base {
                 }
             }
 
-            if($num_block_icons < $num_records) {
+            if ($num_block_icons < $num_records) {
                 $cm_entity_pages[] = block_curr_admin_get_menu_summary_item('curriculum', $curriculum_css_class, $num_records - $num_block_icons);
             }
         }

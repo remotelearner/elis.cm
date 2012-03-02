@@ -670,6 +670,7 @@ class user extends datarecord {
                 $record->city           = $this->city;
                 $record->country        = $this->country;
                 $record->timemodified   = time();
+                $record->lang           = $this->language;
                 $record->id = insert_record('user', $record);
             } else if ($muserid) {
                 /// Update an existing user
@@ -690,6 +691,7 @@ class user extends datarecord {
                 $record->city           = $this->city;
                 $record->country        = $this->country;
                 $record->timemodified   = time();
+                $record->lang           = $this->language;
                 update_record('user', $record);
             } else {
                 return true;
@@ -716,7 +718,7 @@ class user extends datarecord {
                     $fieldname = "field_$shortname";
                     $mfieldname = "profile_$fieldname";
                     $mfieldvalue = isset($origrec->$mfieldname) ? $origrec->$mfieldname : null;
-                    if ($mfieldvalue != $this->$fieldname) {
+                    if (isset($this->$fieldname) && $mfieldvalue != $this->$fieldname) {
                         $record->$mfieldname = $this->$fieldname;
                         $changed = true;
                     }
@@ -995,12 +997,20 @@ class user extends datarecord {
         $archive_var = '_elis_curriculum_archive';
 
         $totalcourses    = 0;
+        $totalcurricula  = 0;
         $completecourses = 0;
 
         $curriculas = array();
         $classids = array();
 
-        if ($usercurs = curriculumstudent::get_curricula($this->id)) {
+        $sql = 'SELECT curstu.id, curstu.curriculumid as curid, cur.name as name
+                  FROM '. $CURMAN->db->prefix_table(CURASSTABLE) .' curstu
+                  JOIN '. $CURMAN->db->prefix_table(CURTABLE) .' cur
+                    ON cur.id = curstu.curriculumid
+                 WHERE curstu.userid = \''.$this->id.
+              '\' ORDER BY cur.priority ASC, cur.name ASC';
+
+        if ($usercurs = get_records_sql($sql)) {
             foreach ($usercurs as $usercur) {
                 // Check if this curricula is set as archived and whether we want to display it
                 $crlm_context = get_context_instance(context_level_base::get_custom_context_level('curriculum', 'block_curr_admin'), $usercur->curid);
@@ -1016,6 +1026,7 @@ class user extends datarecord {
 
                 if ($show_archived == $crlm_archived) {
 
+                    $totalcurricula++;
                     $curriculas[$usercur->curid]['id'] = $usercur->curid;
                     $curriculas[$usercur->curid]['name'] = $usercur->name;
                     $data = array();
@@ -1109,7 +1120,7 @@ class user extends datarecord {
 
         $content .= print_heading_block(get_string('learningplanwelcome', 'block_curr_admin', fullname($this)), '', true);
 
-        if ($totalcourses === 0) {
+        if ($totalcurricula === 0) {
             $blank_lang = ($tab == 'archivedlp') ? 'noarchivedplan' : 'nolearningplan';
             $content .= '<br /><center>' . get_string($blank_lang, 'block_curr_admin') . '</center>';
         }
@@ -1124,9 +1135,12 @@ class user extends datarecord {
 
         $content .= '<input type="hidden" name="collapsed" id="collapsed" value="' . $collapsed . '">';
 
-        if (!empty($curriculas)) {
-            foreach ($curriculas as $curricula) {
-
+         if (!empty($usercurs)) {
+            foreach ($usercurs as $usercur) {
+                if (!isset($curriculas[$usercur->curid])) {
+                    continue;
+                }
+                $curricula = $curriculas[$usercur->curid];
                 $table = new stdClass;
                 $table->head = array(
                     get_string('class', 'block_curr_admin'),
@@ -1160,7 +1174,11 @@ class user extends datarecord {
                 $content .= '<div class="dashboard_curricula_block">';
                 $content .= print_heading($heading, 'left', 2, 'main', true);
                 $content .= '<div id="curriculum-' . $curricula['id'] . '" class="yui-skin-sam ' . $extra_class . '">';
-                $content .= print_table($table, true);
+                if (empty($curricula['data'])) {
+                    $content .= get_string('nocourseassoc','block_curr_admin');
+                } else {
+                    $content .= print_table($table, true);
+                }
                 $content .= '</div>';
                 $content .= '</div>';
             }
@@ -1522,6 +1540,7 @@ class cm_user_filter_text_OR extends user_filter_text {
         $operator = $data['operator'];
         $value    = addslashes($data['value']);
         $field    = $this->_field;
+        $combine_op = ' OR ';
 
         if ($operator != 5 and $value === '') {
             return '';
@@ -1533,7 +1552,9 @@ class cm_user_filter_text_OR extends user_filter_text {
             case 0: // contains
                 $res = "$ilike '%$value%'"; break;
             case 1: // does not contain
-                $res = "NOT $ilike '%$value%'"; break;
+                $res = "NOT $ilike '%$value%'";
+                $combine_op = ' AND ';
+                break;
             case 2: // equal to
                 $res = "$ilike '$value'"; break;
             case 3: // starts with
@@ -1549,7 +1570,7 @@ class cm_user_filter_text_OR extends user_filter_text {
         foreach ($this->_fields as $field) {
             $conditions[] = $field.' '.$res;
         }
-        return '(' . implode(' OR ', $conditions) . ')';
+        return '(' . implode($combine_op, $conditions) . ')';
     }
 }
 

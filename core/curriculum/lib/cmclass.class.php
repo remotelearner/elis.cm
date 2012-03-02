@@ -576,15 +576,17 @@ class cmclass extends datarecord {
         global $CFG, $CURMAN;
         $result = true;
 
-        $sendtouser = $CURMAN->config->notify_classnotstarted_user;
-        $sendtorole = $CURMAN->config->notify_classnotstarted_role;
-        if ($sendtouser || $sendtorole) {
+        $sendtouser       = $CURMAN->config->notify_classnotstarted_user;
+        $sendtorole       = $CURMAN->config->notify_classnotstarted_role;
+        $sendtosupervisor = $CURMAN->config->notify_classnotstarted_supervisor;
+        if ($sendtouser || $sendtorole || $sendtosupervisor) {
             $result = self::check_for_nags_notstarted() && $result;
         }
 
-        $sendtouser = $CURMAN->config->notify_classnotcompleted_user;
-        $sendtorole = $CURMAN->config->notify_classnotcompleted_role;
-        if ($sendtouser || $sendtorole) {
+        $sendtouser       = $CURMAN->config->notify_classnotcompleted_user;
+        $sendtorole       = $CURMAN->config->notify_classnotcompleted_role;
+        $sendtosupervisor = $CURMAN->config->notify_classnotcompleted_supervisor;
+        if ($sendtouser || $sendtorole || $sendtosupervisor) {
             $result = self::check_for_nags_notcompleted() && $result;
         }
 
@@ -614,7 +616,7 @@ class cmclass extends datarecord {
         $select = "SELECT ccl.*,
                           ccm.moodlecourseid as mcourseid,
                           cce.id as studentid, cce.classid, cce.userid,
-                          cce.enrolmenttime, cce.completetime, cce.completestatusid, cce.grade, cce.credits, cce.locked,
+                          cce.enrolmenttime, cce.completetime, cce.completestatusid, cce.grade, cce.credits, cce.locked, cce.endtime,
                           u.id as muserid ";
         $from   = "FROM {$CFG->prefix}crlm_class ccl ";
         $join   = "INNER JOIN {$CFG->prefix}crlm_class_enrolment cce ON cce.classid = ccl.id
@@ -622,7 +624,7 @@ class cmclass extends datarecord {
                    INNER JOIN {$CFG->prefix}crlm_user cu ON cu.id = cce.userid
                     LEFT JOIN {$CFG->prefix}user u ON u.idnumber = cu.idnumber
                     LEFT JOIN {$CFG->prefix}user_lastaccess ul ON ul.userid = u.id AND ul.courseid = ccm.moodlecourseid
-                    LEFT JOIN {$CFG->prefix}crlm_notification_log cnl ON cnl.userid = cu.id AND cnl.instance = ccl.id AND cnl.event = 'class_notstarted' ";
+                    LEFT JOIN {$CFG->prefix}crlm_notification_log cnl ON cnl.fromuserid = cu.id AND cnl.instance = ccl.id AND cnl.event = 'class_notstarted' ";
         $where  = "WHERE cce.completestatusid = ".STUSTATUS_NOTCOMPLETE."
                      AND cnl.id IS NULL
                      AND ul.id IS NULL
@@ -690,14 +692,14 @@ class cmclass extends datarecord {
         $select = "SELECT ccl.*,
                           ccm.moodlecourseid as mcourseid,
                           cce.id as studentid, cce.classid, cce.userid, cce.enrolmenttime,
-                          cce.completetime, cce.completestatusid, cce.grade, cce.credits, cce.locked,
+                          cce.completetime, cce.completestatusid, cce.grade, cce.credits, cce.locked, cce.endtime,
                           u.id as muserid ";
         $from   = "FROM {$CFG->prefix}crlm_class ccl ";
         $join   = "INNER JOIN {$CFG->prefix}crlm_class_enrolment cce ON cce.classid = ccl.id
                     LEFT JOIN {$CFG->prefix}crlm_class_moodle ccm ON ccm.classid = ccl.id
                    INNER JOIN {$CFG->prefix}crlm_user cu ON cu.id = cce.userid
                     LEFT JOIN {$CFG->prefix}user u ON u.idnumber = cu.idnumber
-                    LEFT JOIN {$CFG->prefix}crlm_notification_log cnl ON cnl.userid = cu.id AND cnl.instance = ccl.id AND cnl.event = 'class_notcompleted' ";
+                    LEFT JOIN {$CFG->prefix}crlm_notification_log cnl ON cnl.fromuserid = cu.id AND cnl.instance = ccl.id AND cnl.event = 'class_notcompleted' ";
         $where  = "WHERE cce.completestatusid = ".STUSTATUS_NOTCOMPLETE."
                      AND cnl.id IS NULL
                      AND ccl.enddate <= $enddate ";
@@ -1116,7 +1118,7 @@ function cmclass_get_listing($sort = 'crsname', $dir = 'ASC', $startrec = 0,
               'ON clsmoodle.moodlecourseid = mcrs.id ';
 
     //class associated to a particular cluster via a track
-    if(!empty($clusterid)) {
+    if (!empty($clusterid)) {
         $join .= "JOIN {$CURMAN->db->prefix_table(CLSTRACKCLS)} clstrk
                   ON clstrk.classid = cls.id
                   JOIN {$CURMAN->db->prefix_table(CLSTTRKTABLE)} clsttrk
@@ -1136,15 +1138,15 @@ function cmclass_get_listing($sort = 'crsname', $dir = 'ASC', $startrec = 0,
 
     if (!empty($namesearch)) {
         $namesearch = trim($namesearch);
-        $where[] = "((crs.name $LIKE '%$namesearch%') OR (cls.idnumber $LIKE '%$namesearch%')) ";
+        $where[] = "((crs.name $LIKE '%{$namesearch}%') OR (cls.idnumber $LIKE '%{$namesearch}%')) ";
     }
 
     if ($alpha) {
-        $where[] = "(crs.name $LIKE '$alpha%')";
+        $where[] = "((crs.name $LIKE '{$alpha}%') OR (cls.idnumber $LIKE '{$alpha}%'))";
     }
 
     if ($id) {
-        $where[] = "(crs.id = $id)";
+        $where[] = "(crs.id = {$id})";
     }
 
     if ($onlyopen) {
@@ -1157,7 +1159,7 @@ function cmclass_get_listing($sort = 'crsname', $dir = 'ASC', $startrec = 0,
     }
 
     if (!empty($where)) {
-        $where = 'WHERE '.implode(' AND ',$where).' ';
+        $where = 'WHERE '. implode(' AND ', $where) .' ';
     } else {
         $where = '';
     }
@@ -1174,9 +1176,9 @@ function cmclass_get_listing($sort = 'crsname', $dir = 'ASC', $startrec = 0,
 
     if (!empty($perpage)) {
         if ($CURMAN->db->_dbconnection->databaseType == 'postgres7') {
-            $limit = 'LIMIT ' . $perpage . ' OFFSET ' . $startrec;
+            $limit = 'LIMIT '. $perpage .' OFFSET '. $startrec;
         } else {
-            $limit = 'LIMIT '.$startrec.', '.$perpage;
+            $limit = 'LIMIT '. $startrec .', '. $perpage;
         }
     } else {
         $limit = '';

@@ -52,9 +52,13 @@ function user_activity_add_session($userid, $courseid, $session_start, $session_
         $first = true;
         while ($session_end > $start_hour + 3600) {
             $session_hour_duration = $start_hour + 3600 - $session_start;
-            if ($first && $rec = get_record('etl_user_activity', 'userid', $userid, 'courseid', $courseid, 'hour', $start_hour)) {
+            if ($rec = get_record('etl_user_activity', 'userid', $userid, 'courseid', $courseid, 'hour', $start_hour)) {
                 $rec->duration += $session_hour_duration;
-                update_record('etl_user_activity', $rec);
+                if ($rec->duration <= 3600) {
+                    update_record('etl_user_activity', $rec);
+                } else {
+                    mtrace("user_activity_add_session(userid = {$userid}, courseid = {$courseid}, session_start = {$session_start}, session_end = {$session_end}): Warning: duration > 3600");
+                }
             } else {
                 $rec = new stdClass;
                 $rec->userid = $userid;
@@ -68,9 +72,13 @@ function user_activity_add_session($userid, $courseid, $session_start, $session_
             $first = false;
         }
         $remainder = $session_end - $session_start;
-        if ($first && $rec = get_record('etl_user_activity', 'userid', $userid, 'courseid', $courseid, 'hour', $start_hour)) {
+        if ($rec = get_record('etl_user_activity', 'userid', $userid, 'courseid', $courseid, 'hour', $start_hour)) {
             $rec->duration += $remainder;
-            update_record('etl_user_activity', $rec);
+            if ($rec->duration <= 3600) {
+                update_record('etl_user_activity', $rec);
+            } else {
+                mtrace("user_activity_add_session(userid = {$userid}, courseid = {$courseid}, session_start = {$session_start}, session_end = {$session_end}): Warning: remainder duration > 3600");
+            }
         } else {
             $rec = new stdClass;
             $rec->userid = $userid;

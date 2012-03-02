@@ -33,6 +33,7 @@ class class_reportlinkspage extends newpage {
 
     var $pagename = 'replnk';
     var $tab_page = 'cmclasspage';
+    var $section  = 'rept';
 
     /**
      * Returns an instance of the page class that should provide the tabs for this association page.

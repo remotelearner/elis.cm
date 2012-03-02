@@ -1,5 +1,5 @@
 diff --git a/lib/weblib.php b/lib/weblib.php
-index b4973e5..011c121 100644
+index b4973e5..456fb3e 100644
 --- a/lib/weblib.php
 +++ b/lib/weblib.php
 @@ -1234,7 +1234,7 @@ $targetwindow='self', $selectlabel='', $optionsextra=NULL, $gobutton=NULL) {
@@ -96,6 +96,15 @@ index b4973e5..011c121 100644
              case 'site':
                  if (isloggedin() and isset($CFG->mnet_localhost_id) and $USER->mnethostid != $CFG->mnet_localhost_id && $mnet_peer->force_theme == 1 && $mnet_peer->theme != '') {
                      $theme = $mnet_peer->theme;
+@@ -3576,7 +3645,7 @@ function user_login_string($course=NULL, $user=NULL) {
+         if (isset($user->username) && $user->username == 'guest') {
+             $loggedinas = $realuserinfo.get_string('loggedinasguest').
+                       " (<a $CFG->frametarget href=\"$wwwroot/login/index.php\">".get_string('login').'</a>)';
+-        } else if (!empty($user->access['rsw'][$context->path])) {
++        } else if (!empty($context->path) && !empty($user->access['rsw'][$context->path])) {
+             $rolename = '';
+             if ($role = get_record('role', 'id', $user->access['rsw'][$context->path])) {
+                 $rolename = join("", role_fix_names(array($role->id=>$role->name), $context));
 @@ -4927,16 +4996,16 @@ function print_table($table, $return=false) {
  
      if (!empty($table->data)) {

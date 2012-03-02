@@ -606,7 +606,7 @@ class currentclasstable extends display_table {
             );
 
         $this->yui_formatters = array(
-            'timeofday' => 'cmFormatTimeRange',
+//            'timeofday' => 'cmFormatTimeRange',
             'startdate' => 'cmFormatDate',
             'enddate' => 'cmFormatDate',
         );
@@ -617,7 +617,7 @@ class currentclasstable extends display_table {
         );
 
         $this->yui_sorters = array(
-            'timeofday' => 'cmSortTimeRange',
+//            'timeofday' => 'cmSortTimeRange',
         );
 
         parent::__construct($items, $columns, $pageurl);
@@ -668,18 +668,46 @@ class currentclasstable extends display_table {
         return $this->get_date_item_display('enddate',$this->current_class);
     }
 
+    // TBD - Language strings: n/a, am, pm, ...
     function get_item_display_timeofday($column, $item) {
+        global $CURMAN;
         if (($classdata = $this->get_class($item))) {
             if ((!empty($classdata->starttimehour) || !empty($classdata->starttimeminute)) &&
                 (!empty($classdata->endtimehour) || !empty($classdata->endtimeminute))) {
-                    return array($classdata->starttimehour, $classdata->starttimeminute,
-                                $classdata->endtimehour, $classdata->endtimeminute);
-            } else {
-                return array(0,0,0,0);
+                $start_ampm = '';
+                $end_ampm = '';
+                $starthr = $classdata->starttimehour;
+                $endhr = $classdata->endtimehour;
+                if ($CURMAN->config->time_format_12h) {
+                    if ($starthr > 12) {
+                        $starthr -= 12;
+                        $start_ampm = ' pm';
+                    } else {
+                        $start_ampm = ' am';
+                        if (!$starthr) {
+                            $starthr = 12;
+                        }
+                    }
+                    if ($endhr > 12) {
+                        $endhr -= 12;
+                        $end_ampm = ' pm';
+                    } else {
+                        $end_ampm = ' am';
+                        if (!$endhr) {
+                            $endhr = 12;
+                        }
+                    }
+                }
+                return sprintf("%d:%02d%s - %d:%02d%s", $starthr,
+                               $classdata->starttimeminute, $start_ampm,
+                               $endhr, $classdata->endtimeminute, $end_ampm);
+               /*
+                array($starthr, $classdata->starttimeminute,
+                      $endhr, $classdata->endtimeminute);
+               */
             }
-        } else {
-            return array(0,0,0,0);
         }
+        return 'n/a'; /* array(0,0,0,0); */
     }
 
     function get_item_display_instructor($column, $item) {

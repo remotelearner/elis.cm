@@ -49,8 +49,9 @@ class trackform extends cmform {
         $curs = array();
         if (!empty($USER->id)) {
             // TBD: and/or capability 'block/curr_admin:curriculum:edit|view' ?
+            // WAS: 'block/curr_admin:track:create' ???
             $contexts = get_contexts_by_capability_for_user('curriculum',
-                            'block/curr_admin:track:create', $USER->id);
+                            'block/curr_admin:curriculum:view', $USER->id);
             $curs = curriculum_get_listing('name', 'ASC', 0, 0, '', '',
                         $contexts);
         }
@@ -133,7 +134,13 @@ class trackform extends cmform {
      * @return array
      */
     function validation($data, $files) {
+        global $CURMAN;
+
         $errors = parent::validation($data, $files);
+
+        if ($CURMAN->db->record_exists_select(TRACKTABLE, "idnumber = '{$data['idnumber']}'")) {
+          $errors['idnumber'] = get_string('idnumber_already_used', 'block_curr_admin');
+        }
 
         if(!empty($data['startdate']) && !empty($data['enddate']) && !empty($data['disablestart']) && !empty($data['disableend'])) {
             if($data['startdate'] > $data['enddate']) {

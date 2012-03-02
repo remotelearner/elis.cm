@@ -29,22 +29,32 @@
  * @param  string   path    web path to report instance
  * @return boolean	        true
  */
-function dependentselect_updateoptions(id, path) {
-    var parent = document.getElementById('id_'+id+'_parent');
-    var parentId = parent.value;
-    var child = document.getElementById('id_'+id);
+function dependentselect_updateoptions(pid, id, path) {
+    var parent = document.getElementById('id_'+pid);
+    var child  = document.getElementById('id_'+id);
     var childId = child.value;
 
-	var option_success = function(o) {
-	    var data = YAHOO.lang.JSON.parse(o.responseText);
-	    child.options.length = 0;
-	    for (var key in data) {
-	        addOption(child,childId,key,data[key]);
-	    }
+    var option_success = function(o) {
+        var data = YAHOO.lang.JSON.parse(o.responseText);
+        child.options.length = 0;
+        for (i = 0; i < data.length; i++) {
+            //response text is an array of arrays, where each sub-array's
+            //first element is the element id and the second is the name
+            addOption(child,childId,data[i][0],data[i][1]);
+        }
+        // ELIS-3474/MAEOPPS - Do NOT reset selected option!
+        //child.options[0].selected = true;
+
+        if ("fireEvent" in child) {
+            child.fireEvent("onchange");
+        } else {
+            var evt = document.createEvent("HTMLEvents");
+            evt.initEvent("change", false, true);
+            child.dispatchEvent(evt);
+        }
     };
 
     var option_failure = function(o) {
-        alert("failure: " + o.responseText);
     };
 
     var callback = {
@@ -53,13 +63,20 @@ function dependentselect_updateoptions(id, path) {
         cache: false
     };
 
-    var requestURL = path + "childoptions.php?id=" + parentId;
+    var requestURL = path;
+
+    var selected = new Array();
+    var index = 0;
+    var join  = "?";
+    for (var i = 0; i < parent.options.length; i += 1) {
+    	if (parent.options[i].selected) {
+    		index = selected.length;
+    		requestURL += join +"id[]="+ parent.options[i].value;
+    		join = "&";
+    	}
+    }
 
     YAHOO.util.Connect.asyncRequest('GET', requestURL, callback, null);
-
-    if (parentId == 0 || parentId == '') {
-        child.options[0].selected = true;
-    }
 
     return true;
 }

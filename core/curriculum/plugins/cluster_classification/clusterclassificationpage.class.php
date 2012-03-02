@@ -125,15 +125,29 @@ class clusterclassificationpage extends managementpage {
 
     function action_default() {
         global $CURMAN;
+
+        $sort       = optional_param('sort', 'name', PARAM_ALPHA);
+        $dir        = optional_param('dir', 'ASC', PARAM_ALPHA);
+        $namesearch = trim(optional_param('search', '', PARAM_TEXT));
+        $alpha      = optional_param('alpha', '', PARAM_ALPHA);
+        $page       = optional_param('page', 0, PARAM_INT);
+        $perpage    = optional_param('perpage', 30, PARAM_INT);
+
+        $clusterclass = new clusterclassification();
+
         $columns = array(
-            'shortname' => get_string('shortname','crlm_cluster_classification'),
-            'name' => get_string('name','crlm_cluster_classification'),
+            'shortname' => get_string('shortname', 'crlm_cluster_classification'),
+            'name' => get_string('name', 'crlm_cluster_classification'),
         );
 
-        $items = $CURMAN->db->get_records(CLUSTERCLASSTABLE, '', 'id, shortname, name');
-        $numitems = $CURMAN->db->count_records(CLUSTERCLASSTABLE);
+        $records = $clusterclass->cluster_classification_listing($namesearch, $alpha, $page * $perpage, $perpage, $sort, $dir);
+        $count = $CURMAN->db->count_records(CLUSTERCLASSTABLE); // total record count
 
-        $this->print_list_view($items, $numitems, $columns, $filter=null, $alphaflag=true, $searchflag=true);
+        if (!empty($alpha) || !empty($namesearch)) {
+            $count = $clusterclass->get_record_count(); // retrieve total count for search result
+        }
+
+        $this->print_list_view($records, $count, $columns, $filter=null, $alphaflag=true, $searchflag=true);
     }
 
     function print_add_button() {
