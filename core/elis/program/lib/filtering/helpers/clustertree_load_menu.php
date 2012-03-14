@@ -20,12 +20,12 @@
  * @subpackage pm-filtering-clustertree
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2011 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
 //require necessary dependencies 
-require_once(dirname(__FILE__) .'/../../../../config.php');
+require_once(dirname(__FILE__) .'/../../../../../config.php');
 
 require_once($CFG->dirroot .'/elis/program/lib/setup.php');
 require_once($CFG->dirroot .'/elis/program/lib/data/userset.class.php');
