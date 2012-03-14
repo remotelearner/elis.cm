@@ -398,7 +398,8 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="event_inst_user_ix" UNIQUE="false" FIELDS="userid, instance, event" COMMENT="An index based on the event, user and instance."/>
+        <INDEX NAME="event_inst_user_ix" UNIQUE="false" FIELDS="userid, instance, event" COMMENT="An index based on the event, user and instance." NEXT="event_inst_fuser_ix"/>
+        <INDEX NAME="event_inst_fuser_ix" UNIQUE="false" FIELDS="fromuserid, instance, event" COMMENT="An index based on the event, from user and instance." PREVIOUS="event_inst_user_ix"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="crlm_track" COMMENT="Track table" PREVIOUS="crlm_notification_log" NEXT="crlm_track_class">

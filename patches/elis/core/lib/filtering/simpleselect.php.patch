@@ -1,0 +1,16 @@
+diff --git a/elis/core/lib/filtering/simpleselect.php b/elis/core/lib/filtering/simpleselect.php
+index 1cf1a21..0d19db2 100644
+--- a/elis/core/lib/filtering/simpleselect.php
++++ b/elis/core/lib/filtering/simpleselect.php
+@@ -32,11 +32,6 @@ require_once($CFG->dirroot.'/elis/core/lib/filtering/lib.php');
+  * Generic filter based on a list of values.
+  */
+ class generalized_filter_simpleselect extends generalized_filter_type {
+-    /**
+-     * options for the list values
+-     */
+-    var $_options = array();
+-
+     var $_field;
+ 
+     var $_options  = array();  // Select options

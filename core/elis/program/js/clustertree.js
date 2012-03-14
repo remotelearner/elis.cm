@@ -19,7 +19,7 @@
  * @subpackage programmanagement
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2011 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
@@ -149,7 +149,7 @@ function clustertree_get_list_values(instanceid, list_name) {
 function clustertree_loadNodeData(node, fnLoadComplete, uniqueid, tree_view, instanceid, execution_mode) {
 
     //URL of our script (wwwroot is pre-set by the calling PHP script)
-    var url = wwwroot + '/elis/program/lib/filtering/clustertree_load_menu.php?data=' + node.contentElId +
+    var url = wwwroot + '/elis/program/lib/filtering/helpers/clustertree_load_menu.php?data=' + node.contentElId +
                 '&instanceid=' + instanceid + '&execution_mode=' + execution_mode;
 
     var callback = {

@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2012 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
  * @subpackage pm-filtering
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2011 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
@@ -155,7 +155,7 @@ class checkbox_treerepresentation extends treerepresentation {
         $style = '<style>@import url("'. $CFG->wwwroot .'/lib/yui/2.8.2/build/treeview/assets/skins/sam/treeview.css");</style>'; // TBV
 
         //YUI needs an appropriate div to place the tree in
-        $result = $style ."<div id=\"cluster_param_tree_". $this->instanceid ."_". $uniqueid ."\" class=\"ygtv-checkbox\"></div>";
+        $result = $style ."<div id=\"cluster_param_tree_". $this->instanceid ."_". $uniqueid ."\" class=\"ygtv-checkbox felement\"></div>";
 
         //obtain the actual tree object
         $js_object = $this->get_js_object();
@@ -266,6 +266,9 @@ class generalized_filter_clustertree extends generalized_filter_type {
      */
     function generalized_filter_clustertree($uniqueid, $alias, $name, $label, $advanced, $field, $options = array()) {
         $this->options = $options;
+        if (!array_key_exists('fieldset', $options)) {
+            $this->options['fieldset'] = true;
+        }
         parent::generalized_filter_type($uniqueid, $alias, $name, $label, $advanced, $field);
     }
 
@@ -281,13 +284,21 @@ class generalized_filter_clustertree extends generalized_filter_type {
     /**
      * Returns the condition to be used with SQL where
      * @param  array $data filter settings
+     * @uses   $CFG
      * @uses   $DB
      * @return array       the filtering condition with optional params
      *                     or null if the filter is disabled
      */
     function get_sql_filter($data) {
-        global $DB;
+        global $CFG, $DB;
         static $counter = 0; // required for multiple calls to get_filter_condition in reports!
+
+        //dependencies for queries
+        require_once($CFG->dirroot .'/elis/program/lib/setup.php');
+        require_once($CFG->dirroot .'/elis/program/lib/data/userset.class.php');
+
+        //determine if we are filtering on a user id rather than a cluster id
+        $filter_on_user_records = !empty($this->options['filter_on_user_records']);
 
         $full_fieldname = $this->get_full_fieldname();
         if (empty($full_fieldname)) {
@@ -296,8 +307,17 @@ class generalized_filter_clustertree extends generalized_filter_type {
 
         if (isset($data['specific_clusterid'])) {
             $param_name = 'clustree_clusterid'. $counter++;
-            return array("{$full_fieldname} = :{$param_name}",
-                         array($param_name  => $data['specific_clusterid']));
+            $params = array($param_name => $data['specific_clusterid']);
+            if ($filter_on_user_records) {
+                //validate user id against cluster assignments
+                return array('EXISTS (SELECT *
+                                        FROM {'. clusterassignment::TABLE ."}
+                                       WHERE userid = {$full_fieldname}
+                                         AND clusterid = :{$param_name})",
+                             $params);
+            }
+            //validate cluster id against specific value
+            return array("{$full_fieldname} = :{$param_name}", $params);
         }
 
         //direct cluster id selection
@@ -358,31 +378,46 @@ class generalized_filter_clustertree extends generalized_filter_type {
 
         //this query gives us exactly the user sets we want
 
+        if ($filter_on_user_records) {
+            //connect cluster assignment user id to main query userid
+            $condition = "clstasgn.userid = {$full_fieldname}";
+            //only display records if there is a related cluster assignment
+            $user_join = 'JOIN {'. clusterassignment::TABLE .'} clstasgn
+                            ON c.id = clstasgn.clusterid';
+        } else {
+            //connect cluster id to the main query cluster id
+            $condition = "c.id = {$full_fieldname}";
+            $user_join = "";
+        }
+
         //it essentially consists of two parts
         //part 1: include all the user sets directly selected that have not been
         //cleared out at a parent context
         //part 2: include all user sets selected recursively through an unexpanded
         //parent that have not been cleared out at a parent context
         $sql = 'SELECT c.id FROM {'. userset::TABLE ."} c
-                JOIN {context} context
-                  ON c.id = context.instanceid
-                  AND context.contextlevel = :{$param_ccl1}
-                LEFT JOIN {context} parent_context
-                  ON {$cpath_like}
-                  AND parent_context.contextlevel = :{$param_ccl2}
-                  AND {$full_unexpanded_condition}
-                LEFT JOIN {context} grandparent_context
-                  ON {$pcpath_like}
-                  AND grandparent_context.contextlevel = :{$param_ccl3}
-                  AND {$full_hierarchical_condition}
-                LEFT JOIN {context} eclipse_context
-                  ON {$cpath2_like}
-                  AND eclipse_context.contextlevel = :{$param_ccl4}
-                  AND {$full_clrunexpanded_condition}
-                WHERE ({$clusterid_condition} AND eclipse_context.id IS NULL)
-                  OR  (parent_context.instanceid IS NOT NULL AND grandparent_context.id IS NULL)
+                  JOIN {context} context
+                    ON c.id = context.instanceid
+                   AND context.contextlevel = :{$param_ccl1}
+                {$user_join}
+             LEFT JOIN {context} parent_context
+                    ON {$cpath_like}
+                   AND parent_context.contextlevel = :{$param_ccl2}
+                   AND {$full_unexpanded_condition}
+             LEFT JOIN {context} grandparent_context
+                    ON {$pcpath_like}
+                   AND grandparent_context.contextlevel = :{$param_ccl3}
+                   AND {$full_hierarchical_condition}
+             LEFT JOIN {context} eclipse_context
+                    ON {$cpath2_like}
+                   AND eclipse_context.contextlevel = :{$param_ccl4}
+                   AND {$full_clrunexpanded_condition}
+                 WHERE ({$clusterid_condition} AND eclipse_context.id IS NULL)
+                    OR (parent_context.instanceid IS NOT NULL AND grandparent_context.id IS NULL)
+                   AND {$condition}
                 ";
 
+        // TBD: "EXISTS ({$sql})" did NOT filter selected tree clusters!
         return array("{$full_fieldname} IN ({$sql})", $params);
     }
 
@@ -582,12 +617,18 @@ class generalized_filter_clustertree extends generalized_filter_type {
         //hack the nested fieldset into an html element
         $helptext = get_string('helpprefix2', '', $this->_filterhelp[1]);
         $helpurl = '/help.php?component='. $this->_filterhelp[2] .'&amp;identifier='. $this->_filterhelp[0] .'&amp;lang='. $USER->lang; // TBV
-        $helplink = '<span class="helplink"><a id="helpicon000000" title=""'.
+        $helplink = '<span class="helplink"><a id="helpicon000000" title="'.$this->_filterhelp[1].'"'.
                     ' href="'. $CFG->wwwroot . $helpurl .'" >'.
                     ' <img class="iconhelp" alt="'. $helptext .'" title="'. $helptext .'" src="'. $OUTPUT->pix_url('help') .'"></a></span>';
 
-        $nested_fieldset = '<fieldset class="nested clearfix" id="'
-                           . $this->_uniqueid ."_label\">\n";
+        $nested_fieldset = '';
+        $title = '';
+        if ($this->options['fieldset']) {
+            $nested_fieldset = '<fieldset class="nested clearfix" id="'
+                               . $this->_uniqueid ."_label\">\n";
+        } else {
+            $title = $this->_label . $helplink .'&nbsp;';
+        }
         $legend = '<legend class="ftoggler">'. $this->_label //. $helplink
                   ."</legend>\n";
 
@@ -597,7 +638,7 @@ class generalized_filter_clustertree extends generalized_filter_type {
         $mform->addHelpButton($this->_uniqueid .'_help', $this->_filterhelp[0], $this->_filterhelp[2] /* , $this->_filterhelp[1] */); // TBV
 
         //cluster select dropdown
-        $mform->addElement('select', $this->_uniqueid .'_dropdown', '', $choices_array);
+        $mform->addElement('select', $this->_uniqueid .'_dropdown', $title, $choices_array);
         //dropdown / cluster tree state storage
         $mform->addElement('hidden', $this->_uniqueid .'_usingdropdown');
 
@@ -608,6 +649,8 @@ class generalized_filter_clustertree extends generalized_filter_type {
             $mform->setDefault($this->_uniqueid .'_usingdropdown', 1);
         }
 
+        // dress it up like an mform element
+        $tree_html = '<div class="fitem"><div class="fitemtitle"></div>'. $tree_html .'</div>';
         //cluster tree
         $mform->addElement('html', $tree_html);
         //list of explicitly selected elements
@@ -640,7 +683,9 @@ class generalized_filter_clustertree extends generalized_filter_type {
         $mform->addElement('html', $initialize_state_script);
 
         // close hacked nested fieldset
-        $mform->addElement('html','</fieldset>');
+        if ($this->options['fieldset']) {
+            $mform->addElement('html','</fieldset>');
+        }
     }
 
     /**

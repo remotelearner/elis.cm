@@ -1,5 +1,5 @@
 diff --git a/elis/core/js/associate.class.js b/elis/core/js/associate.class.js
-index 70f23ab..b479dec 100644
+index 2f43248..e7304aa 100644
 --- a/elis/core/js/associate.class.js
 +++ b/elis/core/js/associate.class.js
 @@ -132,27 +132,36 @@ function associate_link_handler(basepage, divid) {
