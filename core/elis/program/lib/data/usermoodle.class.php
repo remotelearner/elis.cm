@@ -26,6 +26,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once(dirname(__FILE__).'/../../../../config.php');
+global $CFG;
+require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 require_once elis::lib('data/data_object.class.php');
 
 /**
@@ -45,4 +48,4 @@ class usermoodle extends elis_data_object {
     protected $_dbfield_cuserid;
     protected $_dbfield_muserid;
     protected $_dbfield_idnumber;
-} 
+}

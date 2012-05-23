@@ -99,6 +99,13 @@ if ($ADMIN->fulltree) {
                            get_string('cert_seal_help', 'elis_program'),
                            0, $seals)); // TBD
 
+    // Certificate templates
+    if ($templates = cm_certificate_get_templates()) {
+        $settings->add(new admin_setting_configselect('elis_program/certificate_template_file',
+                           get_string('certificate_template_file', 'elis_program'),
+                           get_string('certificate_template_file_help', 'elis_program'), 0, $templates));
+    }
+
     // ***Interface Settings
     $settings->add(new admin_setting_heading('interface_settings', get_string('interface_settings', 'elis_program'), '' /* get_string('interface_settings_info', 'elis_program') */));
 

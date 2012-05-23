@@ -125,6 +125,15 @@ $string['certificate_date'] = 'on {$a}';
 $string['certificate_expires'] = 'This certificate will expire on:';
 $string['certificate_has_completed'] = 'has completed';
 $string['certificate_seal_image'] = 'Certificate seal image';
+$string['certificate_code_error'] = 'Error assigning certificate number';
+$string['certificate_code_fail'] = 'Certificate random string failure: $a->sitename with URL $a->url';
+$string['certificate_code_fail_text'] = 'All attempts at generating a random string have failed for record containing the following data:';
+$string['certificate_code_fail_text_data'] = 'Curriculum Id: $a->curriculumid, User Id: $a->userid';
+$string['certificate_email_fail'] = 'Failed to send email to Administrator';
+$string['certificate_template_file'] = 'Certificate template';
+$string['certificate_template_file_help'] = '<p>A certificate template is a layout of text to be used when printing the user\'s certificate</p>
+
+<p>Please contact Remote-Learner to enquire about adding custom templates</p>';
 $string['certificate_title'] = 'Certificate of Achievement';
 $string['certificatelist'] = 'Certificate List';
 $string['certificates'] = 'Certificates';
@@ -256,7 +265,7 @@ $string['crlm_expire_setting'] = 'Enable program expiration';
 $string['cron_notrun'] = '<b>Never!</b>';
 $string['currentcourses'] = 'Current Classes';
 $string['curricula'] = 'Programs';
-$string['curriculaform:curriculum_description'] = 'Long description';
+$string['curriculaform:curriculum_description'] = 'Description';
 $string['curriculaform:curriculum_description_help'] = '<p>Description information about the program. A complete and thorough
 description will help administrators, teachers and students know if this program is correct for them.</p>';
 $string['curriculaform:curriculum_idnumber'] = 'ID Number';
@@ -310,7 +319,6 @@ $string['curriculum_role_help'] = 'This is the default role to assign to a Progr
 This type of role assignment will not take place for a particular program if that user is already permitted to edit that program.
 To disable this functionality, select "N/A" from the list.';
 $string['curriculum_role_setting'] = 'Default Program Role';
-$string['curriculum_shortdescription'] = 'Short description';
 $string['curriculum_userid_mismatch'] = 'Your current user ID does not match the user ID for this program completion.';
 $string['customfields'] = 'Custom fields';
 
@@ -333,6 +341,7 @@ $string['delete_course'] = 'Delete Course Description';
 $string['delete_curriculum'] = 'Delete Program';
 $string['delete_label'] = 'Delete';
 $string['delete_pmclass'] = 'Delete Class Instance';
+$string['delete_resultsengine'] = 'Delete Engine Settings';
 $string['delete_track'] = 'Delete Track';
 $string['delete_user'] = 'Delete user';
 $string['delete_userset'] = 'Delete User Set';
@@ -413,6 +422,49 @@ $string['field_no_fields_defined'] = 'No fields defined';
 $string['field_resyncing'] = 'Please wait.  Resynchronizing data with Moodle.';
 $string['field_saved'] = 'Field saved';
 $string['field_syncwithmoodle'] = 'Sync with Moodle';
+$string['fld_class'] = 'Class';
+$string['fld_classstatus'] = 'Status';
+$string['fld_code'] = 'Code';
+$string['fld_completion_grade'] = 'Completion grade';
+$string['fld_cost'] = 'Cost';
+$string['fld_course'] = 'Course';
+$string['fld_coursename'] = 'Course';
+$string['fld_credits'] = 'Credits';
+$string['fld_curriculum'] = 'Program';
+$string['fld_curriculumname'] = 'Program';
+$string['fld_description'] = 'Description';
+$string['fld_enddate'] = 'End date';
+$string['fld_environment'] = 'Environment';
+$string['fld_environmentid'] = 'Environment';
+$string['fld_idnumber'] = 'ID number';
+$string['fld_idnumber_help'] = '<h1>ID number filter</h1>
+<p>This filter allows you to filter users\' ID number based on a free form text.
+The filter has the following options:</p>
+<ul>
+<li>contains - this option allows only ID numbers that contain the text entered (if no text is entered, then the filter is disabled)</li>
+<li>doesn\'t contain - this option allows only ID numbers that do not contain the text entered (if no text is entered, then the filter is disabled)</li>
+<li>is equal to - this option allows only ID numbers that are equal to the text entered (if no text is entered, then the filter is disabled)</li>
+<li>starts with - this option allows only ID numbers that start with the text entered (if no text is entered, then the filter is disabled)</li>
+<li>ends with - this option allows only ID numbers that end with the text entered (if no text is entered, then the filter is disabled)</li>
+<li>is empty - this option allows only ID numbers that are equal to the empty string (the text entered is ignored)</li>
+</ul>';
+$string['fld_inactive'] = 'Inactive filter';
+$string['fld_inactive_help'] = '<h1>Inactive filter</h1>
+<p>This filter allows you to filter users\' status as active, inactive or both.</p>';
+$string['fld_iscustom'] = 'Custom';
+$string['fld_length'] = 'Length';
+$string['fld_lengthdescription'] = 'Description';
+$string['fld_priority'] = 'Priority';
+$string['fld_reqcredits'] = 'Required credits';
+$string['fld_startdate'] = 'Start date';
+$string['fld_syllabus'] = 'Syllabus';
+$string['fld_timecreated'] = 'Time created';
+$string['fld_timemodified'] = 'Last modified';
+$string['fld_timemodified_help'] = '<h1>Last modified filter</h1>
+<p>This filter allows you to filter on the last time modified, from before and/or after selected dates. Where last modified is the date and time of the last update.</p>';
+$string['fld_timetocomplete'] = 'Time to complete';
+$string['fld_version'] = 'Version';
+
 $string['force_unenrol_in_moodle_setting'] = 'Force unenrolment in Moodle course';
 $string['force_unenrol_in_moodle_help'] = 'If this setting is set, then ELIS will forcibly unenrol users from the associated Moodle course when they are unenrolled from the ELIS class instance, regardless of which enrolment plugin they used to enrol.
 
@@ -445,8 +497,7 @@ $string['health_curriculumdesc'] = 'There are {$a->count} records in the {$a->ta
 $string['health_curriculumsoln'] = 'These records need to be removed from the database.<br/>Suggested SQL:';
 $string['health_duplicate'] = 'Duplicate enrolment records';
 $string['health_duplicatedesc'] = 'There were {$a} duplicate enrolments records in the ELIS enrolments table.';
-$string['health_duplicatesoln'] = 'The duplicate enrolments need to be removed directly from the database.  <b>DO NOT</b> try to remove them via the UI.<br/><br/>
-Recommended to escalate to development for solution.';
+$string['health_duplicatesoln'] = '<p>Run the script fix_duplicate_enrolments.php to remove all duplicate enrolment records.</p>';
 $string['health_dupmoodleprofile'] = 'Duplicate Moodle profile field records';
 $string['health_dupmoodleprofiledesc'] = 'There were {$a} duplicate Moodle profile field records.';
 $string['health_dupmoodleprofilesoln'] = 'Run the script {$a}/fix_duplicate_moodle_profile.php to remove all duplicate profile field records.';
@@ -587,6 +638,7 @@ $string['no_users_matching'] = 'No users matching {$a->match}';
 $string['noarchivedplan'] = 'You do not currently have any archived learning plans';
 $string['noclassavail'] = 'No classes available yet';
 $string['noclassyet'] = 'No Class Instance Yet';
+$string['nocoursedescassoc'] = "There is no course description associated with this program.";
 $string['nolearningplan'] = 'You do not currently have a learning plan assigned';
 $string['nomoodleuser'] = 'No moodle user found for specified user id.';
 $string['nomoodleuser_filt'] = 'Does not have an associated Moodle user';
@@ -725,6 +777,11 @@ $string['postalcode'] = 'Postal code';
 $string['prerequisites'] = 'Prerequisite';
 $string['priority'] = 'Display priority';
 $string['progman'] = 'Program Manager';
+$string['program_copy'] = 'Program Copying';
+$string['program_copy_help'] = '<p>If a Program is copied to this User Set, then a duplicate of the Program is made, and added to the User Set. This is a new Program that is only linked to this user Set, and changes made to this Program will only be available to this User Set (unless other User Sets are linked to it using the link option above).</p>';
+$string['program_link'] = 'Program Linking';
+$string['program_link_help'] = '<p>Linking to the program means that any changes to the Program (Classes instances added, modified, etc.) will be visible by all User Sets that are linked to the Program.</p>';
+
 $string['program'] = 'ELIS Program'; // accesslib.php::get_contextlevel_name()
 $string['program:assign_class_instructor'] = 'Manage class instance instructor assignments';
 $string['program:assign_userset_user_class_instructor'] = 'Manage User Set\'s users\' class instance instructor assignments';
@@ -807,6 +864,84 @@ $string['required'] = 'Required';
 $string['required_credits'] = 'Required Credits';
 $string['required_field'] = 'Error: {$a} is a required field';
 
+$string['results_action_assign_class'] = 'Action {$a->id} - assign class {$a->name}';
+$string['results_action_assign_track'] = 'Action {$a->id} - assign track {$a->name}';
+$string['results_action_update_profile'] = 'Action {$a->id} - updated profile field {$a->name} to {$a->value}';
+$string['results_actions_performed'] = 'Actions performed';
+$string['results_activate'] = 'Activate';
+$string['results_activation_rules'] = 'Activation rules';
+$string['results_activate_this_rule'] = 'Activate this results engine';
+$string['results_add_another_score_btn'] = 'Add new score range';
+$string['results_after_class_end'] = 'after Class Instance end date';
+$string['results_after_class_start'] = 'after Class Instance start date';
+$string['results_assign_to_profile'] = 'Update user profile field';
+$string['results_assign_to_class'] = 'Assign to class instance';
+$string['results_assign_to_track'] = 'Assign to Track';
+$string['results_before_class_end'] = 'before Class Instance end date';
+$string['results_class_grade'] = 'Class Instance grade';
+$string['results_class_instance'] = 'Class Instance';
+$string['results_class_processed'] = 'Class {$a->idnumber} processed on {$a->rundate}';
+$string['results_course_desc_header'] = 'Course Description';
+$string['results_criterion'] = 'Criterion';
+$string['results_date_run'] = 'Date run';
+$string['results_date_scheduled'] = 'Date scheduled';
+$string['results_delete_score'] = 'Delete score range';
+$string['results_done'] = 'Done';
+$string['results_engine'] = 'Results Engine';
+$string['results_engine_status_report'] = 'Results Engine status report';
+$string['results_engine_defaults_config'] = 'Default Results Engine Score Settings';
+$string['results_engine_defaults_err_no_min'] = 'No Minimum Value';
+$string['results_engine_defaults_err_no_max'] = 'No Maximum Value';
+$string['results_engine_defaults_err_min_conflict'] = 'Invalid minimum value - conflicts with a previous row.';
+$string['results_engine_defaults_err_max_conflict'] = 'Invalid maximum value - conflicts with a previous row.';
+$string['results_engine_defaults_err_enveloped_range'] = 'Invalid range - envelopes a previous row.';
+$string['results_engine_defaults_errs_encountered'] = 'Errors Encountered:';
+$string['results_engine_defaults_err_row'] = 'Errors for Row {$a}. Was not Saved.';
+$string['results_engine_defaults_saved_with_errors'] = 'All Other Settings Saved!';
+$string['results_engine_defaults_settings_saved'] = 'Settings Saved!';
+$string['results_error_incomplete_row'] = 'Incomplete row, please complete the row before trying to add another.';
+$string['results_error_incomplete_score_range'] = 'Incomplete score range, please enter a minimum, a maximum, and a value to assign.';
+$string['results_error_min_larger_than_max'] = 'Minimum value is larger than the maximum value.';
+$string['results_error_max_numeric'] = 'The maximum value must be a number';
+$string['results_error_min_numeric'] = 'The minimum value must be a number';
+$string['results_error_no_class'] = 'Please select a class for this range';
+$string['results_error_no_profile'] = 'Please select a profile for this range';
+$string['results_error_no_track'] = 'Please select a track for this range';
+$string['results_error_range_envelop'] = 'A previous range is completely contained within this range.  Ranges must not overlap.';
+$string['results_error_range_overlap_max'] = 'The maximum value for this range falls inside another range.  Ranges must not overlap.';
+$string['results_error_range_overlap_min'] = 'The minimum value for this range falls inside another range.  Ranges must not overlap.';
+$string['results_event_trigger'] = 'Event trigger';
+$string['results_execute_manually'] = 'Execute manually';
+$string['results_field_not_found'] = 'Field id #{$a->fieldid} not found in database!';
+$string['results_id_number_header'] = 'ID Number';
+$string['results_manual_failure'] = 'Manual processing failed';
+$string['results_manual_success'] = 'Manual processing succeeded';
+$string['results_manual_trigger'] = 'Manual trigger only';
+$string['results_no_class_selected'] = 'No class selected';
+$string['results_no_end_date_set'] = 'Class {$a->idnumber} set to use an unset end date';
+$string['results_no_start_date_set'] = 'Class {$a->idnumber} set to use an unset start date';
+$string['results_no_track_selected'] = 'No track selected';
+$string['results_no_profile_selected'] = 'No profile selected';
+$string['results_not_permitted'] = 'You do not have permissions to do that.';
+$string['results_on'] = 'On';
+$string['results_processing_manual'] = 'Processing Results Engine for {$a->idnumber} ...';
+$string['results_profile_name_header'] = 'Profile Field';
+$string['results_result'] = 'Result';
+$string['results_score'] = 'Score';
+$string['results_select_class'] = 'Select&nbsp;class&nbsp;instance';
+$string['results_select_track'] = 'Select&nbsp;track';
+$string['results_select_profile'] = 'Select profile field';
+$string['results_select_grade'] = 'Select which Class Instance grade value should be used to evaluate Student peformance for determing the result';
+$string['results_status_class_title'] = 'Results Engine status report for ({$a->name}) {$a->idnumber}';
+$string['results_status_course_title'] = 'Results Engine status report for {$a->name}';
+$string['results_status_report'] = 'Status report';
+$string['results_track_desc_header'] = 'Track Description';
+$string['results_track_name_header'] = 'Track Name';
+$string['results_unknown_classcourse'] = 'Unknown Class or Course requested for processing.';
+$string['results_use_locked_grades'] = 'Use locked grades only';
+$string['results_when_student_grade_set'] = 'When Student grade set';
+$string['results_with_selected_value'] = 'With selected value';
+
 $string['save_enrolment_changes'] = 'Save Changes';
 $string['saved'] = 'saved';
 $string['score'] = 'Score';
@@ -820,6 +955,7 @@ $string['show_all_users'] = 'Show All Users';
 $string['showcourses'] = 'Show Courses';
 $string['showinactive'] = 'Show inactive';
 $string['site_not_defined'] = 'Site is not defined';
+$string['status_report'] = 'Status Report';
 $string['student_credits'] = 'Credits';
 $string['student_deleteconfirm'] = 'Are you sure you want to unenrol the student name: {$a->name} ?<br />'.
                                    'NOTE: This will delete all records for this student in this class instance and will unenrol them from any connected Moodle course!';
@@ -990,12 +1126,5 @@ $string['waitlist'] = 'waitlist';
 $string['waitlist_size'] = 'Waitlist Size';
 $string['waitlistcourses'] = 'Waitlist';
 $string['waitlistenrol'] = 'Auto enrol from waitlist';
-
-$string['program_link'] = 'Program Linking';
-$string['program_link_help'] = '<p>Linking to the program means that any changes to the Program (Classes instances added, modified, etc.) will be visible by all User Sets that are linked to the Program.</p>';
-
-$string['program_copy'] = 'Program Copying';
-$string['program_copy_help'] = '<p>If a Program is copied to this User Set, then a duplicate of the Program is made, and added to the User Set. This is a new Program that is only linked to this user Set, and changes made to this Program will only be available to this User Set (unless other User Sets are linked to it using the link option above).</p>';
-
-$string['nocoursedescassoc'] = "There is no course description associated with this program.";
+$string['when_student_grade_set'] = 'When Student grade set';
 

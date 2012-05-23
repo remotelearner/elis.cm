@@ -1,7 +1,7 @@
 <?php //$Id$
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2012 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    elis-program
+ * @subpackage filtering
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
  * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
@@ -52,6 +52,7 @@ class generalized_filter_courseclassselect extends generalized_filter_dependents
         global $USER;
 
         $options['numeric'] = true;
+        $options['default'] = '0';
 
         $choices_array = array('0' => get_string('selectaclass', 'elis_program'));
 
@@ -74,11 +75,14 @@ class generalized_filter_courseclassselect extends generalized_filter_dependents
      *                    or null if the filter is disabled
      */
     function get_sql_filter($data) {
+        static $counter = 0;
+        $param_name = 'ex_courseclassselect'. $counter++;
         $full_fieldname = $this->get_full_fieldname();
         if (empty($full_fieldname)) {
             return null;
         }
-        return array("{$full_fieldname} = {$data['value']}", array());
+        return array("{$full_fieldname} = :{$param_name}",
+                     array($param_name => $data['value']));
     }
 
     /**

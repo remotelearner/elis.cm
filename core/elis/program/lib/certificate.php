@@ -26,21 +26,33 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+
+define('CM_CERTIFICATE_CODE_LENGTH', 15);
+
+
 /**
  * Outputs a certificate for some sort of completion element
  *
- * @param  string  $person_fullname  The full name of the certificate recipient
- * @param  string  $entity_name      The name of the entity that is compelted
- * @param  string  $date_string      Date /time the certification was achieved
- * @param  string  $expirydate       A string representing the time that the certificate expires (optional).
+ * @param string $person_fullname      The full name of the certificate recipient
+ * @param string $entity_name          The name of the entity that is compelted
+ * @param string $certificatecode      The unique certificate code
+ * @param string $date_string          Date /time the certification was achieved
+ * @param string $expirydate           A string representing the time that the certificate expires (optional).
+ * @param string $curriculum_frequency The curriculum frequency
+ * @param string $border               A custom border image to use
+ * @param string $seal                 A custom seal image to use
+ * @param string $template             A custom template to use
  */
-function certificate_output_completion($person_fullname, $entity_name, $date_string, $expirydate = '', $border = '', $seal = '') {
+function certificate_output_completion($person_fullname, $entity_name, $certificatecode = '', $date_string, $expirydate = '',
+                                       $curriculum_frequency = '', $border = '', $seal = '', $template = '') {
+
     global $CFG;
 
     //use the TCPDF library
     require_once($CFG->libdir.'/pdflib.php');
 
-    //error_log("/elis/program/lib/certificate.php::certificate_output_completion('{$person_fullname}', '{$entity_name}', '{$date_string}', '{$expirydate}', {$border}, {$seal})");
+//     error_log("/elis/program/lib/certificate.php::certificate_output_completion('{$person_fullname}', '{$entity_name}',
+//               '{$certificatecode}', '{$date_string}', '{$expirydate}', '{$curriculum_frequency}', '{$border}', '{$seal}', '{$template}')");
 
     //global settings
     $borders = 0;
@@ -80,36 +92,13 @@ function certificate_output_completion($person_fullname, $entity_name, $date_str
         }
     }
 
-    //add the header
-    $pdf->Ln(1.25);
-    $pdf->SetFont($font, '', $large_font_size);
-    $pdf->Cell(0, 1, get_string('certificate_title', 'elis_program'), $borders, 1, 'C');
+    // Include the certificate template
+    cm_certificate_check_data_path('templates');
 
-    $pdf->Ln(0.25);
-
-    $pdf->SetFont($font, '', $small_font_size);
-    $pdf->Cell(0, 0.5, get_string('certificate_certify', 'elis_program'), $borders, 1, 'C');
-
-    //person's name
-    $pdf->SetFont($font, '', $large_font_size);
-    $pdf->Cell(0, 1, $person_fullname, $borders, 1, 'C');
-
-    $pdf->SetFont($font, '', $small_font_size);
-    $pdf->Cell(0, 0.5, get_string('certificate_has_completed', 'elis_program'), $borders, 1, 'C');
-
-    //entity's name
-    $pdf->SetFont($font, '', $large_font_size);
-    $pdf->Cell(0, 1, $entity_name, $borders, 1, 'C');
-
-    //time issued
-    $pdf->SetFont($font, '', $small_font_size);
-    $pdf->Cell(0, 0.5, get_string('certificate_date', 'elis_program', $date_string), $borders, 1, 'C');
-
-    // Expiry date (if applicable)
-    if (!empty($expirydate)) {
-        $pdf->SetFont($font, '', 11);
-        $pdf->Cell(0, 0.5, get_string('certificate_expires', 'elis_program'), $borders, 1, 'C');
-        $pdf->Cell(0, 0.05, $expirydate, $borders, 1, 'C');
+    if (file_exists($CFG->dirroot.'/elis/program/pix/certificate/templates/'.$template)) {
+        include($CFG->dirroot.'/elis/program/pix/certificate/templates/'.$template);
+    } else if (file_exists($CFG->dataroot.'/elis/program/pix/certificate/templates/'.$template)) {
+        include($CFG->dataroot.'/elis/program/pix/certificate/templates/'.$template);
     }
 
     $pdf->Output();
@@ -212,3 +201,158 @@ function cm_certificate_check_data_path($imagetype) {
     }
 }
 
+/**
+ * Get the availavble certificate templates from the filesystem
+ *
+ * @param none
+ * @return array An array of
+ */
+function cm_certificate_get_templates() {
+    global $CFG;
+
+    // Add default templates
+    $templateoptions = array();
+
+    $my_path = $CFG->dirroot.'/elis/program/pix/certificate/templates';
+
+    if (file_exists($my_path) && is_dir($my_path) && $handle = opendir($my_path)) {
+        while (false !== ($file = readdir($handle))) {
+            if (strpos($file, '.php',1)) {
+                $templateoptions[$file] = basename($file, '.php');
+            }
+        }
+        closedir($handle);
+    }
+
+    // Add custom images
+    cm_certificate_check_data_path('templates');
+    $my_path = $CFG->dataroot.'/elis/program/pix/certificate/templates';
+    if (file_exists($my_path) && is_dir($my_path) && $handle = opendir($my_path)) {
+        while (false !== ($file = readdir($handle))) {
+            if (strpos($file, '.php',1) ) {
+                $templateoptions[$file] = basename($file, '.php');
+            }
+        }
+        closedir($handle);
+    }
+
+    // Sort templates
+    ksort($templateoptions);
+
+    return $templateoptions;
+}
+
+/**
+ * This function returns a random string of numbers and characters.
+ * The standard length of the string is CM_CERTIFICATE_CODE_LENGTH
+ * characters.  Pass a parameter to append more characters to the
+ * standard CM_CERTIFICATE_CODE_LENGTH characters
+ *
+ * @param int $append - The number of characters to append to the standard
+ * length of CM_CERTIFICATE_CODE_LENGTH
+ */
+function cm_certificate_generate_code($append = 0) {
+    $size = CM_CERTIFICATE_CODE_LENGTH + intval($append);
+    $code = random_string($size);
+
+    return $code;
+}
+
+/**
+ * This function sends a message to the development team indicating that
+ * the maximum number of attempts to generate a random string has been
+ * exhausted
+ *
+ * @uses $CDG
+ * @uses $DB
+ */
+function cm_certificate_email_random_number_fail($tableobj = null) {
+    global $CFG, $DB;
+
+    if (empty($tableobj)) {
+        return false;
+    }
+
+    require_once($CFG->dirroot.'/message/lib.php');
+
+    //construct the message
+    $a = new stdClass;
+    $a->sitename = $DB->get_field('course', 'fullname', array('id' => SITEID));
+    $a->url      = $CFG->wwwroot;
+
+    $message_text  = get_string('certificate_code_fail', 'elis_proram', $a) . "\n\n";
+    $message_text .= get_string('certificate_code_fail_text', 'elis_proram') . "\n";
+    $message_text .= get_string('certificate_code_fail_text_data', 'elis_proram', $tableobj) . "\n";
+
+    $message_html = nl2br($message_text);
+
+    //send message to rladmin user if possible
+    if ($rladmin_user = $DB->get_record('user', array('username' => 'rladmin', 'mnethostid' => $CFG->mnet_localhost_id))) {
+        $result = message_post_message($rladmin_user, $rladmin_user, $message_html, FORMAT_HTML, 'direct');
+
+        if ($result === false) {
+            return $result;
+        }
+    }
+
+    //email to specified address
+    $user_obj = new stdClass;
+    $user_obj->email      = 'development@remote-learner.net';
+    $user_obj->mailformat = FORMAT_HTML;
+
+    email_to_user($user_obj, get_admin(), get_string('certificate_code_fail', 'elis_proram', $a), $message_text, $message_html);
+
+    //output to screen if possible
+    if (!empty($output_to_screen)) {
+        echo $message_html;
+    }
+
+    return true;
+}
+
+
+/**
+ * Make multiple attempts to get a unique certificate code.
+ *
+ * @param none
+ * @return string A unique certificate code.
+ */
+function cm_certificate_get_code() {
+    $counter     = 0;
+    $attempts    = 10;
+    $maximumchar = 15;
+    $addchar     = 0;
+
+    // This loop will try to generate a unique string 11 times.  On the 11th attempt
+    // if string is still not unique then it will add to the length of the string
+    // If the length of the string exceed the maximum length set by $maximumchar
+    // then stop the loop and return an error
+    do {
+        $code   = cm_certificate_generate_code($addchar);
+        $exists = curriculum_code_exists($code);
+
+        if (!$exists) {
+            return $code;
+        }
+
+        // If the counter is equal to the number of attempts
+        if ($counter == $attempts) {
+            // Set counter back to zero and add a character to the string
+            $counter = 0;
+            $addchar++;
+        }
+
+        // increment counter otherwise this is an infinite loop
+        $counter++;
+    } while($maximumchar >= $addchar);
+
+    // Check if the length has exceeded the maximum length
+    if ($maximumchar < $addchar) {
+        if (!cm_certificate_email_random_number_fail($this)) {
+            $message = get_string('certificate_email_fail', 'elis_program');
+            $OUTPUT->notification($message);
+        }
+
+        print_error('certificate_code_error', 'elis_program');
+    }
+}

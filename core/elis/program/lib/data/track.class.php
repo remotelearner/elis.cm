@@ -26,19 +26,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once(dirname(__FILE__).'/../../../../config.php');
+require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 require_once elis::lib('data/data_object_with_custom_fields.class.php');
-
-/* Add these back in as they are migrated
-require_once CURMAN_DIRLOCATION . '/lib/datarecord.class.php';
-
-require_once CURMAN_DIRLOCATION . '/lib/curriculumcourse.class.php';
-require_once CURMAN_DIRLOCATION . '/lib/moodlecourseurl.class.php';
-require_once CURMAN_DIRLOCATION . '/lib/classmoodlecourse.class.php';
-require_once CURMAN_DIRLOCATION . '/lib/usertrack.class.php';
-require_once CURMAN_DIRLOCATION . '/lib/clustercurriculum.class.php';
-require_once CURMAN_DIRLOCATION . '/lib/student.class.php';
-require_once CURMAN_DIRLOCATION . '/lib/clustercurriculum.class.php';
-*/
 require_once elispm::lib('data/classmoodlecourse.class.php');
 require_once elispm::lib('data/clustertrack.class.php');
 require_once elispm::lib('data/course.class.php');
@@ -47,11 +37,7 @@ require_once elispm::lib('data/curriculum.class.php');
 require_once elispm::lib('data/pmclass.class.php');
 require_once elispm::lib('data/user.class.php');
 require_once elispm::lib('data/usertrack.class.php');
-
 require_once elispm::lib('deprecatedlib.php');
-
-//define ('TABLE', 'crlm_track');
-//define ('CLASSTABLE', 'crlm_track_class');
 
 class track extends data_object_with_custom_fields {
     const TABLE = 'crlm_track';
@@ -434,8 +420,9 @@ class track extends data_object_with_custom_fields {
                     $wait_list->save();
                     $status = true;
                 } catch (Exception $e) {
+                    $param = array('message' => $e->getMessage());
                     echo cm_error(get_string('record_not_created_reason',
-                                             self::LANG_FILE, $e));
+                                             self::LANG_FILE, $param));
                 }
             }
         }
@@ -700,8 +687,9 @@ class trackassignment extends elis_data_object {
                     $wait_list = new waitlist($wait_record);
                     $wait_list->save();
                 } catch (Exception $e) {
+                    $param = array('message' => $e->getMessage());
                     echo cm_error(get_string('record_not_created_reason',
-                                             'elis_program', $e));
+                                             'elis_program', $param));
                 }
             }
         }
@@ -1139,12 +1127,12 @@ function track_assignment_count_records($trackid, $namesearch = '', $alpha = '',
     if (!empty($namesearch)) {
         $namesearch = trim($namesearch);
         $where .= (!empty($where) ? ' AND ' : '') . $NAMESEARCH_LIKE;
-        $params['search_namesearch'] = '%$namesearch%';
+        $params['search_namesearch'] = "%{$namesearch}%";
     }
 
     if ($alpha) {
         $where .= (!empty($where) ? ' AND ' : '') . $ALPHA_LIKE;
-        $params['search_alpha'] = '$alpha%';
+        $params['search_alpha'] = "{$alpha}%";
     }
 
     if (!empty($extrafilters['contexts'])) {

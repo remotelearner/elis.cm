@@ -258,8 +258,9 @@ class studentpage extends associationpage {
                     $waitlist[] = $newstu;
                     $status = true;
                 } catch (Exception $e) {
+                    $param = array('message' => $e->getMessage());
                     echo cm_error(get_string('record_not_created_reason',
-                                             self::LANG_FILE, $e));
+                                             self::LANG_FILE, $param));
                 }
             }
         }
@@ -465,7 +466,8 @@ class studentpage extends associationpage {
                             echo cm_error(get_string('record_not_created',
                                                      self::LANG_FILE));
                         } catch (Exception $e) {
-                            echo cm_error(get_string('record_not_created_reason', self::LANG_FILE, $e));
+                            $param = array('message' => $e->getMessage());
+                            echo cm_error(get_string('record_not_created_reason', self::LANG_FILE, $param));
                         }
                     }
                 }

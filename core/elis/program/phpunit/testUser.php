@@ -30,6 +30,7 @@ require_once($CFG->dirroot . '/elis/program/lib/setup.php');
 require_once(elis::lib('testlib.php'));
 require_once('PHPUnit/Extensions/Database/DataSet/CsvDataSet.php');
 require_once(elispm::lib('data/userset.class.php'));
+require_once(elispm::lib('data/usermoodle.class.php'));
 require_once($CFG->dirroot . '/user/profile/lib.php');
 
 class userTest extends elis_database_test {

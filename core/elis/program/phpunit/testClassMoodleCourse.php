@@ -52,7 +52,7 @@ class classmoodlecourseTest extends elis_database_test {
     public function testClassMoodleCoursePreventsDuplicates() {
         $this->load_csv_data();
 
-        $classmoodlecourse = new classmoodlecourse(array('classid' => 1,
+        $classmoodlecourse = new classmoodlecourse(array('classid' => 100,
                                                          'moodlecourseid' => 1));
 
         $classmoodlecourse->save();

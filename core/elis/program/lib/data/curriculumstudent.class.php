@@ -26,11 +26,14 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once(dirname(__FILE__).'/../../../../config.php');
+require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 require_once elis::lib('data/data_object.class.php');
 require_once elispm::lib('data/course.class.php');
 require_once elispm::lib('data/curriculum.class.php');
 require_once elispm::lib('data/curriculumcourse.class.php');
 require_once elispm::lib('data/student.class.php');
+require_once elispm::lib('certificate.php');
 require_once elispm::lib('lib.php');
 
 define('CURR_EXPIRE_ENROL_START',    1);
@@ -60,6 +63,7 @@ class curriculumstudent extends elis_data_object {
     protected $_dbfield_timeexpired;
     protected $_dbfield_credits;
     protected $_dbfield_locked;
+    protected $_dbfield_certificatecode;
     protected $_dbfield_timecreated;
     protected $_dbfield_timemodified;
 
@@ -124,6 +128,14 @@ class curriculumstudent extends elis_data_object {
 
         if ($locked !== false) {
             $this->locked = $locked ? 1 : 0;
+        }
+
+        // Get the certificate code.  This batch of code tries to ensure
+        // that the random string is unique trying
+        if (empty($this->certificatecode)) {
+            $this->certificatecode = null;
+
+            $this->certificatecode = cm_certificate_get_code();
         }
 
         // Doesn't return true/false, so just assume it worked
@@ -662,4 +674,21 @@ function calculate_curriculum_expiry($curass, $curid = 0, $userid = 0) {
 
     // Get the time of expiry start plus the delta value for the actual expiration.
     return strtotime($strtimedelta, $timenow);
+}
+
+/**
+ * Determine if the specified unique certificate code already exists
+ *
+ * @uses $DB
+ * @param string $code The code to look for
+ * @return boolean True if the code already exists, false otherwise.
+ */
+function curriculum_code_exists($code) {
+    global $DB;
+
+    if (empty($code)) {
+        return true;
+    }
+
+    return $DB->record_exists(curriculumstudent::TABLE, array('certificatecode' => $code));
 }

@@ -1,0 +1,19 @@
+diff --git a/my/index.php b/my/index.php
+index 1324c79..6a2e4d7 100644
+--- a/my/index.php
++++ b/my/index.php
+@@ -142,6 +142,14 @@ if ($currentpage->userid == 0) {
+     $CFG->blockmanagerclass = 'my_syspage_block_manager';
+ }
+ 
++require_once($CFG->dirroot.'/elis/program/lib/lib.php');
++
++if (pm_mymoodle_redirect($edit)) {
++    //need to redirect from My Moodle to the PM dashboard
++    //can't just include that file like in 1.9 because it causes page context issues
++    redirect($CFG->wwwroot.'/elis/program/index.php', '', 0);
++    return; 
++}
+ 
+ echo $OUTPUT->header();
+ 

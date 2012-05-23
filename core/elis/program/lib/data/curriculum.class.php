@@ -26,6 +26,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once(dirname(__FILE__).'/../../../../config.php');
+require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 require_once elis::lib('data/data_object_with_custom_fields.class.php');
 require_once elis::lib('data/customfield.class.php');
 require_once elispm::lib('data/course.class.php');
@@ -245,9 +247,9 @@ class curriculum extends data_object_with_custom_fields {
 
         /// Incomplete curricula:
 
-        $select  = 'SELECT cca.id as id, cca.userid, cca.curriculumid, cca.completed, cca.timecompleted,
-                    cca.credits, cca.locked, cca.timecreated, cca.timemodified,
-                    cur.id as curid, cur.timetocomplete as timetocomplete ';
+        $select  = 'SELECT cca.id as id, cca.userid, cca.curriculumid, cca.completed, cca.timecompleted, cca.credits,
+                    cca.locked, cca.timecreated, cca.certificatecode, cca.timemodified, cur.id as curid,
+                    cur.timetocomplete as timetocomplete ';
         $from    = 'FROM {'.curriculumstudent::TABLE.'} cca ';
         $join    = 'INNER JOIN {'.user::TABLE.'} cu ON cu.id = cca.userid
                     INNER JOIN {'.curriculum::TABLE.'} cur ON cca.curriculumid = cur.id

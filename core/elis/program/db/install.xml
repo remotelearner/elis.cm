@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="elis/program" VERSION="20101113" COMMENT="XMLDB file for Moodle ELIS Program Manager"
+<XMLDB PATH="elis/program" VERSION="20111018" COMMENT="XMLDB file for Moodle ELIS Program Manager"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -39,7 +39,7 @@
         <FIELD NAME="completetime" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="enrolmenttime" NEXT="endtime"/>
         <FIELD NAME="endtime" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="the date the course must be completed by" PREVIOUS="completetime" NEXT="completestatusid"/>
         <FIELD NAME="completestatusid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="endtime" NEXT="grade"/>
-        <FIELD NAME="grade" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="completestatusid" NEXT="credits"/>
+        <FIELD NAME="grade" TYPE="number" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" DECIMALS="5" PREVIOUS="completestatusid" NEXT="credits"/>
         <FIELD NAME="credits" TYPE="number" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" DECIMALS="2" COMMENT="Credits awarded for this class." PREVIOUS="grade" NEXT="locked"/>
         <FIELD NAME="locked" TYPE="int" LENGTH="2" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Lock the enrolment value." PREVIOUS="credits"/>
       </FIELDS>
@@ -59,7 +59,7 @@
         <FIELD NAME="classid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="The foreign key id of crlm_class." PREVIOUS="id" NEXT="userid"/>
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="The foreign key if of crlm_user." PREVIOUS="classid" NEXT="completionid"/>
         <FIELD NAME="completionid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="The foreign key id of crlm_course_completion." PREVIOUS="userid" NEXT="grade"/>
-        <FIELD NAME="grade" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="false" DEFAULT="0" SEQUENCE="false" COMMENT="The numeric grade (0-100)." PREVIOUS="completionid" NEXT="locked"/>
+        <FIELD NAME="grade" TYPE="number" LENGTH="10" NOTNULL="false" UNSIGNED="false" DEFAULT="0" SEQUENCE="false" DECIMALS="5" COMMENT="The numeric grade (0-100)." PREVIOUS="completionid" NEXT="locked"/>
         <FIELD NAME="locked" TYPE="int" LENGTH="2" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="If locked, will not be updated by external systems." PREVIOUS="grade" NEXT="timegraded"/>
         <FIELD NAME="timegraded" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time that the activity was graded in Moodle" PREVIOUS="locked" NEXT="timemodified"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Last time stamp the grade was changed." PREVIOUS="timegraded"/>
@@ -208,8 +208,9 @@
         <FIELD NAME="timecompleted" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time of completion (timestamp)" PREVIOUS="completed" NEXT="timeexpired"/>
         <FIELD NAME="timeexpired" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time of curriculum expiry (timestamp)" PREVIOUS="timecompleted" NEXT="credits"/>
         <FIELD NAME="credits" TYPE="number" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" DECIMALS="2" COMMENT="The credits completed with." PREVIOUS="timeexpired" NEXT="locked"/>
-        <FIELD NAME="locked" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Whether or not this completion can be changed." PREVIOUS="credits" NEXT="timecreated"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="locked" NEXT="timemodified"/>
+        <FIELD NAME="locked" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Whether or not this completion can be changed." PREVIOUS="credits" NEXT="certificatecode"/>
+        <FIELD NAME="certificatecode" TYPE="char" LENGTH="40" NOTNULL="false" SEQUENCE="false" ENUM="false" PREVIOUS="locked" NEXT="timecreated"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="certificatecode" NEXT="timemodified"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="timecreated"/>
       </FIELDS>
       <KEYS>
@@ -217,7 +218,8 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="mdl_currcurrassi_usecurcom_ix" UNIQUE="false" FIELDS="userid, curriculumid, completed" NEXT="completed_ix"/>
-        <INDEX NAME="completed_ix" UNIQUE="false" FIELDS="completed" PREVIOUS="mdl_currcurrassi_usecurcom_ix"/>
+        <INDEX NAME="completed_ix" UNIQUE="false" FIELDS="completed" PREVIOUS="mdl_currcurrassi_usecurcom_ix" NEXT="certificatecode_ix"/>
+        <INDEX NAME="certificatecode_ix" UNIQUE="false" FIELDS="certificatecode" PREVIOUS="completed_ix"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="crlm_curriculum_course" COMMENT="crlm_curriculum_course table retrofitted from MySQL" PREVIOUS="crlm_curriculum_assignment" NEXT="crlm_environment">
@@ -292,7 +294,7 @@
         <FIELD NAME="email2" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" PREVIOUS="email" NEXT="address"/>
         <FIELD NAME="address" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" PREVIOUS="email2" NEXT="address2"/>
         <FIELD NAME="address2" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" PREVIOUS="address" NEXT="city"/>
-        <FIELD NAME="city" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" PREVIOUS="address2" NEXT="state"/>
+        <FIELD NAME="city" TYPE="char" LENGTH="120" NOTNULL="false" SEQUENCE="false" PREVIOUS="address2" NEXT="state"/>
         <FIELD NAME="state" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" PREVIOUS="city" NEXT="postalcode"/>
         <FIELD NAME="postalcode" TYPE="char" LENGTH="32" NOTNULL="false" SEQUENCE="false" PREVIOUS="state" NEXT="country"/>
         <FIELD NAME="country" TYPE="char" LENGTH="2" NOTNULL="false" SEQUENCE="false" PREVIOUS="postalcode" NEXT="phone"/>
@@ -515,12 +517,12 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="crlm_user_moodle" COMMENT="Association between Moodle and CM users" PREVIOUS="crlm_wait_list">
+    <TABLE NAME="crlm_user_moodle" COMMENT="Association between Moodle and CM users" PREVIOUS="crlm_wait_list" NEXT="crlm_results">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="cuserid"/>
-        <FIELD NAME="cuserid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" PREVIOUS="id" NEXT="muserid"/>
-        <FIELD NAME="muserid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" PREVIOUS="cuserid" NEXT="idnumber"/>
-        <FIELD NAME="idnumber" TYPE="char" LENGTH="255" NOTNULL="true" PREVIOUS="muserid"/>
+        <FIELD NAME="cuserid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="id" NEXT="muserid"/>
+        <FIELD NAME="muserid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="cuserid" NEXT="idnumber"/>
+        <FIELD NAME="idnumber" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="muserid"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="cuserid_fk"/>
@@ -529,6 +531,76 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="idnumber_idx" UNIQUE="true" FIELDS="idnumber"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="crlm_results" COMMENT="results engine settings" PREVIOUS="crlm_user_moodle" NEXT="crlm_results_action">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="contextid"/>
+        <FIELD NAME="contextid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="id" NEXT="active"/>
+        <FIELD NAME="active" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="contextid" NEXT="eventtriggertype"/>
+        <FIELD NAME="eventtriggertype" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="active" NEXT="lockedgrade"/>
+        <FIELD NAME="lockedgrade" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="eventtriggertype" NEXT="triggerstartdate"/>
+
+        <FIELD NAME="triggerstartdate" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Indicates what date to base the trigger on" PREVIOUS="lockedgrade" NEXT="days"/>
+        <FIELD NAME="days" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Number of days to offset from trigger date" PREVIOUS="triggerstartdate" NEXT="criteriatype"/>
+        <FIELD NAME="criteriatype" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="days"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="contextid_idx" UNIQUE="true" FIELDS="contextid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="crlm_results_action" COMMENT="results engine action settings" PREVIOUS="crlm_results" NEXT="crlm_results_class_log">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="resultsid"/>
+        <FIELD NAME="resultsid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="id" NEXT="actiontype"/>
+        <FIELD NAME="actiontype" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="resultsid" NEXT="minimum"/>
+        <FIELD NAME="minimum" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="false" SEQUENCE="false" PREVIOUS="actiontype" NEXT="maximum"/>
+        <FIELD NAME="maximum" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="false" SEQUENCE="false" PREVIOUS="minimum" NEXT="trackid"/>
+        <FIELD NAME="trackid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="maximum" NEXT="classid"/>
+        <FIELD NAME="classid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="trackid" NEXT="fieldid"/>
+        <FIELD NAME="fieldid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="classid" NEXT="fielddata"/>
+        <FIELD NAME="fielddata" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="fieldid"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="resultsid_idx" UNIQUE="false" FIELDS="resultsid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="crlm_results_class_log" COMMENT="results engine class logs" PREVIOUS="crlm_results_action" NEXT="crlm_results_student_log">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="classid"/>
+        <FIELD NAME="classid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="id" NEXT="datescheduled"/>
+        <FIELD NAME="datescheduled" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false" PREVIOUS="classid" NEXT="daterun"/>
+        <FIELD NAME="daterun" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false" PREVIOUS="datescheduled"/>
+
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="classid_idx" UNIQUE="false" FIELDS="classid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="crlm_results_student_log" COMMENT="results engine student logs" PREVIOUS="crlm_results_class_log">
+
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="classlogid"/>
+        <FIELD NAME="classlogid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="id" NEXT="userid"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="classlogid" NEXT="action"/>
+        <FIELD NAME="action" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="userid" NEXT="daterun"/>
+        <FIELD NAME="daterun" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false" PREVIOUS="action"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="classlogid_idx" UNIQUE="false" FIELDS="classlogid"/>
       </INDEXES>
     </TABLE>
   </TABLES>

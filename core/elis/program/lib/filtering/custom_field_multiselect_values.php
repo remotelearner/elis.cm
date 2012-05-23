@@ -248,4 +248,16 @@ class generalized_filter_custom_field_multiselect_values extends generalized_fil
             return false;
         }
     }
+
+    /**
+     * Takes a set of submitted values and retuns this filter's default values
+     * for them in the same structure (used to reset the filtering form)
+     */
+    function get_default_values($filter_data) {
+        return array();
+    }
+
+    function reset_js() {
+        return 'cf_reset();';
+    }
 }

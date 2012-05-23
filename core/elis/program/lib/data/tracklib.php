@@ -24,9 +24,8 @@
  *
  */
 
-require_once('../../../../config.php');
-require_once($CFG->dirroot . '/elis/program/lib/setup.php');
-
+require_once(dirname(__FILE__).'/../../../../config.php');
+require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 require_once elispm::lib('data/curriculumcourse.class.php');
 require_once elispm::lib('data/track.class.php');
 

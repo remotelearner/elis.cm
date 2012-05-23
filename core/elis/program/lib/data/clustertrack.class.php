@@ -26,6 +26,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once(dirname(__FILE__).'/../../../../config.php');
+require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 require_once(elis::lib('data/data_object_with_custom_fields.class.php'));
 require_once(elispm::lib('data/curriculum.class.php'));
 require_once(elispm::lib('data/curriculumcourse.class.php'));
@@ -300,7 +302,7 @@ class clustertrack extends elis_data_object {
      * @uses $CURMAN
      * @param int $clusterid The cluster id.
      */
-    public static function get_tracks($clusterid = 0) {
+    public static function get_tracks($clusterid = 0, $sort, $dir) {
         global $DB;
 
         if (empty($DB)) {
@@ -312,7 +314,7 @@ class clustertrack extends elis_data_object {
         $join    = 'LEFT JOIN {' . track::TABLE . '} trk '.
           'ON trk.id = clsttrk.trackid ';
         $where   = 'WHERE clsttrk.clusterid = ? ';
-        $sort    = 'ORDER BY trk.idnumber ASC ';
+        $sort    = "ORDER BY {$sort} {$dir} ";
         $params = array($clusterid);
 
         $sql = $select.$tables.$join.$where.$sort;

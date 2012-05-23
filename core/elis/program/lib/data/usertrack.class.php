@@ -26,6 +26,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once(dirname(__FILE__).'/../../../../config.php');
+require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 require_once elis::lib('data/data_object_with_custom_fields.class.php');
 require_once elispm::lib('data/user.class.php');
 require_once elispm::lib('data/student.class.php');
@@ -195,8 +197,9 @@ class usertrack extends elis_data_object {
                     $wait_list->save();
                     $status = true;
                 } catch (Exception $e) {
+                    $param = array('message' => $e->getMessage());
                     echo cm_error(get_string('record_not_created_reason',
-                                             'elis_program', $e));
+                                             'elis_program', $param));
                 }
             }
         }

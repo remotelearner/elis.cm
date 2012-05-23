@@ -93,8 +93,8 @@ class bulkuserpage extends selectionpage {
         $context_set = pm_context_set::for_user_with_capability('cluster', 'elis/program:user_edit', $USER->id);
 
         // Get list of users
-        $items    = usermanagement_get_users($sort, $dir, $perpage * $pagenum,
-                                             $perpage, $extrasql, $context_set);
+        $items    = usermanagement_get_users_recordset($sort, $dir, $perpage * $pagenum,
+                                                       $perpage, $extrasql, $context_set);
         $numitems = usermanagement_count_users($extrasql, $context_set);
         return array($items, $numitems);
     }
@@ -263,7 +263,7 @@ class bulk_user_filtering extends pm_user_filtering {
     function get_field($fieldname, $advanced) {
         switch ($fieldname) {
         case 'nomoodleuser':
-            return new no_moodle_user_filter('nomoodleuser', get_string('nomoodleuser_filt', 'elis_program'), $advanced, 'usr.idnumber');
+            return new no_moodle_user_filter('nomoodleuser', get_string('nomoodleuser_filt', 'elis_program'), $advanced, 'idnumber');
         default:
             return parent::get_field($fieldname, $advanced);
         }

@@ -1,0 +1,43 @@
+diff --git a/elis/core/lib/data/data_object.class.php b/elis/core/lib/data/data_object.class.php
+index 0431cc3..c437f33 100644
+--- a/elis/core/lib/data/data_object.class.php
++++ b/elis/core/lib/data/data_object.class.php
+@@ -978,6 +978,7 @@ function validate_is_unique(elis_data_object $record, array $fields) {
+     $tablename = $classname::TABLE;
+     $db = $record->get_db();
+     $filters = array();
++
+     foreach ($fields as $field) {
+         $filters[] = new field_filter($field, $record->$field);
+     }
+@@ -1020,6 +1021,30 @@ function validate_associated_record_exists(elis_data_object $record, $associatio
+     $object = $record->$association;
+     $object->load();
+ }
++/**
++ * Helper function for generating a unique identifier
++ *
++ * @param string $table The table being checked for unique records
++ * @param string $iterator The iterating field name
++ * @param string $basevalue The starting value to check for uniqueness
++ * @param array $params An array of parameters for the uniqueness check
++ * @param string $classname An optional object name
++ * @param object $class An optional object
++ */
++function generate_unique_identifier($table, $iterator, $basevalue, $params, $classname = NULL, &$class = NULL) {
++    global $DB;
++    //create a unique idnumber by appending a suffix
++    $count = 0;
++    do {
++        $suffix = $count ? '.'.$count : '';
++        ++$count;
++        $params[$iterator]=$basevalue.$suffix;
++        if (isset($classname)) {
++            $class = new $classname($params);
++        }
++    } while ($DB->record_exists($table,$params));
++    return $basevalue.$suffix;
++}
+ 
+ /**
+  * Helper class for validation rules.

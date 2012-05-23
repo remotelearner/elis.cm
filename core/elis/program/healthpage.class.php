@@ -484,21 +484,22 @@ class track_classes_check extends crlm_health_check_base {
 
         //needed for db table constants
         require_once(elispm::lib('data/track.class.php'));
+        require_once(elispm::lib('data/curriculumcourse.class.php'));
 
         $this->unattachedClasses = array();
 
-        $sql = "SELECT trkcls.id, trkcls.trackid, trkcls.courseid, trkcls.classid, trk.curid
-                FROM {".trackassignment::TABLE."} trkcls
-                JOIN {".track::TABLE."} trk ON trk.id = trkcls.trackid
-                JOIN {".pmclass::TABLE."} cls ON trkcls.classid = cls.id
+        $sql = 'SELECT trkcls.id, trkcls.trackid, trkcls.courseid, trkcls.classid, trk.curid
+                FROM {'. trackassignment::TABLE .'} trkcls
+                JOIN {'. track::TABLE .'} trk ON trk.id = trkcls.trackid
+                JOIN {'. pmclass::TABLE .'} cls ON trkcls.classid = cls.id
                 WHERE NOT EXISTS (
                     SELECT *
-                    FROM mdl_crlm_curriculum_course curcrs
+                    FROM {'. curriculumcourse::TABLE .'} curcrs
                     WHERE trk.curid = curcrs.curriculumid
                     AND cls.courseid = curcrs.courseid
-                )";
+                )';
 
-        if ($trackclasses = $DB->get_recordset_sql($sql)) {
+        if (($trackclasses = $DB->get_recordset_sql($sql)) && $trackclasses->valid()) {
             foreach ($trackclasses as $trackclass) {
                 $this->unattachedClasses[] = $trackclass->id;
             }
