@@ -34,7 +34,7 @@ class clustercurriculumeditform extends moodleform {
 
         $this->curriculum_fields = array('idnumber'    => get_string('curriculum_idnumber', 'elis_program'),
                                          'name'        => get_string('curriculum_name', 'elis_program'),
-                                         'description' => get_string('curriculum_shortdescription' ,'elis_program'),
+                                         'description' => get_string('description' ,'elis_program'),
                                          'reqcredits'  => get_string('curriculum_reqcredits', 'elis_program'),
                                          'numcourses'  => get_string('num_courses', 'elis_program'));
 

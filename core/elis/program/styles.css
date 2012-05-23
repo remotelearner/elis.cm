@@ -87,3 +87,55 @@ td.ygtvcontent {
 .elis_page .tabtree .tabrow1 LI.here .empty {
     display: none;
 }
+
+fieldset.engineform {
+    border: 1px black solid;
+    padding: 5px;
+}
+
+fieldset fieldset.engineform {
+    border: 1px black solid;
+    padding: 5px;
+}
+
+.mform #activationrules .fitem .fitemtitle {
+	width: 0px;
+}
+
+table#track_selection_table {
+    width: 50%;
+}
+
+table#class_selection_table {
+    width: 50%;
+}
+
+.path-elis-program.pagelayout-popup #frametop,
+.path-elis-program.pagelayout-popup #footerframetop {
+	min-width: 200px;
+}
+
+#page-elispm .mform .ui-accordion-content .fitem fieldset.felement {
+	width: 100%;
+}
+
+#page-elispm #track_selection_table,
+#page-elispm #class_selection_table,
+#page-elispm #profile_selection_table {
+	border: 1px solid black;
+	width: 90%;
+}
+
+#page-elispm #track_selection_table td:last-child,
+#page-elispm #class_selection_table td:last-child {
+    text-align: right;
+}
+
+.results.enginestatus {
+    text-align: center;
+    padding-top: 2em;
+}
+
+.results.enginestatus .generaltable {
+    margin: 0 auto;
+}

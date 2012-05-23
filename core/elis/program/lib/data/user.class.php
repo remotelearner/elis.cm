@@ -26,6 +26,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once(dirname(__FILE__).'/../../../../config.php');
+require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 require_once elis::lib('data/data_object_with_custom_fields.class.php');
 require_once elispm::lib('data/clusterassignment.class.php');
 require_once elispm::lib('data/student.class.php');
@@ -33,12 +35,6 @@ require_once elispm::lib('data/waitlist.class.php');
 require_once elispm::lib('data/instructor.class.php');
 require_once elispm::lib('data/curriculumstudent.class.php');
 require_once elispm::lib('data/usertrack.class.php');
-/*
-require_once CURMAN_DIRLOCATION . '/lib/cluster.class.php';
-require_once CURMAN_DIRLOCATION . '/lib/cmclass.class.php';
-require_once CURMAN_DIRLOCATION . '/lib/curriculumcourse.class.php';
-require_once CURMAN_DIRLOCATION . '/form/userform.class.php';
-*/
 require_once $CFG->dirroot . '/user/filters/text.php';
 require_once $CFG->dirroot . '/user/filters/date.php';
 require_once $CFG->dirroot . '/user/filters/select.php';
@@ -710,7 +706,7 @@ class user extends data_object_with_custom_fields {
                                     $data[] = array(
                                         $coursename,
                                         $coursedesc,
-                                        $classdata->grade,
+                                        pm_display_grade($classdata->grade),
                                         $classdata->completestatusid == STUSTATUS_PASSED ? get_string('yes') : get_string('no'),
                                         $classdata->completestatusid == STUSTATUS_PASSED && !empty($classdata->completetime) ?
                                         date('M j, Y', $classdata->completetime) : get_string('na','elis_program')

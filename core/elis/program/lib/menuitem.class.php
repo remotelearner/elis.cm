@@ -499,14 +499,17 @@ class treerepresentation {
 
         //render the tree when the page is loaded
         $result .= "<script type=\"text/javascript\">
-//<![CDATA[
-                    var object = $js_object;
-                    var wwwroot = \"{$CFG->wwwroot}\";
-                    YAHOO.util.Event.onDOMReady(function() {
-                                                    render_curr_admin_tree(object);
-                                                           });
-//]]>
-                    </script>";
+        //<![CDATA[
+        var object = $js_object;
+        var wwwroot = \"{$CFG->wwwroot}\";
+        //register the tree module so it doesn't get loaded again
+        YUI().use('yui2-treeview', function(Y) {
+            YAHOO.util.Event.onDOMReady(function() {
+                render_curr_admin_tree(object);
+            });
+        });
+        //]]>
+        </script>";
 
         //handle non-js case
         $result .= '<noscript>' . $this->root->convert_to_markup() . '</noscript>';

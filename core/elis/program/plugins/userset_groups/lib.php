@@ -32,7 +32,11 @@ defined('MOODLE_INTERNAL') || die();
  * ---------------------------------------------------------------
  */
 
+require_once(dirname(__FILE__).'/../../../../config.php');
+global $CFG;
 require_once($CFG->dirroot.'/group/lib.php');
+require_once($CFG->dirroot.'/elis/program/lib/setup.php');
+
 
 /**
  * Handler that gets called when a cm user gets assigned to a cluster

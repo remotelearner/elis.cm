@@ -515,8 +515,8 @@ function block_curr_admin_load_menu_children_course($id, $parent_cluster_id, $pa
     //permissions filter
     $class_contexts = pmclasspage::get_contexts('elis/program:class_view');
 
-    $listing = pmclass_get_listing('crsname', 'asc', 0, $num_block_icons, '', '', $id,
-                                   $class_contexts, null, $parent_cluster_id);
+    $listing = pmclass_get_listing('crsname', 'asc', 0, $num_block_icons, '', '',
+                                   $id, false, $class_contexts, $parent_cluster_id);
 
     if (!empty($listing)) {
         foreach ($listing as $item) {

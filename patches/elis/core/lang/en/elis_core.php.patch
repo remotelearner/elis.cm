@@ -1,0 +1,26 @@
+diff --git a/elis/core/lang/en/elis_core.php b/elis/core/lang/en/elis_core.php
+index fa1be1f..07a870a 100644
+--- a/elis/core/lang/en/elis_core.php
++++ b/elis/core/lang/en/elis_core.php
+@@ -35,9 +35,9 @@ $string['date_format'] = '%d/%m/%Y';
+ $string['date_help'] = '<h1>Date filter</h1>
+ <p>This filter allows you to filter information from before and/or after selected dates.</p>';
+ $string['display'] = 'Display';
+-$string['displaytext'] = 'Display text';
+-$string['displaytext_help'] = '<h1>Display text</h1>
+-<p>This filter allows you to display custom text in the report header, there are usually predefined fields, but this report has neglected to define them.</p>';
++$string['displaytext'] = 'Display Text filter';
++$string['displaytext_help'] = '<h1>Display Text filter</h1>
++<p>This filter allows you to display a custom text label.</p>';
+ $string['done'] = 'done';
+ $string['elis'] = 'ELIS';
+ $string['elisversion'] = '<strong>ELIS Version:</strong> {$a}';
+@@ -136,7 +136,7 @@ The filter has the following options:</p>
+ <li>ends with - this option allows only ID numbers that end with the text entered (if no text is entered, then the filter is disabled)</li>
+ <li>is empty - this option allows only ID numbers that are equal to the empty string (the text entered is ignored)</li>
+ </ul>';
+-$string['fld_inactive'] = 'Inactive filter';
++$string['fld_inactive'] = 'Inactive';
+ $string['fld_inactive_help'] = '<h1>Inactive filter</h1>
+ <p>This filter allows you to filter users\' status as active, inactive or both.</p>';
+ $string['fld_iscustom'] = 'Custom';

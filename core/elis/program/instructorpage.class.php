@@ -355,7 +355,7 @@ class instructorpage extends associationpage {
                 //$table->data[] = $newarr;
             }
             if (!empty($newarr)) {
-                $table = new instructor_page_table($newarr, $columns, &$this);
+                $table = new instructor_page_table($newarr, $columns, $this);
             }
         }
 

@@ -26,7 +26,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-//require_once CURMAN_DIRLOCATION.'/lib/lib.php';
+require_once(dirname(__FILE__).'/../../../../config.php');
+global $CFG;
+require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 
 /**
  * Class to put event handlers in a namespace.

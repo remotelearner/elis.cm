@@ -166,6 +166,7 @@ class pmclasspage extends managementpage {
         array('tab_id' => 'waitlistpage', 'page' => 'waitlistpage', 'name' => get_string('waiting', 'elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'waiting'),
         array('tab_id' => 'instructorpage', 'page' => 'instructorpage', 'name' => get_string('instructors', 'elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'instructor'),
         array('tab_id' => 'class_rolepage', 'page' => 'class_rolepage', 'name' => get_string('roles', 'role'), 'showtab' => true, 'showbutton' => false, 'image' => 'tag'),
+        array('tab_id' => 'class_enginepage', 'page' => 'class_enginepage', 'name' => get_string('results_engine', 'elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'calculator'),
 
         array('tab_id' => 'delete', 'page' => get_class($this), 'params' => array('action' => 'delete'), 'name' => get_string('delete_label', 'elis_program'), 'showbutton' => true, 'image' => 'delete'),
         array('tab_id' => 'class_reportlinkspage', 'page' => 'class_reportlinkspage', '', 'name' => get_string('classreportlinks', 'elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'report')
@@ -414,8 +415,8 @@ class pmclasspage extends managementpage {
             $context_instance = get_context_instance($context_level, $cm_entity->id);
 
             //assign the appropriate role if the user does not have the edit capability
-            if(!has_capability('elis/program:class_edit', $context_instance)) {
-                role_assign(elis::$config->elis_program->default_class_role_id, $USER->id, 0, $context_instance->id);
+            if (!has_capability('elis/program:class_edit', $context_instance)) {
+                role_assign(elis::$config->elis_program->default_class_role_id, $USER->id, $context_instance->id);
             }
         }
     }

@@ -522,8 +522,8 @@ class usersetpage extends managementpage {
             $context_instance = get_context_instance($context_level, $cm_entity->id);
 
             //assign the appropriate role if the user does not have the edit capability
-            if(!has_capability('elis/program:userset_edit', $context_instance)) {
-                role_assign(elis::$config->elis_program->default_cluster_role_id, $USER->id, 0, $context_instance->id);
+            if (!has_capability('elis/program:userset_edit', $context_instance)) {
+                role_assign(elis::$config->elis_program->default_cluster_role_id, $USER->id, $context_instance->id);
             }
         }
     }

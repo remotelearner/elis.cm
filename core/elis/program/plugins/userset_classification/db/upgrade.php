@@ -26,8 +26,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once(dirname(__FILE__).'/../../../../config.php');
 global $CFG;
-require_once($CFG->dirroot . '/elis/program/lib/setup.php');
+require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 require_once(elis::lib('data/customfield.class.php'));
 require_once(elis::plugin_file('pmplugins_userset_classification', 'lib.php'));
 

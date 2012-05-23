@@ -2,6 +2,9 @@
 
 defined('MOODLE_INTERNAL') || die;
 
+require_once(dirname(__FILE__).'/../../../../config.php');
+global $CFG;
+require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 require_once(elispm::file('plugins/userset_groups/lib.php'));
 
 if ($ADMIN->fulltree) {

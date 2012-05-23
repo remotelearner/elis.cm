@@ -62,7 +62,7 @@ class cmCurriculaForm extends cmform {
         $mform->addHelpButton('name', 'curriculaform:curriculum_name', 'elis_program');
 
         $attributes = array('rows'=>'2', 'cols'=>'40');
-        $mform->addElement('textarea', 'description', get_string('curriculum_description', 'elis_program') . ':', $attributes);
+        $mform->addElement('textarea', 'description', get_string('description', 'elis_program') . ':', $attributes);
         $mform->setType('description', PARAM_CLEAN);
         $mform->addHelpButton('description', 'curriculaform:curriculum_description', 'elis_program');
 

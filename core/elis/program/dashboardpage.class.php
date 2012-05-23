@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2012 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once elispm::lib('deprecatedlib.php'); // cm_get_crlmuserid()
 require_once elispm::lib('page.class.php');
+require_once elispm::file('healthpage.class.php');
 
 /**
  * This page is just a dummy that allows generic linking to the dashboard
@@ -94,7 +95,10 @@ class dashboardpage extends pm_page {
             echo $OUTPUT->heading(get_string('admin_dashboard', 'elis_program'));
             echo $OUTPUT->box(html_writer::tag('p', get_string('elis_doc_class_link', 'elis_program')));
             echo $OUTPUT->box(html_writer::tag('p', $this->last_cron_runtimes()));
-            echo $OUTPUT->box(html_writer::tag('p', get_string('health_check_link', 'elis_program', $CFG)));
+            $healthpg = new healthpage();
+            if ($healthpg->can_do_default()) {
+                echo $OUTPUT->box(html_writer::tag('p', get_string('health_check_link', 'elis_program', $CFG)));
+            }
             echo html_writer::tag('p', get_string('elispmversion', 'elis_program', elispm::$release));
             echo html_writer::tag('p', get_string('elisversion', 'elis_core', elis::$release));
         }

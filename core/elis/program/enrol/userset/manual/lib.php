@@ -26,6 +26,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once(dirname(__FILE__).'/../../../../../config.php');
+global $CFG;
+require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 require_once(elispm::lib('data/userset.class.php'));
 
 function cluster_manual_delete_for_cluster($id) {

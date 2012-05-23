@@ -26,6 +26,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once(dirname(__FILE__).'/../../../../config.php');
+require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 require_once(elis::lib('data/data_object_with_custom_fields.class.php'));
 require_once(elispm::lib('data/curriculum.class.php'));
 require_once(elispm::lib('data/curriculumcourse.class.php'));
@@ -290,7 +292,7 @@ class clustercurriculum extends elis_data_object {
 
             if (!empty($filter_sql)) {
                 //user does not have access at the system context
-                $where .= 'AND '.$filter_sql['where'];
+                $where .= 'AND '.$filter_sql['where'].' ';
                 $params = array_merge($params, $filter_sql['where_parameters']);
             }
         }

@@ -36,7 +36,10 @@ require_once(elispm::lib('deprecatedlib.php')); // cm_get_crlmuserid()
 
 // Retrieve curriculum assignment
 $id = required_param('id', PARAM_INT);
+
+
 $curass = new curriculumstudent($id);
+
 // TBD: following required to get user name to display on certificate!
 $curass->load();
 if (!empty($curass->user)) {
@@ -55,8 +58,7 @@ if (!isset($curass->user) || !isset($curass->curriculum)) {
     $datecomplete = date("F j, Y", $curass->timecompleted);
 
     $dateexpired = '';
-    if (!empty(elis::$config->elis_program->enable_curriculum_expiration) &&
-        !empty($curass->timeexpired)) {
+    if (!empty(elis::$config->elis_program->enable_curriculum_expiration) && !empty($curass->timeexpired)) {
         $dateexpired  =  date("F j, Y", $curass->timeexpired);
     }
 
@@ -68,9 +70,9 @@ if (!isset($curass->user) || !isset($curass->curriculum)) {
                   ? elis::$config->elis_program->certificate_seal_image
                   : 'none';
 
-    certificate_output_completion($curass->user->__toString(),
-                                  $curass->curriculum->__toString(),
-                                  $datecomplete, $dateexpired,
-                                  $border_image, $seal_image);
-}
+    $templates = (isset(elis::$config->elis_program->certificate_template_file)) ?
+                  elis::$config->elis_program->certificate_template_file : 'default.php';
 
+    certificate_output_completion($curass->user->__toString(), $curass->curriculum->__toString(), $curass->certificatecode,
+                                  $datecomplete, $dateexpired, $curass->curriculum->frequency, $border_image, $seal_image, $templates);
+}

@@ -26,6 +26,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once(dirname(__FILE__).'/../../../../config.php');
+require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 require_once elis::lib('data/data_object_with_custom_fields.class.php');
 require_once elis::lib('data/customfield.class.php');
 require_once elispm::lib('data/course.class.php');
@@ -44,8 +46,6 @@ class pmclass extends data_object_with_custom_fields {
 
     var $verbose_name = 'class';
     var $autocreate;
-    var $startdate;
-    var $enddate;
     var $moodlecourseid;
     var $track;
     var $oldmax;
@@ -335,6 +335,10 @@ class pmclass extends data_object_with_custom_fields {
      * records where applicable based on class grade and required completion elements
      */
     function update_enrolment_status() {
+        //information about which course this belongs to may not have been
+        //loaded due to lazy-loading
+        $this->load();
+
 //        if (isset($this->course) && (get_class($this->course) == 'course')) {
         if (isset($this->courseid)) {
             $course = new course($this->courseid);
@@ -824,12 +828,18 @@ class pmclass extends data_object_with_custom_fields {
         if (isset($options['targetcourse'])) {
             $clone->courseid = $options['targetcourse'];
         }
+        $idnumber = $clone->idnumber;
         if (isset($userset)) {
             // if cluster specified, append cluster's name to class
-            $clone->idnumber = $clone->idnumber.' - '.$userset->name;
+            $idnumber .= ' - '.$userset->name;
         }
+
+        //get a unique idnumber
+        $clone->idnumber = generate_unique_identifier(pmclass::TABLE, 'idnumber', $idnumber, array('idnumber' => $idnumber));
+
         $clone->autocreate = false; // avoid warnings
         $clone->save();
+
         $objs['classes'] = array($this->id => $clone->id);
 
         $cmc = $this->_db->get_record(classmoodlecourse::TABLE, array('classid'=>$this->id));
@@ -892,7 +902,6 @@ class pmclass extends data_object_with_custom_fields {
         if (isset($this->track) && is_array($this->track)) {
             $param['classid'] = $this->id;
             $param['courseid'] = $this->courseid;
-
             foreach ($this->track as $t) {
                 if (trackassignment::exists(array(new field_filter('classid', $this->id),
                                                   new field_filter('trackid', $t)))) {
@@ -1005,7 +1014,8 @@ function pmclass_get_listing($sort = 'crsname', $dir = 'ASC', $startrec = 0,
     }
 
     if ($id) {
-        $where[] = "(crs.id = $id)";
+        $where[] = is_array($id) ? '(crs.id IN ('. implode(', ', $id) .'))'
+                                 : "(crs.id = $id)";
     }
 
     if ($onlyopen) {

@@ -111,6 +111,10 @@ $pages = array(
                       'file' => 'taginstancepage.class.php'),
     'crsrole' => array('class' => 'course_rolepage',
                        'file' => 'rolepage.class.php'),
+    'crsengine' => array('class' => 'course_enginepage',
+                         'file' => 'resultspage.class.php'),
+    'crsenginestatus' => array('class' => 'course_enginestatuspage',
+                               'file' => 'resultsstatuspage.class.php'),
 
     // Manage Classes
     'cls' => array('class' => 'pmclasspage',
@@ -125,12 +129,18 @@ $pages = array(
                       'file' => 'taginstancepage.class.php'),
     'clsrole' => array('class' => 'class_rolepage',
                        'file' => 'rolepage.class.php'),
+    'clsengine' => array('class' => 'class_enginepage',
+                         'file' => 'resultspage.class.php'),
+    'clsenginestatus' => array('class' => 'class_enginestatuspage',
+                               'file' => 'resultsstatuspage.class.php'),
 
     // Administration
     'replnk' => array('class' => 'class_reportlinkspage',
                       'file' => 'reportlinkspage.class.php'),
     'bulkuser' => array('class' => 'bulkuserpage',
                         'file' => 'bulkuserpage.class.php'),
+	'resultsconfig' => array('class' => 'resultsconfigpage',
+                        'file' => 'resultsconfigpage.class.php'),
     'field' => array('class' => 'customfieldpage',
                      'file' => 'customfieldpage.class.php'),
     'health' => array('class' => 'healthpage',

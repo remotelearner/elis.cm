@@ -229,7 +229,8 @@ class block_curr_admin extends block_base {
                 //Admin
                 new menuitem('admn', null, 'root', get_string('admin'), block_curr_admin_get_item_css_class('admn', true))
                 ,
-                new menuitem('bulkuser', new menuitempage('bulkuserpage'), null, get_string('userbulk', 'admin'), block_curr_admin_get_item_css_class('bulkuser'))
+                new menuitem('bulkuser', new menuitempage('bulkuserpage'), null, get_string('userbulk', 'admin'), block_curr_admin_get_item_css_class('bulkuser')),
+                new menuitem('resultsconfig', new menuitempage('resultsconfigpage'), null, 'Default Results Engine Score Settings', block_curr_admin_get_item_css_class('resultsconfig'))
                 );
 
         // ELIS-3208 - commented out this code as the Jasper reports no longer work in ELIS 2

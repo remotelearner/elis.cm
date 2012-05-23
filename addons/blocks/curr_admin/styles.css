@@ -48,6 +48,10 @@
     background: transparent url(../elis/program/pix/bulkuser.png) no-repeat;
 }
 
+.block_curr_admin .curr_resultsconfig {
+    background: transparent url(../elis/program/pix/calculator.png) no-repeat;
+}
+
 .block_curr_admin .curr_reportslist {
     background: transparent url(../elis/program/pix/reportslist.png) no-repeat;
 }

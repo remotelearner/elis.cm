@@ -267,7 +267,7 @@ class clustertrackpage extends clustertrackbasepage {
             $columns[$sort]['sortable'] = $dir;
         }
 
-        $items = clustertrack::get_tracks($id);
+        $items = clustertrack::get_tracks($id, $sort, $dir);
 
         $this->print_list_view($items, $columns);
 

@@ -418,7 +418,9 @@ class generalized_filter_clustertree extends generalized_filter_type {
                 ";
 
         // TBD: "EXISTS ({$sql})" did NOT filter selected tree clusters!
-        return array("{$full_fieldname} IN ({$sql})", $params);
+        return array(($filter_on_user_records
+                      ? "EXISTS" : "{$full_fieldname} IN")
+                     ." ({$sql})", $params);
     }
 
     function get_report_parameters($data) {
@@ -614,13 +616,7 @@ class generalized_filter_clustertree extends generalized_filter_type {
         //import required css for the fieldset
         $style = '<style>@import url("'. $CFG->wwwroot .'/elis/program/styles.css");</style>';
 
-        //hack the nested fieldset into an html element
-        $helptext = get_string('helpprefix2', '', $this->_filterhelp[1]);
-        $helpurl = '/help.php?component='. $this->_filterhelp[2] .'&amp;identifier='. $this->_filterhelp[0] .'&amp;lang='. $USER->lang; // TBV
-        $helplink = '<span class="helplink"><a id="helpicon000000" title="'.$this->_filterhelp[1].'"'.
-                    ' href="'. $CFG->wwwroot . $helpurl .'" >'.
-                    ' <img class="iconhelp" alt="'. $helptext .'" title="'. $helptext .'" src="'. $OUTPUT->pix_url('help') .'"></a></span>';
-
+        $helplink = '';
         $nested_fieldset = '';
         $title = '';
         if ($this->options['fieldset']) {
@@ -634,13 +630,13 @@ class generalized_filter_clustertree extends generalized_filter_type {
 
         $mform->addElement('html', $style . $nested_fieldset . $legend);
         $mform->addElement('static', $this->_uniqueid .'_help', '');
-        // Must use addHelpButton() to NOT open help link on page, but in popup!
-        $mform->addHelpButton($this->_uniqueid .'_help', $this->_filterhelp[0], $this->_filterhelp[2] /* , $this->_filterhelp[1] */); // TBV
 
         //cluster select dropdown
         $mform->addElement('select', $this->_uniqueid .'_dropdown', $title, $choices_array);
         //dropdown / cluster tree state storage
         $mform->addElement('hidden', $this->_uniqueid .'_usingdropdown');
+        // Must use addHelpButton() to NOT open help link on page, but in popup!
+        $mform->addHelpButton($this->_uniqueid .'_dropdown', $this->_filterhelp[0], $this->_filterhelp[2] /* , $this->_filterhelp[1] */); // TBV
 
         //default to showing dropdown if nothing has been persisted
         $report_shortname = $this->options['report_shortname'];

@@ -1573,12 +1573,12 @@ function xmldb_block_curr_admin_upgrade($oldversion = 0) {
 
                         // Look for the earliest locked grade record for this user and keep that (if any are locked)
                         $sql2 = "SELECT id, grade, locked, timegraded
-                                 FROM mdl_crlm_class_graded
+                                 FROM {crlm_class_graded}
                                  WHERE classid = $classid
                                  AND userid = $userid
                                  ORDER BY timegraded ASC";
 
-                        if ($rs2 = $DB->get_recordset_sql($sql2)) {
+                        if (($rs2 = $DB->get_recordset_sql($sql2)) && $rs2->valid()) {
                             foreach ($rs2 as $rec) {
                                 // Store the last record ID just in case we need it for cleanup
                                 $lastid = $rec->id;
@@ -1618,6 +1618,8 @@ function xmldb_block_curr_admin_upgrade($oldversion = 0) {
 
         // Replace the real table with the temporary table that now only contains unique values.
         $result = $result && $DB->execute("ALTER TABLE {$CFG->prefix}crlm_class_graded_temp RENAME TO {$CFG->prefix}crlm_class_graded");
+
+        upgrade_block_savepoint($result, 2011011802, 'curr_admin');
     }
 
     if ($result && $oldversion < 2011050200) {
@@ -1756,11 +1758,11 @@ function xmldb_block_curr_admin_upgrade($oldversion = 0) {
         $result = $result && change_field_type($table, $field);
 
         // Fix: Database Error if c.credits empty in SQL, below
-        $sql = "UPDATE mdl_crlm_course SET credits = 0 WHERE credits = ''";
+        $sql = "UPDATE {crlm_course} SET credits = 0 WHERE credits = ''";
         $result = $result && $DB->execute($sql);
 
         // update student class credits with decimal credits
-        $sql = "UPDATE mdl_crlm_class_enrolment e, mdl_crlm_class cls, mdl_crlm_course c
+        $sql = "UPDATE {crlm_class_enrolment} e, {crlm_class} cls, {crlm_course} c
                    SET e.credits = c.credits
                  WHERE e.classid = cls.id
                    AND cls.courseid = c.id

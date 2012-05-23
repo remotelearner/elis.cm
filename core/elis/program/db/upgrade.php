@@ -279,18 +279,28 @@ function xmldb_elis_program_upgrade($oldversion=0) {
         //to store the user who triggered the notification
         $table = new xmldb_table('crlm_notification_log');
         $field = new xmldb_field('fromuserid');
-        $field->set_attributes(XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 0, 'userid');
-        $field->comment = 'PM user id that triggered the notification.';
-        $dbman->add_field($table, $field);
 
-        //populate data, assuming that the user who received the notification is the one whose
-        //criteria spawned it
-        //NOTE: this fudges data and the side-effect implies that if someone had received a notification
-        //for another user and satisfy the same criteria for the same instance for themself, they will not
-        //receive a similar notification
-        $sql = "UPDATE {crlm_notification_log}
-                SET fromuserid = userid";
-        $DB->execute($sql);
+        if (!$dbman->field_exists($table, $field)) {
+            $field->set_attributes(XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 0, 'userid');
+            $field->comment = 'PM user id that triggered the notification.';
+            $dbman->add_field($table, $field);
+        }
+
+        //field may already exist from 1.9 install / upgrade
+        if (!$dbman->field_exists($table, $field)) {
+            $field->set_attributes(XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 0, 'userid');
+            $field->comment = 'PM user id that triggered the notification.';
+            $dbman->add_field($table, $field);
+
+            //populate data, assuming that the user who received the notification is the one whose
+            //criteria spawned it
+            //NOTE: this fudges data and the side-effect implies that if someone had received a notification
+            //for another user and satisfy the same criteria for the same instance for themself, they will not
+            //receive a similar notification
+            $sql = "UPDATE {crlm_notification_log}
+                    SET fromuserid = userid";
+            $DB->execute($sql);
+        }
         upgrade_plugin_savepoint($result, 2011110700, 'elis', 'program');
     }
 
@@ -310,11 +320,236 @@ function xmldb_elis_program_upgrade($oldversion=0) {
     if ($result && $oldversion < 2011121501) {
         $table = new xmldb_table('crlm_notification_log');
         $index = new xmldb_index('event_inst_fuser_ix');
-        $index->setAttributes(XMLDB_INDEX_NOTUNIQUE, array('fromuserid', 'instance', 'event'));
+        $index->set_attributes(XMLDB_INDEX_NOTUNIQUE, array('fromuserid', 'instance', 'event'));
 
-        $dbman->add_index($table, $index);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        upgrade_plugin_savepoint($result, 2011121501, 'elis', 'program');
     }
+
+    if ($result && $oldversion < 2012022400) {
+        /// table
+        $table = new xmldb_table('crlm_results');
+
+        /// Adding fields
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('contextid', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, true);
+        $table->add_field('active', XMLDB_TYPE_INTEGER, '1', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 0);
+        $table->add_field('eventtriggertype', XMLDB_TYPE_INTEGER, '1', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 0);
+        $table->add_field('lockedgrade', XMLDB_TYPE_INTEGER, '1', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 0);
+        $table->add_field('triggerstartdate', XMLDB_TYPE_INTEGER, '1', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 0);
+        $table->add_field('days', XMLDB_TYPE_INTEGER, '2', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 0);
+        $table->add_field('criteriatype', XMLDB_TYPE_INTEGER, '1', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 0);
+
+        /// Adding keys and index
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $table->add_index('contextid_idx', XMLDB_INDEX_UNIQUE, array('contextid'));
+
+        /// Create table
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        /// table
+        $table = new xmldb_table('crlm_results_action');
+        if (!$dbman->table_exists($table)) {
+            /// Adding fields
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('resultsid', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL);
+            $table->add_field('actiontype', XMLDB_TYPE_INTEGER, '1', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 0);
+            $table->add_field('minimum', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+            $table->add_field('maximum', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+            $table->add_field('trackid', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 0);
+            $table->add_field('classid', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 0);
+            $table->add_field('fieldid', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 0);
+            $table->add_field('fielddata', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL);
+
+            /// Adding keys and index
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+            $table->add_index('resultsid_idx', XMLDB_INDEX_NOTUNIQUE, array('resultsid'));
+
+            /// Create table
+            $dbman->create_table($table);
+        } else {
+            if (!$dbman->field_exists($table, 'classid')) {
+                $field = new xmldb_field('classid', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null, 'trackid');
+                $dbman->add_field($table, $field);
+            }
+        }
+
+        /// table
+        $table = new xmldb_table('crlm_results_class_log');
+
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('classid', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL);
+        $table->add_field('datescheduled', XMLDB_TYPE_CHAR, '50', null, XMLDB_NOTNULL);
+        $table->add_field('daterun', XMLDB_TYPE_CHAR, '50', null, XMLDB_NOTNULL);
+
+        /// Adding keys and index
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $table->add_index('classid_idx', XMLDB_INDEX_NOTUNIQUE, array('classid'));
+
+        /// Create table
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        /// table
+        $table = new xmldb_table('crlm_results_student_log');
+
+        /// Adding keys and index
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('classlogid', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL);
+        $table->add_field('action', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL);
+        $table->add_field('daterun', XMLDB_TYPE_CHAR, '50', null, XMLDB_NOTNULL);
+
+        /// Adding keys and index
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $table->add_index('classlogid_idx', XMLDB_INDEX_NOTUNIQUE, array('classlogid'));
+
+        /// Create table
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint($result, 2012022400, 'pmplugins_results_engine_', '');
+        upgrade_plugin_savepoint($result, 2012022400, 'elis', 'program');
+    }
+
+    if ($result && $oldversion < 2012022401) {
+        // Add the new 'certificatecode' field to the curriculum_assignment table
+        $table = new xmldb_table('crlm_curriculum_assignment');
+        $field = new xmldb_field('certificatecode', XMLDB_TYPE_CHAR, '40', null, null, null, null, 'locked');
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Add a new non-uniue index for the new field
+        $index = new xmldb_index('certificatecode_ix', XMLDB_INDEX_NOTUNIQUE, array('certificatecode'));
+
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        upgrade_plugin_savepoint($result, 2012022401, 'elis', 'program');
+    }
+
+    if ($result && $oldversion < 2012032700) {
+        $table = new xmldb_table('crlm_class_enrolment');
+        $field = new xmldb_field('grade');
+        $field->set_attributes(XMLDB_TYPE_NUMBER, '10,5', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 0, 'completestatusid');
+        $dbman->change_field_type($table, $field);
+
+        $table = new xmldb_table('crlm_class_graded');
+        $field = new xmldb_field('grade');
+        $field->set_attributes(XMLDB_TYPE_NUMBER, '10,5', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 0, 'completionid');
+        $dbman->change_field_type($table, $field);
+
+        // Attempt to handle different DBs in the most efficient way possible
+        if ($CFG->dbfamily == 'postgres') {
+            $sql = "DELETE FROM {crlm_class_graded}
+                          WHERE id IN (
+                                SELECT ccg.id
+                                  FROM {crlm_user} cu
+                            INNER JOIN {crlm_class_enrolment} cce ON cce.userid = cu.id
+                            INNER JOIN {crlm_class_graded} ccg ON (ccg.userid = cce.userid AND ccg.classid = cce.classid)
+                            INNER JOIN {crlm_course_completion} ccc ON ccc.id = ccg.completionid
+                            INNER JOIN {crlm_class_moodle} ccm ON ccm.classid = ccg.classid
+                            INNER JOIN {user} u ON u.idnumber = cu.idnumber
+                            INNER JOIN {course} c ON c.id = ccm.moodlecourseid
+                            INNER JOIN {grade_items} gi ON (gi.courseid = c.id AND gi.idnumber = ccc.idnumber)
+                            INNER JOIN {grade_grades} gg ON (gg.itemid = gi.id AND gg.userid = u.id)
+                                 WHERE ccg.locked = 0
+                                   AND ccc.idnumber != ''
+                                   AND gi.itemtype != 'course'
+                                   AND ccg.grade != gg.finalgrade
+                                   AND gg.finalgrade IS NOT NULL
+                    )";
+            $DB->execute($sql);
+        } else if ($CFG->dbfamily == 'mysql') {
+            $sql = "    DELETE ccg
+                          FROM {crlm_user} cu
+                    INNER JOIN {crlm_class_enrolment} cce ON cce.userid = cu.id
+                    INNER JOIN {crlm_class_graded} ccg ON (ccg.userid = cce.userid AND ccg.classid = cce.classid)
+                    INNER JOIN {crlm_course_completion} ccc ON ccc.id = ccg.completionid
+                    INNER JOIN {crlm_class_moodle} ccm ON ccm.classid = ccg.classid
+                    INNER JOIN {user} u ON u.idnumber = cu.idnumber
+                    INNER JOIN {course} c ON c.id = ccm.moodlecourseid
+                    INNER JOIN {grade_items} gi ON (gi.courseid = c.id AND gi.idnumber = ccc.idnumber)
+                    INNER JOIN {grade_grades} gg ON (gg.itemid = gi.id AND gg.userid = u.id)
+                         WHERE ccg.locked = 0
+                           AND ccc.idnumber != ''
+                           AND gi.itemtype != 'course'
+                           AND ccg.grade != gg.finalgrade
+                           AND gg.finalgrade IS NOT NULL";
+
+            $DB->execute($sql);
+        } else {
+            $sql = "    SELECT ccg.id, ccg.grade
+                          FROM {crlm_user} cu
+                    INNER JOIN {crlm_class_enrolment} cce ON cce.userid = cu.id
+                    INNER JOIN {crlm_class_graded} ccg ON (ccg.userid = cce.userid AND ccg.classid = cce.classid)
+                    INNER JOIN {crlm_course_completion} ccc ON ccc.id = ccg.completionid
+                    INNER JOIN {crlm_class_moodle} ccm ON ccm.classid = ccg.classid
+                    INNER JOIN {user} u ON u.idnumber = cu.idnumber
+                    INNER JOIN {course} c ON c.id = ccm.moodlecourseid
+                    INNER JOIN {grade_items} gi ON (gi.courseid = c.id AND gi.idnumber = ccc.idnumber)
+                    INNER JOIN {grade_grades} gg ON (gg.itemid = gi.id AND gg.userid = u.id)
+                         WHERE ccg.locked = 0
+                           AND ccc.idnumber != ''
+                           AND gi.itemtype != 'course'
+                           AND ccg.grade != gg.finalgrade
+                           AND gg.finalgrade IS NOT NULL";
+
+            $rs = $DB->get_recordset_sql($sql);
+            if ($rs && $rs->valid()) {
+                foreach($rs as $cg) {
+                    $DB->delete_records('crlm_class_graded',
+                                        array('id' => $cg->id));
+                }
+                $rs->close();
+            }
+        }
+
+        // Force a re-synchronization of ELIS class grade data
+        require_once($CFG->dirroot .'/elis/program/lib/lib.php');
+        pm_synchronize_moodle_class_grades();
+
+        upgrade_plugin_savepoint($result, 2012032700, 'elis', 'program');
+    }
+
+    if ($result && $oldversion < 2012040200) {
+        // The "crlm_class_enrolment.endtime" field might not exist in the current DB, so we need to check if it's missing and add it
+        $table = new xmldb_table('crlm_class_enrolment');
+        $field = new xmldb_field('endtime', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 0, 'completetime');
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // The "crlm_cluster_track.enrolmenttime" field might not exist in the current DB, so we need to check if it's missing and add it
+        $table = new xmldb_table('crlm_cluster_track');
+        $field = new xmldb_field('enrolmenttime', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 0, 'autounenrol');
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint($result, 2012040200, 'elis', 'program');
+    }
+
+     if ($result && $oldversion < 2012050300) {
+         $table = new xmldb_table('crlm_user');
+         $field = new xmldb_field('city', XMLDB_TYPE_CHAR, '120',null, null, null, null, 'address2');
+
+         $dbman->change_field_precision($table, $field);
+
+         upgrade_plugin_savepoint($result, 2012050300, 'elis', 'program');
+     }
 
     return $result;
 }
-

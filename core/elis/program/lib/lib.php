@@ -291,15 +291,14 @@ function pm_synchronize_moodle_class_grades() {
             $relatedcontextsstring = get_related_contexts_string($context);
             $sql = "SELECT DISTINCT u.id AS muid, u.username, cu.id AS cmid, stu.*
                       FROM {user} u
-                INNER JOIN {role_assignments} ra ON u.id = ra.userid
-                INNER JOIN {".user::TABLE."} cu ON cu.idnumber = u.idnumber
-                INNER JOIN {".student::TABLE."} stu on stu.userid = cu.id AND stu.classid = :classid
-                     WHERE ra.roleid in (:roles)
+                      JOIN {role_assignments} ra ON u.id = ra.userid
+                LEFT JOIN {".user::TABLE."} cu ON cu.idnumber = u.idnumber
+                LEFT JOIN {".student::TABLE."} stu on stu.userid = cu.id AND stu.classid = {$pmclass->id}
+                     WHERE ra.roleid in ({$CFG->gradebookroles})
                        AND ra.contextid {$relatedcontextsstring}
                   ORDER BY muid ASC";
 
-            $causers = $DB->get_recordset_sql($sql, array('classid' => $pmclass->id,
-                                                          'roles' => $CFG->gradebookroles));
+            $causers = $DB->get_recordset_sql($sql);
 
             if (empty($causers)) {
                 // nothing to see here, move on
@@ -807,7 +806,9 @@ function pm_moodle_user_to_pm($mu) {
     require_once(elis::plugin_file('elisfields_moodle_profile', 'custom_fields.php'));
     foreach ($fields as $field) {
         $field = new field($field);
-        if (isset($field->owners['moodle_profile']) && $field->owners['moodle_profile']->exclude == pm_moodle_profile::sync_from_moodle) {
+        if (isset($field->owners['moodle_profile']) &&
+            $field->owners['moodle_profile']->exclude == pm_moodle_profile::sync_from_moodle
+            && isset($mu->{"profile_field_{$field->shortname}"})) {
             $fieldname = "field_{$field->shortname}";
             $cu->$fieldname = $mu->{"profile_field_{$field->shortname}"};
         }
@@ -895,12 +896,12 @@ function pm_update_enrolment_status() {
 
 
     /// Get all classes with unlocked enrolments.
-    $select = 'SELECT cce.classid as classid, COUNT(cce.userid) as numusers ';
-    $from   = 'FROM {'.student::TABLE.'} cce ';
-    $where  = 'WHERE cce.locked = 0 ';
-    $group  = 'GROUP BY classid ';
-    $order  = 'ORDER BY classid ASC ';
-    $sql    = $select . $from . $where . $group . $order;
+    $sql = 'SELECT cce.classid as classid, COUNT(cce.userid) as numusers
+            FROM {'.student::TABLE.'} cce
+            INNER JOIN {'.pmclass::TABLE.'} cls ON cls.id = cce.classid
+            WHERE cce.locked = 0
+            GROUP BY cce.classid
+            ORDER BY cce.classid ASC';
 
     $rs = $DB->get_recordset_sql($sql);
     foreach ($rs as $rec) {
@@ -1002,7 +1003,7 @@ function usermanagement_get_users($sort = 'name', $dir = 'ASC', $startrec = 0,
 
     if ($contexts !== null) { // TBV
         $user_obj = $contexts->get_filter('id', 'user');
-        $filter_array = $user_obj->get_sql(false, 'usr');
+        $filter_array = $user_obj->get_sql(false, NULL, SQL_PARAMS_NAMED);
         if (isset($filter_array['where'])) {
             $where[] = '('. $filter_array['where'] .')';
             $params = array_merge($params, $filter_array['where_parameters']);
@@ -1053,7 +1054,7 @@ function usermanagement_count_users($extrasql = array(), $contexts = null) {
 
     if ($contexts !== null) { // TBV
         $user_obj = $contexts->get_filter('id', 'user');
-        $filter_array = $user_obj->get_sql(false, 'usr');
+        $filter_array = $user_obj->get_sql(false, NULL, SQL_PARAMS_NAMED);
         if (isset($filter_array['where'])) {
             $where[] = '('. $filter_array['where'] .')';
             $params = array_merge($params, $filter_array['where_parameters']);
@@ -1083,10 +1084,10 @@ function usermanagement_get_users_recordset($sort = 'name', $dir = 'ASC',
     global $CFG, $DB;
     require_once($CFG->dirroot .'/elis/program/lib/data/user.class.php');
 
-    $FULLNAME = $DB->sql_concat('usr.firstname', "' '", 'usr.lastname');
-    $select = 'SELECT usr.id, usr.idnumber as idnumber, usr.country, usr.language, usr.timecreated, '.
+    $FULLNAME = $DB->sql_concat('firstname', "' '", 'lastname');
+    $select = 'SELECT id, idnumber as idnumber, country, language, timecreated, '.
                $FULLNAME .' as name ';
-    $tables = 'FROM {'. user::TABLE .'} usr ';
+    $tables = 'FROM {'. user::TABLE .'} ';
     $where = array();
     $params = array();
 
@@ -1099,7 +1100,7 @@ function usermanagement_get_users_recordset($sort = 'name', $dir = 'ASC',
 
     if ($contexts !== null) { // TBV
         $user_obj = $contexts->get_filter('id', 'user');
-        $filter_array = $user_obj->get_sql(false, 'usr');
+        $filter_array = $user_obj->get_sql(false, NULL, SQL_PARAMS_NAMED);
         if (isset($filter_array['where'])) {
             $where[] = '('. $filter_array['where'] .')';
             $params = array_merge($params, $filter_array['where_parameters']);
@@ -1419,12 +1420,12 @@ function pm_fix_duplicate_class_enrolments() {
 
                     // Look for the earliest locked grade record for this user and keep that (if any are locked)
                     $sql2 = "SELECT id, grade, locked, timegraded
-                             FROM mdl_crlm_class_graded
+                             FROM {crlm_class_graded}
                              WHERE classid = $classid
                              AND userid = $userid
                              ORDER BY timegraded ASC";
 
-                    if ($rs2 = $DB->get_recordset_sql($sql2)) {
+                    if (($rs2 = $DB->get_recordset_sql($sql2)) && $rs2->valid()) {
                         foreach ($rs2 as $rec) {
                             // Store the last record ID just in case we need it for cleanup
                             $lastid = $rec->id;
@@ -1715,10 +1716,11 @@ function pm_migrate_certificate_files() {
     global $CFG;
     $result = true;
     // Migrate directories: olddir => newdir
-    $dirs = array('1/curriculum/pix/certificate/borders'
-                  => 'elis/program/pix/certificate/borders',
-                  '1/curriculum/pix/certificate/seals'
-                  => 'elis/program/pix/certificate/seals');
+    $dirs = array(
+        '1/curriculum/pix/certificate/borders'  => 'elis/program/pix/certificate/borders',
+        '1/curriculum/pix/certificate/seals'    => 'elis/program/pix/certificate/seals',
+        'curriculum/pix/certificates/templates' => 'elis/program/pix/certificates/templates'
+    );
     foreach ($dirs as $olddir => $newdir) {
         $oldpath = $CFG->dataroot .'/'. $olddir;
         $newpath = $CFG->dataroot .'/'. $newdir;
@@ -1736,5 +1738,60 @@ function pm_migrate_certificate_files() {
         }
     }
     return $result;
+}
+
+/**
+ * Given a float grade value, return a representation of the number meant for UI display
+ *
+ * An integer value will be returned without any decimals included and a true floating point value
+ * will be reduced to only displaying two decimal digits without any rounding.
+ *
+ * @param float $grade The floating point grade value
+ * @return string The grade value formatted for display
+ */
+function pm_display_grade($grade) {
+    if (preg_match('/([0-9]+)([\.[0-9]+|\.0+])/', $grade, $matches)) {
+        if (count($matches) == 3) {
+            return ($matches[2] == 0 ? $matches[1] : sprintf("%0.2f", $matches[0]));
+        }
+    }
+
+    return $grade; // This probably isn't a float value
+}
+
+/**
+ * Determines whether, on the "My Moodle" page, we should instead redirect to
+ * the Program Management Daskboard
+ *
+ * @param boolean $editing True if we are currently editing the page, otherwise
+ *                         false
+ * @return boolean True if we should redirect, otherwise false
+ */
+function pm_mymoodle_redirect($editing = false) {
+    global $USER, $DB;
+
+    if ($editing) {
+        //editing, so do not redirect
+        return false;
+    }
+
+    if (!isloggedin()) {
+        //the page typically handles this but worth sanity checking
+        return false;
+    }
+
+    if (!$DB->record_exists('user', array('id' => $USER->id))) {
+        //require_login handles this but worth sanity checking
+        return false;
+    }
+
+    if (has_capability('moodle/site:config', get_context_instance(CONTEXT_SYSTEM))) {
+        //don't force admins to redirect
+        return false;
+    }
+
+    //check the setting
+    return (!empty(elis::$config->elis_program->mymoodle_redirect) &&
+            elis::$config->elis_program->mymoodle_redirect == 1);
 }
 

@@ -26,10 +26,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-// this is needed if we get called in the event handler
+require_once(dirname(__FILE__).'/../../../../../config.php');
 global $CFG;
-require_once($CFG->dirroot . '/elis/program/lib/setup.php');
-
+require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 require_once(elispm::lib('data/userset.class.php'));
 require_once(elispm::lib('data/user.class.php'));
 require_once(elis::plugin_file('usersetenrol_moodle_profile', 'userset_profile.class.php'));

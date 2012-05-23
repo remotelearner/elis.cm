@@ -2,6 +2,9 @@
 
 defined('MOODLE_INTERNAL') || die;
 
+require_once(dirname(__FILE__).'/../../../../config.php');
+global $CFG;
+require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 require_once(elispm::file('plugins/enrolment_role_sync/lib.php'));
 
 if ($ADMIN->fulltree) {
@@ -9,7 +12,7 @@ if ($ADMIN->fulltree) {
     //try to get all the non-guest roles
     $guestrole = get_guest_role();
 
-    if ($roles = get_all_roles()) { 
+    if ($roles = get_all_roles()) {
         if (isset($guestrole->id)) {
             unset($roles[$guestrole->id]);
         }
