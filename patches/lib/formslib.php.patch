@@ -1,8 +1,8 @@
 diff --git a/lib/formslib.php b/lib/formslib.php
-index 612bc71..a96772e 100644
+index dbeeded..c0652ae 100644
 --- a/lib/formslib.php
 +++ b/lib/formslib.php
-@@ -1438,7 +1438,7 @@ function validate_' . $this->_formName . '(frm) {
+@@ -1443,7 +1443,7 @@ function validate_' . $this->_formName . '(frm) {
          $iname = $this->getAttribute('id').'items';
          $js = '<script type="text/javascript">'."\n";
          $js .= '//<![CDATA['."\n";

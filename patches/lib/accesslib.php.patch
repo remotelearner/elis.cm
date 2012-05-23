@@ -1162,7 +1162,7 @@ index 0ab769e..38841b8
 +                }
 +            }
 +        }
-                 }
+     }
 +    return true;
 +}
 +
@@ -1175,11 +1175,11 @@ index 0ab769e..38841b8
 +function islegacy($capabilityname) {
 +    if (strpos($capabilityname, 'moodle/legacy') === 0) {
 +        return true;
-             } else {
+     } else {
 -                // block does not exist
 -                $result = false;
 +        return false;
-             }
+     }
 -            break;
 -        case CONTEXT_USER:
 -            // default to basepath
@@ -1394,7 +1394,7 @@ index 0ab769e..38841b8
 +    if (context_level_base::context_level_exists($context)) {
 +        $context_level = context_level_base::get_context_level($context);
 +        return $context_level->print_context_name($context, $withprefix, $short);
-                     } else {
+     } else {
 -                        $name .= format_string($course->fullname);
 -                   }
 -                }
@@ -1432,7 +1432,7 @@ index 0ab769e..38841b8
 -            break;
 -
 -        default:
-             error ('This is an unknown context (' . $context->contextlevel . ') in print_context_name!');
+         error ('This is an unknown context (' . $context->contextlevel . ') in print_context_name!');
 -            return false;
 -
      }
@@ -1637,7 +1637,7 @@ index 0ab769e..38841b8
 +        $context_level = context_level_base::get_context_level($context);
 +        return $context_level->get_child_contexts($context);
 +    } else {
-             error('This is an unknown context (' . $context->contextlevel . ') in get_child_contexts!');
+         error('This is an unknown context (' . $context->contextlevel . ') in get_child_contexts!');
 -        return false;
      }
  }
@@ -1684,7 +1684,7 @@ index 0ab769e..38841b8
 +    if(context_level_base::context_level_exists($contextlevel)) {
 +        $context_level = context_level_base::get_context_level($contextlevel);
 +        return $context_level->get_component_string($component, $contextlevel);
-             } else {
+     } else {
 -                $string = get_string('course');
 -            }
 -        break;
@@ -1702,7 +1702,7 @@ index 0ab769e..38841b8
 -        break;
 -
 -        default:
-             error ('This is an unknown context $contextlevel (' . $contextlevel . ') in get_component_string!');
+         error ('This is an unknown context $contextlevel (' . $contextlevel . ') in get_component_string!');
 -        return false;
 -
      }
@@ -1807,7 +1807,7 @@ index 0ab769e..38841b8
 -                       $ctxemptyclause";
 -        execute_sql($sql, $feedback);
 +    execute_sql("TRUNCATE TABLE {$CFG->prefix}context_temp", $feedback);
-         
+ 
 -        // this is needed after every loop
 -        // MDL-11532
 -        execute_sql($updatesql, $feedback);
