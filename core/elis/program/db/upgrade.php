@@ -551,5 +551,28 @@ function xmldb_elis_program_upgrade($oldversion=0) {
          upgrade_plugin_savepoint($result, 2012050300, 'elis', 'program');
      }
 
+    if ($result && $oldversion < 2012050315) {
+        //search for the following fields in the config_plugins table and change %%curriculumname%% to %%programname%%
+        //for the fields in $fields
+        $plugin = 'elis_program';
+        $name1 = 'notify_curriculumrecurrence_message';
+        $name2 = 'notify_curriculumnotcompleted_message';
+        $name3 = 'notify_curriculumcompleted_message';
+        $sqlwhere = "name IN (:name1,:name2,:name3)";
+        $params = array('name1' => $name1,'name2'=>$name2,'name3'=>$name3);
+        $rs = $DB->get_recordset_select('config_plugins', $sqlwhere, $params);
+        if (!empty($rs)) {
+            foreach ($rs as $record) {
+                if ($record->value !== null) {
+                    //update the value from curriculumname to programname
+                    $record->value = str_replace('%%curriculumname%%','%%programname%%',$record->value);
+                    $DB->set_field('config_plugins', 'value', $record->value, array('id'=>$record->id));
+                }
+            }
+        }
+
+        upgrade_plugin_savepoint($result, 2012050315, 'elis', 'program');
+    }
+
     return $result;
 }

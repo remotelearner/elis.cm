@@ -39,6 +39,7 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->dirroot.'/elis/program/accesslib.php');
 
+/*
 $contextlevels = array(
     'curriculum' => new context_level_elis_curriculum(),
     'track' => new context_level_elis_track(),
@@ -47,7 +48,7 @@ $contextlevels = array(
     'user' => new context_level_elis_user(),
     'cluster' => new context_level_elis_cluster(),
     );
-
+*/
 //
 // Capability definitions for the this block.
 //
@@ -719,6 +720,7 @@ $capabilities = array(
 
      'elis/program:program_enrol_userset_user' => array(
 
+    'elis/program:track_enrol_userset_user' => array(
         'riskbitmask' => RISK_PERSONAL | RISK_DATALOSS,
         'captype' => 'write',
         'contextlevel' => CONTEXT_SYSTEM,

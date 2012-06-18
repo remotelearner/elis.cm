@@ -101,7 +101,7 @@ class generalized_filter_custom_field_multiselect_values extends generalized_fil
         }
 
         $options = array(
-            'contextlevel' => context_level_base::get_custom_context_level('course', 'elis_program'),
+            'contextlevel' => CONTEXT_ELIS_COURSE,
             'fieldfilter' => array(&$this, 'field_accessible')
         );
         $mform->addElement(elis_custom_field_multiselect::NAME, $this->_uniqueid, $this->_label, $options);
@@ -145,8 +145,7 @@ class generalized_filter_custom_field_multiselect_values extends generalized_fil
             $a->value    = ': none selected';
         } else {
             $selectedfields = explode(',', $data['value']);
-            $context = context_level_base::get_custom_context_level('course', 'elis_program');
-            $fields = field::get_for_context_level($context)->to_array();
+            $fields = field::get_for_context_level(CONTEXT_ELIS_COURSE)->to_array();
             $a->value = ': ' . implode(', ', array_map(function($id) use ($fields) { return $fields[$id]->name;}, $selectedfields));
         }
         $a->operator = '';
@@ -173,7 +172,7 @@ class generalized_filter_custom_field_multiselect_values extends generalized_fil
     function check_for_custom_fields($field_type) {
 
         // Get custom course fields by context level
-        $context = context_level_base::get_custom_context_level($field_type, 'elis_program');
+        $context = context_elis_helper::get_level_from_name($field_type);
         $fields = field::get_for_context_level($context);
         $fields = $fields ? $fields : array();
         $testfields = array();

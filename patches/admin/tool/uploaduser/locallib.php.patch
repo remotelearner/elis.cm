@@ -1,0 +1,23 @@
+diff --git a/admin/tool/uploaduser/locallib.php b/admin/tool/uploaduser/locallib.php
+index 83b648c..e5e989c 100644
+--- a/admin/tool/uploaduser/locallib.php
++++ b/admin/tool/uploaduser/locallib.php
+@@ -56,7 +56,7 @@ define('UU_PWRESET_ALL', 2);
+  */
+ class uu_progress_tracker {
+     private $_row;
+-    public $columns = array('status', 'line', 'id', 'username', 'firstname', 'lastname', 'email', 'password', 'auth', 'enrolments', 'suspended', 'deleted');
++    public $columns = array('status', 'line', 'id', 'username', 'firstname', 'lastname', 'idnumber', 'email', 'password', 'auth', 'enrolments', 'suspended', 'deleted');
+ 
+     /**
+      * Print table header.
+@@ -72,6 +72,9 @@ class uu_progress_tracker {
+         echo '<th class="header c'.$ci++.'" scope="col">'.get_string('username').'</th>';
+         echo '<th class="header c'.$ci++.'" scope="col">'.get_string('firstname').'</th>';
+         echo '<th class="header c'.$ci++.'" scope="col">'.get_string('lastname').'</th>';
++        //start of RL modifications
++        echo '<th class="header c'.$ci++.'" scope="col">'.get_string('idnumber').'</th>';
++        //end of RL modifications
+         echo '<th class="header c'.$ci++.'" scope="col">'.get_string('email').'</th>';
+         echo '<th class="header c'.$ci++.'" scope="col">'.get_string('password').'</th>';
+         echo '<th class="header c'.$ci++.'" scope="col">'.get_string('authentication').'</th>';

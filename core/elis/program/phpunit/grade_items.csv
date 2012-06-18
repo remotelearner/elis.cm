@@ -1,0 +1,4 @@
+id,courseid,idnumber,itemtype
+1,1,required,manual
+2,1,notrequired,manual
+3,1,course,course

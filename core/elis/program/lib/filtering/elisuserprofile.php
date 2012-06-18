@@ -203,7 +203,7 @@ class generalized_filter_elisuserprofile extends generalized_filter_multifilter 
 
         $pos = strpos($name, 'customfield-');
         if ($pos !== false) {
-            $options['contextlevel'] = context_level_base::get_custom_context_level('user', 'elis_program');
+            $options['contextlevel'] = CONTEXT_ELIS_USER;
         }
 
         return $options;

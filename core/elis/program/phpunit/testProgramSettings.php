@@ -68,6 +68,7 @@ class programSettingsTest extends elis_database_test {
 
         //our test user
         $user = new stdClass;
+        $user->username = "testuser";
         $userid = user_create_user($user);
         $USER = $DB->get_record('user', array('id' => $userid));
 
@@ -84,7 +85,7 @@ class programSettingsTest extends elis_database_test {
      * Validate that redirection from My Moodle does not happen for admins
      */
     public function testMymoodleRedirectReturnsFalseForAdmin() {
-        global $CFG, $USER, $DB, $UNITTEST;
+        global $CFG, $USER, $DB;
         require_once($CFG->dirroot.'/user/lib.php');
 
         //make sure we're not a guest
@@ -101,6 +102,7 @@ class programSettingsTest extends elis_database_test {
 
         //set up the current user global
         $user = new stdClass;
+        $user->username = "testuser";
         $userid = user_create_user($user);
         $USER = $DB->get_record('user', array('id' => $userid));
 
@@ -117,9 +119,7 @@ class programSettingsTest extends elis_database_test {
         $result = pm_mymoodle_redirect();
 
         //clear out cached permissions data so we don't affect other tests
-        $UNITTEST->running = true;
-        accesslib_clear_all_caches_for_unit_testing();
-        unset($UNITTEST->running);
+        accesslib_clear_all_caches(true);
 
         $this->assertFalse($result);
     }
@@ -179,6 +179,7 @@ class programSettingsTest extends elis_database_test {
 
         //set up our test user
         $user = new stdClass;
+        $user->username = "testuser";
         $userid = user_create_user($user);
         $USER = $DB->get_record('user', array('id' => $userid));
 

@@ -91,10 +91,6 @@ class curriculumcourse extends elis_data_object {
     }
     ';
 
-    protected function get_field_context_level() {
-        return context_level_base::get_custom_context_level('curriculum', 'elis_program');
-    }
-
     function delete() {
         $this->delete_all_track_classes();
 
@@ -936,10 +932,6 @@ class courseprerequisite extends elis_data_object {
 
     protected $_dbfield_curriculumcourseid;
     protected $_dbfield_courseid;
-
-    protected function get_field_context_level() {
-        return context_level_base::get_custom_context_level('course', 'elis_program');
-    }
 }
 
 class coursecorequisite extends elis_data_object {
@@ -958,8 +950,4 @@ class coursecorequisite extends elis_data_object {
 
     protected $_dbfield_curriculumcourseid;
     protected $_dbfield_courseid;
-
-    protected function get_field_context_level() {
-        return context_level_base::get_custom_context_level('course', 'elis_program');
-    }
 }

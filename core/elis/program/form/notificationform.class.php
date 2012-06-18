@@ -46,7 +46,7 @@ defined('MOODLE_INTERNAL') || die();
 
             $classenrol = array();
             $classenrol[] =& $mform->createElement('checkbox', 'notify_classenrol_user', '', get_string('notifications_notifyuser', 'elis_program'));
-            $a = '"notify_classenrol"';
+            $a = '"'.get_string('notify_classenrol', 'elis_program').'"';
             $classenrol[] =& $mform->createElement('checkbox', 'notify_classenrol_role', '', get_string('notifications_notifyrole', 'elis_program', $a));
             $classenrol[] =& $mform->createElement('checkbox', 'notify_classenrol_supervisor', '', get_string('notifications_notifysupervisor', 'elis_program', $a));
             $mform->addGroup($classenrol, 'classenrol', get_string('notify_classenrol', 'elis_program'), '<br />', false);
@@ -60,7 +60,7 @@ defined('MOODLE_INTERNAL') || die();
 
             $classcompl = array();
             $classcompl[] =& $mform->createElement('checkbox', 'notify_classcompleted_user', '', get_string('notifications_notifyuser', 'elis_program'));
-            $a = '"notify_classcomplete"';
+            $a = '"'.get_string('notify_classcomplete', 'elis_program').'"';
             $classcompl[] =& $mform->createElement('checkbox', 'notify_classcompleted_role', '', get_string('notifications_notifyrole', 'elis_program', $a));
             $classcompl[] =& $mform->createElement('checkbox', 'notify_classcompleted_supervisor', '', get_string('notifications_notifysupervisor', 'elis_program', $a));
             $mform->addGroup($classcompl, 'classcompl', get_string('notify_classcomplete', 'elis_program'), '<br />', false);
@@ -74,7 +74,7 @@ defined('MOODLE_INTERNAL') || die();
 
             $classnotst = array();
             $classnotst[] =& $mform->createElement('checkbox', 'notify_classnotstarted_user', '', get_string('notifications_notifyuser', 'elis_program'));
-            $a = '"notify_classnotstart"';
+            $a = '"'.get_string('notify_classnotstart', 'elis_program').'"';
             $classnotst[] =& $mform->createElement('checkbox', 'notify_classnotstarted_role', '', get_string('notifications_notifyrole', 'elis_program', $a));
             $classnotst[] =& $mform->createElement('checkbox', 'notify_classnotstarted_supervisor', '', get_string('notifications_notifysupervisor', 'elis_program', $a));
             $mform->addGroup($classnotst, 'classnotst', get_string('notify_classnotstart', 'elis_program'), '<br />', false);
@@ -92,7 +92,7 @@ defined('MOODLE_INTERNAL') || die();
 
             $classnotcm = array();
             $classnotcm[] =& $mform->createElement('checkbox', 'notify_classnotcompleted_user', '', get_string('notifications_notifyuser', 'elis_program'));
-            $a = '"notify_classnotcomplete"';
+            $a = '"'.get_string('notify_classnotcomplete', 'elis_program').'"';
             $classnotcm[] =& $mform->createElement('checkbox', 'notify_classnotcompleted_role', '', get_string('notifications_notifyrole', 'elis_program', $a));
             $classnotcm[] =& $mform->createElement('checkbox', 'notify_classnotcompleted_supervisor', '', get_string('notifications_notifysupervisor', 'elis_program', $a));
             $mform->addGroup($classnotcm, 'classnotcm', get_string('notify_classnotcomplete', 'elis_program'), '<br />', false);
@@ -110,7 +110,7 @@ defined('MOODLE_INTERNAL') || die();
 
             $currcompl = array();
             $currcompl[] =& $mform->createElement('checkbox', 'notify_curriculumcompleted_user', '', get_string('notifications_notifyuser', 'elis_program'));
-            $a = '"notify_curriculumcomplete"';
+            $a = '"'.get_string('notify_curriculumcomplete', 'elis_program').'"';
             $currcompl[] =& $mform->createElement('checkbox', 'notify_curriculumcompleted_role', '', get_string('notifications_notifyrole', 'elis_program', $a));
             $currcompl[] =& $mform->createElement('checkbox', 'notify_curriculumcompleted_supervisor', '', get_string('notifications_notifysupervisor', 'elis_program', $a));
             $mform->addGroup($currcompl, 'currcompl', get_string('notify_curriculumcomplete', 'elis_program'), '<br />', false);
@@ -125,7 +125,7 @@ defined('MOODLE_INTERNAL') || die();
 
             $currncompl = array();
             $currncompl[] =& $mform->createElement('checkbox', 'notify_curriculumnotcompleted_user', '', get_string('notifications_notifyuser', 'elis_program'));
-            $a = '"notify_curriculumnotcomplete"';
+            $a = '"'.get_string('notify_curriculumnotcomplete', 'elis_program').'"';
             $currncompl[] =& $mform->createElement('checkbox', 'notify_curriculumnotcompleted_role', '', get_string('notifications_notifyrole', 'elis_program', $a));
             $currncompl[] =& $mform->createElement('checkbox', 'notify_curriculumnotcompleted_supervisor', '', get_string('notifications_notifysupervisor', 'elis_program', $a));
             $mform->addGroup($currncompl, 'currncompl', get_string('notify_curriculumnotcomplete', 'elis_program'), '<br />', false);
@@ -144,7 +144,7 @@ defined('MOODLE_INTERNAL') || die();
 
             $trackassign = array();
             $trackassign[] =& $mform->createElement('checkbox', 'notify_trackenrol_user', '', get_string('notifications_notifyuser', 'elis_program'));
-            $a = '"notify_trackenrol"';
+            $a = '"'.get_string('notify_trackenrol', 'elis_program').'"';
             $trackassign[] =& $mform->createElement('checkbox', 'notify_trackenrol_role', '', get_string('notifications_notifyrole', 'elis_program', $a));
             $trackassign[] =& $mform->createElement('checkbox', 'notify_trackenrol_supervisor', '', get_string('notifications_notifysupervisor', 'elis_program', $a));
             $mform->addGroup($trackassign, 'trackassign', get_string('notify_trackenrol', 'elis_program'), '<br />', false);
@@ -158,7 +158,7 @@ defined('MOODLE_INTERNAL') || die();
 
             $courserecur = array();
             $courserecur[] =& $mform->createElement('checkbox', 'notify_courserecurrence_user', '', get_string('notifications_notifyuser', 'elis_program'));
-            $a = '"notify_courserecurrence"';
+            $a = '"'.get_string('notify_courserecurrence', 'elis_program').'"';
             $courserecur[] =& $mform->createElement('checkbox', 'notify_courserecurrence_role', '', get_string('notifications_notifyrole', 'elis_program', $a));
             $courserecur[] =& $mform->createElement('checkbox', 'notify_courserecurrence_supervisor', '', get_string('notifications_notifysupervisor', 'elis_program', $a));
             $mform->addGroup($courserecur, 'courserecur', get_string('notify_courserecurrence', 'elis_program'), '<br />', false);
@@ -176,7 +176,7 @@ defined('MOODLE_INTERNAL') || die();
 
             $currrecur = array();
             $currrecur[] =& $mform->createElement('checkbox', 'notify_curriculumrecurrence_user', '', get_string('notifications_notifyuser', 'elis_program'));
-            $a = '"notify_curriculumrecurrence"';
+            $a = '"'.get_string('notify_curriculumrecurrence', 'elis_program').'"';
             $currrecur[] =& $mform->createElement('checkbox', 'notify_curriculumrecurrence_role', '', get_string('notifications_notifyrole', 'elis_program', $a));
             $currrecur[] =& $mform->createElement('checkbox', 'notify_curriculumrecurrence_supervisor', '', get_string('notifications_notifysupervisor', 'elis_program', $a));
             $mform->addGroup($currrecur, 'curriculumrecur', get_string('notify_curriculumrecurrence', 'elis_program'), '<br />', false);

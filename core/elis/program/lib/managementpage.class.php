@@ -326,8 +326,8 @@ abstract class managementpage extends pm_page {
      */
     public function do_add() {
         $params = array('action' => 'add');
-        if ($curid = $this->optional_param('curid', 0, PARAM_INT)) {
-            $params['curid'] = $curid;
+        if ($parentid = $this->optional_param('parent', 0, PARAM_INT)) {
+            $params['parent'] = $parentid;
         }
         $target = $this->get_new_page($params, true);
 
@@ -336,8 +336,8 @@ abstract class managementpage extends pm_page {
 
         if ($form->is_cancelled()) {
             $params = array();
-            if ($curid) {
-                $params['curid'] = $curid;
+            if ($parentid) {
+                $params['id'] = $parentid;
             }
             $target = $this->get_new_page($params, true);
             redirect($target->url);
@@ -354,8 +354,8 @@ abstract class managementpage extends pm_page {
             $this->after_cm_entity_add($obj);
 
             $params = array('action' => 'view', 'id' => $obj->id);
-            if ($curid) {
-                $params['curid'] = $curid;
+            if ($parentid) {
+                $params['parent'] = $parentid;
             }
             $target = $this->get_new_page($params, true);
             redirect($target->url);
@@ -401,16 +401,16 @@ abstract class managementpage extends pm_page {
         global $PAGE;
         $id = $this->required_param('id', PARAM_INT);
         $params = array('action' => 'edit', 'id' => $id);
-        if ($curid = $this->optional_param('curid', 0, PARAM_INT)) {
-            $params['curid'] = $curid;
+        if ($parentid = $this->optional_param('parent', 0, PARAM_INT)) {
+            $params['parent'] = $parentid;
         }
         $target = $this->get_new_page($params, true);
         $obj = $this->get_new_data_object($id);
         $obj->load();
 
         $params = array('action' => 'view', 'id' => $id);
-        if ($curid) {
-            $params['curid'] = $curid;
+        if ($parentid) {
+            $params['parent'] = $parentid;
         }
         $form = new $this->form_class($target->url, array('obj' => $obj->to_object()));
 

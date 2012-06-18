@@ -65,8 +65,8 @@ abstract class rolepage extends associationpage2 {
         //add a link to the first role screen where you select a role
         $id = $this->required_param('id', PARAM_INT);
         $params = array('id' => $id);
-        if ($curid = $this->optional_param('curid', 0, PARAM_INT)) {
-            $params['curid'] = $curid;
+        if ($parentid = $this->optional_param('parent', 0, PARAM_INT)) {
+            $params['parent'] = $parentid;
         }
         $page = $this->get_new_page($params, true);
         $this->navbar->add(get_string('roles', 'role'), $page->url);
@@ -464,9 +464,7 @@ class curriculum_rolepage extends rolepage {
     protected function get_context() {
         if (!isset($this->context)) {
             $id = $this->required_param('id', PARAM_INT);
-
-            $context_level = context_level_base::get_custom_context_level('curriculum', 'elis_program');
-            $context_instance = get_context_instance($context_level, $id);
+            $context_instance = context_elis_program::instance($id);
             $this->set_context($context_instance);
         }
         return $this->context;
@@ -491,8 +489,7 @@ class track_rolepage extends rolepage {
         if (!isset($this->context)) {
             $id = $this->required_param('id', PARAM_INT);
 
-            $context_level = context_level_base::get_custom_context_level('track', 'elis_program');
-            $context_instance = get_context_instance($context_level, $id);
+            $context_instance = context_elis_track::instance($id);
             $this->set_context($context_instance);
         }
         return $this->context;
@@ -504,8 +501,8 @@ class track_rolepage extends rolepage {
             require_once elispm::file('trackpage.class.php');
             $id = $this->required_param('id');
             $params = array('id' => $id, 'action' => 'view');
-            if ($curid = $this->optional_param('curid', 0, PARAM_INT)) { // this?
-                $params['curid'] = $curid;
+            if ($parentid = $this->optional_param('parent', 0, PARAM_INT)) { // this?
+                $params['parent'] = $parentid;
             }
             $this->parent_page = new trackpage($params);
         }
@@ -520,8 +517,7 @@ class course_rolepage extends rolepage {
         if (!isset($this->context)) {
             $id = $this->required_param('id', PARAM_INT);
 
-            $context_level = context_level_base::get_custom_context_level('course', 'elis_program');
-            $context_instance = get_context_instance($context_level, $id);
+            $context_instance = context_elis_course::instance($id);
             $this->set_context($context_instance);
         }
         return $this->context;
@@ -546,8 +542,7 @@ class class_rolepage extends rolepage {
         if (!isset($this->context)) {
             $id = $this->required_param('id', PARAM_INT);
 
-            $context_level = context_level_base::get_custom_context_level('class', 'elis_program');
-            $context_instance = get_context_instance($context_level, $id);
+            $context_instance = context_elis_class::instance($id);
             $this->set_context($context_instance);
         }
         return $this->context;
@@ -572,8 +567,7 @@ class user_rolepage extends rolepage {
         if (!isset($this->context)) {
             $id = $this->required_param('id', PARAM_INT);
 
-            $context_level = context_level_base::get_custom_context_level('user', 'elis_program');
-            $context_instance = get_context_instance($context_level, $id);
+            $context_instance = context_elis_user::instance($id);
             $this->set_context($context_instance);
         }
         return $this->context;
@@ -598,8 +592,7 @@ class cluster_rolepage extends rolepage {
         if (!isset($this->context)) {
             $id = $this->required_param('id', PARAM_INT);
 
-            $context_level = context_level_base::get_custom_context_level('cluster', 'elis_program');
-            $context_instance = get_context_instance($context_level, $id);
+            $context_instance = context_elis_userset::instance($id);
             $this->set_context($context_instance);
         }
         return $this->context;
@@ -726,7 +719,10 @@ class cluster_rolepage extends rolepage {
                                     AND {".user::TABLE."}.id = um.cuserid)
                       AND EXISTS (SELECT 'x'
                                   FROM {".usermoodle::TABLE."} um
-                                  WHERE {".user::TABLE."}.id = um.cuserid)";
+                                  JOIN {".clusterassignment::TABLE."} ca
+                                    ON um.cuserid = ca.userid 
+                                  WHERE {".user::TABLE."}.id = um.cuserid
+                                    AND ca.clusterid = :clusterid)";
 
             $params = array('contextid' => $context->id,
                             'roleid' => $roleid,
@@ -796,8 +792,10 @@ class cluster_rolepage extends rolepage {
             require_once(elispm::lib('data/clusterassignment.class.php'));
 
             $sql .= " AND EXISTS (SELECT *
-                                  FROM {".clusterassignment::TABLE."} clstass
-                                  WHERE u.id = clstass.userid
+                                  FROM {".usermoodle::TABLE."} um
+                                  JOIN {".clusterassignment::TABLE."} clstass
+                                    ON um.cuserid = clstass.userid
+                                  WHERE u.id = um.muserid
                                   AND clstass.clusterid = ?
                       )";
             $params[] = $context->instanceid;

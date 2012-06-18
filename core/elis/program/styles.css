@@ -23,7 +23,7 @@ dl.notice dt, dl.notice dd {
     background-color: #e5db36;
 }
 dt.solution, dd.solution, div#healthnoproblemsfound {
-    background-color: #5BB83E !important;
+    background-color: #5BB83E;
 }
 dl.healthissues dt, dl.healthissues dd {
     margin: 0px;
@@ -139,3 +139,17 @@ table#class_selection_table {
 .results.enginestatus .generaltable {
     margin: 0 auto;
 }
+
+/* Used to hide buttons on the dashboard */
+input.hide {
+    display: none;
+}
+
+/*
+ Specific fix so that IE knows hidden fieldsets hidden by moving off
+ to the left are not wide enough to hit the viewing area
+ */
+fieldset.accesshide.custom_field_default_fieldset {
+  width: 100%;
+}
+

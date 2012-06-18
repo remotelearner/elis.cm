@@ -65,10 +65,6 @@ class studentpage extends associationpage {
         parent::__construct($params);
     }
 
-    function _get_page_context() { // TBD
-        return parent::_get_page_context();
-    }
-
     function _get_page_params() { // TBD
         return parent::_get_page_params();
     }
@@ -80,8 +76,8 @@ class studentpage extends associationpage {
     }
 
     function can_do_add() {
-        $id = $this->required_param('id');
-        $users = optional_param('users', array(), PARAM_CLEAN);
+        $id    = $this->required_param('id');
+        $users = pm_process_user_enrolment_data(); // ELIS-4089 -- JJF
 
         foreach($users as $uid => $user) {
             if(!student::can_manage_assoc($uid, $id)) {
@@ -209,7 +205,7 @@ class studentpage extends associationpage {
 
     function display_savenew() { // action_savenew
         $clsid = $this->required_param('id', PARAM_INT);
-        $users = $this->optional_param('users', array(), PARAM_CLEAN);
+        $users = pm_process_user_enrolment_data();  // ELIS-4089 -- JJF
 
         if (!empty($users)) {
             $this->attempt_enrol($clsid, $users);
@@ -284,7 +280,7 @@ class studentpage extends associationpage {
         global $DB;
         $stuid = $this->required_param('association_id', PARAM_INT);
         $clsid = $this->required_param('id', PARAM_INT);
-        $users = $this->required_param('users');
+        $users = pm_process_user_enrolment_data();
         //error_log("studentpage::do_update() stuid = {$stuid} clsid = {$clsid} ...");
         $uid   = key($users);
         $user  = current($users);
@@ -320,8 +316,8 @@ class studentpage extends associationpage {
         /// Check for grade records...
         $element = cm_get_param('element', array());
         $newelement = cm_get_param('newelement', array());
-        $timegraded = cm_get_param('timegraded', array());
-        $newtimegraded = cm_get_param('newtimegraded', array());
+        $timegraded = $this->optional_param_array('timegraded', array(), PARAM_CLEAN);
+        $newtimegraded = $this->optional_param_array('newtimegraded', array(), PARAM_CLEAN);
         $completionid = cm_get_param('completionid', array());
         $newcompletionid = cm_get_param('newcompletionid', array());
         $grade = cm_get_param('grade', array());
@@ -369,7 +365,7 @@ class studentpage extends associationpage {
     function do_updatemultiple() { // action_updatemultiple
         global $DB;
         $clsid = $this->required_param('id', PARAM_INT);
-        $users = $this->optional_param('users', array(), PARAM_CLEAN);
+        $users = pm_process_user_enrolment_data();  // ELIS-4089 -- JJF
 
         foreach($users as $uid => $user) {
             $sturecord            = array();
@@ -422,10 +418,13 @@ class studentpage extends associationpage {
     }
 
     /**
+     * Confirm saving a user to the wait list
      *
+     * @param boolean $redirect Redirect to next destination page if true
+     *                          (needed to prevent redirects in unit testing)
      */
-    public function do_waitlistconfirm() { // action_waitlistconfirm
-        $id = $this->required_param('userid', PARAM_INT);
+    public function do_waitlistconfirm($redirect = true) { // action_waitlistconfirm
+        $id = $this->required_param_array('userid', PARAM_INT);
 
         $form_url = new moodle_url(null, array('s'       => $this->pagename,
                                                'section' => $this->section,
@@ -443,8 +442,10 @@ class studentpage extends associationpage {
                         $wait_record = new object();
                         $wait_record->userid = $uid;
                         $wait_record->classid = $data->classid[$uid];
+                        //todo: remove? (not an actual db field)
                         $wait_record->enrolmenttime = $data->enrolmenttime[$uid];
                         $wait_record->timecreated = $now;
+                        $wait_record->timemodified = $now;
                         $wait_record->position = 0;
 
                         $wait_list = new waitlist($wait_record);
@@ -474,14 +475,17 @@ class studentpage extends associationpage {
             }
         }
 
-        if (is_array($id)) {
-            $target_id = array_shift($id);
-        } else {
-            $target_id = $id;
-        }
+        if ($redirect) {
+            //todo: remove?
+            if (is_array($id)) {
+                $target_id = array_shift($id);
+            } else {
+                $target_id = $id;
+            }
 
-        $target = $this->get_new_page(array('action' => 'default', 'id' => $this->required_param('id', PARAM_INT)));
-        redirect($target->url);
+            $target = $this->get_new_page(array('action' => 'default', 'id' => $this->required_param('id', PARAM_INT)));
+            redirect($target->url);
+        }
     }
 
     /**
@@ -536,10 +540,13 @@ class studentpage extends associationpage {
         $this->print_search();
 
         if (!$numstus) {
-            pmshowmatches($alpha, $namesearch);
+            pmshowmatches($alpha, $namesearch, null, 'no_student_matching');
         }
 
-        $this->print_list_view($stus, $columns);
+        //note: this does actually use the third parameter right now because
+        //we have customized this function - consider using standard version
+        //here an in the instructor page?
+        $this->print_list_view($stus, $columns, 'users'); // TBD: students ?
 
         $pagingbar = new paging_bar($numstus, $page, $perpage,
                          "index.php?s=stu&amp;section=curr&amp;id=$clsid&amp;sort=$sort&amp;" .
@@ -617,9 +624,9 @@ class studentpage extends associationpage {
         echo $newstu->edit_classid_html($cmclass->id, $type, $sort, $dir, $page, $perpage, $namesearch, $alpha);
     }
 
-    function print_edit_form($stu, $cls) {
+    function print_edit_form($stu, $cls, $sort, $dir) {
         $stu->classid = $cls->id; // TBD
-        echo $stu->edit_student_html($stu->id);
+        echo $stu->edit_student_html($stu->id, '', $sort, $dir);
     }
 
     /**

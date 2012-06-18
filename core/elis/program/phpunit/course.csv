@@ -1,0 +1,2 @@
+id,category,sortorder,fullname,shortname,idnumber,summary,summaryformat,format,showgrades,nodinfo,newsitems,startdate,numsections,marker,maxbytes,legacyfiles,showreports,visible,visibleold,hiddensections,groupmode,groupmodeforce,defaultgroupingid,lang,theme,timecreate,timemodified,request,restrictmodules,enablecompletion,completionstartonenrol,completionnotify
+4,1,10001,Test Course,testcourse,,,1,weeks,1,a:0:{},5,1332302400,10,0,2147483648,0,0,1,1,0,0,0,0,,,1332265747,1332265747,0,0,0,0,0

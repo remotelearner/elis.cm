@@ -269,7 +269,7 @@ class clustertrackpage extends clustertrackbasepage {
 
         $items = clustertrack::get_tracks($id, $sort, $dir);
 
-        $this->print_list_view($items, $columns);
+        $this->print_list_view($items, $columns, 'tracks');
 
         // find the tracks that the user can associate with this cluster
         $contexts = trackpage::get_contexts('elis/program:associate');
@@ -345,7 +345,7 @@ class trackclusterpage extends clustertrackbasepage {
 
         $items = clustertrack::get_clusters($id, $parent_clusterid, $sort, $dir);
 
-        $this->print_list_view($items, $columns);
+        $this->print_list_view($items, $columns, 'clusters');
 
         // find the tracks that the user can associate with this cluster
         $contexts = usersetpage::get_contexts('elis/program:associate');

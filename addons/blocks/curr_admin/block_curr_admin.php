@@ -110,9 +110,7 @@ class block_curr_admin extends block_base {
 
         //make sure elis_program / custom contexts set up correctly
         //to prevent error before the upgrade to ELIS 2
-        $program_context = context_level_base::get_custom_context_level('curriculum', 'elis_program');
-
-        if (empty($access) || $this->content !== NULL || $program_context == null) {
+        if (empty($access) || $this->content !== NULL || !defined('CONTEXT_ELIS_PROGRAM')) {
             return $this->content;
         }
 
@@ -146,16 +144,16 @@ class block_curr_admin extends block_base {
         /*****************************************
          * Clusters
          *****************************************/
-        if(!isset(elis::$config->elis_program->display_clusters_at_top_level) || !empty(elis::$config->elis_program->display_clusters_at_top_level)) {
+        if (!isset(elis::$config->elis_program->display_clusters_at_top_level) || !empty(elis::$config->elis_program->display_clusters_at_top_level)) {
             $manageclusters_css_class = block_curr_admin_get_item_css_class('manageclusters');
             $cluster_css_class = block_curr_admin_get_item_css_class('cluster_instance');
 
             require_once elispm::lib('contexts.php');
-            $context_result = pm_context_set::for_user_with_capability('cluster', 'elis/program:program_view', $USER->id);
+            $context_result = pm_context_set::for_user_with_capability('cluster', 'elis/program:userset_view', $USER->id);
             $extrafilters = array('contexts' => $context_result,'parent' => 0);
             $num_records = cluster_count_records('', '', $extrafilters);
 
-            if($clusters = cluster_get_listing('priority, name', 'ASC', 0, $num_block_icons, '', '', array('parent' => 0))) {
+            if ($clusters = cluster_get_listing('priority, name', 'ASC', 0, $num_block_icons, '', '', $extrafilters)) {
                 foreach($clusters as $cluster) {
                     $params = array('id'     => $cluster->id,
                                     'action' => 'view');
@@ -175,7 +173,7 @@ class block_curr_admin extends block_base {
                 }
             }
 
-            if($num_block_icons < $num_records) {
+            if ($num_block_icons < $num_records) {
                 $cm_entity_pages[] = block_curr_admin_get_menu_summary_item('userset', $cluster_css_class, $num_records - $num_block_icons);
             }
         }

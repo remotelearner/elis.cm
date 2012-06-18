@@ -87,6 +87,21 @@ class dashboardpage extends pm_page {
         return $description;
     }
 
+    /**
+     * Entry point to the page
+     */
+    function do_default() {
+        global $USER, $CFG;
+        require_once(elispm::lib('lib.php'));
+
+        //update the current user's info in the PM system
+        //todo: check return status?
+        pm_update_user_information($USER->id);
+
+        //display as normal
+        $this->display('default');
+    }
+
     function display_default() {
         global $CFG, $USER, $OUTPUT;
 

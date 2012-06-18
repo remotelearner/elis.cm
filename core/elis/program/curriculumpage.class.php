@@ -114,18 +114,8 @@ class curriculumpage extends managementpage {
         if ($cached !== null) {
             return $cached;
         }
-        $context = get_context_instance(context_level_base::get_custom_context_level('curriculum', 'elis_program'), $id);
+        $context = context_elis_program::instance($id);
         return has_capability($capability, $context);
-    }
-
-    public function _get_page_context() {
-        $id = $this->optional_param('id', 0, PARAM_INT);
-
-        if ($id) {
-            return get_context_instance(context_level_base::get_custom_context_level('curriculum', 'elis_program'), $id);
-        } else {
-            return parent::_get_page_context();
-        }
     }
 
     public function _get_page_params() {
@@ -136,7 +126,7 @@ class curriculumpage extends managementpage {
         parent::__construct($params);
 
         $id = $this->optional_param('id', 0, PARAM_INT);
-        $track_params = ($id) ? array('curid' => $id) : array();
+        $track_params = ($id) ? array('parent' => $id) : array();
         $this->tabs = array(
         array('tab_id' => 'view', 'page' => get_class($this), 'params' => array('action' => 'view'), 'name' => get_string('detail', 'elis_program'), 'showtab' => true),
         array('tab_id' => 'edit', 'page' => get_class($this), 'params' => array('action' => 'edit'), 'name' => get_string('edit', 'elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'edit'),
@@ -230,8 +220,7 @@ class curriculumpage extends managementpage {
         if(!empty(elis::$config->elis_program->default_curriculum_role_id) && $DB->record_exists('role', array('id' => elis::$config->elis_program->default_curriculum_role_id))) {
 
             //get the context instance for capability checking
-            $context_level = context_level_base::get_custom_context_level('curriculum', 'elis_program');
-            $context_instance = get_context_instance($context_level, $cm_entity->id);
+            $context_instance = context_elis_program::instance($cm_entity->id);
 
             //assign the appropriate role if the user does not have the edit capability
             if (!has_capability('elis/program:program_edit', $context_instance)) {
@@ -317,12 +306,18 @@ class curriculumforcoursepage extends curriculumpage {
     }
 
     function display_savenew() {
-        $target = $this->get_new_page(array('action' => 'add'));
+        $courseid = $this->optional_param('cfccourseid', 0, PARAM_INT);
+
+        $target = $this->get_new_page(array('action' => 'savenew', 'cfccourseid' => $courseid));
 
         $form = new $this->form_class($target->url);
 
         if ($form->is_cancelled()) {
-            $this->display_default();
+            //go back to course and list programs
+            $target = new coursecurriculumpage(array('id'     => $courseid,
+                                         'action' => 'default',
+                                         's' => 'crscurr'));
+            redirect($target->url);
             return;
         }
 
@@ -336,13 +331,16 @@ class curriculumforcoursepage extends curriculumpage {
             $course = new course($data->courseid);
             $course->add_course_to_curricula(array($obj->id));
 
-            $coursepage = new coursepage();
+            $page = new coursecurriculumpage();
+            $params = array('action' => 'default', 'id' => $data->courseid);
 
-            $target = $coursepage->get_new_page(array('action' => 'view', 'id' => $course->id));
+            $target = $page->get_new_page($params);
+
             redirect($target->url, ucwords($obj->get_verbose_name())  . ' ' . $obj->__toString() . ' saved.');
         } else {
             // Validation must have failed, redisplay form
             $form->display();
         }
     }
+
 }

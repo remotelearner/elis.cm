@@ -177,11 +177,24 @@ $PAGE->set_heading($blockname);
 $PAGE->set_cacheable(true);
 $PAGE->set_button('&nbsp;');
 
-$PAGE->navbar->add($blockname);
+// Make sure that the either the My Moodle or course shortname link is in the navbar if within that context
+if ($mymoodle) {
+    $PAGE->navbar->add(get_string('myhome'), new moodle_url('/my'));
+} else if ($course->id != SITEID) {
+    $PAGE->navbar->add($course->shortname, new moodle_url('/course/view.php?id='.$course->id));
+}
+
+if (isset($block->config->title)) {
+    $pagetitle = $block->config->title;
+} else {
+    $pagetitle = get_string('takepage', 'block_enrol_survey');
+}
+
+$PAGE->navbar->add($pagetitle);
 $PAGE->blocks->add_regions(array('side-pre', 'side-post')); // TBV ?
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading($block->config->title);
+echo $OUTPUT->heading($pagetitle);
 $survey_form->set_data($toform);
 $survey_form->display();
 echo $OUTPUT->footer();

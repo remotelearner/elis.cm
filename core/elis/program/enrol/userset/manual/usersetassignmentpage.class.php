@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2012 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,6 @@ require_once(elis::plugin_file('usersetenrol_manual', 'usersetassignment_form.ph
 require_once(elis::plugin_file('usersetenrol_manual', 'selectpage.class.php'));
 
 class userclusterbasepage extends associationpage {
-
     var $data_class = 'clusterassignment';
     var $form_class = 'assignpage_form';
 
@@ -57,7 +56,7 @@ class userclusterbasepage extends associationpage {
 
         $allowed_clusters = array();
 
-        if(!usersetpage::can_enrol_into_cluster($clustid)) {
+        if (!usersetpage::can_enrol_into_cluster($clustid)) {
             //the users who satisfty this condition are a superset of those who can manage associations
             return false;
         } else if (usersetpage::_has_capability('elis/program:userset_enrol', $clustid)) {
@@ -70,14 +69,14 @@ class userclusterbasepage extends associationpage {
         $filter = array(new field_filter('userid', $userid));
 
         //query to get users associated to at least one enabling cluster
-        if(empty($allowed_clusters)) {
+        if (empty($allowed_clusters)) {
             $filter[] = new select_filter('FALSE');
         } else {
             $filter[] = new in_list_filter('clusterid', $allowed_clusters);
         }
 
         //user just needs to be in one of the possible clusters
-        if(clusterassignment::exists($filter)) {
+        if (clusterassignment::exists($filter)) {
             return true;
         }
 
@@ -91,12 +90,6 @@ class userclusterpage extends userclusterbasepage {
     //var $default_tab = 'userclusterpage';
 
     var $parent_data_class = 'user';
-
-    public function _get_page_context() {
-        $id = $this->required_param('id', PARAM_INT);
-
-        return get_context_instance(context_level_base::get_custom_context_level('user', 'elis_program'), $id);
-    }
 
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
@@ -123,7 +116,7 @@ class userclusterpage extends userclusterbasepage {
         $id = $this->required_param('id', PARAM_INT);
 
         $this->print_autoassigned_table();
-
+        echo '<br/>';
         $this->print_manuallyassigned_table();
     }
 
@@ -142,10 +135,15 @@ class userclusterpage extends userclusterbasepage {
     }
 
     function print_autoassigned_table() {
-        $id = $this->required_param('id', PARAM_INT);
+        global $OUTPUT;
 
-        $sort         = optional_param('sort', 'name', PARAM_ALPHA);
-        $dir          = optional_param('dir', 'ASC', PARAM_ALPHA);
+        $id = $this->required_param('id', PARAM_INT);
+        $sort = optional_param('sort', 'name', PARAM_ALPHA);
+        $dir  = optional_param('dir', 'ASC', PARAM_ALPHA);
+        $page  = $this->optional_param('aapage', 0, PARAM_INT);
+        $perpage  = $this->optional_param('aaperpage', 20, PARAM_INT);
+        $mapage  = $this->optional_param('mapage', 0, PARAM_INT);
+        $maperpage  = $this->optional_param('maperpage', 20, PARAM_INT);
 
         $columns = array(
             'name'        => array('header' => get_string('name', 'elis_program'),
@@ -156,10 +154,10 @@ class userclusterpage extends userclusterbasepage {
             'display'     => array('header' => get_string('description', 'elis_program')),
         );
 
-        if($dir !== 'DESC') {
+        if ($dir !== 'DESC') {
             $dir = 'ASC';
         }
-        if(isset($columns[$sort])) {
+        if (isset($columns[$sort])) {
             $columns[$sort]['sortable'] = $dir;
         }
 
@@ -167,20 +165,29 @@ class userclusterpage extends userclusterbasepage {
                                   new AND_filter(array(new field_filter('plugin', 'manual', field_filter::NEQ),
                                                        new field_filter('userid', $id))),
                                   false, false);
-        $items = userset::find($filter, array($sort => $dir));
+        $items = userset::find($filter, array($sort => $dir), $page * $perpage,
+                               $perpage);
+        $count = userset::count($filter);
 
         echo html_writer::tag('h2', get_string('auto_assigned_usersets', 'usersetenrol_manual'));
 
-        $this->print_list_view($items, $columns);
+        $full_url = "/elis/program/index.php?s={$this->pagename}&amp;section={$this->section}&amp;id={$id}&amp;sort={$sort}&amp;dir={$dir}&amp;mapage={$mapage}&amp;maperpage={$maperpage}&amp;aaperpage={$perpage}";
+        $pagingbar = new paging_bar($count, $page, $perpage, $full_url, 'aapage');
+        echo $OUTPUT->render($pagingbar);
+
+        $this->print_list_view($items, $columns, 'clusters');
     }
 
     function print_manuallyassigned_table() {
-        global $DB;
+        global $DB, $OUTPUT;
 
         $id = $this->required_param('id', PARAM_INT);
-
         $sort = $this->optional_param('sort', 'name', PARAM_ALPHA);
         $dir = $this->optional_param('dir', 'ASC', PARAM_ALPHA);
+        $page  = $this->optional_param('mapage', 0, PARAM_INT);
+        $perpage  = $this->optional_param('maperpage', 20, PARAM_INT);
+        $aapage  = $this->optional_param('aapage', 0, PARAM_INT);
+        $aaperpage  = $this->optional_param('aaperpage', 20, PARAM_INT);
 
         $columns = array(
             'name'        => array('header' => get_string('name', 'elis_program'),
@@ -192,10 +199,10 @@ class userclusterpage extends userclusterbasepage {
             'manage'      => array('header' => ''),
         );
 
-        if($dir !== 'DESC') {
+        if ($dir !== 'DESC') {
             $dir = 'ASC';
         }
-        if(isset($columns[$sort])) {
+        if (isset($columns[$sort])) {
             $columns[$sort]['sortable'] = $dir;
         }
 
@@ -212,13 +219,19 @@ class userclusterpage extends userclusterbasepage {
                 JOIN {' . userset::TABLE . "} u ON ca.clusterid = u.id
                 WHERE {$filtersql['where']}
                 ORDER BY {$sort} {$dir}";
-        $items = $DB->get_records_sql($sql, $filtersql['where_parameters']);
+        $totalitems = $DB->get_records_sql($sql, $filtersql['where_parameters']);
+        $items = $DB->get_records_sql($sql, $filtersql['where_parameters'],
+                       $page * $perpage, $perpage);
 
         echo html_writer::tag('h2', get_string('manually_assigned_usersets', 'usersetenrol_manual'));
 
-        $this->print_list_view($items, $columns);
+        $full_url = "/elis/program/index.php?s={$this->pagename}&amp;section={$this->section}&amp;id={$id}&amp;sort={$sort}&amp;dir={$dir}&amp;aapage={$aapage}&amp;aaperpage={$aaperpage}&amp;maperpage={$perpage}";
+        $pagingbar = new paging_bar(count($totalitems), $page, $perpage, $full_url, 'mapage');
+        echo $OUTPUT->render($pagingbar);
 
-        $this->print_dropdown(cluster_get_listing('name', 'ASC', 0, 0, '', '', array(), $id), $items, 'userid', 'clusterid', 'add');
+        $this->print_list_view($items, $columns, 'clusters');
+
+        $this->print_dropdown(cluster_get_listing('name', 'ASC', 0, 0, '', '', array(), $id), $totalitems, 'userid', 'clusterid', 'add');
     }
 }
 
@@ -228,12 +241,6 @@ class clusteruserpage extends userclusterbasepage {
     //var $default_tab = 'clusteruserpage';
 
     var $parent_data_class = 'userset';
-
-    public function _get_page_context() {
-        $id = $this->required_param('id', PARAM_INT);
-
-        return get_context_instance(context_level_base::get_custom_context_level('cluster', 'elis_program'), $id);
-    }
 
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
@@ -261,14 +268,20 @@ class clusteruserpage extends userclusterbasepage {
         $id = $this->required_param('id', PARAM_INT);
 
         $this->print_autoassigned_table();
-
+        echo '<br/>';
         $this->print_manuallyassigned_table();
     }
 
     function print_autoassigned_table() {
+        global $OUTPUT;
+
         $id    = $this->required_param('id', PARAM_INT);
         $sort  = $this->optional_param('sort', 'lastname', PARAM_ALPHA);
         $dir   = $this->optional_param('dir', 'ASC', PARAM_ALPHA);
+        $page  = $this->optional_param('aapage', 0, PARAM_INT);
+        $perpage  = $this->optional_param('aaperpage', 20, PARAM_INT);
+        $mapage  = $this->optional_param('mapage', 0, PARAM_INT);
+        $maperpage  = $this->optional_param('maperpage', 20, PARAM_INT);
 
         $decorator = new record_link_decorator('userpage', array('action'=>'view'), 'id');
         $columns = array(
@@ -306,25 +319,33 @@ class clusteruserpage extends userclusterbasepage {
             $filter = new AND_filter(array($filter, new field_filter('inactive', 0)));
         }
 
-        $items = user::find($filter, array($sort => $dir));
-
+        $items = user::find($filter, array($sort => $dir), $page * $perpage,
+                            $perpage);
         $count = user::count($filter);
 
         echo html_writer::tag('h2', get_string('auto_assigned_users', 'usersetenrol_manual'));
+
+        $full_url = "/elis/program/index.php?s={$this->pagename}&amp;section={$this->section}&amp;id={$id}&amp;sort={$sort}&amp;dir={$dir}&amp;mapage={$mapage}&amp;maperpage={$maperpage}&amp;aaperpage={$perpage}";
+        $pagingbar = new paging_bar($count, $page, $perpage, $full_url, 'aapage');
+        echo $OUTPUT->render($pagingbar);
 
         $a = new stdClass;
         $a->num = $count;
         echo html_writer::tag('div', get_string('items_found', 'elis_program', $a), array('style' => 'text-align:right'));
 
-        $this->print_list_view($items, $columns);
+        $this->print_list_view($items, $columns, 'users');
     }
 
     function print_manuallyassigned_table() {
-        global $DB;
+        global $DB, $OUTPUT;
 
         $id    = $this->required_param('id', PARAM_INT);
         $sort  = $this->optional_param('sort', 'lastname', PARAM_ALPHA);
         $dir   = $this->optional_param('dir', 'ASC', PARAM_ALPHA);
+        $page  = $this->optional_param('mapage', 0, PARAM_INT);
+        $perpage  = $this->optional_param('maperpage', 20, PARAM_INT);
+        $aapage  = $this->optional_param('aapage', 0, PARAM_INT);
+        $aaperpage  = $this->optional_param('aaperpage', 20, PARAM_INT);
 
         $decorator = new record_link_decorator('userpage', array('action'=>'view'), 'userid');
         $columns = array(
@@ -355,11 +376,9 @@ class clusteruserpage extends userclusterbasepage {
                                   new field_filter('clusterid', $id));
 
         $filter = new AND_filter($AND_filter_array);
-
         $filtersql = $filter->get_sql(false, 'ca');
-
         if (empty(elis::$config->elis_program->legacy_show_inactive_users)) {
-            if (!empty($filtersql['where'])) {
+            if (!empty($filtersql['where'])) { // TBD: should be an 'else'!!!
                 $filtersql['where'] .= ' AND u.inactive = 0 ';
             }
         }
@@ -373,8 +392,10 @@ class clusteruserpage extends userclusterbasepage {
         $sql = 'SELECT ca.id, u.id AS userid, u.idnumber, u.firstname, u.lastname, u.email
                   FROM {' . clusterassignment::TABLE . '} ca
                   JOIN {' . user::TABLE . "} u ON ca.userid = u.id
-                 WHERE {$filtersql['where']}";
-        $items = $DB->get_recordset_sql($sql, $filtersql['where_parameters']);
+                 WHERE {$filtersql['where']}
+              ORDER BY u.{$sort} {$dir}";
+        $items = $DB->get_recordset_sql($sql, $filtersql['where_parameters'],
+                         $page * $perpage, $perpage);
 
         $sql = 'SELECT COUNT(*)
                   FROM {' . clusterassignment::TABLE . '} ca
@@ -384,11 +405,15 @@ class clusteruserpage extends userclusterbasepage {
 
         echo html_writer::tag('h2', get_string('manually_assigned_users', 'usersetenrol_manual'));
 
+        $full_url = "/elis/program/index.php?s={$this->pagename}&amp;section={$this->section}&amp;id={$id}&amp;sort={$sort}&amp;dir={$dir}&amp;aapage={$aapage}&amp;aaperpage={$aaperpage}&amp;maperpage={$perpage}";
+        $pagingbar = new paging_bar($count, $page, $perpage, $full_url, 'mapage');
+        echo $OUTPUT->render($pagingbar);
+
         $a = new stdClass;
         $a->num = $count;
         echo html_writer::tag('div', get_string('items_found', 'elis_program', $a), array('style' => 'text-align:right'));
 
-        $this->print_list_view($items, $columns);
+        $this->print_list_view($items, $columns, 'users');
 
         $this->print_assign_link();
     }

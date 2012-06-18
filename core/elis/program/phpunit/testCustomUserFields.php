@@ -36,7 +36,7 @@ require_once(elispm::lib('data/user.class.php'));
 require_once(elispm::lib('data/usermoodle.class.php'));
 require_once($CFG->dirroot . '/user/profile/lib.php');
 
-class userTest extends elis_database_test {
+class userCustomFieldsTest extends elis_database_test {
     protected $backupGlobalsBlacklist = array('DB');
 
     protected static function get_overlay_tables() {
@@ -124,8 +124,7 @@ class userTest extends elis_database_test {
         load_phpunit_data_set($dataset, true, self::$overlaydb);
 
         // load field data next (we need the user context ID and context level)
-        $usercontextlevel = context_level_base::get_custom_context_level('user', 'elis_program');
-        $usercontext = get_context_instance($usercontextlevel, 103);
+        $usercontext = context_elis_user::instance(103);
         $dataset = new PHPUnit_Extensions_Database_DataSet_CsvDataSet();
         $dataset->addTable(field_contextlevel::TABLE, elis::component_file('program', 'phpunit/user_field_contextlevel.csv'));
         $dataset->addTable(field_category_contextlevel::TABLE, elis::component_file('program', 'phpunit/user_field_category_contextlevel.csv'));
@@ -136,7 +135,7 @@ class userTest extends elis_database_test {
         $dataset->addTable(field_data_text::TABLE, elis::component_file('program', 'phpunit/user_field_data_text.csv'));
         $dataset = new PHPUnit_Extensions_Database_DataSet_ReplacementDataSet($dataset);
         $dataset->addFullReplacement('##USERCTXID##', $usercontext->id);
-        $dataset->addFullReplacement('##USERCTXLVL##', $usercontextlevel);
+        $dataset->addFullReplacement('##USERCTXLVL##', CONTEXT_ELIS_USER);
         load_phpunit_data_set($dataset, true, self::$overlaydb);
     }
 
@@ -146,14 +145,13 @@ class userTest extends elis_database_test {
      */
     public function testSyncPMUserFieldToDeletedMoodleProfileField() {
         global $CFG, $DB;
-        require_once($CFG->dirroot .'/user/profile/definelib.php'); 
+        require_once($CFG->dirroot .'/user/profile/definelib.php');
         //PHPUnit_Framework_Error_Notice::$enabled = true;
         //PHPUnit_Framework_Error_Warning::$enabled = true;
         $this->load_csv_data();
 
         // Set PM Custom User field(s) to Sync to Moodle
-        $ctxlvl = context_level_base::get_custom_context_level('user',
-                                          'elis_program');
+        $ctxlvl = CONTEXT_ELIS_USER;
         $fields = field::get_for_context_level($ctxlvl);
         foreach ($fields as $field) {
             $fieldobj = new field($field);

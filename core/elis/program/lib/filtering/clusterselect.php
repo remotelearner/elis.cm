@@ -58,23 +58,6 @@ class generalized_filter_clusterselect extends generalized_filter_equalityselect
     function generalized_filter_clusterselect($uniqueid, $alias, $name, $label, $advanced, $field, $options = array()) {
         global $USER;
 
-        $options['numeric'] = true;
-
-        //expected by the parent class
-        $options['choices'] = array();
-
-        parent::generalized_filter_equalityselect($uniqueid, $alias, $name, $label, $advanced, $field, $options);
-    }
-
-    /**
-     * Adds controls specific to this filter in the form.
-     * @param object $mform a MoodleForm object to setup
-     */
-    function setupForm(&$mform) {
-        global $USER;
-
-        $choices_array = array();
-
         //figure out which capability to check
         if ($this->execution_mode == php_report::EXECUTION_MODE_SCHEDULED) {
             $capability = 'block/php_report:schedule';
@@ -82,18 +65,27 @@ class generalized_filter_clusterselect extends generalized_filter_equalityselect
             $capability = 'block/php_report:view';
         }
 
-        //obtain all course contexts where this user can view reports
-        $contexts = get_contexts_by_capability_for_user('user', $capability, $USER->id);
+        //obtain all cluster contexts where this user can view reports
+        $contexts = get_contexts_by_capability_for_user('cluster', $capability, $USER->id);
 
-        $context_array = array('contexts' => $contexts);
-
-        if ($recordset = cluster_get_listing('name', 'ASC', 0, 0, '', '', $context_array)) {
-            $records = $recordset->to_array();
+        //set up cluster listing
+        if ($records = $this->cluster_dropdown_get_listing($contexts)) {
             foreach ($records as $record) {
-                if ($record->parent == 0) {
-                    $choices_array[$record->id] = $record->name;
-                    $child_array = $this->find_child_clusters($records, $record->id);
-                    $choices_array = $this->merge_array_keep_keys($choices_array,$child_array);
+                if (empty($choices_array[$record->id])) {
+                    //if (count($choices_array) > 1) {
+                    //    $choices_array[-$record->id] = $cluster_group_separator;
+                    //}
+                    $ancestors = $record->depth - 1;
+                    // shorten really long cluster names
+                    $clstname = (strlen($record->name) > 100)
+                            ? substr($record->name, 0, 100) .'...'
+                            : $record->name;
+                    $choices_array[$record->id] = $ancestors
+                            ? str_repeat('- ', $ancestors) . $clstname
+                            : $clstname;
+                    //merge in child clusters
+                    $child_array = $this->find_child_clusters($records, $record->id, $ancestors);
+                    $choices_array = $this->merge_array_keep_keys($choices_array, $child_array);
                 }
             }
         }
@@ -101,7 +93,40 @@ class generalized_filter_clusterselect extends generalized_filter_equalityselect
         //explicitly set the list of available options
         $this->_options = $choices_array;
 
-        parent::setupForm($mform);
+        //expected by the parent class
+        $options['choices'] = $choices_array;
+        $options['numeric'] = true;
+
+        parent::generalized_filter_equalityselect($uniqueid, $alias, $name, $label, $advanced, $field, $options);
+    }
+
+    /**
+     * Gets the cluster listing for the drop-down menu
+     * @param mixed  $contexts
+     * @return array cluster listing
+     */
+    function cluster_dropdown_get_listing($contexts = null) {
+        global $DB;
+
+        //ob_start();
+        //var_dump($contexts);
+        //$tmp = ob_get_contents();
+        //ob_end_clean();
+        $sql = 'SELECT * FROM {'. userset::TABLE .'}';
+        $params = array();
+
+        if ($contexts) {
+            $filter_obj = $contexts->get_filter('id', 'cluster');
+            $filter_sql = $filter_obj->get_sql();
+            if (isset($filter_sql['where'])) {
+                $sql .= " WHERE {$filter_sql['where']}";
+                $params = $filter_sql['where_parameters'];
+            }
+        }
+
+        $sql .= ' ORDER BY depth ASC, name ASC';
+        //error_log("cluster_dropdown_get_listing(); SQL => {$sql}; contextset = {$tmp}");
+        return $DB->get_records_sql($sql, $params);
     }
 
     /**
@@ -111,7 +136,7 @@ class generalized_filter_clusterselect extends generalized_filter_equalityselect
      * @param int $indent the parent cluster indentation level
      * @return array child clusters array
      */
-    function find_child_clusters($records, $parentid, $indent=0) {
+    function find_child_clusters($records, $parentid, $indent = 0) {
         $choices_array = array();
         $indent++;
 

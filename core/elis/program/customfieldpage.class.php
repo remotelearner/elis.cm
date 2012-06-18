@@ -49,14 +49,15 @@ class customfieldpage extends pm_page {
     function display_default() {
         global $CFG, $DB, $OUTPUT;
         $level = $this->required_param('level', PARAM_ACTION);
-        $ctxlvl = context_level_base::get_custom_context_level($level, 'elis_program');
-        if (!$ctxlvl) {
+
+        if (!$ctxlvl = context_elis_helper::get_level_from_name($level)) {
             print_error('invalid_context_level', 'elis_program');
         }
 
         $tmppage = new moodle_url($this->url);
         $tabs = array();
-        require $CFG->dirroot.'/elis/program/db/access.php';
+
+        $contextlevels = context_elis_helper::get_legacy_levels();
         foreach($contextlevels as $contextlevel => $val) {
             $tmppage->param('level', $contextlevel);
             $tabs[] = new tabobject($contextlevel, $tmppage->out(), get_string($contextlevel, 'elis_program'));
@@ -186,11 +187,7 @@ class customfieldpage extends pm_page {
                                   $buttoncontinue, $buttoncancel);
         } else {
             print_string('field_resyncing', 'elis_program');
-            $ctxlvl = context_level_base::get_custom_context_level('user', 'elis_program');
-            if (!$ctxlvl) {
-                print_error('invalid_context_level', 'elis_program');
-            }
-            $fields = field::get_for_context_level($ctxlvl);
+            $fields = field::get_for_context_level(CONTEXT_ELIS_USER);
             $fields = $fields ? $fields : array();
             require_once(elis::plugin_file('elisfields_moodle_profile', 'custom_fields.php'));
             foreach ($fields as $field) {
@@ -206,7 +203,7 @@ class customfieldpage extends pm_page {
         require_once elispm::file('form/fieldcategoryform.class.php');
 
         $level = $this->required_param('level', PARAM_ACTION);
-        $ctxlvl = context_level_base::get_custom_context_level($level, 'elis_program');
+        $ctxlvl = context_elis_helper::get_level_from_name($level);
         if (!$ctxlvl) {
             print_error('invalid_context_level', 'elis_program');
         }
@@ -287,7 +284,7 @@ class customfieldpage extends pm_page {
         global $CFG, $DB;
 
         $level = $this->required_param('level', PARAM_ACTION);
-        $ctxlvl = context_level_base::get_custom_context_level($level, 'elis_program');
+        $ctxlvl = context_elis_helper::get_level_from_name($level);
         if (!$ctxlvl) {
             print_error('invalid_context_level', 'elis_program');
         }
@@ -300,6 +297,23 @@ class customfieldpage extends pm_page {
             $tmppage = new customfieldpage(array('level' => $level));
             redirect($tmppage->url, get_string('edit_cancelled', 'elis_program'));
         } else if ($data = $form->get_data()) {
+            switch ($data->manual_field_control) {
+                case 'checkbox':
+                    $data->defaultdata = $data->defaultdata_checkbox;
+                    break;
+                case 'menu':
+                    $src = $data->manual_field_options_source;
+                    $elem = !empty($src) ? "defaultdata_menu_{$src}"
+                                         : "defaultdata_menu";
+                    $data->defaultdata = $data->$elem;
+                    break;
+                case 'datetime':
+                    $data->defaultdata = $data->defaultdata_datetime;
+                    break;
+                default:
+                    $data->defaultdata = $data->defaultdata_text;
+                    break;
+            }
             $field = new field($data);
             if ($id) {
                 $field->id = $id;
@@ -362,6 +376,12 @@ class customfieldpage extends pm_page {
                     case field::CHECKBOX:
                         $data_array['datatype'] = 'bool';
                         break;
+                    case field::DATETIME:
+                        $data_array['datatype'] = 'datetime';
+                        $data_array['manual_field_startyear'] = $moodlefield->param1;
+                        $data_array['manual_field_stopyear'] = $moodlefield->param2;
+                        $data_array['manual_field_inctime'] = $moodlefield->param3;
+                        break;
                     case field::MENU:
                         $data_array['datatype'] = 'char';
                         $data_array['manual_field_options'] = $moodlefield->param1;
@@ -380,6 +400,9 @@ class customfieldpage extends pm_page {
                     }
                 } else {
                     $data = new field($id);
+                    $manual = new field_owner((!isset($field->owners) || !isset($field->owners['manual'])) ? false : $field->owners['manual']);
+                    $menu_src = !empty($manual->options_source)
+                                ? $manual->options_source : 0;
                     $data_array = $data->to_array();
 
                     $field_record = $DB->get_record(field::TABLE, array('id'=>$id));
@@ -432,7 +455,14 @@ class customfieldpage extends pm_page {
                         }
                     }
                 }
-
+                if (isset($data_array['defaultdata'])) {
+                    $data_array['defaultdata_checkbox'] = !empty($data_array['defaultdata']);
+                    $data_array['defaultdata_datetime'] = $data_array['defaultdata'];
+                    $data_array['defaultdata_text'] = strval($data_array['defaultdata']);
+                    $data_array[empty($menu_src)
+                                ? 'defaultdata_menu'
+                                : "defaultdata_menu_{$menu_src}"] = $data_array['defaultdata'];
+                }
                 $form->set_data($data_array);
             }
             $form->display();

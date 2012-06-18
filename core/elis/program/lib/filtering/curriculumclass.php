@@ -320,8 +320,7 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
         }
 
         foreach ($this->sections as $group => $section) {
-            $ctxtlvl = context_level_base::get_custom_context_level(
-                    $section['name'], 'elis_program');
+            $ctxtlvl = context_elis_helper::get_level_from_name($section['name']);
 
             $this->sections[$group]['contextlevel'] = $ctxtlvl;
 
@@ -442,7 +441,7 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
                 $options['extraconditions'] = 'AND u.id = cca.userid';
 
                 //tell the filter we're operating on the curriculum context level
-                $options['contextlevel'] = context_level_base::get_custom_context_level('curriculum', 'elis_program');
+                $options['contextlevel'] = CONTEXT_ELIS_PROGRAM;
                 break;
 
             case 'course':
@@ -521,7 +520,7 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
                 $pos = strpos($name, 'customfield-');
                 if ($pos !== false) {
                     //tell the filter we're operating on the class context level
-                    $options['contextlevel'] = context_level_base::get_custom_context_level('class', 'elis_program');
+                    $options['contextlevel'] = CONTEXT_ELIS_CLASS;
                 }
                 break;
 

@@ -69,6 +69,7 @@ class testDataObjectChildren extends elis_database_test {
 		    coursecorequisite::TABLE => 'elis_program',
 		    courseprerequisite::TABLE => 'elis_program',
 		    curriculumcourse::TABLE => 'elis_program',
+		    'crlm_cluster_profile'  => 'elis_program',
 		    curriculumstudent::TABLE => 'elis_program',
 		    field::TABLE => 'elis_core',
 		    instructor::TABLE => 'elis_program',

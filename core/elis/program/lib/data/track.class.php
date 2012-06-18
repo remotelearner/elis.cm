@@ -85,7 +85,7 @@ class track extends data_object_with_custom_fields {
     static $delete_is_complex = true;
 
     protected function get_field_context_level() {
-        return context_level_base::get_custom_context_level('track', 'elis_program');
+        return CONTEXT_ELIS_TRACK;
     }
 
     public static function delete_for_curriculum($id) {
@@ -134,15 +134,21 @@ class track extends data_object_with_custom_fields {
         // For every course of the curricula determine which ones need -
         // to have their auto enrol flag set
         foreach ($curcourse as $recid => $curcourec) {
-            $suffix = 0;
-            do {
-                $idnumber = (!empty($curcourec->idnumber) ? $curcourec->idnumber .'-' : '') . $this->idnumber . ($suffix ? $suffix : '');
-                ++$suffix;
-                $classojb = new pmclass(array('courseid' => $curcourec->courseid,
-                                              'idnumber' => $idnumber));
-            } while ($this->_db->record_exists(pmclass::TABLE,
-                                     array('courseid' => $curcourec->courseid,
-                                           'idnumber' => $idnumber)));
+
+            //get a unique idnumber
+            $idnumber = $this->idnumber;
+            if (!empty($curcourec->idnumber)) {
+                // if cluster specified, append cluster's name to class
+                $idnumber = $curcourec->idnumber.'-'.$idnumber;
+            }
+
+            generate_unique_identifier(pmclass::TABLE,
+                                      'idnumber',
+                                       $idnumber,
+                                       array('idnumber' => $idnumber),
+                                      'pmclass', $classojb,
+                                       array('courseid' => $curcourec->courseid,
+                                             'idnumber' => $idnumber));
 
             // Course is required
             if ($curcourec->required) {
@@ -274,8 +280,8 @@ class track extends data_object_with_custom_fields {
         parent::delete();
 
         //Delete this leve's context
-        $level = context_level_base::get_custom_context_level('track', 'elis_program');
-        delete_context($level,$this->id);
+        $context = context_elis_track::instance($this->id);
+        $context->delete();
     }
 
     function __toString() {
@@ -311,7 +317,7 @@ class track extends data_object_with_custom_fields {
             $this->track_auto_create();
         }
 
-        $status = field_data::set_for_context_from_datarecord('track', $this);
+        $status = field_data::set_for_context_from_datarecord(CONTEXT_ELIS_TRACK, $this);
 
         return $status;
     }
@@ -470,10 +476,25 @@ class track extends data_object_with_custom_fields {
         if (isset($options['targetcurriculum'])) {
             $clone->curid = $options['targetcurriculum'];
         }
+
+        $idnumber = $clone->idnumber;
+        $name = $clone->name;
         if (isset($userset)) {
-            // if cluster specified, append cluster's name to track
-            $clone->idnumber = $clone->idnumber.' - '.$userset->name;
-            $clone->name = $clone->name.' - '.$userset->name;
+            // if cluster specified, append cluster's name to curriculum
+            $idnumber .= ' - '.$userset->name;
+            $name .= ' - '.$userset->name;
+        }
+
+        //get a unique idnumber
+        $clone->idnumber = generate_unique_identifier(track::TABLE, 'idnumber', $idnumber, array('idnumber' => $idnumber));
+
+        if ($clone->idnumber != $idnumber) {
+            //get the suffix appended and add it to the name
+            $parts = explode('.', $clone->idnumber);
+            $suffix = end($parts);
+            $clone->name = $name.'.'.$suffix;
+        } else {
+            $clone->name = $name;
         }
         $clone->autocreate = false; // avoid warnings
         $clone->save();
@@ -1040,11 +1061,21 @@ function track_assignment_get_listing($trackid = 0, $sort='cls.idnumber', $dir='
     $join   = " JOIN {" . track::TABLE ."} trk ON trkassign.trackid = trk.id
                 JOIN {". pmclass::TABLE ."} cls ON trkassign.classid = cls.id
                 JOIN {". curriculumcourse::TABLE . "} curcrs ON curcrs.curriculumid = trk.curid AND curcrs.courseid = cls.courseid ";
+
+    //calculate an appropriate condition if we need to filter out inactive users
+    $inactive_condition = '';
+    if (empty(elis::$config->elis_program->legacy_show_inactive_users)) {
+        $inactive_condition = ' AND u.inactive = 0';
+    }
+
     // get number of users from track who are enrolled
     $join  .= "LEFT JOIN (SELECT s.classid, COUNT(s.userid) AS enrolments
                             FROM {". student::TABLE ."} s
                             JOIN {". usertrack::TABLE ."} t USING(userid)
-                           WHERE t.trackid = :trackid
+                            JOIN {".user::TABLE."} u
+                              ON t.userid = u.id
+                              {$inactive_condition}
+                           WHERE t.trackid = :trackid                             
                         GROUP BY s.classid) enr ON enr.classid = cls.id ";
     $params['trackid'] = $trackid;
 

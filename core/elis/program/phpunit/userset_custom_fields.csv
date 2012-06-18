@@ -1,0 +1,7 @@
+id,shortname,name,datatype,description,categoryid,sortorder,multivalued,forceunique,params
+4,_elis_userset_classification,User Set classification,char,NULL,3,0,0,0,a:0:{}
+5,_elis_userset_display_priority,Display Priority,int,NULL,4,0,0,0,a:0:{}
+6,userset_group,Enable Corresponding Group,bool,NULL,5,0,0,0,a:0:{}
+7,userset_groupings,Autoenrol users in groupings,bool,NULL,5,0,0,0,a:0:{}
+8,_elis_userset_themepriority,Theme Priority,int,NULL,6,0,0,0,a:0:{}
+9,_elis_userset_theme,Theme,char,NULL,6,0,0,0,a:0:{}

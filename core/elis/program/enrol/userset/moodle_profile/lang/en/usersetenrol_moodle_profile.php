@@ -30,7 +30,8 @@ $string['autoenrol'] = 'Auto-enrol';
 $string['auto_associate'] = 'Auto-associate users with Moodle profile field';
 $string['auto_associate_help'] = 'If this User Set will be populated from custom profile fields, select the
 custom profile field name from this drop-down menu and the requested value from
-the input control directly below it.</p>
+the input control directly below it.
+<br><b>Note</b>: only allowed Moodle custom profile fields types are <i>Menu&nbsp;of&nbsp;choices</i>, <i>Text input</i> or <i>Checkbox</i>.</p>
 <p>To create a User Set populating based on two
 profile fields or options, use the second set of controls in addition to the first set.</p>
 <p>If User Sets will be populated manually, these settings should be left to their defaults.</p>';

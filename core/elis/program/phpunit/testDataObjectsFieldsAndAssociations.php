@@ -74,8 +74,8 @@ class DataObjectBuiltInTest extends PHPUnit_Framework_TestCase {
         if (!empty($error_str)) {
             $error_str .= 'Check error_log for details!';
         }
-        // TBD: $this->assertEquals() has bug that double prints error message!?
-        $this->assertLessThanOrEqual(0, $dbfield_errors + $association_errors, $error_str);
+
+        $this->assertEquals(0, $dbfield_errors + $association_errors, $error_str);
     }
 
 }

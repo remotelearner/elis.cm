@@ -124,7 +124,7 @@ class generalized_filter_display_table extends generalized_filter_type {
         if (is_array($customfields)) {
 
             foreach ($customfields as $type => $fields) {
-                $ctxlvl = context_level_base::get_custom_context_level($type, 'elis_program');
+                $ctxlvl = context_elis_helper::get_level_from_name($type);
                 $ctxtfields = field::get_for_context_level($ctxlvl);
                 $ctxtfields = $ctxtfields ? $ctxtfields : array();
 

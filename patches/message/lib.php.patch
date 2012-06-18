@@ -1,8 +1,8 @@
 diff --git a/message/lib.php b/message/lib.php
-index d873ead..b43ccc2 100644
+index d393fc4..dcc28f8 100644
 --- a/message/lib.php
 +++ b/message/lib.php
-@@ -1989,7 +1989,7 @@ function message_format_message($message, $format='', $keywords='', $class='othe
+@@ -1991,7 +1991,7 @@ function message_format_message($message, $format='', $keywords='', $class='othe
          $messagetext = highlight($keywords, $messagetext);
      }
  

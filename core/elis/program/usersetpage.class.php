@@ -82,14 +82,20 @@ class usersetpage extends managementpage {
             return true;
         }
 
+      /* TBD: the folowing commented-out code was removed for ELIS-3846
         $cluster = new userset($clusterid);
-        if(!empty($cluster->parent)) {
+        $cluster->load();  // ELIS-3848 Needed otherwise the 'parent' property is not set =(
+
+        if (!empty($cluster->parent)) {
             //check to see if the current user has the secondary capability anywhere up the cluster tree
             $contexts = pm_context_set::for_user_with_capability('cluster', 'elis/program:userset_enrol_userset_user', $USER->id);
             return $contexts->context_allowed($clusterid, 'cluster');
         }
+      */
 
-        return false;
+        //check to see if the current user has the secondary capability anywhere up the cluster tree
+        $contexts = pm_context_set::for_user_with_capability('cluster', 'elis/program:userset_enrol_userset_user', $USER->id);
+        return $contexts->context_allowed($clusterid, 'cluster');
     }
 
     /**
@@ -101,18 +107,8 @@ class usersetpage extends managementpage {
         if ($cached !== null) {
             return $cached;
         }
-        $context = get_context_instance(context_level_base::get_custom_context_level('cluster', 'elis_program'), $id);
+        $context = context_elis_userset::instance($id);
         return has_capability($capability, $context);
-    }
-
-    public function _get_page_context() {
-        $id = $this->optional_param('id', 0, PARAM_INT);
-
-        if ($id) {
-            return get_context_instance(context_level_base::get_custom_context_level('cluster', 'elis_program'), $id);
-        } else {
-            return parent::_get_page_context();
-        }
     }
 
     public function __construct(array $params=null) {
@@ -161,7 +157,7 @@ class usersetpage extends managementpage {
     function can_do_subcluster() {
         //obtain the contexts where editing is allowed for the subcluster
         $subclusterid = $this->required_param('subclusterid', PARAM_INT);
-        $context = get_context_instance(context_level_base::get_custom_context_level('cluster', 'elis_program'), $subclusterid);
+        $context = context_elis_userset::instance($subclusterid);
 
         //make sure editing is allowed on both clusters
         return $this->_has_capability('elis/program:userset_edit') && has_capability('elis/program:userset_edit', $context);
@@ -181,8 +177,7 @@ class usersetpage extends managementpage {
                 : $this->optional_param('parent', 0, PARAM_INT);
 
         if ($parent) {
-            $level = context_level_base::get_custom_context_level('cluster', 'elis_program');
-            $context = get_context_instance($level,$parent);
+            $context = context_elis_userset::instance($parent);
         } else {
             $context = get_context_instance(CONTEXT_SYSTEM);
         }
@@ -216,8 +211,6 @@ class usersetpage extends managementpage {
          */
         $viewable_clusters = userset::get_viewable_clusters($capability);
 
-        $cluster_context_level = context_level_base::get_custom_context_level('cluster', 'elis_program');
-
         //if the user has no additional access through parent clusters, then they can't view this cluster
         if (empty($viewable_clusters)) {
             return false;
@@ -234,8 +227,8 @@ class usersetpage extends managementpage {
                 JOIN {context} child_context
                   ON child_context.instanceid {$in_clause}
                   AND {$like_clause}
-                  AND parent_context.contextlevel = {$cluster_context_level}
-                  AND child_context.contextlevel = {$cluster_context_level}
+                  AND parent_context.contextlevel = ".CONTEXT_ELIS_USERSET."
+                  AND child_context.contextlevel = ".CONTEXT_ELIS_USERSET."
                   AND parent_context.instanceid = {$id}";
 
         $params = array_merge($params, array($parent_path, $cluster_context_level, $cluster_context_level, $id));
@@ -270,13 +263,12 @@ class usersetpage extends managementpage {
         // add cluster hierarchy if cluster defined
         $id = $this->optional_param('id', 0, PARAM_INT);
         if ($id) {
-            $level = context_level_base::get_custom_context_level('cluster', 'elis_program');
-            $context = get_context_instance($level, $id);
+            $context = context_elis_userset::instance($id);
             $ancestorids = substr(str_replace('/',',',$context->path),3);
             $sql = "SELECT cluster.*
                     FROM {context} ctx
                     JOIN {" . userset::TABLE . "} cluster ON ctx.instanceid = cluster.id
-                   WHERE ctx.id IN ($ancestorids) AND ctx.contextlevel = $level
+                   WHERE ctx.id IN ($ancestorids) AND ctx.contextlevel = ".CONTEXT_ELIS_USERSET."
                    ORDER BY ctx.depth";
             $ancestors = $DB->get_recordset_sql($sql);
             foreach ($ancestors as $ancestor) {
@@ -439,7 +431,7 @@ class usersetpage extends managementpage {
             $a = new stdClass;
             $a->name = $obj;
             $a->subclusters = $count;
-            $context = get_context_instance(context_level_base::get_custom_context_level('cluster', 'elis_program'), $obj->id);
+            $context = context_elis_userset::instance($obj->id);
             $like = $DB->sql_like('path', '?');
             $a->descendants = $DB->count_records_select('context',$DB->sql_like('path', '?'), array("{$context->path}/%")) - $a->subclusters;
             print_string($a->descendants ? 'confirm_delete_with_usersubsets_and_descendants' : 'confirm_delete_with_usersubsets', 'elis_program', array('name'=>$obj->name, 'subclusters'=>$count));
@@ -518,8 +510,7 @@ class usersetpage extends managementpage {
            && $DB->record_exists('role', array('id' => elis::$config->elis_program->default_cluster_role_id))) {
 
             //get the context instance for capability checking
-            $context_level = context_level_base::get_custom_context_level('cluster', 'elis_program');
-            $context_instance = get_context_instance($context_level, $cm_entity->id);
+            context_elis_userset::instance($cm_entity->id);
 
             //assign the appropriate role if the user does not have the edit capability
             if (!has_capability('elis/program:userset_edit', $context_instance)) {

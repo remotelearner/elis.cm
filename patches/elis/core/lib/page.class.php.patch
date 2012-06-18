@@ -1,5 +1,5 @@
 diff --git a/elis/core/lib/page.class.php b/elis/core/lib/page.class.php
-index b45ea53..16c8ae3 100644
+index a1125f2..9ae2d02 100644
 --- a/elis/core/lib/page.class.php
 +++ b/elis/core/lib/page.class.php
 @@ -44,7 +44,7 @@ abstract class elis_page extends moodle_page {

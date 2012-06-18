@@ -95,7 +95,7 @@ class course extends data_object_with_custom_fields {
     static $delete_is_complex = true;
 
     protected function get_field_context_level() {
-        return context_level_base::get_custom_context_level('course', 'elis_program');
+        return CONTEXT_ELIS_COURSE;
     }
 
     /////////////////////////////////////////////////////////////////////
@@ -247,6 +247,13 @@ class course extends data_object_with_custom_fields {
         }
 
         return $this->_db->get_records(coursecompletion::TABLE, array('courseid'=>$this->id));
+    }
+
+    /*
+     * @return int The Course id
+     */
+    function get_course_id() {
+        return $this->id;
     }
 
     /*
@@ -618,8 +625,8 @@ class course extends data_object_with_custom_fields {
 
         parent::delete();
 
-        $level = context_level_base::get_custom_context_level('course', 'elis_program');
-        delete_context($level,$this->id);
+        $context = context_elis_course::instance($this->id);
+        $context->delete();
     }
 
     public static function find($filter=null, array $sort=array(), $limitfrom=0, $limitnum=0, moodle_database $db=null) {
@@ -676,7 +683,7 @@ class course extends data_object_with_custom_fields {
             coursetemplate::delete_records(new field_filter('courseid', $this->id));
         }
 
-        field_data::set_for_context_from_datarecord('course', $this);
+        field_data::set_for_context_from_datarecord(CONTEXT_ELIS_COURSE, $this);
     }
 
     public function __toString() {
@@ -733,10 +740,25 @@ class course extends data_object_with_custom_fields {
         // clone main course object
         $clone = new course($this);
         unset($clone->id);
+
+        $idnumber = $clone->idnumber;
+        $name = $clone->name;
         if (isset($userset)) {
-            // if cluster specified, append cluster's name to course
-            $clone->name = $clone->name.' - '.$userset->name;
-            $clone->idnumber = $clone->idnumber.' - '.$userset->name;
+            // if cluster specified, append cluster's name to curriculum
+            $idnumber .= ' - '.$userset->name;
+            $name .= ' - '.$userset->name;
+        }
+
+        //get a unique idnumber
+        $clone->idnumber = generate_unique_identifier(course::TABLE, 'idnumber', $idnumber, array('idnumber' => $idnumber));
+
+        if ($clone->idnumber != $idnumber) {
+            //get the suffix appended and add it to the name
+            $parts = explode('.', $clone->idnumber);
+            $suffix = end($parts);
+            $clone->name = $name.'.'.$suffix;
+        } else {
+            $clone->name = $name;
         }
         $clone->save();
 
@@ -894,8 +916,4 @@ class coursecompletion extends elis_data_object {
             'idfield' => 'courseid'
         ),
     );
-
-    protected function get_field_context_level() {
-        return context_level_base::get_custom_context_level('course', 'elis_program');
-    }
 }

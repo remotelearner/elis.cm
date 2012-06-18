@@ -50,6 +50,7 @@ class testPmEntities extends elis_database_test {
             'role_assignments' => 'moodle',
             'role_capabilities' => 'moodle',
             'user' => 'moodle',
+            'elis_field' => 'elis_core',
             curriculum::TABLE => 'elis_program',
             track::TABLE => 'elis_program',
             course::TABLE => 'elis_program',
@@ -90,6 +91,8 @@ class testPmEntities extends elis_database_test {
         // load initial data from a CSV file
         $dataset = new PHPUnit_Extensions_Database_DataSet_CsvDataSet();
         $dataset->addTable('user', elis::component_file('program', 'phpunit/mdluser.csv'));
+        $dataset->addTable('crlm_course', elis::component_file('program', 'phpunit/pmcourse.csv'));
+        $dataset->addTable('crlm_curriculum', elis::component_file('program', 'phpunit/curriculum.csv'));
         load_phpunit_data_set($dataset, true, self::$overlaydb);
     }
 
@@ -163,6 +166,7 @@ class testPmEntities extends elis_database_test {
 
         // Create a new track entity
         $data = array(
+            'curid'       => '1',
             'idnumber'    => 'track100',
             'name'        => 'track100',
             'description' => 'track100'

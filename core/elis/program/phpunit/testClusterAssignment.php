@@ -38,7 +38,11 @@ class clusterassignmentTest extends elis_database_test {
     protected $backupGlobalsBlacklist = array('DB');
 
 	protected static function get_overlay_tables() {
-		return array(clusterassignment::TABLE => 'elis_program');
+		return array(
+		    'context' => 'moodle',
+		    clusterassignment::TABLE => 'elis_program',
+		    userset::TABLE => 'elis_program'
+        );
 	}
 
 	protected static function get_ignored_tables() {
@@ -49,6 +53,7 @@ class clusterassignmentTest extends elis_database_test {
 
     protected function load_csv_data() {
         $dataset = new PHPUnit_Extensions_Database_DataSet_CsvDataSet();
+        $dataset->addTable(userset::TABLE, elis::component_file('program', 'phpunit/userset.csv'));
         $dataset->addTable(clusterassignment::TABLE, elis::component_file('program', 'phpunit/cluster_assignment.csv'));
         load_phpunit_data_set($dataset, true, self::$overlaydb);
     }

@@ -305,7 +305,7 @@ class usertrack extends elis_data_object {
      * @uses $CURMAN
      * @param int $userid The cluster id.
      */
-    public static function get_tracks($userid = 0) {
+    public static function get_tracks($userid = 0, $sort, $dir) {
         global $DB;
 
         if (empty($DB)) {
@@ -324,7 +324,7 @@ class usertrack extends elis_data_object {
             'ON trkcls.trackid = trk.id ';
         $where   = 'WHERE usrtrk.userid = ? ';
         $group   = 'GROUP BY usrtrk.id ';
-        $sort    = 'ORDER BY trk.idnumber ASC ';
+        $sort    = "ORDER BY {$sort} {$dir} ";
 
         $params = array($userid);
 
@@ -381,5 +381,147 @@ class usertrack extends elis_data_object {
 //        }
 
         return false;
+    }
+
+    /**
+     * Obtain the list of users who can be assigned to the provided track
+     *
+     * @param int $trackid The record id of the track we are currently assigning to
+     * @param string $sort The column to sort users by
+     * @param string $dir The user sorting direction
+     * @param string $namesearch A substring of users' fullnames to search by
+     * @param string $alpha The first letter of users' fullnames to search by
+     * @param int $page The page we are on (0-indexed)
+     * @param int $perpage Number of users to display per page
+     *
+     * @return array The list of users on the current page
+     */
+    public static function get_available_users($trackid, $sort = 'lastname', $dir = 'ASC', $namesearch = '',
+                                               $alpha = '', $page = 0, $perpage = 30) {
+        global $CFG, $DB, $USER;
+
+        require_once(elispm::file('trackpage.class.php'));
+        require_once(elispm::lib('data/clusterassignment.class.php'));
+
+        // find all users not enrolled in the track
+        $FULLNAME = $DB->sql_concat('usr.firstname', "' '", 'usr.lastname');
+
+        $select = 'SELECT usr.*, ' . $FULLNAME . ' AS name, usr.lastname AS lastname ';
+        $sql = 'FROM {' . user::TABLE . '} usr '
+            . 'LEFT OUTER JOIN {' . usertrack::TABLE . '} ut ON ut.userid = usr.id AND ut.trackid = :trackid '
+            . 'WHERE ut.userid IS NULL ';
+        $params = array('trackid' => $trackid);
+
+        if ($namesearch != '') {
+            $NAMELIKE = $DB->sql_like($FULLNAME, ':namesearch', false);
+
+            $namesearch = trim($namesearch);
+            $sql .= 'AND '.$NAMELIKE.' ';
+            $params['namesearch'] = "%{$namesearch}%";
+        }
+
+        if ($alpha != '') {
+            //todo: determine if this should actually be using last name?
+            $ALPHA_LIKE = $DB->sql_like($FULLNAME, ':lastname', false);
+
+            $sql .= 'AND '.$ALPHA_LIKE.' ';
+            $params['lastname'] = "{$alpha}%";
+        }
+
+        if (empty(elis::$config->elis_program->legacy_show_inactive_users)) {
+            $sql .= 'AND usr.inactive = 0 ';
+        }
+
+        if (!trackpage::_has_capability('elis/program:track_enrol', $trackid)) {
+            //perform SQL filtering for the more "conditional" capability
+            //get the context for the "indirect" capability
+            $context = pm_context_set::for_user_with_capability('cluster', 'elis/program:track_enrol_userset_user', $USER->id);
+
+            //get the clusters and check the context against them
+            $clusters = clustertrack::get_clusters($trackid);
+            $allowed_clusters = $context->get_allowed_instances($clusters, 'cluster', 'clusterid');
+
+            if (empty($allowed_clusters)) {
+                $sql .= 'AND 0=1 ';
+            } else {
+                $cluster_filter = implode(',', $allowed_clusters);
+                $sql .= "AND usr.id IN (
+                           SELECT userid FROM {" . clusterassignment::TABLE . "}
+                           WHERE clusterid IN (:clusterfilter)) ";
+                $params['clusterfilter'] = $cluster_filter;
+            }
+        }
+
+        if ($sort) {
+            $sql .= 'ORDER BY '.$sort.' '.$dir.' ';
+        }
+
+        return $DB->get_records_sql($select.$sql, $params, $page * $perpage, $perpage);
+    }
+
+    /**
+     * Obtain the count of users who can be assigned to the provided track
+     *
+     * @param int $trackid The record id of the track we are currently assigning to
+     * @param string $namesearch A substring of users' fullnames to search by
+     * @param string $alpha The first letter of users' fullnames to search by
+     *
+     * @return array The total count of appropriate users
+     */
+    public static function count_available_users($trackid, $namesearch = '', $alpha = '') {
+        global $CFG, $DB, $USER;
+
+        require_once(elispm::file('trackpage.class.php'));
+        require_once(elispm::lib('data/clusterassignment.class.php'));
+
+        $FULLNAME = $DB->sql_concat('usr.firstname', "' '", 'usr.lastname');
+
+        $select = 'SELECT COUNT(*) ';
+        $sql = 'FROM {' . user::TABLE . '} usr '
+            . 'LEFT OUTER JOIN {' . usertrack::TABLE . '} ut ON ut.userid = usr.id AND ut.trackid = :trackid '
+            . 'WHERE ut.userid IS NULL ';
+        $params = array('trackid' => $trackid);
+
+        if ($namesearch != '') {
+            $NAMELIKE = $DB->sql_like($FULLNAME, ':namesearch', false);
+
+            $namesearch = trim($namesearch);
+            $sql .= 'AND '.$NAMELIKE.' ';
+            $params['namesearch'] = "%{$namesearch}%";
+        }
+
+        if ($alpha != '') {
+            //todo: determine if this should actually be using last name?
+            $ALPHA_LIKE = $DB->sql_like($FULLNAME, ':lastname', false);
+
+            $sql .= 'AND '.$ALPHA_LIKE.' ';
+            $params['lastname'] = "{$alpha}%";
+        }
+
+        if (empty(elis::$config->elis_program->legacy_show_inactive_users)) {
+            $sql .= 'AND usr.inactive = 0 ';
+        }
+
+        if (!trackpage::_has_capability('elis/program:track_enrol', $trackid)) {
+            //perform SQL filtering for the more "conditional" capability
+            //get the context for the "indirect" capability
+            $context = pm_context_set::for_user_with_capability('cluster', 'elis/program:track_enrol_userset_user', $USER->id);
+
+            //get the clusters and check the context against them
+            $clusters = clustertrack::get_clusters($trackid);
+            $allowed_clusters = $context->get_allowed_instances($clusters, 'cluster', 'clusterid');
+
+            if (empty($allowed_clusters)) {
+                $sql .= 'AND 0=1 ';
+            } else {
+                $cluster_filter = implode(',', $allowed_clusters);
+                $sql .= "AND usr.id IN (
+                           SELECT userid FROM {" . clusterassignment::TABLE . "}
+                           WHERE clusterid IN (:clusterfilter)) ";
+                $params['clusterfilter'] = $cluster_filter;
+            }
+        }
+
+        return $DB->count_records_sql($select.$sql, $params);
     }
 }

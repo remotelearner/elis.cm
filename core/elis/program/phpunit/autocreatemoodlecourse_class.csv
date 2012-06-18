@@ -1,0 +1,2 @@
+id,courseid,idnumber,startdate,enddate,duration,starttimehour,starttimeminute,endtimehour,endtimeminute,maxstudents,environmentid,enrol_from_waitlist
+1,2,classauto,0,0,0,61,61,61,61,0,0,0

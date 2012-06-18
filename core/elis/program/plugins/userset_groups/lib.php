@@ -309,8 +309,7 @@ function userset_groups_grouping_helper($clusterid, $name) {
     if(!empty($enabled) && userset_groups_grouping_allowed($clusterid)) {
 
         //determine if flagged as grouping
-        $contextlevel = context_level_base::get_custom_context_level('cluster', 'elis_program');
-        $contextinstance = get_context_instance($contextlevel, $clusterid);
+        $contextinstance = context_elis_userset::instance($clusterid);
         $data = field_data::get_for_context($contextinstance);
 
         //retrieve grouping
@@ -601,11 +600,8 @@ function userset_groups_userset_allows_groups($clusterid) {
     //retrieve the config field
     if($fieldid = $DB->get_field(field::TABLE, 'id', array('shortname' => 'userset_group'))) {
 
-        //get the cluster context level
-        $context = context_level_base::get_custom_context_level('cluster', 'elis_program');
-
         //retrieve the cluster context instance
-        $context_instance = get_context_instance($context, $clusterid);
+        $context_instance = context_elis_userset::instance($clusterid);
 
         //construct the specific field
         $field = new field($fieldid);
@@ -643,11 +639,8 @@ function userset_groups_grouping_allowed($clusterid) {
     //retrieve the config field
     if($fieldid = $DB->get_field(field::TABLE, 'id', array('shortname' => 'userset_groupings'))) {
 
-        //get the cluster context level
-        $context = context_level_base::get_custom_context_level('cluster', 'elis_program');
-
         //retrieve the cluster context instance
-        $context_instance = get_context_instance($context, $clusterid);
+        $context_instance = context_elis_userset::instance($clusterid);
 
         //construct the specific field
         $field = new field($fieldid);

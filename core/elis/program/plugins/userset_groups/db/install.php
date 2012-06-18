@@ -32,10 +32,6 @@ defined('MOODLE_INTERNAL') || die();
  * @return  boolean  Returns true to indicate success
  */
 function xmldb_pmplugins_userset_groups_install() {
-
-    //retrieve the cluster context
-    $cluster_context = context_level_base::get_custom_context_level('cluster', 'elis_program');
-
     //set up the cluster group category
     $group_category = new field_category();
     $group_category->name = get_string('userset_group_category', 'pmplugins_userset_groups');
@@ -47,7 +43,7 @@ function xmldb_pmplugins_userset_groups_install() {
     $group_field->datatype = 'bool';
 
     //set up the field and category
-    $group_field = field::ensure_field_exists_for_context_level($group_field, $cluster_context, $group_category);
+    $group_field = field::ensure_field_exists_for_context_level($group_field, CONTEXT_ELIS_USERSET, $group_category);
 
     //set up the field owner
     $owner_options = array('required' => 0,
@@ -61,14 +57,11 @@ function xmldb_pmplugins_userset_groups_install() {
                           );
     field_owner::ensure_field_owner_exists($group_field, 'manual', $owner_options);
 
-    //retrieve the cluster context
-    $context = context_level_base::get_custom_context_level('cluster', 'elis_program');
-
     $field = new field();
     $field->shortname = 'userset_groupings';
     $field->name = get_string('autoenrol_groupings', 'pmplugins_userset_classification');
     $field->datatype = 'bool';
-    $field = field::ensure_field_exists_for_context_level($field, $context, $group_category);
+    $field = field::ensure_field_exists_for_context_level($field, CONTEXT_ELIS_USERSET, $group_category);
 
     $owner_options = array('required' => 0,
                            'edit_capability' => '',

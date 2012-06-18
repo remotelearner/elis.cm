@@ -74,12 +74,12 @@ class curriculum extends data_object_with_custom_fields {
     static $delete_is_complex = true;
 
     protected function get_field_context_level() {
-        return context_level_base::get_custom_context_level('curriculum', 'elis_program');
+        return CONTEXT_ELIS_PROGRAM;
     }
 
     public function set_from_data($data) {
 
-        $fields = field::get_for_context_level('curriculum', 'elis_program');
+        $fields = field::get_for_context_level(CONTEXT_ELIS_PROGRAM);
         $fields = $fields ? $fields : array();
         foreach ($fields as $field) {
             $fieldname = "field_{$field->shortname}";
@@ -108,8 +108,8 @@ class curriculum extends data_object_with_custom_fields {
         parent::delete();
 
         //clean up the curriculum context instance
-        $level = context_level_base::get_custom_context_level('curriculum', 'elis_program');
-        delete_context($level,$this->id);
+        $context = context_elis_program::instance($this->id);
+        $context->delete();
     }
 
     function __toString() {
@@ -377,7 +377,7 @@ class curriculum extends data_object_with_custom_fields {
         $text = empty(elis::$config->elis_program->notify_curriculumrecurrence_message) ?
                     get_string('notifycurriculumrecurrencemessagedef', 'elis_program') :
                     elis::$config->elis_program->notify_curriculumrecurrence_message;
-        $search = array('%%userenrolname%%', '%%curriculumname%%');
+        $search = array('%%userenrolname%%', '%%programname%%');
         $pmuser = $DB->get_record(user::TABLE, array('id' => $user->userid));
         $student = new user($pmuser);
 
@@ -466,10 +466,25 @@ class curriculum extends data_object_with_custom_fields {
         // clone main curriculum object
         $clone = new curriculum($this);
         unset($clone->id);
+
+        $idnumber = $clone->idnumber;
+        $name = $clone->name;
         if (isset($userset)) {
             // if cluster specified, append cluster's name to curriculum
-            $clone->name = $clone->name.' - '.$userset->name;
-            $clone->idnumber = $clone->idnumber.' - '.$userset->name;
+            $idnumber .= ' - '.$userset->name;
+            $name .= ' - '.$userset->name;
+        }
+
+        //get a unique idnumber
+        $clone->idnumber = generate_unique_identifier(curriculum::TABLE, 'idnumber', $idnumber, array('idnumber' => $idnumber));
+
+        if ($clone->idnumber != $idnumber) {
+            //get the suffix appended and add it to the name
+            $parts = explode('.', $clone->idnumber);
+            $suffix = end($parts);
+            $clone->name = $name.'.'.$suffix;
+        } else {
+            $clone->name = $name;
         }
 
         $clone = new curriculum($clone);
@@ -586,7 +601,7 @@ class curriculum extends data_object_with_custom_fields {
             }
         }
 
-        field_data::set_for_context_from_datarecord('curriculum', $this);
+        field_data::set_for_context_from_datarecord(CONTEXT_ELIS_PROGRAM, $this);
     }
 
     function get_verbose_name() {

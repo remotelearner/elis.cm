@@ -25,6 +25,7 @@
  */
 
 require_once(dirname(__FILE__) . '/../../core/test_config.php');
+global $CFG;
 require_once($CFG->dirroot . '/elis/program/lib/setup.php');
 require_once(elispm::lib('data/clustercurriculum.class.php'));
 require_once($CFG->dirroot . '/elis/program/curriculumpage.class.php');

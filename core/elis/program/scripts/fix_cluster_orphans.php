@@ -59,8 +59,7 @@ foreach ($clusters as $clusid => $clusdata) {
             $result = $DB->update_record(userset::TABLE, $newclusdata);
 
             // Blank out the depth and path for associated records and child records in context table
-            $cluster_context_level = context_level_base::get_custom_context_level('cluster', 'elis_program');
-            $cluster_context_instance = get_context_instance($cluster_context_level, $clusid);
+            $cluster_context_instance = context_elis_userset::instance($clusid);
             $instance_id = $cluster_context_instance->id;
             $sql = "UPDATE {context}
                        SET depth = 0, path = NULL
@@ -80,7 +79,7 @@ if ($clusters_fixed_cnt > 0) {
 
 mtrace("Done.");
 
-exit;
+//exit;
 
 function print_usage() {
     mtrace('Usage: '. basename(__FILE__) ."\n");

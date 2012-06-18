@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2012 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,6 +60,12 @@ class coursecurriculumbaseform extends cmform {
         $mform->addRule('frequency', null, 'maxlength', 64, 'client');
         $mform->addHelpButton('frequency', 'curriculumcourseform:frequency', 'elis_program');
 
+        foreach ($this->timeperiod_values as $key => $val) {
+            if (get_string_manager()->string_exists("time_period_{$key}",
+                                                    'elis_program')) {
+                $this->timeperiod_values[$key] = get_string("time_period_{$key}", 'elis_program');
+            }
+        }
         $mform->addElement('select', 'timeperiod', get_string('time_period', 'elis_program') . ':', $this->timeperiod_values);
         $mform->addHelpButton('timeperiod', 'curriculumcourseform:time_period', 'elis_program');
 
