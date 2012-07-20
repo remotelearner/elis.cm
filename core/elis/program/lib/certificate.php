@@ -67,10 +67,7 @@ function certificate_output_completion($person_fullname, $entity_name, $certific
     $pdf->setPrintHeader(false);
     $pdf->setPrintFooter(false);
 
-    //add main (only) page; this next call sometimes adds an empty first page!
-    if (empty($border) || $border == 'none') {
-        $pdf->AddPage();
-    }
+    $pdf->AddPage();
 
     //draw the border
     cm_certificate_check_data_path('borders');

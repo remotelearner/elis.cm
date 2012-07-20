@@ -482,10 +482,10 @@ class usersetpage extends managementpage {
 
                     //default groups and groupings settings
                     if ($classification->param_autoenrol_groups) {
-                        $obj->field_cluster_group = $classification->param_autoenrol_groups;
+                        $obj->field_userset_group = $classification->param_autoenrol_groups;
                     }
                     if ($classification->param_autoenrol_groupings) {
-                        $obj->field_cluster_groupings = $classification->param_autoenrol_groupings;
+                        $obj->field_userset_groupings = $classification->param_autoenrol_groupings;
                     }
                 }
             }

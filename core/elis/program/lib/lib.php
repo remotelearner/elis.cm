@@ -1927,3 +1927,44 @@ function pm_mymoodle_redirect($editing = false) {
     return (!empty(elis::$config->elis_program->mymoodle_redirect) &&
             elis::$config->elis_program->mymoodle_redirect == 1);
 }
+
+/**
+ * Function to append suffix to string, but, only once
+ * - if already present doesn't re-append
+ *
+ * @param string $str     The string to append to
+ * @param string $suffix  The string to append
+ * @param array  $options associate array of options, including:
+ *                        'maxlength' => int - maximum length of returned str
+ *                        'prepend'   => bool, false appends, true prepends $suffix
+ *                        'casesensitive' => bool, caseinsensitive by default
+ *                        'strict' => bool, true if $suffix must end (begin for prepend)
+ * @return string         The appended string
+ */
+function append_once($str, $suffix, $options = array()) {
+    $has_suffix = empty($options['casesensitive']) ? stripos($str, $suffix)
+                                                   : strpos($str, $suffix);
+    $prepend = !empty($options['prepend']);
+    $strict = !empty($options['strict']);
+    $maxlen = !empty($options['maxlength'])
+              ? ($options['maxlength'] - strlen($suffix))
+              : 0;
+    if ($prepend) {
+        if ($has_suffix === FALSE || ($strict && $has_suffix !== 0)) {
+            if ($maxlen) {
+                $str = substr($str, 0, $maxlen);
+            }
+            return $suffix . $str;
+        }
+    } else if ($has_suffix === FALSE ||
+              ($strict && $has_suffix != (strlen($str) - strlen($suffix)))) {
+        if ($maxlen) {
+            $str = substr($str, 0, $maxlen);
+        }
+        return $str . $suffix;
+    }
+
+    // $suffix already in $str
+    return $str;
+}
+

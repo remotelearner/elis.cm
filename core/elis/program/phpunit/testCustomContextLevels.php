@@ -32,6 +32,9 @@ require_once($CFG->dirroot . '/elis/program/lib/setup.php');
 require_once(elis::lib('testlib.php'));
 require_once('PHPUnit/Extensions/Database/DataSet/CsvDataSet.php');
 require_once(elis::lib('data/customfield.class.php'));
+require_once(elispm::lib('data/clusterassignment.class.php'));
+require_once(elispm::lib('data/clustercurriculum.class.php'));
+require_once(elispm::lib('data/clustertrack.class.php'));
 require_once(elispm::lib('data/curriculum.class.php'));
 require_once(elispm::lib('data/track.class.php'));
 require_once(elispm::lib('data/course.class.php'));
@@ -40,6 +43,7 @@ require_once(elispm::lib('data/pmclass.class.php'));
 require_once(elispm::lib('data/user.class.php'));
 require_once(elispm::lib('data/usermoodle.class.php'));
 require_once(elispm::lib('data/userset.class.php'));
+require_once(elispm::file('enrol/userset/moodle_profile/userset_profile.class.php'));
 
 class test_element_creation extends elis_database_test {
     protected $backupGlobalsBlacklist = array('DB');
@@ -54,11 +58,36 @@ class test_element_creation extends elis_database_test {
             course::TABLE          => 'elis_program',
             coursetemplate::TABLE  => 'elis_program',
             field::TABLE           => 'elis_core',
+            field_data_int::TABLE  => 'elis_core',
+            field_data_num::TABLE  => 'elis_core',
             field_data_char::TABLE => 'elis_core',
+            field_data_text::TABLE => 'elis_core',
             pmclass::TABLE         => 'elis_program',
             user::TABLE            => 'elis_program',
             usermoodle::TABLE      => 'elis_program',
+            userset_profile::TABLE => 'elis_program',
             userset::TABLE         => 'elis_program'
+        );
+    }
+
+    /**
+     * Return the list of tables that should be ignored for writes.
+     */
+    static protected function get_ignored_tables() {
+        return array(
+            'block_instances'   => 'moodle',
+            'block_positions'   => 'moodle',
+            'cache_flags'       => 'moodle',
+            'comments'          => 'moodle',
+            'filter_active'     => 'moodle',
+            'filter_config'     => 'moodle',
+            'rating'            => 'moodle',
+            'role_assignments'  => 'moodle',
+            'role_capabilities' => 'moodle',
+            'role_names'        => 'moodle',
+            clusterassignment::TABLE => 'elis_program',
+            clustercurriculum::TABLE => 'elis_program',
+            clustertrack::TABLE => 'elis_program'
         );
     }
 
@@ -347,6 +376,126 @@ class test_element_creation extends elis_database_test {
 
         // Create the context path to validate this in the returned context object
         $path = '/'.SYSCONTEXTID.'/'.$ctx1->id.'/'.$context->id;
+
+        $this->assertEquals($path, $context->path);
+        $this->assertEquals(substr_count($path, '/'), $context->depth);
+    }
+
+    /**
+     * Test that a child User Set context instance is updated when that User Set
+     * is promoted to the top level
+     */
+    public function testChildUsersetContextOnPromotion() {
+        $newobj = $this->initUserset();
+        $newobj->save();
+
+        $ctx1 = context_elis_userset::instance($newobj->id);
+
+        $data = array(
+            'name'    => 'Test Sub User Set 1A',
+            'display' => 'We\'re just testing user set creation with child user sets!',
+            'parent'  => $newobj->id
+        );
+
+        $subuserset = new userset($data);
+        $subuserset->save();
+
+        // Update the sub-set, setting its parent to the top level
+        $subuserset->parent = 0;
+        $subuserset->save();
+
+        $context = context_elis_userset::instance($subuserset->id);
+
+        // Validate that the current state of the context record is valid
+        $this->assertGreaterThan(0, $context->id);
+        $this->assertEquals(CONTEXT_ELIS_USERSET, $context->contextlevel);
+        $this->assertEquals($subuserset->id, $context->instanceid);
+
+        // Create the context path to validate this in the returned context object
+        $path = '/'.SYSCONTEXTID.'/'.$context->id;
+
+        $this->assertEquals($path, $context->path);
+        $this->assertEquals(substr_count($path, '/'), $context->depth);
+    }
+
+    /**
+     * Test that a child User Set context instance is updated when that User Set
+     * has its parent changes to another valid user set
+     */
+    public function testChildUsersetContextOnParentChange() {
+        //need to clean caching because it was causing the parent userset's
+        //id to not have a matching context instanceid
+        global $UNITTEST;
+        $UNITTEST->running = true;
+        accesslib_clear_all_caches_for_unit_testing();
+        unset($UNITTEST->running);
+
+        $firstparent = $this->initUserSet();
+        $firstparent->save();
+
+        $secondparent = new userset(array('name' => 'Second Parent'));
+        $secondparent->save();
+
+        $ctx1 = context_elis_userset::instance($secondparent->id);
+
+        $data = array(
+            'name'    => 'Test Sub User Set 1A',
+            'display' => 'We\'re just testing user set creation with child user sets!',
+            'parent'  => $firstparent->id
+        );
+
+        $subuserset = new userset($data);
+        $subuserset->save();
+
+        // Update the sub-set, setting its parent to the other top-level user set
+        $subuserset->parent = $secondparent->id;
+        $subuserset->save();
+
+        $context = context_elis_userset::instance($subuserset->id);
+
+        // Validate that the curent state of the context record is valid
+        $this->assertGreaterThan(0, $context->id);
+        $this->assertEquals(CONTEXT_ELIS_USERSET, $context->contextlevel);
+        $this->assertEquals($subuserset->id, $context->instanceid);
+
+        // Create the context path to valid that this in the returned context object
+        $path = '/'.SYSCONTEXTID.'/'.$ctx1->id.'/'.$context->id;
+
+        $this->assertEquals($path, $context->path);
+        $this->assertEquals(substr_count($path, '/'), $context->depth);
+    }
+
+    /**
+     * Test that a child User Set context instance is updated when that User Set
+     * is promoted to the top level due to parent User Set deletion
+     */
+    public function testChildUsersetContextOnPromotionDuringParentDeletion() {
+        $newobj = $this->initUserset();
+        $newobj->save();
+
+        $ctx1 = context_elis_userset::instance($newobj->id);
+
+        $data = array(
+            'name'    => 'Test Sub User Set 1A',
+            'display' => 'We\'re just testing user set creation with child user sets!',
+            'parent'  => $newobj->id
+        );
+
+        $subuserset = new userset($data);
+        $subuserset->save();
+
+        // Delete the parent user set, promoting the sub-user-set
+        $newobj->delete();
+
+        $context = context_elis_userset::instance($subuserset->id);
+
+        // Validate that the curent state of the context record is valid
+        $this->assertGreaterThan(0, $context->id);
+        $this->assertEquals(CONTEXT_ELIS_USERSET, $context->contextlevel);
+        $this->assertEquals($subuserset->id, $context->instanceid);
+
+        // Create the context path to valid that this in the returned context object
+        $path = '/'.SYSCONTEXTID.'/'.$context->id;
 
         $this->assertEquals($path, $context->path);
         $this->assertEquals(substr_count($path, '/'), $context->depth);

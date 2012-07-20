@@ -166,8 +166,8 @@ class userset extends data_object_with_custom_fields {
                         SET depth=0, path=NULL
                         WHERE contextlevel=? AND instanceid=?";
                 $this->_db->execute($sql, array(CONTEXT_ELIS_USERSET, $child->id));
-            }
-            build_context_path(); // Re-build the context table for all sub-clusters
+            } 
+            context_elis_helper::build_all_paths(false, array(CONTEXT_ELIS_USERSET)); // Re-build the context table for all sub-clusters
         }
 
         return $result;
@@ -231,7 +231,7 @@ class userset extends data_object_with_custom_fields {
             $this->_db->execute($sql, array($cluster_context_instance->id, "{$cluster_context_instance->path}/%"));
 
             // Rebuild any blanked out records in context table
-            build_context_path();
+            context_elis_helper::build_all_paths(false, array(CONTEXT_ELIS_USERSET));
         }
 
         $plugins = get_plugin_list(self::ENROL_PLUGIN_TYPE);

@@ -202,6 +202,38 @@ class context_elis_helper extends context_elis {
      */
     public function get_capabilities() {
     }
+
+    /**
+     * Rebuild paths and depths in all context levels.
+     *
+     * @static
+     * @param bool $force false means add missing only
+     * @param mixed $levels array of context level contexts, or NULL for all
+     * @return void
+     */
+    public static function build_all_paths($force = false, $levels = NULL) {
+        //TODO: validate this this works for contexts levels other than "user set" 
+
+        if ($levels === NULL) {
+            $levels = array(
+                CONTEXT_ELIS_PROGRAM,
+                CONTEXT_ELIS_TRACK,
+                CONTEXT_ELIS_COURSE,
+                CONTEXT_ELIS_CLASS,
+                CONTEXT_ELIS_USER,
+                CONTEXT_ELIS_USERSET
+            );
+        }
+
+        foreach (self::$alllevels as $key => $classname) {
+            if (in_array($key, $levels)) {
+                $classname::build_paths($force);
+            }
+        }
+
+        // reset static course cache - it might have incorrect cached data
+        accesslib_clear_all_caches(true);
+    }
 }
 
 /**
@@ -1356,7 +1388,7 @@ class context_elis_userset extends context_elis {
                      WHERE contextlevel=".CONTEXT_ELIS_USERSET."
                            AND EXISTS (SELECT 'x'
                                          FROM {".userset::TABLE."} eu
-                                        WHERE eu.id = {context}.instanceid AND cc.depth=1)
+                                        WHERE eu.id = {context}.instanceid AND eu.depth=1)
                            $emptyclause";
             $DB->execute($sql);
 

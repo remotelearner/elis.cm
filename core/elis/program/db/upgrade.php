@@ -574,5 +574,13 @@ function xmldb_elis_program_upgrade($oldversion=0) {
         upgrade_plugin_savepoint($result, 2012050315, 'elis', 'program');
     }
 
+    if ($result && $oldversion < 2012062900) {
+        require_once($CFG->dirroot.'/elis/program/lib/setup.php');
+        require_once(elispm::file('accesslib.php'));
+
+        //rebuild user set context paths to fix problems related to changing hierarchy
+        context_elis_helper::build_all_paths(false, array(CONTEXT_ELIS_USERSET));
+    }
+
     return $result;
 }

@@ -149,13 +149,7 @@ class pmclasspage extends managementpage {
         if ($reports_installed) {
             require_once($CFG->dirroot .'/blocks/php_report/php_report_base.php');
         }
-    }
 
-    public function _get_page_params() {
-        return parent::_get_page_params();
-    }
-
-    public function __construct(array $params=null) {
         $this->tabs = array(
         array('tab_id' => 'view', 'page' => get_class($this), 'params' => array('action' => 'view'), 'name' => get_string('detail', 'elis_program'), 'showtab' => true),
         array('tab_id' => 'edit', 'page' => get_class($this), 'params' => array('action' => 'edit'), 'name' => get_string('edit', 'elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'edit'),
