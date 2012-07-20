@@ -29,6 +29,7 @@ defined('MOODLE_INTERNAL') || die();
 require_once(dirname(__FILE__).'/../../../../config.php');
 require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 require_once elis::lib('data/data_object_with_custom_fields.class.php');
+require_once elispm::lib('lib.php');
 require_once elispm::lib('data/classmoodlecourse.class.php');
 require_once elispm::lib('data/clustertrack.class.php');
 require_once elispm::lib('data/course.class.php');
@@ -138,8 +139,10 @@ class track extends data_object_with_custom_fields {
             //get a unique idnumber
             $idnumber = $this->idnumber;
             if (!empty($curcourec->idnumber)) {
-                // if cluster specified, append cluster's name to class
-                $idnumber = $curcourec->idnumber.'-'.$idnumber;
+                $idnumber = append_once($idnumber, $curcourec->idnumber .'-',
+                                        array('prepend'   => true,
+                                              'maxlength' => 95,
+                                              'strict'    => true));
             }
 
             generate_unique_identifier(pmclass::TABLE,
@@ -480,9 +483,10 @@ class track extends data_object_with_custom_fields {
         $idnumber = $clone->idnumber;
         $name = $clone->name;
         if (isset($userset)) {
-            // if cluster specified, append cluster's name to curriculum
-            $idnumber .= ' - '.$userset->name;
-            $name .= ' - '.$userset->name;
+            $to_append = ' - '. $userset->name;
+            // if cluster specified, append cluster's name to course
+            $idnumber = append_once($idnumber, $to_append, array('maxlength' => 95));
+            $name = append_once($name, $to_append, array('maxlength' => 250));
         }
 
         //get a unique idnumber

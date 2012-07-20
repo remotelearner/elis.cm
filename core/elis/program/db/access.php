@@ -720,7 +720,6 @@ $capabilities = array(
 
      'elis/program:program_enrol_userset_user' => array(
 
-    'elis/program:track_enrol_userset_user' => array(
         'riskbitmask' => RISK_PERSONAL | RISK_DATALOSS,
         'captype' => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
