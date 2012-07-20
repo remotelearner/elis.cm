@@ -98,16 +98,22 @@ class pm_context_set {
 
         // find all contexts at the given context level where the user has a direct
         // role assignment
-        $contextlevelnum = context_level_base::get_custom_context_level($contextlevel, 'elis_program');
-        $sql = "SELECT c.*
+
+        $ctxlevel = context_elis_helper::get_level_from_name($contextlevel);
+        $ctxclass = context_elis_helper::get_class_for_level($ctxlevel);
+
+        $sql = "SELECT c.id, c.instanceid
                   FROM {role_assignments} ra
                   JOIN {context} c ON ra.contextid = c.id
                  WHERE ra.userid = $userid
-                   AND c.contextlevel = $contextlevelnum";
+                   AND c.contextlevel = ".$ctxlevel;
+
         $possiblecontexts = $DB->get_recordset_sql($sql);
         foreach ($possiblecontexts as $c) {
-            if (has_capability($capability, $c, $userid, $doanything)) {
-                $contexts[$contextlevel][] = $c->instanceid;
+            $context = $ctxclass::instance($c->instanceid);
+
+            if (has_capability($capability, $context, $userid, $doanything)) {
+                $contexts[$contextlevel][] = $context->__get('instanceid');
             }
         }
         if (empty($contexts[$contextlevel])) {
@@ -216,14 +222,13 @@ class pm_context_set {
         $where = array();
         if (isset($this->contexts['cluster'])) {
             $where[] = new in_list_filter($idfieldname, $this->contexts['cluster']);
-            $ctxlvl = context_level_base::get_custom_context_level('cluster', 'elis_program');
             // cross fingers and hope that the user doesn't have too many clusters
             foreach ($this->contexts['cluster'] as $cluster) {
-                $context = get_context_instance($ctxlvl, $cluster);
+                $context = context_elis_userset::instance($cluster);
                 $pattern = $context->path . '/%';
                 $where[] = new join_filter($idfieldname, 'context', 'instanceid',
                                            new AND_filter(array(new field_filter('path', $pattern, field_filter::LIKE),
-                                                                new field_filter('contextlevel', $ctxlvl))));
+                                                                new field_filter('contextlevel', CONTEXT_ELIS_USERSET))));
             }
         }
         return $where;
@@ -315,12 +320,11 @@ class pm_context_set {
     function _cluster_allowed($id) {
         global $DB;
         if (isset($this->contexts['cluster'])) {
-            $ctxlvl = context_level_base::get_custom_context_level('cluster', 'elis_program');
-            $context = get_context_instance($ctxlvl, $id);
+            $context = context_elis_userset::instance($id);
             $ancestorids = substr(str_replace('/',',',$context->path),1);
             $select = "id IN ($ancestorids)
                    AND instanceid IN (".implode(',',$this->contexts['cluster']).")
-                   AND contextlevel = $ctxlvl";
+                   AND contextlevel = ".CONTEXT_ELIS_USERSET;
             return $DB->record_exists_select('context', $select);
         }
         return false;
@@ -376,8 +380,10 @@ function pm_get_users_by_capability($contextlevel, $instance_id, $capability) {
     static $pm_context_extra_parents = array('course' => array('curriculum'),
                                              'class' => array('track'),
                                              'user' => array('cluster'));
-    $contextlevelnum = context_level_base::get_custom_context_level($contextlevel, 'elis_program');
-    $context = get_context_instance($contextlevelnum, $instance_id);
+
+    $ctxclass = context_elis_helper::get_class_for_level(context_elis_helper::get_level_from_name($contextlevel));
+
+    $context = $ctxclass::instance($instance_id);
     $users = get_users_by_capability($context, $capability);
     $users = $users ? $users : array();
 

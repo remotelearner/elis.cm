@@ -255,6 +255,8 @@ function test_cluster_tree_get_menu_item($type, $instance, $parent, $css_class, 
 
 class generalized_filter_clustertree extends generalized_filter_type {
     var $options;
+    var $data = null; // ELIS-5348: chache data in get_sql_filter()
+    var $ids  = array();
 
     /**
      * Constructor
@@ -290,137 +292,126 @@ class generalized_filter_clustertree extends generalized_filter_type {
      *                     or null if the filter is disabled
      */
     function get_sql_filter($data) {
-        global $CFG, $DB;
         static $counter = 0; // required for multiple calls to get_filter_condition in reports!
-
-        //dependencies for queries
-        require_once($CFG->dirroot .'/elis/program/lib/setup.php');
-        require_once($CFG->dirroot .'/elis/program/lib/data/userset.class.php');
-
-        //determine if we are filtering on a user id rather than a cluster id
-        $filter_on_user_records = !empty($this->options['filter_on_user_records']);
 
         $full_fieldname = $this->get_full_fieldname();
         if (empty($full_fieldname)) {
             return null;
         }
 
-        if (isset($data['specific_clusterid'])) {
-            $param_name = 'clustree_clusterid'. $counter++;
-            $params = array($param_name => $data['specific_clusterid']);
-            if ($filter_on_user_records) {
-                //validate user id against cluster assignments
-                return array('EXISTS (SELECT *
-                                        FROM {'. clusterassignment::TABLE ."}
-                                       WHERE userid = {$full_fieldname}
-                                         AND clusterid = :{$param_name})",
-                             $params);
+        if ($data != $this->data) {
+            global $CFG, $DB;
+            //dependencies for queries
+            require_once($CFG->dirroot .'/elis/program/lib/setup.php');
+            require_once($CFG->dirroot .'/elis/program/lib/data/userset.class.php');
+            $this->data = $data;
+            $this->ids = array();
+
+            //determine if we are filtering on a user id rather than a cluster id
+            $filter_on_user_records = !empty($this->options['filter_on_user_records']);
+
+            if (isset($data['specific_clusterid'])) {
+                $param_name = 'clustree_clusterid'. $counter++;
+                $params = array($param_name => $data['specific_clusterid']);
+                if ($filter_on_user_records) {
+                    //validate user id against cluster assignments
+                    $this->ids = $DB->get_records(clusterassignment::TABLE,
+                                          array('clusterid' => $data['specific_clusterid']),
+                                          '', 'DISTINCT userid');
+                } else {
+                    $this->ids[$data['specific_clusterid']] = $data['specific_clusterid'];
+                    //validate cluster id against specific value
+                    return array("{$full_fieldname} = :{$param_name}", $params);
+                }
+            } else {
+
+                //direct cluster id selection
+                $clusterid_condition = $this->get_list_condition('c.id', $data['clusterids']);
+
+                //full list of hierarchically selected entries
+                $full_hierarchical_condition = $this->get_list_condition('grandparent_context.instanceid', $data['clrunexpanded_ids']);
+
+                //full unexpanded list
+                $full_unexpanded_condition = $this->get_list_condition('parent_context.instanceid', $data['unexpanded_ids']);
+
+                //full unexpanded and unselected list
+                $full_clrunexpanded_condition = $this->get_list_condition('eclipse_context.instanceid', $data['clrunexpanded_ids']);
+
+                //needed in query to join context table
+                $cluster_context_level = CONTEXT_ELIS_USERSET;
+
+                //$params = array();
+                $param_cpath = 'clustree_cpath_a'. $counter;
+                $param_pcpath = 'clustree_pcpath'. $counter;
+                $param_cpath2 = 'clustree_cpath_b'. $counter;
+
+                // ELIS-5861 -- Got named parameters working with sql_concat() -- tested in /elis/program/phpunit/testFilters
+                $cpath_like = $DB->sql_like('context.path', $DB->sql_concat('parent_context.path', ':c_path'), false); // TBV: case insensitive?
+                $params['c_path'] = '/%';
+
+                $pcpath_like = $DB->sql_like('parent_context.path', $DB->sql_concat('grandparent_context.path', ':pc_path'), false); // TBV: case insensitive?
+                $params['pc_path'] = '/%';
+
+                $cpath2_like = $DB->sql_like('context.path', $DB->sql_concat('eclipse_context.path', ':c2_path'), false); // TBV: case insensitive?
+                $params['c2_path'] = '/%';
+
+                $param_ccl1 = 'clustree_context_a'. $counter;
+                $param_ccl2 = 'clustree_context_b'. $counter;
+                $param_ccl3 = 'clustree_context_c'. $counter;
+                $param_ccl4 = 'clustree_context_d'. $counter;
+                $params[$param_ccl1] = $cluster_context_level;
+                $params[$param_ccl2] = $cluster_context_level;
+                $params[$param_ccl3] = $cluster_context_level;
+                $params[$param_ccl4] = $cluster_context_level;
+                $counter++;
+
+                //this query gives us exactly the user sets we want
+
+                if ($filter_on_user_records) {
+                    //connect cluster assignment user id to main query userid
+                    $column = 'clstasgn.userid';
+                    //only display records if there is a related cluster assignment
+                    $user_join = 'JOIN {'. clusterassignment::TABLE .'} clstasgn
+                                    ON c.id = clstasgn.clusterid';
+                } else {
+                    //connect cluster id to the main query cluster id
+                    $column = 'c.id';
+                    $user_join = '';
+                }
+
+                //it essentially consists of two parts
+                //part 1: include all the user sets directly selected that have not been
+                //cleared out at a parent context
+                //part 2: include all user sets selected recursively through an unexpanded
+                //parent that have not been cleared out at a parent context
+                $sql = "SELECT DISTINCT {$column}
+                          FROM {". userset::TABLE ."} c
+                          JOIN {context} context
+                            ON c.id = context.instanceid
+                           AND context.contextlevel = :{$param_ccl1}
+                        {$user_join}
+                     LEFT JOIN {context} parent_context
+                            ON {$cpath_like}
+                           AND parent_context.contextlevel = :{$param_ccl2}
+                           AND {$full_unexpanded_condition}
+                     LEFT JOIN {context} grandparent_context
+                            ON {$pcpath_like}
+                           AND grandparent_context.contextlevel = :{$param_ccl3}
+                           AND {$full_hierarchical_condition}
+                     LEFT JOIN {context} eclipse_context
+                            ON {$cpath2_like}
+                           AND eclipse_context.contextlevel = :{$param_ccl4}
+                           AND {$full_clrunexpanded_condition}
+                         WHERE ({$clusterid_condition} AND eclipse_context.id IS NULL)
+                            OR (parent_context.instanceid IS NOT NULL AND grandparent_context.id IS NULL)
+                        ";
+
+                $this->ids = $DB->get_records_sql($sql, $params);
             }
-            //validate cluster id against specific value
-            return array("{$full_fieldname} = :{$param_name}", $params);
         }
 
-        //direct cluster id selection
-        $clusterid_condition = $this->get_list_condition('c.id', $data['clusterids']);
-
-        //full list of hierarchically selected entries
-        $full_hierarchical_condition = $this->get_list_condition('grandparent_context.instanceid', $data['clrunexpanded_ids']);
-
-        //full unexpanded list
-        if (count($data['unexpanded_ids']) > 0) {
-            $list = implode(',', $data['unexpanded_ids']);
-            $full_unexpanded_condition = "parent_context.instanceid IN ({$list})";
-        }  else {
-            $full_unexpanded_condition = 'FALSE';
-        }
-
-        //full unexpanded and unselected list
-        if (count($data['clrunexpanded_ids']) > 0) {
-            $list = implode(',', $data['clrunexpanded_ids']);
-            $full_clrunexpanded_condition = "eclipse_context.instanceid IN ({$list})";
-        } else {
-            $full_clrunexpanded_condition = 'FALSE';
-        }
-
-        //needed in query to join context table
-        $cluster_context_level = context_level_base::get_custom_context_level('cluster', 'elis_program');
-
-        //$params = array();
-        $param_cpath = 'clustree_cpath_a'. $counter;
-        $param_pcpath = 'clustree_pcpath'. $counter;
-        $param_cpath2 = 'clustree_cpath_b'. $counter;
-
-        /** NOTE:
-         * ELIS-3685: We cannot seem to use sql_concat() in parameter array ...
-         * query fails (perhaps quoting the "CONCAT( ...)" parameter?),
-         * unfortunely this causes warnings from sql_like() ...
-         * "Potential SQL injection detected, sql_ilike() expects bound parameters (? or :named)
-         */
-        $cpath_like = $DB->sql_like('context.path', $DB->sql_concat('parent_context.path', "'/%'"),
-                                    false); // TBV: case insensitive?
-        //$params[$param_cpath] = $DB->sql_concat('parent_context.path', "'/%'");
-        $pcpath_like = $DB->sql_like('parent_context.path', $DB->sql_concat('grandparent_context.path', "'/%'"),
-                                     false); // TBV: case insensitive?
-        //$params[$param_pcpath] = $DB->sql_concat('grandparent_context.path', "'/%'");
-        $cpath2_like = $DB->sql_like('context.path', $DB->sql_concat('eclipse_context.path', "'/%'"),
-                                     false); // TBV: case insensitive?
-        //$params[$param_cpath2] = $DB->sql_concat('eclipse_context.path', "'/%'");
-
-        $param_ccl1 = 'clustree_context_a'. $counter;
-        $param_ccl2 = 'clustree_context_b'. $counter;
-        $param_ccl3 = 'clustree_context_c'. $counter;
-        $param_ccl4 = 'clustree_context_d'. $counter;
-        $params[$param_ccl1] = $cluster_context_level;
-        $params[$param_ccl2] = $cluster_context_level;
-        $params[$param_ccl3] = $cluster_context_level;
-        $params[$param_ccl4] = $cluster_context_level;
-        $counter++;
-
-        //this query gives us exactly the user sets we want
-
-        if ($filter_on_user_records) {
-            //connect cluster assignment user id to main query userid
-            $condition = "clstasgn.userid = {$full_fieldname}";
-            //only display records if there is a related cluster assignment
-            $user_join = 'JOIN {'. clusterassignment::TABLE .'} clstasgn
-                            ON c.id = clstasgn.clusterid';
-        } else {
-            //connect cluster id to the main query cluster id
-            $condition = "c.id = {$full_fieldname}";
-            $user_join = "";
-        }
-
-        //it essentially consists of two parts
-        //part 1: include all the user sets directly selected that have not been
-        //cleared out at a parent context
-        //part 2: include all user sets selected recursively through an unexpanded
-        //parent that have not been cleared out at a parent context
-        $sql = 'SELECT c.id FROM {'. userset::TABLE ."} c
-                  JOIN {context} context
-                    ON c.id = context.instanceid
-                   AND context.contextlevel = :{$param_ccl1}
-                {$user_join}
-             LEFT JOIN {context} parent_context
-                    ON {$cpath_like}
-                   AND parent_context.contextlevel = :{$param_ccl2}
-                   AND {$full_unexpanded_condition}
-             LEFT JOIN {context} grandparent_context
-                    ON {$pcpath_like}
-                   AND grandparent_context.contextlevel = :{$param_ccl3}
-                   AND {$full_hierarchical_condition}
-             LEFT JOIN {context} eclipse_context
-                    ON {$cpath2_like}
-                   AND eclipse_context.contextlevel = :{$param_ccl4}
-                   AND {$full_clrunexpanded_condition}
-                 WHERE ({$clusterid_condition} AND eclipse_context.id IS NULL)
-                    OR (parent_context.instanceid IS NOT NULL AND grandparent_context.id IS NULL)
-                   AND {$condition}
-                ";
-
-        // TBD: "EXISTS ({$sql})" did NOT filter selected tree clusters!
-        return array(($filter_on_user_records
-                      ? "EXISTS" : "{$full_fieldname} IN")
-                     ." ({$sql})", $params);
+        $ids = array_keys($this->ids);
+        return array($this->get_list_condition($full_fieldname, $ids), array());
     }
 
     function get_report_parameters($data) {
@@ -507,6 +498,35 @@ class generalized_filter_clustertree extends generalized_filter_type {
     }
 
     /**
+     * Gets the cluster listing for the drop-down menu
+     * @param mixed  $contexts
+     * @return array cluster listing
+     */
+    function cluster_dropdown_get_listing($contexts = null) {
+        global $DB;
+
+        //ob_start();
+        //var_dump($contexts);
+        //$tmp = ob_get_contents();
+        //ob_end_clean();
+        $sql = 'SELECT * FROM {'. userset::TABLE .'}';
+        $params = array();
+
+        if ($contexts) {
+            $filter_obj = $contexts->get_filter('id', 'cluster');
+            $filter_sql = $filter_obj->get_sql();
+            if (isset($filter_sql['where'])) {
+                $sql .= " WHERE {$filter_sql['where']}";
+                $params = $filter_sql['where_parameters'];
+            }
+        }
+
+        $sql .= ' ORDER BY depth ASC, name ASC';
+        //error_log("cluster_dropdown_get_listing(); SQL => {$sql}; contextset = {$tmp}");
+        return $DB->get_records_sql($sql, $params);
+    }
+
+    /**
      * Adds controls specific to this filter in the form.
      * @param object $mform a MoodleForm object to setup
      * @uses  $CFG
@@ -517,10 +537,26 @@ class generalized_filter_clustertree extends generalized_filter_type {
     function setupForm(&$mform) {
         global $CFG, $OUTPUT, $PAGE, $USER;
 
+        // Javascript for cluster dropdown onchange event
+        $cluster_group_separator = '------------------------------';
+        $js = '
+<script type="text/javascript">
+//<![CDATA[
+    function dropdown_separator(selectelem) {
+        /* alert("dropdown_separator(" + selectelem.selectedIndex + ")"); */
+        if (selectelem.options[selectelem.selectedIndex].value < 0) {
+            return 0;
+        }
+        return selectelem.selectedIndex;
+    }
+//]]>
+</script>
+';
+
         /**
          * CSS includes
          */
-        $mform->addElement('html', '<style>@import url("'. $CFG->wwwroot .'/lib/yui/2.8.2/build/treeview/assets/skins/sam/treeview-skin.css");</style>');
+        $mform->addElement('html', '<style>@import url("'. $CFG->wwwroot .'/lib/yui/2.8.2/build/treeview/assets/skins/sam/treeview-skin.css");</style>'. $js);
 
         /**(use "git add" and/or "git commit -a")
          * JavaScript includes
@@ -547,8 +583,6 @@ class generalized_filter_clustertree extends generalized_filter_type {
         }
 
         $context_result = pm_context_set::for_user_with_capability('cluster', $capability, $USER->id);
-        $extrafilters = array('contexts' => $context_result, 'parent' => 0);
-        $num_records = cluster_count_records('', '', $extrafilters);
 
         /**
          * TreeView-related work
@@ -591,14 +625,22 @@ class generalized_filter_clustertree extends generalized_filter_type {
         $choices_array = array(0 => get_string('anyvalue', 'filters'));
 
         //set up cluster listing
-        if ($recordset = cluster_get_listing('name', 'ASC', 0, 0, '', '',
-                             array('contexts' => $context_result))) {
-            $records = $recordset->to_array();
+        if ($records = $this->cluster_dropdown_get_listing($context_result)) {
             foreach ($records as $record) {
-                if ($record->parent == 0) {
+                if (empty($choices_array[$record->id])) {
+                    if (count($choices_array) > 1) {
+                        $choices_array[-$record->id] = $cluster_group_separator;
+                    }
+                    $ancestors = $record->depth - 1;
+                    // shorten really long cluster names
+                    $name = (strlen($record->name) > 100)
+                            ? substr($record->name, 0, 100) .'...'
+                            : $record->name;
+                    $choices_array[$record->id] = $ancestors
+                            ? str_repeat('- ', $ancestors) . $name
+                            : $name;
                     //merge in child clusters
-                    $choices_array[$record->id] = $record->name;
-                    $child_array = $this->find_child_clusters($records, $record->id);
+                    $child_array = $this->find_child_clusters($records, $record->id, $ancestors);
                     $choices_array = $this->merge_array_keep_keys($choices_array, $child_array);
                 }
             }
@@ -632,7 +674,10 @@ class generalized_filter_clustertree extends generalized_filter_type {
         $mform->addElement('static', $this->_uniqueid .'_help', '');
 
         //cluster select dropdown
-        $mform->addElement('select', $this->_uniqueid .'_dropdown', $title, $choices_array);
+        $mform->addElement('select', $this->_uniqueid .'_dropdown', $title,
+                           $choices_array,
+                           array('onchange' =>
+                             'this.selectedIndex = dropdown_separator(this);'));
         //dropdown / cluster tree state storage
         $mform->addElement('hidden', $this->_uniqueid .'_usingdropdown');
         // Must use addHelpButton() to NOT open help link on page, but in popup!
@@ -695,9 +740,6 @@ class generalized_filter_clustertree extends generalized_filter_type {
         //accumulate the result here
         $results = array();
 
-        //needed for checking parent/child relationships
-        $cluster_context_level = context_level_base::get_custom_context_level('cluster', 'elis_program');
-
         if (isset($data['specific_clusterid'])) {
             //selected a single cluster
             return $this->_label .':<br/>'. $DB->get_field(userset::TABLE, 'name', array('id' => $data['specific_clusterid'])) .'<br/>';
@@ -725,9 +767,9 @@ class generalized_filter_clustertree extends generalized_filter_type {
         if (!empty($data['unexpanded_ids'])) {
             //the specific elements we are considering
             $list = implode(',', $data['unexpanded_ids']);
-            $params['cluster_context_level1'] = $cluster_context_level;
-            $params['cluster_context_level2'] = $cluster_context_level;
-            $params['cluster_context_level3'] = $cluster_context_level;
+            $params['cluster_context_level1'] = CONTEXT_ELIS_USERSET;
+            $params['cluster_context_level2'] = CONTEXT_ELIS_USERSET;
+            $params['cluster_context_level3'] = CONTEXT_ELIS_USERSET;
             $sql = 'SELECT c.name FROM {'. userset::TABLE ."} c
                     JOIN {context} ctxt
                       ON c.id = ctxt.instanceid
@@ -757,8 +799,8 @@ class generalized_filter_clustertree extends generalized_filter_type {
         //handle individually selected clusters without child elements
         if (!empty($data['clusterids'])) {
             $list = implode(',', $data['clusterids']);
-            $params['cluster_context_level1'] = $cluster_context_level;
-            $params['cluster_context_level2'] = $cluster_context_level;
+            $params['cluster_context_level1'] = CONTEXT_ELIS_USERSET;
+            $params['cluster_context_level2'] = CONTEXT_ELIS_USERSET;
             $sql = 'SELECT c.name FROM {'. userset::TABLE ."} c
                     JOIN {context} ctxt
                       ON c.id = ctxt.instanceid

@@ -43,10 +43,6 @@ class usersetclassification extends elis_data_object {
 
     var $verbose_name = 'userset_classification';
 
-    protected function get_field_context_level() {
-        return context_level_base::get_custom_context_level('cluster', 'elis_program');
-    }
-
     function __get($name) {
         if (strncmp($name,'param_',6) == 0) {
             $paramname = substr($name,6);
@@ -130,13 +126,15 @@ class usersetclassification extends elis_data_object {
             $cluster = $cluster->id;
         }
 
-        $context = get_context_instance(context_level_base::get_custom_context_level('cluster', 'elis_program'), $cluster);
+        $context = context_elis_userset::instance($cluster);
         $value = field_data::get_for_context_and_field($context, USERSET_CLASSIFICATION_FIELD);
-        if ($value->valid()) {
+        if (isset($value) && $value->valid()) {
             $value = $value->current();
             $name = $value->data;
             $newusersetclassification = usersetclassification::find(new field_filter('shortname', $name));
             return $newusersetclassification->current();
+        } else {
+            return false;
         }
 
     }

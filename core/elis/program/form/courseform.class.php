@@ -162,27 +162,8 @@ class cmCourseForm extends cmform {
         }
 
         // custom fields
-        $fields = field::get_for_context_level('course');
-        $fields = $fields ? $fields : array();
-
-        $lastcat = null;
-        $context = isset($this->_customdata['obj']) && isset($this->_customdata['obj']->id)
-            ? get_context_instance(context_level_base::get_custom_context_level('course', 'elis_program'), $this->_customdata['obj']->id)
-            : get_context_instance(CONTEXT_SYSTEM);
-
-        require_once(elis::plugin_file('elisfields_manual', 'custom_fields.php'));
-
-        foreach ($fields as $rec) {
-            $field = new field($rec);
-            if (!isset($field->owners['manual'])) {
-                continue;
-            }
-            if ($lastcat != $rec->categoryid) {
-                $lastcat = $rec->categoryid;
-                $mform->addElement('header', "category_{$lastcat}", htmlspecialchars($rec->categoryname));
-            }
-            manual_field_add_form_element($this, $mform, $context, $this->_customdata, $field);
-        }
+        $this->add_custom_fields('course', 'elis/program:course_edit',
+                                 'elis/program:course_view');
 
         $this->add_action_buttons();
 
@@ -215,6 +196,8 @@ class cmCourseForm extends cmform {
         if ($DB->record_exists_select(course::TABLE, $sql, $params)) {
             $errors['idnumber'] = get_string('idnumber_already_used', 'elis_program');
         }
+
+        $errors += parent::validate_custom_fields($data, 'course');
 
         return $errors;
     }

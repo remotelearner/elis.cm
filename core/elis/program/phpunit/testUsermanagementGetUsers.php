@@ -44,15 +44,24 @@ class usermanagementGetsUsersTest extends elis_database_test {
         require_once(elispm::lib('data/usermoodle.class.php'));
         require_once(elispm::lib('data/userset.class.php'));
 
-        return array(clusterassignment::TABLE => 'elis_program',
+        return array('elis_field' => 'elis_core',
+                     clusterassignment::TABLE => 'elis_program',
+                     'crlm_class_enrolment'   => 'elis_program',
+                     'crlm_curriculum_assignment' => 'elis_program',
+                     course::TABLE => 'elis_program',
                      user::TABLE => 'elis_program',
                      usermoodle::TABLE => 'elis_program',
+                     usertrack::TABLE  => 'elis_program',
                      userset::TABLE => 'elis_program',
                      'config' => 'moodle',
                      'context' => 'moodle',
+                     'course' => 'moodle',
+                     'enrol' => 'moodle',
                      'role' => 'moodle',
                      'role_assignments' => 'moodle',
-                     'user' => 'moodle');
+                     'role_capabilities' => 'moodle',
+                     'user' => 'moodle',
+                     'user_enrolments' => 'moodle');
     }
 
     /**
@@ -61,7 +70,33 @@ class usermanagementGetsUsersTest extends elis_database_test {
      * @return array The mapping of table names to componenets
      */
     static protected function get_ignored_tables() {
-        return array('cache_flags' => 'moodle');
+        return array('cache_flags' => 'moodle',
+                     'message'     => 'moodle');
+    }
+
+    /**
+     * Set up the course and context records needed for many of the
+     * unit tests
+     */
+    private function init_contexts_and_site_course() {
+        global $DB, $USER;
+
+        $prefix = self::$origdb->get_prefix();
+        $DB->execute("INSERT INTO {context}
+                      SELECT * FROM
+                      {$prefix}context
+                      WHERE contextlevel = ?", array(CONTEXT_SYSTEM));
+        $DB->execute("INSERT INTO {context}
+                      SELECT * FROM
+                      {$prefix}context
+                      WHERE contextlevel = ? and instanceid = ?", array(CONTEXT_COURSE, SITEID));
+        //set up the site course record
+        if ($record = self::$origdb->get_record('course', array('id' => SITEID))) {
+            unset($record->id);
+            $DB->insert_record('course', $record);
+        }
+
+        build_context_path();
     }
 
     /**
@@ -79,7 +114,7 @@ class usermanagementGetsUsersTest extends elis_database_test {
      * Set up some base user data
      */
     protected function set_up_users() {
-        global $DB, $USER; 
+        global $DB, $USER;
 
         require_once(elispm::lib('data/clusterassignment.class.php'));
         require_once(elispm::lib('data/user.class.php'));
@@ -107,11 +142,10 @@ class usermanagementGetsUsersTest extends elis_database_test {
         $syscontext = get_context_instance(CONTEXT_SYSTEM);
         $roleid = create_role('clusteradmin', 'clusteradmin', 'clusteradmin');
         assign_capability('elis/program:user_edit', CAP_ALLOW, $roleid, $syscontext->id);
-
         //assign the userset administrator an appropriate role on the userset
-        $userset_context_level = context_level_base::get_custom_context_level('cluster', 'elis_program');
-        $userset_context = get_context_instance($userset_context_level, 1);
-        role_assign($roleid, $USER->id, $userset_context->id);
+        $contextclass = context_elis_helper::get_class_for_level(CONTEXT_ELIS_USERSET);
+        $instance     = $contextclass::instance(1);
+        role_assign($roleid, $USER->id, $instance->id);
 
         //assign the user to the user set
         $clusterassignment = new clusterassignment(array('clusterid' => 1,
@@ -124,7 +158,7 @@ class usermanagementGetsUsersTest extends elis_database_test {
      * users in relation to userset permissions
      */
     public function testUsermanagementGetsUsersRespectsUsersetPermissions() {
-        global $USER, $DB, $UNITTEST;
+        global $USER, $DB;
 
         require_once(elispm::lib('lib.php'));
 
@@ -133,18 +167,11 @@ class usermanagementGetsUsersTest extends elis_database_test {
         set_config('siteadmins', '');
 
         //prevent accesslib caching
-        $UNITTEST->running = true;
-        accesslib_clear_all_caches_for_unit_testing();
-        unset($UNITTEST->running);
-
-        //need the site context
-        $DB->execute("INSERT INTO {context}
-                      SELECT *
-                      FROM ".self::$origdb->get_prefix()."context
-                      WHERE contextlevel = ?", array(CONTEXT_SYSTEM));
+        accesslib_clear_all_caches(true);
 
         //data setup
         $this->load_csv_data();
+        $this->init_contexts_and_site_course();
         $this->set_up_users();
 
         //the context set our user set administrator has access to
@@ -166,7 +193,7 @@ class usermanagementGetsUsersTest extends elis_database_test {
      * recordset in relation to userset permissions
      */
     public function testUsermanagementGetsUsersRecordsetRespectsUsersetPermissions() {
-        global $USER, $DB, $UNITTEST;
+        global $USER, $DB;
 
         require_once(elispm::lib('lib.php'));
 
@@ -175,18 +202,11 @@ class usermanagementGetsUsersTest extends elis_database_test {
         set_config('siteadmins', '');
 
         //prevent accesslib caching
-        $UNITTEST->running = true;
-        accesslib_clear_all_caches_for_unit_testing();
-        unset($UNITTEST->running);
-
-        //need the site context
-        $DB->execute("INSERT INTO {context}
-                      SELECT *
-                      FROM ".self::$origdb->get_prefix()."context
-                      WHERE contextlevel = ?", array(CONTEXT_SYSTEM));
+        accesslib_clear_all_caches(true);
 
         //data setup
         $this->load_csv_data();
+        $this->init_contexts_and_site_course();
         $this->set_up_users();
 
         //the context set our user set administrator has access to
@@ -205,7 +225,7 @@ class usermanagementGetsUsersTest extends elis_database_test {
      * users when applying userset permissions and an appropriate SQL filter
      */
     public function testUsermanagementGetsUsersRespectsFilters() {
-        global $USER, $DB, $UNITTEST;
+        global $USER, $DB;
 
         require_once(elispm::lib('data/clusterassignment.class.php'));
         require_once(elispm::lib('data/user.class.php'));
@@ -216,18 +236,11 @@ class usermanagementGetsUsersTest extends elis_database_test {
         set_config('siteadmins', '');
 
         //prevent accesslib caching
-        $UNITTEST->running = true;
-        accesslib_clear_all_caches_for_unit_testing();
-        unset($UNITTEST->running);
-
-        //need the site context
-        $DB->execute("INSERT INTO {context}
-                      SELECT *
-                      FROM ".self::$origdb->get_prefix()."context
-                      WHERE contextlevel = ?", array(CONTEXT_SYSTEM));
+        accesslib_clear_all_caches(true);
 
         //data setup
         $this->load_csv_data();
+        $this->init_contexts_and_site_course();
         $this->set_up_users();
 
         //assign a second user to the user set
@@ -264,7 +277,7 @@ class usermanagementGetsUsersTest extends elis_database_test {
      * recordset when applying userset permissions and an appropriate SQL filter
      */
     public function testUsermanagementGetsUsersRecordsetRespectsFilters() {
-        global $USER, $DB, $UNITTEST;
+        global $USER, $DB;
 
         require_once(elispm::lib('data/clusterassignment.class.php'));
         require_once(elispm::lib('data/user.class.php'));
@@ -275,18 +288,11 @@ class usermanagementGetsUsersTest extends elis_database_test {
         set_config('siteadmins', '');
 
         //prevent accesslib caching
-        $UNITTEST->running = true;
-        accesslib_clear_all_caches_for_unit_testing();
-        unset($UNITTEST->running);
-
-        //need the site context
-        $DB->execute("INSERT INTO {context}
-                      SELECT *
-                      FROM ".self::$origdb->get_prefix()."context
-                      WHERE contextlevel = ?", array(CONTEXT_SYSTEM));
+        accesslib_clear_all_caches(true);
 
         //data setup
         $this->load_csv_data();
+        $this->init_contexts_and_site_course();
         $this->set_up_users();
 
         //assign a second user to the user set

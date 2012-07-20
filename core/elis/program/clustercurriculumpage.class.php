@@ -72,16 +72,6 @@ class clustercurriculumbasepage extends associationpage {
         return clustercurriculumpage::$contexts[$capability];
     }
 
-    /*public function _get_page_context() {
-        $id = $this->optional_param('id', 0, PARAM_INT);
-        $action = $this->optional_param('action', 'default', PARAM_ACTION);
-
-        if ($id) {
-            return get_context_instance(context_level_base::get_custom_context_level('cluster', 'elis_program'), $id);
-        } else {
-            return parent::_get_page_context();
-        }
-    }*/
     function can_do_add() {
         // the user must have 'elis/program:associate' permissions on both ends
         $clusterid = $this->required_param('clusterid', PARAM_INT);
@@ -253,17 +243,6 @@ class clustercurriculumpage extends clustercurriculumbasepage {
     const CPY_CURR_CLS_PREFIX     = 'add_cls_curr_';
     const CPY_CURR_MDLCRS_PREFIX  = 'add_mdlcrs_curr_';
 
-    public function _get_page_context() {
-        $id = $this->optional_param('id', 0, PARAM_INT);
-        $action = $this->optional_param('action', 'default', PARAM_ACTION);
-
-        if ($id) {
-            return get_context_instance(context_level_base::get_custom_context_level('cluster', 'elis_program'), $id);
-        } else {
-            return parent::_get_page_context();
-        }
-    }
-
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
 
@@ -316,7 +295,7 @@ class clustercurriculumpage extends clustercurriculumbasepage {
         $sort_clause = $sort.' '.$dir;
         $items = clustercurriculum::get_curricula($id, 0, 0, $sort_clause);
 
-        $this->print_list_view($items, $columns);
+        $this->print_list_view($items, $columns, 'curricula');
 
         // find the curricula that the user can associate with this cluster
         $contexts = curriculumpage::get_contexts('elis/program:associate');
@@ -671,16 +650,6 @@ class curriculumclusterpage extends clustercurriculumbasepage {
 
     var $section = 'curr';
 
-    public function _get_page_context() {
-        $id = $this->optional_param('id', 0, PARAM_INT);
-        $action = $this->optional_param('action', 'default', PARAM_ACTION);
-
-        if ($id) {
-            return get_context_instance(context_level_base::get_custom_context_level('curriculum', 'elis_program'), $id);
-        } else {
-            return parent::_get_page_context();
-        }
-    }
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
 
@@ -725,7 +694,7 @@ class curriculumclusterpage extends clustercurriculumbasepage {
 
         $items = clustercurriculum::get_clusters($id, $parent_clusterid, $sort, $dir);
 
-        $this->print_list_view($items, $columns);
+        $this->print_list_view($items, $columns, 'clusters');
 
         $contexts = usersetpage::get_contexts('elis/program:associate');
         $clusters = cluster_get_listing('name', 'ASC', 0, 0, '', '', array('contexts' =>$contexts));

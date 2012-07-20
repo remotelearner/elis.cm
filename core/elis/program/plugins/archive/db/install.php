@@ -26,7 +26,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once(dirname(__FILE__).'/../../../../config.php');
+require_once(dirname(__FILE__).'/../../../../../config.php');
 global $CFG;
 require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 require_once elispm::file('plugins/archive/lib.php');
@@ -42,9 +42,6 @@ function xmldb_pmplugins_archive_install() {
     require_once elispm::lib('setup.php');
     require_once elis::lib('data/customfield.class.php');
 
-    //context level at which we are creating the new field(s)
-    $curriculum_ctx_lvl = context_level_base::get_custom_context_level('curriculum', 'elis_program');
-
     // Archive field
     $field = new field();
     $field->shortname = ARCHIVE_FIELD;
@@ -54,7 +51,7 @@ function xmldb_pmplugins_archive_install() {
     $category = new field_category();
     $category->name = get_string('archive_category_name', 'pmplugins_archive');
 
-    $field = field::ensure_field_exists_for_context_level($field, 'curriculum', $category);
+    $field = field::ensure_field_exists_for_context_level($field, CONTEXT_ELIS_PROGRAM, $category);
 
     // make sure 'manual' is an owner
     if (!isset($field->owners['manual'])) {

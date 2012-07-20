@@ -359,10 +359,9 @@ class student extends elis_data_object {
             $ra->roleid       = !empty($sturole)
                                 ? $sturole
                                 : $DB->get_field('role', 'id', array('shortname' => 'student'));
-            $ra->contextid    = context_level_base::get_custom_context_level('class', 'elis_program'); // TBD
+            $ra->contextid    = context_elis_class::instance($this->classid)->id;
             $ra->userid       = cm_get_moodleuserid($this->userid);
             $ra->component    = 'enrol_elis';
-            $ra->itemid       = $this->classid; // TBD
             $ra->timemodified = time();
             $ra->modifierid   = empty($USER->id) ? 0 : $USER->id;
             events_trigger('role_assigned', $ra);
@@ -485,6 +484,36 @@ class student extends elis_data_object {
                                      $perpage, $namesearch, $alpha);
     }
 
+   /**
+    * Get a listing of grade elements for a particular course
+    *
+    * @param int $courseid The course id
+    * @param int $classid The class id
+    * @param int $userid The user id
+    * @param string $sort The sorting field name
+    * @param string $dir The direction of sorting
+    * @return array The grade elements
+    */
+    public static function retrieve_grade_elements($courseid = 0, $classid, $userid, $sort, $dir) {
+        global $DB;
+
+        if (empty($DB)) {
+            return NULL;
+        }
+
+        $select  = 'SELECT cc.id, sg.id AS studentgradeid, cc.idnumber, sg.grade, sg.locked, sg.timegraded ';
+        $tables  = 'FROM {' . coursecompletion::TABLE . '} cc ';
+        $join    = 'LEFT JOIN {' . student_grade::TABLE . '} sg '.
+                    'ON sg.classid = ? AND sg.userid = ? AND cc.id = sg.completionid ';
+        $where   = 'WHERE cc.courseid = ? ';
+        $sort    = "ORDER BY {$sort} {$dir} ";
+        $params  = array($classid, $userid, $courseid);
+
+        $sql = $select.$tables.$join.$where.$sort;
+
+        return $DB->get_records_sql($sql, $params);
+    }
+
     /**
      * Return the HTML to edit a specific student.
      * This could be extended to allow for application specific editing,
@@ -495,7 +524,7 @@ class student extends elis_data_object {
      * @uses $PAGE
      * @return string The form HTML, without the form.
      */
-    function edit_form_html($classid, $type = '', $sort = 'name', $dir = 'ASC', $page = 0,
+    function edit_form_html($classid, $type = '', $sort = 'idnumber', $dir = 'ASC', $page = 0,
                             $perpage = 30, $namesearch = '', $alpha = '') {
                             // ^^^ set non-zero default for $perpage
         global $CFG, $OUTPUT, $PAGE;
@@ -535,9 +564,11 @@ class student extends elis_data_object {
         } else {
             $columns = array(
                 'idnumber'         => array('header' => get_string('student_idnumber', self::LANG_FILE),
-                                            'display_function' => 'htmltab_display_function'),
+                                            'display_function' => 'htmltab_display_function',
+                                            'sortable' => false),
                 'name'             => array('header' => get_string('student_name_1', self::LANG_FILE),
-                                            'display_function' => 'htmltab_display_function'),
+                                            'display_function' => 'htmltab_display_function',
+                                            'sortable' => false),
                 'enrolmenttime'    => array('header' => get_string('enrolment_time', self::LANG_FILE),
                                             'display_function' => 'htmltab_display_function',
                                             'sortable' => false),
@@ -557,16 +588,6 @@ class student extends elis_data_object {
                                             'display_function' => 'htmltab_display_function',
                                             'sortable' => false),
             );
-        }
-
-        if ($dir !== 'DESC') {
-            $dir = 'ASC';
-        }
-        if (isset($columns[$sort])) {
-            $columns[$sort]['sortable'] = $dir;
-        } else {
-            $sort = 'name';
-            $columns[$sort]['sortable'] = $dir;
         }
 
         $users = array();
@@ -697,39 +718,41 @@ class student extends elis_data_object {
         }
 
         if (isset($this->id)) {
-            if ($elements = $this->pmclass->course->get_completion_elements()) {
-                $select = 'classid = ? AND userid = ? ';
-                $grades = $this->_db->get_records_select(student_grade::TABLE, $select, array($this->classid, $this->userid), 'id', 'completionid,id,classid,userid,grade,locked,timegraded,timemodified');
-                $columns = array( // TBD
-                    'element'    => array('header' => get_string('grade_element', self::LANG_FILE),
+
+            $columns = array(
+                    'idnumber'    => array('header' => get_string('grade_element', self::LANG_FILE),
                                           'display_function' => 'htmltab_display_function'),
-                    'grade'      => array('header' => get_string('grade_element', self::LANG_FILE),
+                    'grade'      => array('header' => get_string('grade', self::LANG_FILE),
                                           'display_function' => 'htmltab_display_function'),
                     'locked'     => array('header' => get_string('student_locked', self::LANG_FILE),
                                           'display_function' => 'htmltab_display_function'),
                     'timegraded' => array('header' => get_string('date_graded', self::LANG_FILE),
                                           'display_function' => 'htmltab_display_function')
-                );
+            );
 
-                if ($dir !== 'DESC') {
-                    $dir = 'ASC';
-                }
-                if (isset($columns[$sort])) {
-                    $columns[$sort]['sortable'] = $dir;
-                } else {
-                    $sort = 'element'; // TBD
-                    $columns[$sort]['sortable'] = $dir;
-                }
+            if ($dir !== 'DESC') {
+                $dir = 'ASC';
+            }
+            if (isset($columns[$sort])) {
+                $columns[$sort]['sortable'] = $dir;
+            } else {
+                $sort = 'idnumber';
+                $columns[$sort]['sortable'] = $dir;
+            }
+
+            $elements = self::retrieve_grade_elements($this->pmclass->course->get_course_id(), $this->classid, $this->userid, $sort, $dir);
+
+            if ($elements) {
                 //$table->width = "100%"; // TBD
 
                 $newarr = array();
                 foreach ($elements as $element) {
                     $tabobj = new stdClass;
-                    foreach ($columns as $column => $cdesc) {
+                    foreach ($element as $column => $cdesc) {
                         switch ($column) {
-                            case 'element':
-                                if (isset($grades[$element->id])) {
-                                    $name = 'element['.$grades[$element->id]->id.']';
+                            case 'idnumber':
+                                if (isset($element->studentgradeid)) {
+                                    $name = 'element['.$element->studentgradeid.']';
                                     $value = $element->id;
                                 } else {
                                     $name = 'newelement['.$element->id.']';
@@ -740,9 +763,9 @@ class student extends elis_data_object {
                                 break;
 
                             case 'timegraded':
-                                if (isset($grades[$element->id])) {
-                                    $name = 'timegraded['.$grades[$element->id]->id.']';
-                                    $value = $grades[$element->id]->timegraded;
+                                if (isset($element->studentgradeid)) {
+                                    $name = 'timegraded['.$element->studentgradeid.']';
+                                    $value = $element->timegraded;
                                 } else {
                                     $name = 'newtimegraded['.$element->id.']';
                                     $value = 0;
@@ -754,9 +777,9 @@ class student extends elis_data_object {
                                 break;
 
                             case 'grade':
-                                if (isset($grades[$element->id])) {
-                                    $name = 'grade['.$grades[$element->id]->id.']';
-                                    $value = $grades[$element->id]->grade;
+                                if (isset($element->studentgradeid)) {
+                                 $name = 'grade['.$element->studentgradeid.']';
+                                    $value = $element->grade;
                                 } else {
                                     $name = 'newgrade['.$element->id.']';
                                     $value = 0;
@@ -766,9 +789,9 @@ class student extends elis_data_object {
                                 break;
 
                             case 'locked':
-                                if (isset($grades[$element->id])) {
-                                    $name = 'locked['.$grades[$element->id]->id.']';
-                                    $value = $grades[$element->id]->locked;
+                                if (isset($element->studentgradeid)) {
+                                    $name = 'locked['.$element->studentgradeid.']';
+                                    $value = $element->locked;
                                 } else {
                                     $name = 'newlocked['.$element->id.']';
                                     $value = 0;
@@ -2423,15 +2446,20 @@ function student_get_student_classes($userid, $curid = 0) {
  * in for a specific course in the system.
  *
  * @param int $crsid The course ID
+ * @param int $userid The PM user id whose enrolments we are considering
+ * @param string $sort The field to sort on
+ * @param string $dir The sort direction
  * @uses $DB
  * @return
  */
-function student_get_class_from_course($crsid, $userid) {
+function student_get_class_from_course($crsid, $userid, $sort = 'cls.idnumber', $dir = 'ASC') {
     global $DB;
+
     $sql = 'SELECT cls.*, stu.enrolmenttime, stu.completetime, stu.completestatusid, stu.grade
             FROM {'. student::TABLE .'} stu
             INNER JOIN {'. pmclass::TABLE .'} cls ON stu.classid = cls.id
             WHERE stu.userid = ?
-            AND cls.courseid = ? ';
+            AND cls.courseid = ? 
+            ORDER BY '.$sort.' '.$dir;
     return $DB->get_records_sql($sql, array($userid, $crsid));
 }

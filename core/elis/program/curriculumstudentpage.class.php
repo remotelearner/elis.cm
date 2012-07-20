@@ -57,15 +57,6 @@ class studentcurriculumpage extends associationpage2 {
         parent::__construct($params);
     }
 
-    public function _get_page_context() {
-        $id = $this->optional_param('id', 0, PARAM_INT);
-        if ($id) {
-            return get_context_instance(context_level_base::get_custom_context_level('user', 'elis_program'), $id);
-        } else {
-            return parent::_get_page_context();
-        }
-    }
-
     public function _get_page_params() {
         $params = parent::_get_page_params();
 
@@ -137,7 +128,7 @@ class studentcurriculumpage extends associationpage2 {
     protected function get_context() {
         if (!isset($this->context)) {
             $id = isset($this->params['id']) ? $this->params['id'] : required_param('id', PARAM_INT);
-            $this->context = get_context_instance(context_level_base::get_custom_context_level('user', 'elis_program'), $id);
+            $this->context = context_elis_user::instance($id);
         }
         return $this->context;
     }
@@ -500,15 +491,6 @@ class curriculumstudentpage extends associationpage2 {
         parent::__construct($params);
     }
 
-    public function _get_page_context() {
-        $id = $this->optional_param('id', 0, PARAM_INT);
-        if ($id) {
-            return get_context_instance(context_level_base::get_custom_context_level('curriculum', 'elis_program'), $id);
-        } else {
-            return parent::_get_page_context();
-        }
-    }
-
     public function _get_page_params() {
         return array('id' => $this->optional_param('id', 0, PARAM_INT)) + parent::_get_page_params();
     }
@@ -529,7 +511,7 @@ class curriculumstudentpage extends associationpage2 {
     protected function get_context() {
         if (!isset($this->context)) {
             $id = required_param('id', PARAM_INT);
-            $this->context = get_context_instance(context_level_base::get_custom_context_level('curriculum', 'elis_program'), $id);
+            $this->context = context_elis_program::instance($id);
         }
         return $this->context;
     }

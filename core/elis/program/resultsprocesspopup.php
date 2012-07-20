@@ -34,10 +34,8 @@ $id = required_param('id', PARAM_INT);
 require_login();
 
 $context = get_context_instance_by_id($id);
-$classlevel  = context_level_base::get_custom_context_level('class', 'elis_program');
-$courselevel = context_level_base::get_custom_context_level('course', 'elis_program');
 
-if ((! $context) || (($context->contextlevel != $classlevel) && ($context->contextlevel != $courselevel))) {
+if ((! $context) || (($context->contextlevel != CONTEXT_ELIS_CLASS) && ($context->contextlevel != CONTEXT_ELIS_COURSE))) {
     print_string('results_unknown_classcourse', RESULTS_ENGINE_LANG_FILE);
     exit;
 }
@@ -46,7 +44,7 @@ $capability = 'elis/program:course_edit';
 $table      = 'crlm_course';
 $fields     = 'id, name as idnumber';
 
-if ($context->contextlevel == $classlevel) {
+if ($context->contextlevel == CONTEXT_ELIS_CLASS) {
     $capability = 'elis/program:class_edit';
     $table      = 'crlm_class';
     $fields     = 'id, idnumber';

@@ -35,6 +35,7 @@ class class_reportlinkspage extends pm_page {
 
     var $pagename = 'replnk';
     var $tab_page = 'pmclasspage';
+    var $section = 'curr';
 
     function build_navbar_default() {
         global $CFG;

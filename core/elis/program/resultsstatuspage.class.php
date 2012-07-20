@@ -237,9 +237,7 @@ class course_enginestatuspage extends enginestatuspage {
         if (!isset($this->context)) {
             $id = $this->required_param('id', PARAM_INT);
 
-            $context_level = context_level_base::get_custom_context_level('course', 'elis_program');
-            $context_instance = get_context_instance($context_level, $id);
-            $this->set_context($context_instance);
+            $this->set_context(context_elis_course::instance($id));
         }
         return $this->context;
     }
@@ -339,9 +337,7 @@ class class_enginestatuspage extends enginestatuspage {
         if (!isset($this->context)) {
             $id = $this->required_param('id', PARAM_INT);
 
-            $context_level = context_level_base::get_custom_context_level('class', 'elis_program');
-            $context_instance = get_context_instance($context_level, $id);
-            $this->set_context($context_instance);
+            $this->set_context(context_elis_class::instance($id));
         }
         return $this->context;
     }

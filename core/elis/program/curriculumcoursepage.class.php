@@ -84,6 +84,15 @@ class curriculumcoursebasepage extends associationpage {
         return $this->can_do_edit();
     }
 
+    function has_associate_and_manage_capability() {
+        if (has_capability('elis/program:associate', $this->_get_page_context()) ||
+            //manage is deprecated but kept for consistency
+            has_capability('elis/program:manage', $this->_get_page_context())) {
+            return true;
+        }
+        return false;
+    }
+
 }
 
 class curriculumcoursepage extends curriculumcoursebasepage {
@@ -97,17 +106,12 @@ class curriculumcoursepage extends curriculumcoursebasepage {
 
     var $parent_data_class = 'curriculum';
 
-    public function _get_page_context() {
-        $id = $this->optional_param('id', 0, PARAM_INT);
-        if ($id) {
-            return get_context_instance(context_level_base::get_custom_context_level('curriculum', 'elis_program'), $id);
-        } else {
-            return parent::_get_page_context();
-        }
-    }
-
     public function _get_page_params() {
         return array('id' => $this->optional_param('id', 0, PARAM_INT)) + parent::_get_page_params();
+    }
+
+    function has_program_view_capability() {
+        return has_capability('elis/program:program_view', $this->_get_page_context());
     }
 
     function can_do_default() {
@@ -182,9 +186,11 @@ class curriculumcoursepage extends curriculumcoursebasepage {
         $this->print_alpha();
         $this->print_search();
 
-        $this->print_list_view($items, $columns);
+        $this->print_list_view($items, $columns, 'courses');
 
-        $this->print_add_button(array('id' => $id), get_string('curriculumcourse_assigncourse','elis_program'));
+        if (parent::has_associate_and_manage_capability()) {
+            $this->print_add_button(array('id' => $id), get_string('curriculumcourse_assigncourse','elis_program'));
+        }
     }
 
     function display_prereqedit() {
@@ -333,15 +339,6 @@ class coursecurriculumpage extends curriculumcoursebasepage {
 
     var $parent_data_class = 'course';
 
-    public function _get_page_context() {
-        $id = $this->optional_param('id', 0, PARAM_INT);
-        if ($id) {
-            return get_context_instance(context_level_base::get_custom_context_level('course', 'elis_program'), $id);
-        } else {
-            return parent::_get_page_context();
-        }
-    }
-
     public function _get_page_params() {
         return array('id' => $this->optional_param('id', 0, PARAM_INT)) + parent::_get_page_params();
     }
@@ -349,7 +346,7 @@ class coursecurriculumpage extends curriculumcoursebasepage {
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
 
-        if (coursepage::_has_capability('elis/program:course_view', $id)) {
+        if (coursepage::_has_capability('elis/program:program_view', $id)) {
             //allow viewing but not managing associations
         	return true;
         }
@@ -391,15 +388,24 @@ class coursecurriculumpage extends curriculumcoursebasepage {
         $this->print_alpha();
         $this->print_search();
 
-        $this->print_list_view($items, $columns);
+        $this->print_list_view($items, $columns, 'curricula');
 
-        $this->print_add_button(array('id' => $id), get_string('course_assigncurriculum', 'elis_program'));
+        if (parent::has_associate_and_manage_capability()) {
+            $this->print_add_button(array('id' => $id), get_string('course_assigncurriculum', 'elis_program'));
+        }
 
-        echo '<div align="center">';
-        $options = array_merge(array('s' => 'cfc', 'id' => $id));
-        $button = new single_button(new moodle_url('index.php', $options), get_string('makecurcourse','elis_program'), 'get', array('disabled'=>false, 'title'=>get_string('makecurcourse','elis_program'), 'id'=>''));
-        echo $OUTPUT->render($button);
-        echo '</div>';
+        if ($this->has_program_create_capability()) {
+            echo '<div align="center">';
+            $options = array_merge(array('s' => 'cfc', 'id' => $id, 'cfccourseid' => $id));
+            $button = new single_button(new moodle_url('index.php', $options), get_string('makecurcourse','elis_program'), 'get', array('disabled'=>false, 'title'=>get_string('makecurcourse','elis_program'), 'id'=>''));
+            echo $OUTPUT->render($button);
+            echo '</div>';
+        }
+    }
+
+
+    function has_program_create_capability() {
+        return has_capability('elis/program:program_create', $this->_get_page_context());
     }
 
     // disable prereq/coreq editing from the course page

@@ -1,8 +1,8 @@
-diff --git a/admin/uploaduser.php b/admin/uploaduser.php
-index 4e3214c..5a05b66 100644
---- a/admin/uploaduser.php
-+++ b/admin/uploaduser.php
-@@ -67,6 +67,11 @@ $strusernotdeletedadmin     = get_string('usernotdeletedadmin', 'error');
+diff --git a/admin/tool/uploaduser/index.php b/admin/tool/uploaduser/index.php
+index 633b5f2..469efa4 100644
+--- a/admin/tool/uploaduser/index.php
++++ b/admin/tool/uploaduser/index.php
+@@ -68,6 +68,11 @@ $strusernotdeletedadmin     = get_string('usernotdeletedadmin', 'error');
  $strcannotassignrole        = get_string('cannotassignrole', 'error');
  
  $struserauthunsupported     = get_string('userauthunsupported', 'error');
@@ -14,7 +14,7 @@ index 4e3214c..5a05b66 100644
  $stremailduplicate          = get_string('useremailduplicate', 'error');
  
  $strinvalidpasswordpolicy   = get_string('invalidpasswordpolicy', 'error');
-@@ -494,7 +499,35 @@ if ($formdata = $mform2->is_cancelled()) {
+@@ -507,7 +512,35 @@ if ($formdata = $mform2->is_cancelled()) {
                          }
                      }
                      if ($existinguser->$column !== $user->$column) {
@@ -51,7 +51,7 @@ index 4e3214c..5a05b66 100644
                              if ($DB->record_exists('user', array('email'=>$user->email))) {
                                  if ($noemailduplicates) {
                                      $upt->track('email', $stremailduplicate, 'error');
-@@ -618,6 +651,30 @@ if ($formdata = $mform2->is_cancelled()) {
+@@ -656,6 +689,30 @@ if ($formdata = $mform2->is_cancelled()) {
  
              $isinternalauth = $auth->is_internal();
  

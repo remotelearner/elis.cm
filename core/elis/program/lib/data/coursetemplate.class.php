@@ -42,10 +42,6 @@ class coursetemplate extends elis_data_object {
     protected $_dbfield_location;
     protected $_dbfield_templateclass;
 
-    protected function get_field_context_level() {
-        return context_level_base::get_custom_context_level('course', 'elis_program');
-    }
-
     /**
      * Deprecated: this method should no longer be used!
      * Instead use:

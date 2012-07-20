@@ -62,8 +62,6 @@ class waitlist extends elis_data_object {
     protected $_dbfield_timecreated;
     protected $_dbfield_timemodified;
     protected $_dbfield_position;
-    //protected $_dbfield_enrolmenttime;
-    var $enrolmenttime; // TBD: not in table so not _dbfield_enrolmenttime???
 
     static $associations = array(
         'user'   => array('class' => 'user',

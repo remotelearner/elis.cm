@@ -54,3 +54,11 @@ function class_bulkedit_set_all_selected() {
     }
   }
 }
+
+function class_confirm_unlink(selectedelement,message) {
+  if(selectedelement.checked == true){
+	  return confirm(message);
+  } else {
+	  return true;
+  }
+}

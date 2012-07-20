@@ -88,8 +88,8 @@ class associationpage extends pm_page {
         if (!empty($association_id)) {
             $params['association_id'] = $association_id;
         }
-        if ($curid = $this->optional_param('curid', 0, PARAM_INT)) {
-            $params['curid'] = $curid;
+        if ($parentid = $this->optional_param('parent', 0, PARAM_INT)) {
+            $params['parent'] = $parentid;
         }
         $this->get_tab_page()->print_tabs($action, $params);
     }
@@ -210,6 +210,8 @@ class associationpage extends pm_page {
         $id             = $this->required_param('id', PARAM_INT);
         $obj            = new $this->data_class($association_id);
         $parent_obj     = new $this->parent_data_class($id);
+        $sort           = optional_param('sort', 'idnumber', PARAM_ALPHA);
+        $dir            = optional_param('dir', 'ASC', PARAM_ALPHA);
 
         /*if(!$obj->get_dbloaded()) { // TBD
             $sparam = new stdClass;
@@ -218,7 +220,7 @@ class associationpage extends pm_page {
         }*/
         $obj->load();
         //error_log("associationpage::display_edit(): obj->id = {$obj->id}");
-        $this->print_edit_form($obj, $parent_obj);
+        $this->print_edit_form($obj, $parent_obj, $sort, $dir);
     }
 
     /**
@@ -238,8 +240,8 @@ class associationpage extends pm_page {
     function do_edit() {
         $association_id = $this->required_param('association_id', PARAM_INT);
         $params = array('action' => 'edit', 'association_id' => $association_id);
-        if ($curid = $this->optional_param('curid', 0, PARAM_INT)) {
-            $params['curid'] = $curid;
+        if ($parentid = $this->optional_param('parent', 0, PARAM_INT)) {
+            $params['parent'] = $parentid;
         }
 
         $target = $this->get_new_page($params, true);
@@ -252,8 +254,8 @@ class associationpage extends pm_page {
         $parent_obj->load();
 
         $params = array('action' => 'default', 'id' => $id);
-        if ($curid) {
-            $params['curid'] = $curid;
+        if ($parentid) {
+            $params['parent'] = $parentid;
         }
         $form = new $this->form_class($target->url, array('obj' => $obj->to_object(),
                                                           'parent_obj' => $parent_obj->to_object()));
@@ -285,8 +287,8 @@ class associationpage extends pm_page {
     function print_edit_form($obj, $parent_obj) {
         $parent_id = $this->required_param('id', PARAM_INT);
         $params = array('action' => 'edit', 'id' => $parent_id, 'association_id' => $obj->id);
-        if ($curid = $this->optional_param('curid', 0, PARAM_INT)) {
-            $params['curid'] = $curid;
+        if ($parentid = $this->optional_param('parent', 0, PARAM_INT)) {
+            $params['parent'] = $parentid;
         }
         $target = $this->get_new_page($params);
 
@@ -302,8 +304,8 @@ class associationpage extends pm_page {
         $parent_id = $this->required_param('id', PARAM_INT);
         $parent_obj = new $this->parent_data_class($parent_id);
         $params = array('action' => 'savenew', 'id' => $parent_id);
-        if ($curid = $this->optional_param('curid', 0, PARAM_INT)) {
-            $params['curid'] = $curid;
+        if ($parentid = $this->optional_param('parent', 0, PARAM_INT)) {
+            $params['parent'] = $parentid;
         }
         $target = $this->get_new_page($params);
 
@@ -320,8 +322,8 @@ class associationpage extends pm_page {
             //$obj->set_from_data($data);
             $obj->save();
             $params = array('action' => 'default', 'id' => $parent_id);
-            if ($curid) {
-                $params['curid'] = $curid;
+            if ($parentid) {
+                $params['parent'] = $parentid;
             }
             $target = $this->get_new_page($params, true);
             redirect($target->url, ucwords($obj->get_verbose_name())  . ' ' . $obj->__toString() . ' saved.');
@@ -341,8 +343,8 @@ class associationpage extends pm_page {
         $association_id = $this->required_param('association_id', PARAM_INT);
         $obj = new $this->data_class($association_id);
         $params = array('action' => 'update');
-        if ($curid = $this->optional_param('curid', 0, PARAM_INT)) {
-            $params['curid'] = $curid;
+        if ($parentid = $this->optional_param('parent', 0, PARAM_INT)) {
+            $params['parent'] = $parentid;
         }
         $target = $this->get_new_page($params);
 
@@ -358,8 +360,8 @@ class associationpage extends pm_page {
             $obj->set_from_data($data);
             $obj->save();
             $params = array('action' => 'default', 'id' => $parent_id);
-            if ($curid) {
-                $params['curid'] = $curid;
+            if ($parentid) {
+                $params['parent'] = $parentid;
             }
             $target = $this->get_new_page($params);
             redirect($target->url, ucwords($obj->get_verbose_name())  . ' ' . $obj->__toString() . ' updated.');
@@ -383,8 +385,8 @@ class associationpage extends pm_page {
         //parent::build_navbar_default();
         $id = $this->required_param('id', PARAM_INT);
         $params = array('action' => 'view', 'id' => $id);
-        if ($curid = $this->optional_param('curid', 0, PARAM_INT)) { // this?
-            $params['curid'] = $curid;
+        if ($parentid = $this->optional_param('parent', 0, PARAM_INT)) { // this?
+            $params['parent'] = $parentid;
         }
         $tabpage = $this->get_tab_page($params);
         $tabpage->build_navbar_view();
@@ -455,8 +457,8 @@ class associationpage extends pm_page {
         $returnurl = $this->optional_param('return_url', null, PARAM_URL);
         if ($returnurl === null) {
             $params = array('id' => $id);
-            if ($curid = $this->optional_param('curid', 0, PARAM_INT)) {
-                $params['curid'] = $curid;
+            if ($parentid = $this->optional_param('parent', 0, PARAM_INT)) {
+                $params['parent'] = $parentid;
             }
             $target_page = $this->get_new_page($params, true);
             $returnurl = $target_page->url;
@@ -472,14 +474,31 @@ class associationpage extends pm_page {
      * Prints out the page that displays a list of records returned from a query.
      * @param $items array of records to print
      * @param $columns associative array of column id => column heading text
+     * @param $itemstr language string idenitifer for object - default = 'items'
      */
-    function print_list_view($items, $columns) { // TBD
+    function print_list_view($items, $columns, $itemstr = 'items') { // TBD
         global $CFG;
 
         $id = $this->required_param('id', PARAM_INT);
+        $search = optional_param('search', null, PARAM_CLEAN);
+        $alpha = optional_param('alpha', null, PARAM_ALPHA);
 
-        if (empty($items)) {
-            echo '<div>' . get_string('none', self::LANG_FILE) . '</div>';
+        //todo: make usersetassignmentpage consistent with other pages and
+        //change all pages to use recordsets
+        $empty = empty($items) || $items instanceof Iterator && !$items->valid();
+
+        if ($empty) {
+            $a = new stdClass;
+
+            //determining if we are searching
+            $is_searching = $alpha || $search;
+
+            //display the appropriate "no items found" message
+            $a->search = $is_searching ? get_string('matchingsearch', 'elis_program') : '';
+            $a->obj = get_string($itemstr, 'elis_program');
+
+            //display the appropriate message in a div
+            echo html_writer::tag('div', get_string('noitems', 'elis_program', $a));
             return;
         }
 
@@ -622,8 +641,8 @@ class association_page_table extends display_table {
     function get_item_display_buttons($column, $item) {
         $id = required_param('id', PARAM_INT);
         $params = array('id' => $id, 'association_id' => $item->id);
-        if ($curid = optional_param('curid', 0, PARAM_INT)) {
-            $params['curid'] = $curid;
+        if ($parentid = optional_param('parent', 0, PARAM_INT)) {
+            $params['parent'] = $parentid;
         }
         return $this->page->get_buttons($params);
     }

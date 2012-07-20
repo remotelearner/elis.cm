@@ -61,8 +61,8 @@ class instructorpage extends associationpage {
     }
 
     function can_do_add() {
-        $id = $this->required_param('id');
-        $users = optional_param('users', array(), PARAM_CLEAN);
+        $id    = $this->required_param('id');
+        $users = pm_process_user_enrolment_data();
 
         foreach($users as $uid => $user) {
             if(!instructor::can_manage_assoc($uid, $id)) {
@@ -205,8 +205,8 @@ class instructorpage extends associationpage {
     }
 
     function do_savenew() { // action_savenew
-        $users = cm_get_param('users', array());
         $clsid = required_param('id', PARAM_INT);
+        $users = pm_process_user_enrolment_data(); // ELIS-4089 -- JJF
 
         if (!empty($users)) {
             foreach ($users as $uid => $user) {

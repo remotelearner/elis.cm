@@ -48,7 +48,7 @@ function cluster_moodle_profile_edit_form($form, $mform, $clusterid) {
     global $CFG, $DB, $PAGE;
 
 /// Only get--at most--two profile field associations for this cluster.
-    if(empty($clusterid)) {
+    if (empty($clusterid)) {
         $prof_fields = null;
     } else {
         $prof_fields = userset_profile::find(new field_filter('clusterid', $clusterid), array(), 0, 2);
@@ -77,7 +77,7 @@ function cluster_moodle_profile_edit_form($form, $mform, $clusterid) {
         /// Retrieve the profile value, if set
         $value = null;
         $value_js = 'null';
-        if(isset($mform->_defaultValues['profile_value'.$i])) {
+        if (isset($mform->_defaultValues['profile_value'.$i])) {
             $value = $mform->_defaultValues['profile_value'.$i];
             /// Create an appropriate value for passing to Javascript
             $value_js = "'" . str_replace("'", "\\'", $value) . "'";
@@ -85,7 +85,7 @@ function cluster_moodle_profile_edit_form($form, $mform, $clusterid) {
 
         /// Determine if the profile field is of type "text" as it affects the behaviour
 
-        if(!empty($prof_field->fieldid)) {
+        if (!empty($prof_field->fieldid)) {
             $datatype = $DB->get_field('user_info_field', 'datatype', array('id' => $prof_field->fieldid));
             $originallyText = ($datatype == 'text') ? 'true' : 'false';
             $data = array("profile_field{$i}" => $prof_field->fieldid);
@@ -104,8 +104,10 @@ function cluster_moodle_profile_edit_form($form, $mform, $clusterid) {
         }
 
         /// Add field options to form
+        // TBD: hack below is because $mform->isFrozen() ... didn't work!
+        $isfrozen = optional_param('action', '', PARAM_CLEAN) == 'view';
 
-        $mform->addElement('static', '', get_string('set_to', 'usersetenrol_moodle_profile'), html_writer::start_tag('div', array('id' => "cluster_profile_div{$i}")) . get_moodle_profile_field_options($prof_field, "profile_value{$i}", $value) . html_writer::end_tag('div'));
+        $mform->addElement('static', '', get_string('set_to', 'usersetenrol_moodle_profile'), html_writer::start_tag('div', array('id' => "cluster_profile_div{$i}")) . get_moodle_profile_field_options($prof_field, "profile_value{$i}", $value, $isfrozen) . html_writer::end_tag('div'));
     }
 }
 
@@ -115,17 +117,18 @@ function cluster_moodle_profile_edit_form($form, $mform, $clusterid) {
  * @param  stdClass  $prof_field      an object containing the appropriate field id
  * @param  int       $elementid       the index of the association we are referring to (1 or 2)
  * @param  string    $existing_value  a pre-set value for the element
+ * @param  bool      $frozen          true if form is frozen, false (default) otherwise
  * @return string                     HTML representing the necessary input element
  */
-function get_moodle_profile_field_options($prof_field, $elementid, $existing_value=null) {
+function get_moodle_profile_field_options($prof_field, $elementid, $existing_value=null, $frozen = false) {
     global $DB;
 
-    if(empty($prof_field->fieldid)) {
+    //error_log("get_moodle_profile_field_options(prof_field(obj), elementid = {$elementid}, existing_value = {$existing_value}, frozen = {$frozen});");
+    if (empty($prof_field->fieldid)) {
         return get_string('option_profile_field', 'usersetenrol_moodle_profile');
     }
 
     $fieldid = $prof_field->fieldid;
-
     $fields = $DB->get_record('user_info_field', array('id' => $fieldid));
 
     if (empty($fields)) {
@@ -134,7 +137,6 @@ function get_moodle_profile_field_options($prof_field, $elementid, $existing_val
 
     switch ($fields->datatype) {
     case 'menu':
-
         $return_html = '';
 
         //create the list of possible options
@@ -146,8 +148,12 @@ function get_moodle_profile_field_options($prof_field, $elementid, $existing_val
 
         //set up the default value
         $default = htmlspecialchars($fields->defaultdata);
-        if($existing_value !== null) {
+        if ($existing_value !== null) {
             $default = htmlspecialchars($existing_value);
+        }
+
+        if ($frozen) {
+            break;
         }
 
         //create and return the appropriate HTML
@@ -155,38 +161,45 @@ function get_moodle_profile_field_options($prof_field, $elementid, $existing_val
             $selected = ($value == $default ? ' selected' : '');
             $return_html .= "<option value=\"$value\"$selected>$display</option>\n";
         }
-        $return_html = '<select id="' . $elementid . '" name="' . $elementid . '">' . $return_html . '</select>';
+        $return_html = '<select id="'. $elementid .'" name="'. $elementid .'">'. $return_html .'</select>';
         return $return_html;
 
     case 'checkbox':
-
         //set up the default value
         $default = htmlspecialchars($fields->defaultdata);
-        if($existing_value !== null) {
+        if ($existing_value !== null) {
             $default = htmlspecialchars($existing_value);
         }
 
         //set up and return the appropriate HTML
         $checked = !empty($default) ? 'checked="checked"' : '';
+        if ($frozen) {
+            $checked .= ' disabled="disabled"';
+        }
 
-        return '<input type="checkbox" id="' . $elementid . '" name="' . $elementid . '"' . $checked . '/>';
+        return '<input type="checkbox" id="'. $elementid .'" name="'. $elementid .'"'. $checked .'/>';
 
     case 'text';
-
         //set up the default value, based only on an actual set value
         $default = '';
-        if($existing_value !== null) {
+        if ($existing_value !== null) {
             $default = htmlspecialchars($existing_value);
         }
 
+        if ($frozen) {
+            break;
+        }
+
         //set up and return the appropriate HTML
-        return '<input type="text" id ="' . $elementid . '" name="' . $elementid . '" value="' . $default . '"/>';
+        return '<input type="text" id ="'. $elementid .'" name="'. $elementid .'" value="'. $default .'"/>';
 
     default:
-
         //this should never happen, as only the types listed above are supported
         return '';
     }
+
+    // Frozen form return
+    return $default;
 }
 
 function userset_moodle_profile_update($cluster) {
@@ -296,6 +309,9 @@ function cluster_profile_update_handler($userdata) {
     // make sure a CM user exists
     pm_moodle_user_to_pm($userdata);
 
+    if (!isset($userdata->id)) {
+        return true;
+    }
     $cuid = pm_get_crlmuserid($userdata->id);
 
     if (empty($cuid)) {

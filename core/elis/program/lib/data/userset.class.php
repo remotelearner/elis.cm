@@ -66,7 +66,7 @@ class userset extends data_object_with_custom_fields {
     const ENROL_PLUGIN_TYPE = 'usersetenrol';
 
     protected function get_field_context_level() {
-        return context_level_base::get_custom_context_level('cluster', 'elis_program');
+        return CONTEXT_ELIS_USERSET;
     }
 
     /**
@@ -112,8 +112,10 @@ class userset extends data_object_with_custom_fields {
             parent::delete();
 
             //delete this cluster's context
-            $level = context_level_base::get_custom_context_level('cluster', 'elis_program');
-            delete_context($level, $this->id);
+            //get a new context instance,
+            $contextclass = context_elis_helper::get_class_for_level(CONTEXT_ELIS_USERSET);
+            $userset_context = $contextclass::instance($this->id);
+            $userset_context->delete();
 
             return;
         }
@@ -122,15 +124,14 @@ class userset extends data_object_with_custom_fields {
         $children = array();
         $delete_ids = array();
         $promote_ids = array();
-        $cluster_context_level = context_level_base::get_custom_context_level('cluster', 'elis_program');
 
         /// Figure out all the sub-clusters
-        $cluster_context_instance = get_context_instance($cluster_context_level, $this->id);
+        $cluster_context_instance = context_elis_userset::instance($this->id);
         $instance_id = $cluster_context_instance->id;
         $instance_path = $cluster_context_instance->path;
         $children = userset::find(new join_filter('id', 'context', 'instanceid',
                                                   new AND_filter(array(new field_filter('path', "{$instance_path}/%", field_filter::LIKE),
-                                                                       new field_filter('contextlevel', $cluster_context_level)))),
+                                                                       new field_filter('contextlevel', CONTEXT_ELIS_USERSET)))),
                                   array('id' => 'DESC'), 0, 0, $this->_db);
         $children = $children->to_array();
 
@@ -164,7 +165,7 @@ class userset extends data_object_with_custom_fields {
                 $sql = "UPDATE {context}
                         SET depth=0, path=NULL
                         WHERE contextlevel=? AND instanceid=?";
-                $this->_db->execute($sql, array($cluster_context_level, $child->id));
+                $this->_db->execute($sql, array(CONTEXT_ELIS_USERSET, $child->id));
             }
             build_context_path(); // Re-build the context table for all sub-clusters
         }
@@ -209,8 +210,7 @@ class userset extends data_object_with_custom_fields {
         parent::save();
 
         if (isset($old) && $this->parent != $old->parent) {
-            $cluster_context_level = context_level_base::get_custom_context_level('cluster', 'elis_program');
-            $cluster_context_instance = get_context_instance($cluster_context_level, $this->id);
+            $cluster_context_instance = context_elis_userset::instance($this->id);
 
             // find all subclusters and adjust their depth
             $delta_depth = $this->depth - $old->depth;
@@ -221,7 +221,7 @@ class userset extends data_object_with_custom_fields {
                                     FROM {context}
                                    WHERE contextlevel = ?
                                      AND {$LIKE})";
-            $this->_db->execute($sql, array($delta_depth, $cluster_context_level,
+            $this->_db->execute($sql, array($delta_depth, CONTEXT_ELIS_USERSET,
                                             "{$cluster_context_instance->path}/%"));
 
             // Blank out the depth and path for associated records and child records in context table
@@ -336,32 +336,36 @@ class userset extends data_object_with_custom_fields {
         global $USER, $DB;
 
         //get the clusters and check the context against them
-        $cluster_context_level = context_level_base::get_custom_context_level('cluster', 'elis_program');
-        $cluster_context_instance = get_context_instance($cluster_context_level, $clusterid);
+        $cluster_context_instance = context_elis_userset::instance($clusterid);
 
-        $path = $DB->sql_concat('ctxt.path', "'/%'");
+        // ELIS-3848 -- Use named parameters otherwise array += array doesn't work correctly
+        $path = $DB->sql_concat('ctxt.path', ':pathwildcard');
 
         //query to get parent cluster contexts
         $cluster_permissions_sql = 'SELECT clst.*
                                     FROM {' . self::TABLE . "} clst
                                     JOIN {context} ctxt
                                          ON clst.id = ctxt.instanceid
-                                         AND ctxt.contextlevel = ?
-                                         AND ? LIKE {$path} ";
+                                         AND ctxt.contextlevel = :ctxlevel
+                                         AND :ctxpath LIKE {$path} ";
 
-        $params = array($cluster_context_level, $cluster_context_instance->path);
+        $params = array(
+            'ctxlevel'     => CONTEXT_ELIS_USERSET,
+            'ctxpath'      => $cluster_context_instance->path,
+            'pathwildcard' => '/%'
+        );
 
         // filter out the records that the user can't see
         $context = pm_context_set::for_user_with_capability('cluster', 'elis/program:userset_enrol_userset_user', $USER->id);
-        $filtersql = $context->get_filter('id')->get_sql(true, 'clst');
+        $filtersql = $context->get_filter('id')->get_sql(true, 'clst', SQL_PARAMS_NAMED);
 
         if (isset($filtersql['join'])) {
             $cluster_permission_sql .= $filtersql['join'];
-            $params += $filtersql['join_params'];
+            $params = array_merge($params, $filtersql['join_params']);
         }
         if (isset($filtersql['where'])) {
             $cluster_permissions_sql .= ' WHERE ' . $filtersql['where'];
-            $params += $filtersql['where_parameters'];
+            $params = array_merge($params, $filtersql['where_parameters']);
         }
 
         $allowed_clusters = $DB->get_records_sql($cluster_permissions_sql, $params);
@@ -455,17 +459,16 @@ class usersubset_filter extends data_filter {
         $childtable = data_filter::_get_unique_name();
         $childclsttable = data_filter::_get_unique_name();
 
-        $cluster_context_level = context_level_base::get_custom_context_level('cluster', 'elis_program');
         $parent_path = $db->sql_concat("{$parenttable}.path", "'/%'");
 
         $sql = "SELECT {$clsttable}.id
                   FROM {" . userset::TABLE . "} {$clsttable}
                   JOIN {context} {$parenttable}
                     ON {$parenttable}.instanceid = {$clsttable}.id
-                   AND {$parenttable}.contextlevel = {$cluster_context_level}
+                   AND {$parenttable}.contextlevel = ".CONTEXT_ELIS_USERSET."
                   JOIN {context} {$childtable}
                     ON {$childtable}.path LIKE {$parent_path}
-                   AND {$childtable}.contextlevel = {$cluster_context_level}
+                   AND {$childtable}.contextlevel = ".CONTEXT_ELIS_USERSET."
                   JOIN {" . userset::TABLE . "} {$childclsttable}
                     ON {$childtable}.instanceid = {$childclsttable}.id ";
 
@@ -522,7 +525,7 @@ function cluster_get_listing($sort='name', $dir='ASC', $startrec=0, $perpage=0, 
     $display_priority_enabled = isset($plugins['userset_display_priority']);
     if ($display_priority_enabled) {
         require_once(elis::plugin_file('pmplugins_userset_display_priority', 'lib.php'));
-        $priority_field = field::get_for_context_level_with_name('cluster', USERSET_DISPLAY_PRIORITY_FIELD);
+        $priority_field = field::get_for_context_level_with_name(CONTEXT_ELIS_USERSET, USERSET_DISPLAY_PRIORITY_FIELD);
         if (empty($priority_field->id)) {
             $display_priority_enabled = false;
         }
@@ -555,7 +558,6 @@ function cluster_get_listing($sort='name', $dir='ASC', $startrec=0, $perpage=0, 
             $sql_condition = new select_filter('TRUE');
         } else {
             //user does not have capability at system level, so filter
-
             $viewable_clusters = userset::get_viewable_clusters();
 
             if (empty($viewable_clusters)) {
@@ -563,19 +565,18 @@ function cluster_get_listing($sort='name', $dir='ASC', $startrec=0, $perpage=0, 
                 $sql_condition = new select_filter('FALSE');
             } else {
                 //user has additional access to some set of clusters, so "enable" this access
-                $cluster_context_level = context_level_base::get_custom_context_level('cluster', 'elis_program');
 
                 //use the context path to find parent clusters
                 $path = $DB->sql_concat('parent_context.path', "'/%'");
                 list($IN, $inparams) = $DB->get_in_or_equal($viewable_clusters);
 
                 $sql_condition = new select_filter(
-                    "id IN (SELECT parent_context.instanceid
+                    "clst.id IN (SELECT parent_context.instanceid
                               FROM {context} parent_context
                               JOIN {context} child_context
                                 ON child_context.path LIKE {$path}
-                               AND parent_context.contextlevel = {$cluster_context_level}
-                               AND child_context.contextlevel = {$cluster_context_level}
+                               AND parent_context.contextlevel = ".CONTEXT_ELIS_USERSET."
+                               AND child_context.contextlevel = ".CONTEXT_ELIS_USERSET."
                                AND child_context.instanceid {$IN}
                            )", $inparams);
             }
@@ -596,11 +597,10 @@ function cluster_get_listing($sort='name', $dir='ASC', $startrec=0, $perpage=0, 
     }
 
     if (isset($extrafilters['classification'])) {
-        require_once(elis::plugin_file('elisfields_userset_classification', 'lib.php'));
-        $contextlevel = context_level_base::get_custom_context_level('cluster', 'elis_program');
-        $field = new field(field::get_for_context_level_with_name($contextlevel, USERSET_CLASSIFICATION_FIELD));
+        require_once(elispm::file('plugins/userset_classification/lib.php'));
+        $field = new field(field::get_for_context_level_with_name(CONTEXT_ELIS_USERSET, USERSET_CLASSIFICATION_FIELD));
 
-        $filters[] = new elis_field_filter($field, 'id', $contextlevel, $extrafilters['classification']);
+        $filters[] = new elis_field_filter($field, 'id', CONTEXT_ELIS_USERSET, $extrafilters['classification']);
     }
 
     if(!empty($userid)) {
@@ -618,7 +618,6 @@ function cluster_get_listing($sort='name', $dir='ASC', $startrec=0, $perpage=0, 
         } else {
             $allowed_clusters_list = implode(',', $allowed_clusters);
 
-            $cluster_context_level = context_level_base::get_custom_context_level('cluster', 'elis_program');
             $path = $DB->sql_concat('parentctxt.path', "'/%'");
 
             //this allows both the indirect capability and the direct curriculum filter to work
@@ -627,10 +626,10 @@ function cluster_get_listing($sort='name', $dir='ASC', $startrec=0, $perpage=0, 
                                FROM {" . userset::TABLE . "} clst
                                JOIN {context} parentctxt
                                  ON clst.id = parentctxt.instanceid
-                                AND parentctxt.contextlevel = {$cluster_context_level}
+                                AND parentctxt.contextlevel = ".CONTEXT_ELIS_USERSET."
                                JOIN {context} childctxt
-                                 ON childctx.path LIKE {$path}
-                                AND childctxt.contextlevel = {$cluster_context_level}
+                                 ON childctxt.path LIKE {$path}
+                                AND childctxt.contextlevel = ".CONTEXT_ELIS_USERSET."
                               WHERE parentctxt.instanceid IN ({$allowed_clusters_list}))");
             $filters[] = new OR_filter(array($subcluster_filter, $curriculum_filter));
         }
@@ -674,11 +673,11 @@ function cluster_get_listing($sort='name', $dir='ASC', $startrec=0, $perpage=0, 
     $where = '';
     if(isset($filtersql['join'])) {
         $join .= ' JOIN ' . $filtersql['join'];
-        $params += $filtersql['join_parameters'];
+        $params = array_merge($params,$filtersql['join_parameters']);
     }
     if(isset($filtersql['where'])) {
         $where = ' WHERE ' . $filtersql['where'];
-        $params += $filtersql['where_parameters'];
+        $params = array_merge($params,$filtersql['where_parameters']);
     }
 
     $sort_clause = ' ORDER BY ' . implode($sort_clauses, ', ') . ' ';
@@ -723,7 +722,6 @@ function cluster_count_records($namesearch = '', $alpha = '', $extrafilters = ar
                 $sql_condition = new select_filter('FALSE');
             } else {
                 //user has additional access to some set of clusters, so "enable" this access
-                $cluster_context_level = context_level_base::get_custom_context_level('cluster', 'elis_program');
 
                 //use the context path to find parent clusters
                 $path = $DB->sql_concat('parent_context.path', "'/%'");
@@ -734,8 +732,8 @@ function cluster_count_records($namesearch = '', $alpha = '', $extrafilters = ar
                               FROM {context} parent_context
                               JOIN {context} child_context
                                 ON child_context.path LIKE {$path}
-                               AND parent_context.contextlevel = {$cluster_context_level}
-                               AND child_context.contextlevel = {$cluster_context_level}
+                               AND parent_context.contextlevel = ".CONTEXT_ELIS_USERSET."
+                               AND child_context.contextlevel = ".CONTEXT_ELIS_USERSET."
                                AND child_context.instanceid {$IN}
                            )", $inparams);
             }
@@ -756,11 +754,11 @@ function cluster_count_records($namesearch = '', $alpha = '', $extrafilters = ar
     }
 
     if (isset($extrafilters['classification'])) {
-        require_once(elis::plugin_file('elisfields_userset_classification', 'lib.php'));
-        $contextlevel = context_level_base::get_custom_context_level('cluster', 'elis_program');
-        $field = new field(field::get_for_context_level_with_name($contextlevel, USERSET_CLASSIFICATION_FIELD));
+        require_once(elispm::file('plugins/userset_classification/lib.php'));
 
-        $filters[] = new elis_field_filter($field, 'id', $contextlevel, $extrafilters['classification']);
+        $field = new field(field::get_for_context_level_with_name(CONTEXT_ELIS_USERSET, USERSET_CLASSIFICATION_FIELD));
+
+        $filters[] = new elis_field_filter($field, 'id', CONTEXT_ELIS_USERSET, $extrafilters['classification']);
     }
 
     return userset::count($filters);
@@ -849,10 +847,8 @@ function cluster_get_non_child_clusters($target_cluster_id, $contexts = null) {
     global $DB;
     $return = array(0=>get_string('userset_top_level','elis_program'));
 
-    $cluster_context_level = context_level_base::get_custom_context_level('cluster', 'elis_program');
-
     if (!empty($target_cluster_id)) {
-        $cluster_context_instance = get_context_instance($cluster_context_level, $target_cluster_id);
+        $cluster_context_instance = context_elis_userset::instance($target_cluster_id);
         $target_cluster_path = $cluster_context_instance->path;
     } else {
         // provide a dummy id and path that won't match anything
@@ -869,7 +865,7 @@ function cluster_get_non_child_clusters($target_cluster_id, $contexts = null) {
              WHERE {$LIKE}
                    AND ctx.instanceid != ?";
 
-    $params = array($cluster_context_level,
+    $params = array(CONTEXT_ELIS_USERSET,
                     "{$target_cluster_path}/%",
                     $target_cluster_id);
 
@@ -903,8 +899,7 @@ function cluster_get_possible_sub_clusters($target_cluster_id, $contexts = null)
         return array();
     }
 
-    $cluster_context_level = context_level_base::get_custom_context_level('cluster', 'elis_program');
-    $cluster_context_instance = get_context_instance($cluster_context_level, $target_cluster_id);
+    $cluster_context_instance = context_elis_userset::instance($target_cluster_id);
     // get parent contexts as a comma-separated list of context IDs
     $parent_contexts = explode('/', substr($cluster_context_instance->path,1));
     list($EQUAL, $params) = $DB->get_in_or_equal($parent_contexts, SQL_PARAMS_NAMED, 'param0000', false);
@@ -916,7 +911,7 @@ function cluster_get_possible_sub_clusters($target_cluster_id, $contexts = null)
              WHERE ctx.id {$EQUAL}
                    AND clst.parent != :parent";
 
-    $params['ctxlvl'] = $cluster_context_level;
+    $params['ctxlvl'] = CONTEXT_ELIS_USERSET;
     $params['parent'] = $target_cluster_id;
 
     if ($contexts !== null) {

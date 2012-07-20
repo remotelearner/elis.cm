@@ -51,24 +51,15 @@ class healthpage extends pm_page {
         $this->navbar->add(get_string('learningplan', 'elis_program'), "{$CFG->wwwroot}/elis/program/");
         $baseurl = $this->url;
         $baseurl->remove_all_params();
-        $this->navbar->add(get_string('healthcenter'),
+        $this->navbar->add(get_string('pluginname', 'tool_health'),
                            $baseurl->out(true, array('s' => $this->pagename)));
     }
 
     /**
      * Initialize the page variables needed for display.
      */
-    protected function _init_display() {
-        global $PAGE;
-
-        //needed for item coloring and layout
-        $PAGE->requires->css('/elis/program/styles.css');
-
-        parent::_init_display();
-    }
-
     function get_page_title_default() {
-        return get_string('healthcenter');
+        return get_string('pluginname', 'tool_health');
     }
 
     function display_default() {
@@ -133,10 +124,10 @@ class healthpage extends pm_page {
 
         if($problems == 0) {
             echo '<div id="healthnoproblemsfound">';
-            echo get_string('healthnoproblemsfound');
+            echo get_string('healthnoproblemsfound', 'tool_health');
             echo '</div>';
         } else {
-            echo $OUTPUT->heading(get_string('healthproblemsdetected'));
+            echo $OUTPUT->heading(get_string('healthproblemsdetected', 'tool_health'));
             foreach($issues as $severity => $healthissues) {
                 if(!empty($issues[$severity])) {
                     echo '<dl class="healthissues '.$severity.'">';
@@ -146,7 +137,7 @@ class healthpage extends pm_page {
                         echo '<form action="index.php#solution" method="get">';
                         echo '<input type="hidden" name="s" value="health" />';
                         echo '<input type="hidden" name="action" value="solution" />';
-                        echo '<input type="hidden" name="problem" value="'.$classname.'" /><input type="submit" value="'.get_string('viewsolution').'" />';
+                        echo '<input type="hidden" name="problem" value="'.$classname.'" /><input type="submit" value="'.get_string('healthsolution', 'tool_health').'" />';
                         echo '</form></dd>';
                     }
                     echo '</dl>';
@@ -180,16 +171,16 @@ class healthpage extends pm_page {
             'solution'    => $problem->solution()
             );
 
-        $OUTPUT->heading(get_string('healthcenter'));
-        $OUTPUT->heading(get_string('healthproblemsolution'));
+        $OUTPUT->heading(get_string('pluginname', 'tool_health'));
+        $OUTPUT->heading(get_string('healthproblemsolution', 'tool_health'));
         echo '<dl class="healthissues '.$data['severity'].'">';
         echo '<dt>'.$data['title'].'</dt>';
         echo '<dd>'.$data['description'].'</dd>';
-        echo '<dt id="solution" class="solution">'.get_string('healthsolution').'</dt>';
+        echo '<dt id="solution" class="solution">'.get_string('healthsolution', 'tool_health').'</dt>';
         echo '<dd class="solution">'.$data['solution'].'</dd></dl>';
         echo '<form id="healthformreturn" action="index.php#'.$classname.'" method="get">';
         echo '<input type="hidden" name="s" value="health" />';
-        echo '<input type="submit" value="'.get_string('healthreturntomain').'" />';
+        echo '<input type="submit" value="'.get_string('healthreturntomain', 'tool_health').'" />';
         echo '</form>';
     }
 }
@@ -221,7 +212,8 @@ $core_health_checks = array(
     'health_user_sync',
     'cluster_orphans_check',
     'track_classes_check',
-    'completion_export_check'
+    'completion_export_check',
+    'dangling_completion_locks',
     );
 
 /**
@@ -662,5 +654,76 @@ class duplicate_moodle_profile extends crlm_health_check_base {
     function solution() {
         global $CFG;
         return get_string('health_dupmoodleprofilesoln', 'elis_program', $CFG->dirroot);
+    }
+}
+
+/**
+ * Checks for any passing completion scores that are unlocked and linked to Moodle grade items which do not exist.
+ */
+class dangling_completion_locks extends crlm_health_check_base {
+    function __construct() {
+        global $CFG, $DB;
+
+        require_once($CFG->dirroot.'/elis/program/lib/setup.php');
+        require_once elispm::lib('data/student.class.php');
+
+        // Check for unlocked, passed completion scores which are not associated with a valid Moodle grade item
+        $sql = "SELECT COUNT('x')
+                FROM {".student_grade::TABLE."} ccg
+                INNER JOIN {".coursecompletion::TABLE."} ccc ON ccc.id = ccg.completionid
+                INNER JOIN {".classmoodlecourse::TABLE."} ccm ON ccm.classid = ccg.classid
+                INNER JOIN {course} c ON c.id = ccm.moodlecourseid
+                LEFT JOIN {grade_items} gi ON (gi.idnumber = ccc.idnumber AND gi.courseid = c.id)
+                WHERE ccg.locked = 0
+                AND ccc.idnumber != ''
+                AND ccg.grade >= ccc.completion_grade
+                AND gi.id IS NULL";
+
+        $this->count = $DB->count_records_sql($sql);
+
+/*
+        // Check for unlocked, passed completion scores which are associated with a valid Moodle grade item
+        // XXX - NOTE: this is not currently being done as it may be that these values were manually unlocked on purpose
+        // XXX - NOTE: this is from 1.9 so if / when using this query, update query to 2.x standard
+        $sql = "SELECT COUNT('x')
+                FROM {$CURMAN->db->prefix_table(USRTABLE)} cu
+                INNER JOIN {$CURMAN->db->prefix_table(STUTABLE)} cce ON cce.userid = cu.id
+                INNER JOIN {$CURMAN->db->prefix_table(GRDTABLE)} ccg ON (ccg.userid = cce.userid AND ccg.classid = cce.classid)
+                INNER JOIN {$CURMAN->db->prefix_table(CRSCOMPTABLE)} ccc ON ccc.id = ccg.completionid
+                INNER JOIN {$CURMAN->db->prefix_table(CLSMOODLETABLE)} ccm ON ccm.classid = ccg.classid
+                INNER JOIN {$CFG->prefix}user u ON u.idnumber = cu.idnumber
+                INNER JOIN {$CFG->prefix}course c ON c.id = ccm.moodlecourseid
+                INNER JOIN {$CFG->prefix}grade_items gi ON (gi.courseid = c.id AND gi.idnumber = ccc.idnumber)
+                INNER JOIN {$CFG->prefix}grade_grades gg ON (gg.itemid = gi.id AND gg.userid = u.id)
+                WHERE ccg.locked = 0
+                AND ccg.grade >= ccc.completion_grade
+                AND gg.finalgrade >= ccc.completion_grade
+                AND ccc.idnumber != ''
+                AND gi.itemtype != 'course'
+                AND ccg.timemodified > gg.timemodified";
+
+        $this->count += $CURMAN->db->count_records_sql($sql);
+*/
+    }
+
+    function exists() {
+        return $this->count != 0;
+    }
+
+    function severity() {
+        return healthpage::SEVERITY_SIGNIFICANT;
+    }
+
+    function title() {
+        return get_string('health_danglingcompletionlocks','elis_program');
+    }
+
+    function description() {
+        return get_string('health_danglingcompletionlocksdesc','elis_program', $this->count);
+    }
+
+    function solution() {
+        $msg = get_string('health_danglingcompletionlockssoln','elis_program');
+        return $msg;
     }
 }

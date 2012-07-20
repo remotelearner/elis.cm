@@ -187,6 +187,8 @@ class coursecatalogpage extends pm_page {
 
         $form = $this->create_waitlistform($classid);
 
+        $now = time();
+
         if($form->is_cancelled()) {
             $this->display('available');
         } else if($data = $form->get_data()) {
@@ -200,7 +202,8 @@ class coursecatalogpage extends pm_page {
             $wait_record->userid = $userid;
             $wait_record->classid = $classid;
             $wait_record->enrolmenttime = $class->startdate;
-            $wait_record->timecraeted = time();
+            $wait_record->timecreated = $now;
+            $wait_record->timemodified = $now;
             $wait_record->position = $position;
 
             $wait_list = new waitlist($wait_record);

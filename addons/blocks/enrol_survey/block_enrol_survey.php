@@ -69,21 +69,21 @@ class block_enrol_survey extends block_base {
         if (has_capability('block/enrol_survey:edit', $context)) {
             $editpage = get_string('editpage', 'block_enrol_survey');
 
-            $this->content->text .= "<a 
-href=\"{$CFG->wwwroot}/blocks/enrol_survey/edit_survey.php?id={$this->instance->id}&courseid={$COURSE->id}&mymoodle={$mymoodle}\">$editpage</a><br 
+            $this->content->text .= "<a
+href=\"{$CFG->wwwroot}/blocks/enrol_survey/edit_survey.php?id={$this->instance->id}&courseid={$COURSE->id}&mymoodle={$mymoodle}\">$editpage</a><br
 />";
         }
 
         if (has_capability('block/enrol_survey:take', $context) &&
-            cm_get_crlmuserid($USER->id) !== false) { 
+            cm_get_crlmuserid($USER->id) !== false) {
             // MUST have ELIS user record to take survey!
             if(!empty($this->config->force_user) && !is_survey_taken($USER->id, $this->instance->id)) {
                 redirect("{$CFG->wwwroot}/blocks/enrol_survey/survey.php?id={$this->instance->id}");
             }
 
             $takepage = get_string('takepage', 'block_enrol_survey');
-            $this->content->text .= "<a 
-href=\"{$CFG->wwwroot}/blocks/enrol_survey/survey.php?id={$this->instance->id}&courseid={$COURSE->id}&mymoodle={$mymoodle}\">$takepage</a><br 
+            $this->content->text .= "<a
+href=\"{$CFG->wwwroot}/blocks/enrol_survey/survey.php?id={$this->instance->id}&courseid={$COURSE->id}&mymoodle={$mymoodle}\">$takepage</a><br
 />";
         }
 
@@ -91,6 +91,9 @@ href=\"{$CFG->wwwroot}/blocks/enrol_survey/survey.php?id={$this->instance->id}&c
     }
 
     function specialization() {
+        if (!isset($this->config)) {
+            return;
+        }
         if (!empty($this->config->title)) {
             $this->title = $this->config->title;
         } else {

@@ -68,6 +68,11 @@ if ($ADMIN->fulltree) {
     $setting->set_updatedcallback('curriculum_expiration_start_updatedcallback');
     $settings->add($setting); // TBD
 
+    // Allow students to see completed courses on their dashboard
+    $settings->add(new admin_setting_configcheckbox('elis_program/display_completed_courses',
+                                                     get_string('completed_courses_setting', 'elis_program'),
+                                                     get_string('completed_courses_help', 'elis_program'), 1));
+
     // ***Certificates
     $settings->add(new admin_setting_heading('certificates', get_string('certificates', 'elis_program'), '' /* get_string('certificate_info', 'elis_program') */));
     // Disable Certificates

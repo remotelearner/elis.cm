@@ -25,6 +25,7 @@
  */
 
 require_once dirname(__FILE__).'/../../core/lib/setup.php';
+require_once dirname(__FILE__).'/../accesslib.php';
 
 /**
  * Global Program Manager object.

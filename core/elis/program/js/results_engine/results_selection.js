@@ -192,7 +192,7 @@ function toggleform(checkbox) {
     var form  = checkbox.form;
 
     if (checkbox.checked) {
-        state = false;
+        state = '';
     }
 
     for(var i=0; i<form.length;i+=1) {

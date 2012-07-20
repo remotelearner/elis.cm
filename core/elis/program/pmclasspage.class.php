@@ -134,22 +134,20 @@ class pmclasspage extends managementpage {
         if ($cached !== null) {
             return $cached;
         }
-        $context = get_context_instance(context_level_base::get_custom_context_level('class', 'elis_program'), $id);
+        $context = context_elis_class::instance($id);
         return has_capability($capability, $context);
     }
 
-    public function _get_page_context() {
-        $id = $this->optional_param('id', 0, PARAM_INT);
-        $action = $this->optional_param('action', 'default', PARAM_ACTION);
+    public function _get_page_params() {
+        return parent::_get_page_params();
+    }
 
-        if ($id) {
-            if ($action == 'default') {
-                return get_context_instance(context_level_base::get_custom_context_level('course', 'elis_program'), $id);
-            } else {
-                return get_context_instance(context_level_base::get_custom_context_level('class', 'elis_program'), $id);
-            }
-        } else {
-            return parent::_get_page_context();
+    public function __construct(array $params=null) {
+        global $DB, $CFG;
+
+        $reports_installed = $DB->record_exists('block', array('name' => 'php_report'));
+        if ($reports_installed) {
+            require_once($CFG->dirroot .'/blocks/php_report/php_report_base.php');
         }
     }
 
@@ -161,16 +159,18 @@ class pmclasspage extends managementpage {
         $this->tabs = array(
         array('tab_id' => 'view', 'page' => get_class($this), 'params' => array('action' => 'view'), 'name' => get_string('detail', 'elis_program'), 'showtab' => true),
         array('tab_id' => 'edit', 'page' => get_class($this), 'params' => array('action' => 'edit'), 'name' => get_string('edit', 'elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'edit'),
-
         array('tab_id' => 'studentpage', 'page' => 'studentpage', 'name' => get_string('enrolments', 'elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'user'),
         array('tab_id' => 'waitlistpage', 'page' => 'waitlistpage', 'name' => get_string('waiting', 'elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'waiting'),
         array('tab_id' => 'instructorpage', 'page' => 'instructorpage', 'name' => get_string('instructors', 'elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'instructor'),
         array('tab_id' => 'class_rolepage', 'page' => 'class_rolepage', 'name' => get_string('roles', 'role'), 'showtab' => true, 'showbutton' => false, 'image' => 'tag'),
         array('tab_id' => 'class_enginepage', 'page' => 'class_enginepage', 'name' => get_string('results_engine', 'elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'calculator'),
-
-        array('tab_id' => 'delete', 'page' => get_class($this), 'params' => array('action' => 'delete'), 'name' => get_string('delete_label', 'elis_program'), 'showbutton' => true, 'image' => 'delete'),
-        array('tab_id' => 'class_reportlinkspage', 'page' => 'class_reportlinkspage', '', 'name' => get_string('classreportlinks', 'elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'report')
+        array('tab_id' => 'delete', 'page' => get_class($this), 'params' => array('action' => 'delete'), 'name' => get_string('delete_label', 'elis_program'), 'showbutton' => true, 'image' => 'delete')
         );
+
+        if ($reports_installed) {
+            $this->tabs[] = array('tab_id' => 'class_reportlinkspage', 'page' => 'class_reportlinkspage', '', 'name' => get_string('classreportlinks', 'elis_program'),
+                                  'showtab' => true, 'showbutton' => true, 'image' => 'report');
+        }
 
         parent::__construct($params);
     }
@@ -411,8 +411,7 @@ class pmclasspage extends managementpage {
         if(!empty(elis::$config->elis_program->default_class_role_id) && $DB->record_exists('role', array('id' => elis::$config->elis_program->default_class_role_id))) {
 
             //get the context instance for capability checking
-            $context_level = context_level_base::get_custom_context_level('class', 'elis_program');
-            $context_instance = get_context_instance($context_level, $cm_entity->id);
+            $context_instance = context_elis_class::instance($cm_entity->id);
 
             //assign the appropriate role if the user does not have the edit capability
             if (!has_capability('elis/program:class_edit', $context_instance)) {

@@ -26,7 +26,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once(dirname(__FILE__).'/../../../../config.php');
+require_once(dirname(__FILE__).'/../../../../../config.php');
 global $CFG;
 require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 require_once elispm::file('plugins/userset_classification/lib.php');
@@ -43,8 +43,6 @@ function xmldb_pmplugins_userset_classification_install() {
     require_once elis::lib('data/customfield.class.php');
     require_once elispm::file('plugins/userset_classification/usersetclassification.class.php');
 
-    $cluster_ctx_lvl = context_level_base::get_custom_context_level('cluster', 'elis_program');
-
     $field = new field();
     $field->shortname = USERSET_CLASSIFICATION_FIELD;
     $field->name = get_string('classification_field_name', 'pmplugins_userset_classification');
@@ -53,7 +51,7 @@ function xmldb_pmplugins_userset_classification_install() {
     $category = new field_category();
     $category->name = get_string('classification_category_name', 'pmplugins_userset_classification');
 
-    $field = field::ensure_field_exists_for_context_level($field, 'cluster', $category);
+    $field = field::ensure_field_exists_for_context_level($field, CONTEXT_ELIS_USERSET, $category);
 
     // make sure we're set as owner
     if (!isset($field->owners['userset_classification'])) {

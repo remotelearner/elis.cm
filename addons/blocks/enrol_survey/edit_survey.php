@@ -37,7 +37,6 @@ if (!$course = $DB->get_record('course', array('id'=>$courseid))) {
 }
 
 $instanceid        = required_param('id', PARAM_INT);
-
 $add_profilefield  = optional_param('add_profilefield', '', PARAM_CLEAN);
 $retake            = optional_param('retake', '', PARAM_CLEAN);
 $update            = optional_param('update', '', PARAM_CLEAN);
@@ -60,10 +59,15 @@ if ($COURSE->id == SITEID) {
     $context = get_context_instance(CONTEXT_COURSE, $COURSE->id);
 }
 
-$data = get_object_vars($block->config);
+if (isset($block->config) && is_object($block->config)) {
+    $data = get_object_vars($block->config);
+} else {
+    $data = array();
+}
+
 $data['force_user'] = $force_user;
 unset($data['none']);
-    
+
 if (!empty($profile_fields) && count($profile_fields) === count($custom_names)) {
     $tempdata = array_combine($profile_fields, $custom_names);
     $data = array_merge($data, $tempdata);
@@ -71,30 +75,27 @@ if (!empty($profile_fields) && count($profile_fields) === count($custom_names)) 
 
 $data = (object)$data;
 
-$update = false;
+$dbupdate = false;
 if (!empty($delete)) {
     $keys = array_keys($delete);
     foreach($keys as $todel) {
         unset($data->$todel);
     }
-    $update = true;
-}
-if (!empty($update) && !empty($data)) {
-    $update = true;
-}
-if (!empty($add_profilefield)) {
+    $dbupdate = true;
+} else if (!empty($update) && !empty($data)) {
+    $dbupdate = true;
+} else if (!empty($add_profilefield)) {
     $data->none = '';
-    $update = true;
-}
-if (!empty($exit)) {
-    $update = true;
-}
-if (!empty($retake)) {
+    $dbupdate = true;
+} else if (!empty($exit)) {
+    $dbupdate = true;
+} else if (!empty($retake)) {
     $DB->delete_records('block_enrol_survey_taken', array('blockinstanceid' => $instanceid));
 }
 
-if ($update) {
+if ($dbupdate) {
     $block->instance_config_save($data);
+
     // NOTE: instance_config_save() does NOT update $block->config only DBtable!
     // therefore we MUST reload the block data!
     $instance = $DB->get_record('block_instances', array('id' => $instanceid));
@@ -102,15 +103,15 @@ if ($update) {
 }
 
 if (!empty($exit)) {
-  if ($mymoodle == 1) {
-    redirect($CFG->wwwroot .'/my');
-  } else {
-    redirect($CFG->wwwroot .'/course/view.php?id=' . $course->id);
-  }
+    if ($mymoodle == 1) {
+        redirect($CFG->wwwroot .'/my');
+    } else {
+        redirect($CFG->wwwroot .'/course/view.php?id=' . $course->id);
+    }
 }
 
 require_capability('block/enrol_survey:edit', $context);
-   
+
 $courseobj = new stdClass();
 $courseobj->courseid = $course->id;
 $courseobj->mymoodle = $mymoodle;
@@ -126,7 +127,14 @@ $PAGE->set_heading($blockname);
 $PAGE->set_cacheable(true);
 $PAGE->set_button('&nbsp;');
 
-$PAGE->navbar->add($blockname);
+// Make sure that the either the My Moodle or course shortname link is in the navbar if within that context
+if ($mymoodle) {
+    $PAGE->navbar->add(get_string('myhome'), new moodle_url('/my'));
+} else if ($course->id != SITEID) {
+    $PAGE->navbar->add($course->shortname, new moodle_url('/course/view.php?id='.$course->id));
+}
+
+$PAGE->navbar->add(get_string('editpage', 'block_enrol_survey'));
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('surveysettings', 'block_enrol_survey'));

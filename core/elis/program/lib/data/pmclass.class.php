@@ -49,6 +49,7 @@ class pmclass extends data_object_with_custom_fields {
     var $moodlecourseid;
     var $track;
     var $oldmax;
+    var $unlink_attached_course;
 
     static $config_default_prefix = 'clsdft';
 
@@ -97,7 +98,7 @@ class pmclass extends data_object_with_custom_fields {
     static $delete_is_complex = true;
 
     protected function get_field_context_level() {
-        return context_level_base::get_custom_context_level('class', 'elis_program');
+        return CONTEXT_ELIS_CLASS;
     }
 
     function get_start_time() {
@@ -226,6 +227,9 @@ class pmclass extends data_object_with_custom_fields {
 
         if (!empty($data->moodleCourses['moodlecourseid']) && !$this->autocreate) {
             $this->moodlecourseid = $data->moodleCourses['moodlecourseid'];
+        } else if (!empty($data->courseSelected['unlink_attached_course']) && !empty($data->moodlecourseid)) {
+            $this->unlink_attached_course = $data->courseSelected['unlink_attached_course'];
+            $this->moodlecourseid = $data->moodlecourseid;
         } else {
             $this->moodlecourseid = 0;
         }
@@ -256,8 +260,8 @@ class pmclass extends data_object_with_custom_fields {
 
             parent::delete();
 
-            $level = context_level_base::get_custom_context_level('class', 'elis_program');
-            $result = delete_context($level,$this->id);
+            $context = context_elis_class::instance($this->id);
+            $context->delete();
         }
     }
 
@@ -333,8 +337,10 @@ class pmclass extends data_object_with_custom_fields {
     /**
      * Update enrolment status of users enroled in the current class, completing and locking
      * records where applicable based on class grade and required completion elements
+     *
+     * @param int $pmuserid  optional userid to update, default(0) updates all users
      */
-    function update_enrolment_status() {
+    function update_enrolment_status($pmuserid = 0) {
         //information about which course this belongs to may not have been
         //loaded due to lazy-loading
         $this->load();
@@ -370,10 +376,16 @@ class pmclass extends data_object_with_custom_fields {
                            ) grades ON grades.userid = s.userid
                      WHERE s.classid = :outerclassid AND s.locked = 0';
 
-            $rs = $this->_db->get_recordset_sql($sql, array('courseid' => $this->courseid,
-                                                            'joinclassid' => $this->id,
-                                                            'innerclassid' => $this->id,
-                                                            'outerclassid' => $this->id));
+            $params = array('courseid'     => $this->courseid,
+                            'joinclassid'  => $this->id,
+                            'innerclassid' => $this->id,
+                            'outerclassid' => $this->id);
+            if ($pmuserid) {
+                $sql .= ' AND s.userid = :userid';
+                $params['userid'] = $pmuserid;
+            }
+
+            $rs = $this->_db->get_recordset_sql($sql, $params);
             foreach ($rs as $rec) {
                 if ($rec->incomplete == 0 && $rec->grade > 0 &&
                     $rec->grade >= $this->course->completion_grade) {
@@ -390,8 +402,12 @@ class pmclass extends data_object_with_custom_fields {
             /// minimum value required for the course.
 
             /// Get all unlocked enrolments
-            $rs = student::find(array(new field_filter('classid', $this->id),
-                                      new field_filter('locked', 0)));
+            $stufilters = array(new field_filter('classid', $this->id),
+                                new field_filter('locked', 0));
+            if ($pmuserid) {
+                $stufilters[] = new field_filter('userid', $pmuserid);
+            }
+            $rs = student::find($stufilters);
             foreach ($rs as $rec) {
                 if ($rec->grade > 0 && $rec->grade >= $this->course->completion_grade) {
                     $rec->completestatusid = STUSTATUS_PASSED;
@@ -421,7 +437,7 @@ class pmclass extends data_object_with_custom_fields {
     /////////////////////////////////////////////////////////////////////
 
 
-    public static function check_for_moodle_courses() {
+    public static function check_for_moodle_courses($pmuserid = 0) {
         global $DB;
 
         //crlm_class_moodle moodlecourseid
@@ -429,12 +445,19 @@ class pmclass extends data_object_with_custom_fields {
                 FROM {'.classmoodlecourse::TABLE.'} cm
                 LEFT JOIN {course} c ON cm.moodlecourseid = c.id
                 WHERE c.id IS NULL';
+        $params = array();
+        if ($pmuserid) {
+            $sql .= ' AND EXISTS (SELECT id FROM {'. student::TABLE .'} stu
+                                   WHERE stu.classid = cm.classid
+                                     AND stu.userid = ?)';
+            $params[] = $pmuserid;
+        }
 
-        $broken_classes = $DB->get_records_sql($sql);
-
-        if(!empty($broken_classes)) {
-            foreach($broken_classes as $class) {
-                $DB->delete_records(classmoodlecourse::TABLE, array('id'=>$class->id));
+        $broken_classes = $DB->get_records_sql($sql, $params);
+        if (!empty($broken_classes)) {
+            foreach ($broken_classes as $class) {
+                $DB->delete_records(classmoodlecourse::TABLE,
+                         array('id' => $class->id));
             }
         }
 
@@ -850,8 +873,13 @@ class pmclass extends data_object_with_custom_fields {
             if (empty($options['moodlecourses']) || $options['moodlecourses'] == 'copyalways'
                 || ($options['moodlecourses'] == 'copyautocreated' && $cmc->autocreated)) {
                 // create a new Moodle course based on the current class's Moodle course
-                $moodlecourseid   = course_rollover($cmc->moodlecourseid, $clone->startdate);
+                $moodlecourseid   = course_rollover($cmc->moodlecourseid);
+                //check that the course has rolled over successfully
+                if (!$moodlecourseid) {
+                    return false;
+                }
                 // Rename the fullname, shortname and idnumber of the restored course
+                $restore = new stdClass;
                 $restore->id = $moodlecourseid;
                 // ELIS-2941: Don't prepend course name if already present ...
                 if (strpos($clone->idnumber, $clone->course->name) !== 0) {
@@ -913,6 +941,12 @@ class pmclass extends data_object_with_custom_fields {
             }
         }
 
+        if (isset($this->unlink_attached_course) && isset($this->moodlecourseid)) {
+            // process unlink moodle course id request
+            $return = moodle_detach_class($this->id, $this->moodlecourseid);
+            $this->moodlecourseid = 0;
+        }
+
         if ($this->moodlecourseid || $this->autocreate) {
             moodle_attach_class($this->id, $this->moodlecourseid, '', true, true, $this->autocreate);
         }
@@ -935,7 +969,7 @@ class pmclass extends data_object_with_custom_fields {
             }
         }
 
-        field_data::set_for_context_from_datarecord('class', $this);
+        field_data::set_for_context_from_datarecord(CONTEXT_ELIS_CLASS, $this);
     }
 
 }
@@ -1008,7 +1042,7 @@ function pmclass_get_listing($sort = 'crsname', $dir = 'ASC', $startrec = 0,
     }
 
     if ($alpha) {
-        $crslike = $DB->sql_like('crs.name', '?', FALSE);
+        $crslike = $DB->sql_like('cls.idnumber', '?', FALSE);
         $where[] = "($crslike)";
         $params[] = "$alpha%";
     }
@@ -1093,7 +1127,7 @@ function pmclass_count_records($namesearch = '', $alpha = '', $id = 0, $onlyopen
     }
 
     if ($alpha) {
-        $crslike = $DB->sql_like('crs.name', '?', FALSE);
+        $crslike = $DB->sql_like('cls.idnumber', '?', FALSE);
         $where[] = "($crslike)";
         $params[] = "$alpha%";
     }

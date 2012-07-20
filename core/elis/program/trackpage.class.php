@@ -128,15 +128,15 @@ class trackpage extends managementpage {
         if ($cached !== null) {
             return $cached;
         }
-        $context = get_context_instance(context_level_base::get_custom_context_level('track', 'elis_program'), $id);
+        $context = context_elis_track::instance($id);
         return has_capability($capability, $context);
     }
 
     public function __construct(array $params=null) {
-        parent::__construct($params);
-        $curid = $this->optional_param('curid', 0, PARAM_INT); // TBD: get_cm_id(empty($action));
-        $curid_param = $curid ? array('curid' => $curid) : array();
 
+        parent::__construct($params);
+        $curid = $this->optional_param('parent', 0, PARAM_INT); // TBD: get_cm_id(empty($action));
+        $curid_param = $curid ? array('parent' => $curid) : array();
         $this->tabs = array(
         array('tab_id' => 'view', 'page' => 'trackpage', 'params' => array('action' => 'view') + $curid_param, 'name' => get_string('detail','elis_program'), 'showtab' => true),
         array('tab_id' => 'edit', 'page' => 'trackpage', 'params' => array('action' => 'edit') + $curid_param, 'name' => get_string('edit','elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'edit'),
@@ -196,22 +196,25 @@ class trackpage extends managementpage {
     function build_navbar_default() {
         $action = $this->optional_param('action', '', PARAM_CLEAN);
         $cancel = $this->optional_param('cancel', '', PARAM_CLEAN);
-        $parent = $this->get_cm_id(empty($action));
+        $paramname = '';
+        $parent = $this->get_cm_id(empty($action), $paramname);
         $params = array();
         $lp_bc = true;
         if (!empty($parent) /* && (empty($action) ||empty($cancel)) */ ) {
             //viewing from within curriculum
             $params['id'] = $parent;
+            //$params[$paramname] = $parent;
             $curriculumpage = new curriculumpage($params);
-            $curriculum_navigation = $curriculumpage->build_navbar_view($this, 'curid');
+            $curriculum_navigation = $curriculumpage->build_navbar_view($this, $paramname);
             $lp_bc = false;
         }
         parent::build_navbar_default(null, $lp_bc, $params);
     }
 
     function build_navbar_view() {
-        $curid = $this->get_cm_id(false);
-        parent::build_navbar_view(null, 'id', $curid ? array('curid' => $curid): array());
+        $paramname = '';
+        $curid = $this->get_cm_id(false, $paramname);
+        parent::build_navbar_view(null, 'id', $curid ? array($paramname => $curid): array());
     }
 
     /**
@@ -334,6 +337,7 @@ class trackpage extends managementpage {
         if ($parent) {
             $obj = new stdClass;
             $obj->curid = $parent;
+            $obj->parent = $parent;
             return $obj;
         } else {
             return NULL;
@@ -356,8 +360,7 @@ class trackpage extends managementpage {
         if(!empty(elis::$config->elis_program->default_track_role_id) && $DB->record_exists('role', array('id' => elis::$config->elis_program->default_track_role_id))) {
 
             //get the context instance for capability checking
-            $context_level = context_level_base::get_custom_context_level('track', 'elis_program');
-            $context_instance = get_context_instance($context_level, $cm_entity->id);
+            $context_instance = context_elis_track::instance($cm_entity->id);
 
             //assign the appropriate role if the user does not have the edit capability
             if(!has_capability('elis/program:track_edit', $context_instance)) {
@@ -370,15 +373,24 @@ class trackpage extends managementpage {
      * Returns the cm id corresponding to this page's entity, taking into account
      * weirdness from cancel actions
      *
-     * @return  int  The appropriate id, or zero if none available
+     * @param  bool   $check_id     true to check 'id' param
+     * @param  string &$paramname   to return param name
+     * @return int    The appropriate id, or zero if none available
      */
-    function get_cm_id($check_id = true) {
-        $id  = $this->optional_param('curid', 0, PARAM_INT);
-        if ($check_id && empty($id)) {
-            //weirdness from cancel actions
-            $id = $this->optional_param('id', 0, PARAM_INT);
+    function get_cm_id($check_id = true, &$paramname = null) {
+        $idparams = array('parent', 'curid', 'id');
+        foreach ($idparams as $param) {
+            if ($param == 'id' && !$check_id) {
+                break;
+            }
+            if ($paramname !== null) {
+                $paramname = $param;
+            }
+            $id = $this->optional_param($param, 0, PARAM_INT);
+            if (!empty($id)) {
+                break;
+            }
         }
-
         return $id;
     }
 
@@ -395,7 +407,7 @@ class trackpage extends managementpage {
             $extra_params['parent_clusterid'] = $parent_clusterid;
         }
         if ($curid = $this->get_cm_id()) {
-            $extra_params['curid'] = $curid;
+            $extra_params['parent'] = $curid;
         }
         $page_object = $this->get_new_page($extra_params);
 

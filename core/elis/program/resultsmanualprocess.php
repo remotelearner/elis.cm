@@ -41,10 +41,8 @@ if (! isloggedin()) {
 }
 
 $context = get_context_instance_by_id($id);
-$classlevel = context_level_base::get_custom_context_level('class', 'elis_program');
-$courselevel = context_level_base::get_custom_context_level('course', 'elis_program');
 
-if ((! $context) || (($context->contextlevel != $classlevel) && ($context->contextlevel != $courselevel))) {
+if ((! $context) || (($context->contextlevel != CONTEXT_ELIS_CLASS) && ($context->contextlevel != CONTEXT_ELIS_COURSE))) {
     print_string('results_unknown_classcourse', RESULTS_ENGINE_LANG_FILE);
     exit;
 }

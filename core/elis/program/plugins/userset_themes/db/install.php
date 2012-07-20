@@ -32,10 +32,6 @@ defined('MOODLE_INTERNAL') || die();
  * @return  boolean  true  Returns true to satisfy install procedure
  */
 function xmldb_pmplugins_userset_themes_install() {
-
-    //retrieve the cluster context
-    $cluster_context = context_level_base::get_custom_context_level('cluster', 'elis_program');
-
     //set up the cluster theme category
     $theme_category = new field_category();
     $theme_category->name = get_string('userset_theme_category', 'pmplugins_userset_themes');
@@ -47,7 +43,7 @@ function xmldb_pmplugins_userset_themes_install() {
     $theme_priority_field->datatype = 'int';
 
     //set up the field and category
-    $theme_priority_field = field::ensure_field_exists_for_context_level($theme_priority_field, $cluster_context, $theme_category);
+    $theme_priority_field = field::ensure_field_exists_for_context_level($theme_priority_field, CONTEXT_ELIS_USERSET, $theme_category);
     $owner_options = array('required' => 0,
                            'edit_capability' => '',
                            'view_capability' => '',
@@ -65,7 +61,7 @@ function xmldb_pmplugins_userset_themes_install() {
     $theme_field->datatype = 'char';
 
     //set up the field and category
-    $theme_field = field::ensure_field_exists_for_context_level($theme_field, $cluster_context, $theme_category);
+    $theme_field = field::ensure_field_exists_for_context_level($theme_field, CONTEXT_ELIS_USERSET, $theme_category);
     $owner_options = array('control' => 'menu',
                            'options_source' => 'themes',
                            'required' => 0,

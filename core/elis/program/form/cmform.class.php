@@ -42,5 +42,84 @@ class cmform extends moodleform {
     function freeze() {
         $this->_form->freeze();
     }
+
+    /**
+     * Method to add ELIS entity's custom fields to entity forms
+     *
+     * @param string $entity    ELIS entity name:
+     *                          Eg. 'class', 'course', 'track', 'cluster' ...
+     * @param string $edit_cap  the required edit capability
+     * @param string $view_cap  the required view capability
+     */
+    function add_custom_fields($entity, $edit_cap, $view_cap)
+    {
+        $mform = &$this->_form;
+        $fields = field::get_for_context_level($entity);
+        $fields = $fields ? $fields : array();
+
+        $contextlevel = context_elis_helper::get_level_from_name($entity);
+        $contextclass = context_elis_helper::get_class_for_level($contextlevel);
+
+        if (isset($this->_customdata['obj'])) {
+            if(isset($this->_customdata['obj']->id)) {
+                $context = $contextclass::instance($this->_customdata['obj']->id);
+            } elseif (isset($this->_customdata['obj']->parent)) {
+                $context = $contextclass::instance($this->_customdata['obj']->parent);
+            } else {
+                $context = context_system::instance();
+            }
+        } else {
+            $context = context_system::instance();
+        }
+
+        require_once(elis::plugin_file('elisfields_manual', 'custom_fields.php'));
+
+        $lastcat = null;
+        foreach ($fields as $rec) {
+            $field = new field($rec);
+            if (!isset($field->owners['manual'])) {
+                continue;
+            }
+
+            //capabilities for editing / viewing this context
+
+            if (manual_field_is_view_or_editable($field, $context, $edit_cap, $view_cap) != MANUAL_FIELD_NO_VIEW_OR_EDIT) {
+                if ($lastcat != $rec->categoryid) {
+                    $lastcat = $rec->categoryid;
+                    $mform->addElement('header', "category_{$lastcat}", htmlspecialchars($rec->categoryname));
+                }
+
+                manual_field_add_form_element($this, $mform, $context,
+                                              $this->_customdata, $field,
+                                              true, $edit_cap, $view_cap);
+            }
+        }
+    }
+
+    function validate_custom_fields($data, $eliscontext) {
+        $errors = array();
+
+        $contextlevel = context_elis_helper::get_level_from_name($eliscontext);
+        $fields = field::get_for_context_level($contextlevel);
+        $fields = $fields ? $fields : array();
+        if (!empty($data['id'])) {
+            $contextclass = context_elis_helper::get_class_for_level($contextlevel);
+            $context     = $contextclass::instance($data['id']);
+            $contextid = $context->id;
+        } else {
+            $contextid = 0;
+        }
+
+        foreach ($fields as $field) {
+            $field = new field($field);
+            $key = "field_{$field->shortname}";
+            if ($errstr = manual_field_validation(isset($data[$key]) ? $data[$key] : null, $field, $contextid)) {
+                $errors[$key] = $errstr;
+            }
+            //error_log("cmform.class.php::validation(): contextid = {$contextid}, data[{$key}] = {$data[$key]}, errors[$key] = {$errstr}");
+        }
+
+        return $errors;
+    }
 }
 

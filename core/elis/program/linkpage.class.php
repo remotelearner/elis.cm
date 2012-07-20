@@ -35,8 +35,6 @@ class linkpage extends pm_page {
     public function __construct(array $params=null) {
         global $CFG;
 
-        //$this->params = $params;
-
         $params_array = array();
 
         // Grab the main link parameter
@@ -68,7 +66,7 @@ class linkpage extends pm_page {
         parent::__construct($params_array);
 
         //set up the url and parameters on the current page object
-        $this->set_url($link_url, $params);
+        $this->set_url($link_url, $params_array);
     }
 
     function can_do_default() {

@@ -55,7 +55,7 @@ class enrolconfirmform extends cmform {
         
         $mform->addElement('static', 'lbl_enrol_confirmation', '', get_string('enrol_confirmation', 'elis_program', $data->a));
 
-        $this->add_action_buttons(true, get_string('enrol', 'elis_program'));
+        $this->add_action_buttons(true, get_string('btn_waitlist_add', 'elis_program'));
     }
 }
 

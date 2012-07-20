@@ -121,8 +121,7 @@ class userTest extends elis_database_test {
         load_phpunit_data_set($dataset, true, self::$overlaydb);
 
         // load field data next (we need the user context ID and context level)
-        $usercontextlevel = context_level_base::get_custom_context_level('user', 'elis_program');
-        $usercontext = get_context_instance($usercontextlevel, 103);
+        $usercontext = context_elis_user::instance(103);
         $dataset = new PHPUnit_Extensions_Database_DataSet_CsvDataSet();
         $dataset->addTable(field_contextlevel::TABLE, elis::component_file('program', 'phpunit/user_field_contextlevel.csv'));
         $dataset->addTable(field_category_contextlevel::TABLE, elis::component_file('program', 'phpunit/user_field_category_contextlevel.csv'));
@@ -133,7 +132,7 @@ class userTest extends elis_database_test {
         $dataset->addTable(field_data_text::TABLE, elis::component_file('program', 'phpunit/user_field_data_text.csv'));
         $dataset = new PHPUnit_Extensions_Database_DataSet_ReplacementDataSet($dataset);
         $dataset->addFullReplacement('##USERCTXID##', $usercontext->id);
-        $dataset->addFullReplacement('##USERCTXLVL##', $usercontextlevel);
+        $dataset->addFullReplacement('##USERCTXLVL##', CONTEXT_ELIS_USER);
         load_phpunit_data_set($dataset, true, self::$overlaydb);
     }
 
@@ -305,8 +304,7 @@ class userTest extends elis_database_test {
         //$result->addTable(new moodle_recordset_phpunit_datatable(field_data_num::TABLE, self::$overlaydb->get_recordset(field_data_num::TABLE, null, '', 'contextid, fieldid, data'));
         $result->addTable(new moodle_recordset_phpunit_datatable(field_data_char::TABLE, self::$overlaydb->get_recordset(field_data_char::TABLE, null, '', 'contextid, fieldid, data')));
         $result->addTable(new moodle_recordset_phpunit_datatable(field_data_text::TABLE, self::$overlaydb->get_recordset(field_data_text::TABLE, null, '', 'contextid, fieldid, data')));
-        $usercontextlevel = context_level_base::get_custom_context_level('user', 'elis_program');
-        $usercontext = get_context_instance($usercontextlevel, 103);
+        $usercontext = context_elis_user::instance(103);
         $dataset = new PHPUnit_Extensions_Database_DataSet_CsvDataSet();
         $dataset->addTable(field_data_int::TABLE, elis::component_file('program', 'phpunit/user_field_data_int.csv'));
         //we don't have any num field data
@@ -315,7 +313,7 @@ class userTest extends elis_database_test {
         $dataset->addTable(field_data_text::TABLE, elis::component_file('program', 'phpunit/user_field_data_text.csv'));
         $dataset = new PHPUnit_Extensions_Database_DataSet_ReplacementDataSet($dataset);
         $dataset->addFullReplacement('##USERCTXID##', $usercontext->id);
-        $dataset->addFullReplacement('##USERCTXLVL##', $usercontextlevel);
+        $dataset->addFullReplacement('##USERCTXLVL##', CONTEXT_ELIS_USER);
         // only the first text field should be changed; everything else should
         // be the same
         $dataset->addFullReplacement('First text entry field', $src->profile_field_sometext);

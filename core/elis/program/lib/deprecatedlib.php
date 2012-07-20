@@ -90,6 +90,9 @@ function _print_checkbox($name, $value, $checked = true, $label = '', $alt = '',
  * @return string | boolean The value of the parameter, or $default.
  */
 function cm_get_param($param, $default = false) {
+    if (is_array($default)) {
+        return optional_param_array($param, $default, PARAM_CLEAN);
+    }
     return optional_param($param, $default, PARAM_CLEAN);
 }
 
@@ -330,7 +333,7 @@ function cm_determine_access($uid = false) {
         return false;
     }
 
-    $context = get_context_instance(CONTEXT_SYSTEM, SITEID);
+    $context = get_context_instance(CONTEXT_SYSTEM);
 
     //require_once($CFG->dirroot . '/curriculum/lib/cluster.class.php');
 

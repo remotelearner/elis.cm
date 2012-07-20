@@ -60,7 +60,7 @@ $url = new moodle_url('/elis/program/usertrackpopup.php',
                      'perpage'    => $perpage));
 $PAGE->set_url($url);
 require_login();
-$context = get_context_instance(context_level_base::get_custom_context_level('track', 'elis_program'), $trackid);
+$context = context_elis_track::instance($trackid);
 $PAGE->set_context($context);
 
 //todo: integrate this better with user-track page?
@@ -91,56 +91,17 @@ window.opener.location = "<?php echo htmlspecialchars_decode($target->url); ?>";
 <?php
 }
 
-// find all users not enrolled in the track
-$FULLNAME = $DB->sql_concat('usr.firstname', "' '", 'usr.lastname');
-$NAMELIKE = $DB->sql_like($FULLNAME, ':namesearch', FALSE);
-$ALPHA_LIKE = $DB->sql_like($FULLNAME, ':lastname', FALSE);
+//obtain the total count of users, depending on the current filters
+$count = usertrack::count_available_users($trackid, $namesearch, $alpha);
 
-$select = 'SELECT usr.*, ' . $FULLNAME . ' AS name, usr.lastname AS lastname ';
-$sql = 'FROM {' . user::TABLE . '} usr '
-    . 'LEFT OUTER JOIN {' . usertrack::TABLE . '} ut ON ut.userid = usr.id AND ut.trackid = :trackid '
-    . 'WHERE ut.userid IS NULL ';
-$params = array('trackid' => $trackid);
-if (!empty($namesearch)) {
-        $namesearch = trim($namesearch);
-        $sql .= ' AND '. $NAMELIKE;
-        $params['namesearch'] = "%{$namesearch}%";
-    }
-
-if ($alpha) {
-    $sql .= ' AND '. $ALPHA_LIKE;
-    $params['lastname'] = "{$alpha}%";
-}
-
-if (!trackpage::_has_capability('elis/program:track_enrol', $trackid)) {
-    //perform SQL filtering for the more "conditional" capability
-    //get the context for the "indirect" capability
-    $context = pm_context_set::for_user_with_capability('cluster', 'elis/program:track_enrol_userset_user', $USER->id);
-
-    //get the clusters and check the context against them
-    $clusters = clustertrack::get_clusters($trackid);
-    $allowed_clusters = $context->get_allowed_instances($clusters, 'cluster', 'clusterid');
-
-    if (empty($allowed_clusters)) {
-        $sql .= 'AND 0=1';
-    } else {
-        $cluster_filter = implode(',', $allowed_clusters);
-        $sql .= "AND usr.id IN (
-                   SELECT userid FROM " . $DB->prefix_table(CLSTUSERTABLE) . "
-                   WHERE clusterid IN (:clusterfilter))";
-        $params['clusterfilter'] = $cluster_filter;
-    }
-}
-
-// get the total number of matching users
-$count = $DB->count_records_sql('SELECT COUNT(usr.id) '.$sql, $params);
-if ($sort) {
-    $sql .= 'ORDER BY '.$sort.' '.$dir.' ';
-}
 if ($count < ($page * $perpage)) {
+    //off the end of the last page, so go back to the beginning
+    //(potentially happens if adding last user from last page)
     $page = 0;
 }
-$users = $DB->get_records_sql($select.$sql, $params, $page * $perpage, $perpage);
+
+//obtain the user listing for the current page
+$users = usertrack::get_available_users($trackid, $sort, $dir, $namesearch, $alpha, $page, $perpage);
 
 $PAGE->set_title($site->shortname .': '. get_string('assign_user_track', 'elis_program') .'"'. $track->name .'"');
 $PAGE->set_heading($site->shortname .': '. get_string('assign_user_track', 'elis_program') .'"'. $track->name . '"');

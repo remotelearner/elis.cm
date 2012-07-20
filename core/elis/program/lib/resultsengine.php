@@ -80,8 +80,8 @@ function results_engine_manual($context) {
 
     $processed = false;
 
-    $level  = context_level_base::get_custom_context_level('class', 'elis_program');
-    $courselevel = context_level_base::get_custom_context_level('course', 'elis_program');
+    $level       = CONTEXT_ELIS_CLASS;
+    $courselevel = CONTEXT_ELIS_COURSE;
     $tables = '{crlm_class} cc'
             .' JOIN {context} c ON c.instanceid=cc.id AND c.contextlevel=?'
             .' JOIN {crlm_results} cr ON cr.contextid=c.id';
@@ -186,8 +186,8 @@ function results_engine_check($class) {
 function results_engine_get_active() {
     global $DB;
 
-    $courselevel = context_level_base::get_custom_context_level('course', 'elis_program');
-    $classlevel  = context_level_base::get_custom_context_level('class', 'elis_program');
+    $courselevel = CONTEXT_ELIS_COURSE;
+    $classlevel  = CONTEXT_ELIS_CLASS;
 
     $fields = array('cls.id', 'cls.idnumber', 'cls.startdate', 'cls.enddate',  'cr.id as engineid',
                     'cr.eventtriggertype', 'cr.triggerstartdate', 'cr.criteriatype',
@@ -301,7 +301,6 @@ function results_engine_get_students($class) {
 function results_engine_process($class) {
     global $CFG, $DB;
 
-    $userlevel = context_level_base::get_custom_context_level('user', 'elis_program');
     $params    = array('classid' => $class->id);
 
     $students  = results_engine_get_students($class);
@@ -388,7 +387,7 @@ function results_engine_process($class) {
                     }
 
                     /*
-                    $context = get_context_instance($userlevel, $student->userid);
+                    $context = context_elis_user::instance($student->userid);
                     field_data::set_for_context_and_field($context, $userfields[$do->fieldid], $do->fielddata);
                     */
 

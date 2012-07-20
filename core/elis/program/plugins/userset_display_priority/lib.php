@@ -39,9 +39,7 @@ function userset_display_priority_append_sort_data($userset_id_field, &$select, 
     global $DB;
 
     //make sure we can get the field we need for ordering
-    if($theme_priority_field = new field(field::get_for_context_level_with_name('cluster', USERSET_DISPLAY_PRIORITY_FIELD)) and
-       $contextlevel = context_level_base::get_custom_context_level('cluster', 'elis_program')) {
-
+    if ($theme_priority_field = new field(field::get_for_context_level_with_name(CONTEXT_ELIS_USERSET, USERSET_DISPLAY_PRIORITY_FIELD))) {
         $field_data_table = $theme_priority_field->data_table();
 
         //use this for easier naming in terms of sorting
@@ -52,7 +50,7 @@ function userset_display_priority_append_sort_data($userset_id_field, &$select, 
                      ON field_data.contextid = context.id
                      AND field_data.fieldid = '.$theme_priority_field->id.')
 
-                     ON context.contextlevel = '.$contextlevel.'
+                     ON context.contextlevel = '.CONTEXT_ELIS_USERSET.'
                      AND context.instanceid = '.$userset_id_field.'
                  ';
     }
