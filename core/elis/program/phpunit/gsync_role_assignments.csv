@@ -1,0 +1,5 @@
+id,roleid,contextid,userid,timemodified,modifierid,component,itemid,sortorder
+1,1,1000,100,1343838579,2,enrol_elis,4,0
+2,1,1000,110,1343838579,2,enrol_elis,4,0
+3,1,1000,120,1343838591,2,,0,0
+4,1,1000,130,1343838592,2,,0,0

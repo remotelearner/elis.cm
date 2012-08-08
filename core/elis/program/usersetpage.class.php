@@ -510,7 +510,7 @@ class usersetpage extends managementpage {
            && $DB->record_exists('role', array('id' => elis::$config->elis_program->default_cluster_role_id))) {
 
             //get the context instance for capability checking
-            context_elis_userset::instance($cm_entity->id);
+            $context_instance = context_elis_userset::instance($cm_entity->id);
 
             //assign the appropriate role if the user does not have the edit capability
             if (!has_capability('elis/program:userset_edit', $context_instance)) {

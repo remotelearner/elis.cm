@@ -76,8 +76,7 @@ class usersetform extends cmform {
         }
 
         // custom fields
-        $this->add_custom_fields('cluster', 'elis/program:userset_edit',
-                                 'elis/program:userset_view');
+        $this->add_custom_fields('cluster', 'elis/program:userset_edit', 'elis/program:userset_view', 'cluster');
 
         $this->add_action_buttons();
     }

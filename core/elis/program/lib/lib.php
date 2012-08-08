@@ -307,8 +307,8 @@ function pm_synchronize_moodle_class_grades($moodleuserid = 0) {
             $sql = "SELECT DISTINCT u.id AS muid, u.username, cu.id AS cmid, stu.*
                       FROM {user} u
                       JOIN {role_assignments} ra ON u.id = ra.userid
-                LEFT JOIN {".user::TABLE."} cu ON cu.idnumber = u.idnumber
-                LEFT JOIN {".student::TABLE."} stu on stu.userid = cu.id AND stu.classid = {$pmclass->id}
+                 LEFT JOIN {".user::TABLE."} cu ON cu.idnumber = u.idnumber
+                 LEFT JOIN {".student::TABLE."} stu on stu.userid = cu.id AND stu.classid = {$pmclass->id}
                      WHERE ra.roleid in ({$CFG->gradebookroles})
                        AND ra.contextid {$relatedcontextsstring}
                        {$outerusercondition}
@@ -399,8 +399,10 @@ function pm_synchronize_moodle_class_grades($moodleuserid = 0) {
                     break;
                 }
                 while (is_object($sturec) && is_object($stugrades) && ($sturec->muid < $stugrades->user->id)) {
-                    $sturec = next($causers);
+                    $causers->next();
+                    $sturec = $causers->valid() ? $causers->current() : NULL;
                 }
+
                 if (!is_object($sturec)) {
                     break;
                 }
