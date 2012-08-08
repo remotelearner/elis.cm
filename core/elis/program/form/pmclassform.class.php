@@ -190,8 +190,7 @@ class pmclassform extends cmform {
         $mform->addHelpButton('enrol_from_waitlist', 'pmclassform:waitlistenrol', 'elis_program');
 
         // custom fields
-        $this->add_custom_fields('class','elis/program:class_edit',
-                                 'elis/program:class_view');
+        $this->add_custom_fields('class','elis/program:class_edit', 'elis/program:class_view', 'course');
 
         $this->add_action_buttons();
     }

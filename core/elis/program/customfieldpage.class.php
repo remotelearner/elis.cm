@@ -456,8 +456,17 @@ class customfieldpage extends pm_page {
                     }
                 }
                 if (isset($data_array['defaultdata'])) {
+                    // ELIS-6699 -- load the field to determine the data type used, $data may be a field_data_* or field object
+                    if (isset($data->fieldid)) {
+                        $field->id = $data->fieldid;
+                        $field->load();
+                    } else {
+                        $field = $data;
+                    }
+
                     $data_array['defaultdata_checkbox'] = !empty($data_array['defaultdata']);
-                    $data_array['defaultdata_datetime'] = $data_array['defaultdata'];
+                    // ELIS-6699 -- If this is not a datetime field, then we can't use the default data value as a timestamp
+                    $data_array['defaultdata_datetime'] = ($field->datatype == 'datetime') ? $data_array['defaultdata'] : time();
                     $data_array['defaultdata_text'] = strval($data_array['defaultdata']);
                     $data_array[empty($menu_src)
                                 ? 'defaultdata_menu'

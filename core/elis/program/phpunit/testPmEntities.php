@@ -146,6 +146,9 @@ class testPmEntities extends elis_database_test {
         // Initialize a new program management page and invoke the code that handles default role assignments
         $page = new curriculumpage();
         $page->after_cm_entity_add($obj);
+
+        $programctx = context_elis_program::instance($obj->id);
+        $this->assertTrue($DB->record_exists('role_assignments', array('roleid' => $reid, 'userid' => $USER->id, 'contextid' => $programctx->id)));
     }
 
     /**
@@ -178,6 +181,9 @@ class testPmEntities extends elis_database_test {
         // Initialize a new track management page and invoke the code that handles default role assignments
         $page = new trackpage();
         $page->after_cm_entity_add($obj);
+
+        $trackctx = context_elis_track::instance($obj->id);
+        $this->assertTrue($DB->record_exists('role_assignments', array('roleid' => $reid, 'userid' => $USER->id, 'contextid' => $trackctx->id)));
     }
 
     /**
@@ -212,6 +218,9 @@ class testPmEntities extends elis_database_test {
         // Initialize a new course management page and invoke the code that handles default role assignments
         $page = new coursepage();
         $page->after_cm_entity_add($obj);
+
+        $coursectx = context_elis_course::instance($obj->id);
+        $this->assertTrue($DB->record_exists('role_assignments', array('roleid' => $reid, 'userid' => $USER->id, 'contextid' => $coursectx->id)));
     }
 
     /**
@@ -244,6 +253,9 @@ class testPmEntities extends elis_database_test {
         // Initialize a new class management page and invoke the code that handles default role assignments
         $page = new pmclasspage();
         $page->after_cm_entity_add($obj);
+
+        $classctx = context_elis_class::instance($obj->id);
+        $this->assertTrue($DB->record_exists('role_assignments', array('roleid' => $reid, 'userid' => $USER->id, 'contextid' => $classctx->id)));
     }
 
     /**
@@ -254,8 +266,8 @@ class testPmEntities extends elis_database_test {
 
         list($rcid, $reid) = $this->create_roles('userset');
 
-        // Setup the editor role to be the default role for the class context
-        elis::$config->elis_program->default_userset_role_id = $reid;
+        // Setup the editor role to be the default role for the userset context
+        elis::$config->elis_program->default_cluster_role_id = $reid;
 
         $sysctx = get_context_instance(CONTEXT_SYSTEM);
 
@@ -275,5 +287,8 @@ class testPmEntities extends elis_database_test {
         // Initialize a new userset management page and invoke the code that handles default role assignments
         $page = new usersetpage();
         $page->after_cm_entity_add($obj);
+
+        $usersetctx = context_elis_userset::instance($obj->id);
+        $this->assertTrue($DB->record_exists('role_assignments', array('roleid' => $reid, 'userid' => $USER->id, 'contextid' => $usersetctx->id)));
     }
 }

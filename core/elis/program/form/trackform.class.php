@@ -119,8 +119,7 @@ class trackform extends cmform {
         }
 
         // custom fields
-        $this->add_custom_fields('track', 'elis/program:track_edit',
-                                 'elis/program:track_view');
+        $this->add_custom_fields('track', 'elis/program:track_edit', 'elis/program:track_view', 'curriculum');
 
         $this->add_action_buttons();
     }

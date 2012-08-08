@@ -45,40 +45,44 @@ class pmSynchronizeMoodleClassGradesTest extends elis_database_test {
      * @return array The mapping of overlay tables to components
      */
     static protected function get_overlay_tables() {
-        return array('config' => 'moodle',
-                     'context' => 'moodle',
-                     'course' => 'moodle',
-                     'course_categories' => 'moodle',
-                     'enrol' => 'moodle',
-                     //prevent events magic from happening
-                     'events_handlers' => 'moodle',
-                     'grade_categories' => 'moodle',
-                     'grade_grades' => 'moodle',
-                     'grade_items' => 'moodle',
-                     'role' => 'moodle',
-                     'role_assignments' => 'moodle',
-                     'user' => 'moodle',
-                     'user_enrolments' => 'moodle',
-                     'elis_field_data_num' => 'elis_core',
-                     classmoodlecourse::TABLE => 'elis_program',
-                     course::TABLE => 'elis_program',
-                     coursecompletion::TABLE => 'elis_program',
-                     pmclass::TABLE => 'elis_program',
-                     student::TABLE => 'elis_program',
-                     student_grade::TABLE => 'elis_program',
-                     user::TABLE => 'elis_program',
-                     usermoodle::TABLE => 'elis_program');
+        return array(
+            'config' => 'moodle',
+            'context' => 'moodle',
+            'course' => 'moodle',
+            'course_categories' => 'moodle',
+            'enrol' => 'moodle',
+            //prevent events magic from happening
+            'events_handlers' => 'moodle',
+            'grade_categories' => 'moodle',
+            'grade_grades' => 'moodle',
+            'grade_items' => 'moodle',
+            'role' => 'moodle',
+            'role_assignments' => 'moodle',
+            'user' => 'moodle',
+            'user_enrolments' => 'moodle',
+            field::TABLE => 'elis_core',
+            classmoodlecourse::TABLE => 'elis_program',
+            course::TABLE => 'elis_program',
+            coursecompletion::TABLE => 'elis_program',
+            pmclass::TABLE => 'elis_program',
+            student::TABLE => 'elis_program',
+            student_grade::TABLE => 'elis_program',
+            user::TABLE => 'elis_program',
+            usermoodle::TABLE => 'elis_program'
+        );
     }
 
     /**
      * Return the list of tables that should be ignored for writes.
      */
     static protected function get_ignored_tables() {
-        return array('cache_flags' => 'moodle',
-                     'grade_categories_history' => 'moodle',
-                     'grade_grades_history' => 'moodle',
-                     'grade_items_history' => 'moodle',
-                     coursetemplate::TABLE => 'moodle');
+        return array(
+            'cache_flags' => 'moodle',
+            'grade_categories_history' => 'moodle',
+            'grade_grades_history' => 'moodle',
+            'grade_items_history' => 'moodle',
+            coursetemplate::TABLE => 'moodle'
+        );
     }
 
     /**
@@ -2106,5 +2110,75 @@ class pmSynchronizeMoodleClassGradesTest extends elis_database_test {
         $count = $DB->count_records(student_grade::TABLE, array('locked' => 1));
         $this->assertEquals(1, $count);
         $this->assert_student_grade_exists(100, 103, 1, NULL, 1);
+    }
+
+    /**
+     * Validate that even with duplicate enrolment records, the grade synchronisation still runs correctly and can synchronise
+     * data for unique enrolments.
+     */
+    public function testGradeSyncWithDuplicateClassEnrolmentRecords() {
+        global $DB;
+
+        $dataset = new PHPUnit_Extensions_Database_DataSet_CsvDataSet();
+
+        $dataset->addTable('context', elis::component_file('program', 'phpunit/gsync_context.csv'));
+        $dataset->addTable('course', elis::component_file('program', 'phpunit/gsync_mdl_course.csv'));
+        $dataset->addTable('grade_grades', elis::component_file('program', 'phpunit/gsync_grade_grades.csv'));
+        $dataset->addTable('grade_items', elis::component_file('program', 'phpunit/gsync_grade_items.csv'));
+        $dataset->addTable('role', elis::component_file('program', 'phpunit/role.csv'));
+        $dataset->addTable('role_assignments', elis::component_file('program', 'phpunit/gsync_role_assignments.csv'));
+        $dataset->addTable('user', elis::component_file('program', 'phpunit/gsync_mdl_user.csv'));
+        $dataset->addTable('user_enrolments', elis::component_file('program', 'phpunit/gsync_user_enrolments.csv'));
+
+        $dataset->addTable(pmclass::TABLE, elis::component_file('program', 'phpunit/gsync_class.csv'));
+        $dataset->addTable(student::TABLE, elis::component_file('program', 'phpunit/gsync_class_enrolment.csv'));
+        $dataset->addTable(classmoodlecourse::TABLE, elis::component_file('program', 'phpunit/gsync_class_moodle.csv'));
+        $dataset->addTable(course::TABLE, elis::component_file('program', 'phpunit/gsync_course.csv'));
+        $dataset->addTable(user::TABLE, elis::component_file('program', 'phpunit/gsync_user.csv'));
+        $dataset->addTable(usermoodle::TABLE, elis::component_file('program', 'phpunit/gsync_user_moodle.csv'));
+
+        load_phpunit_data_set($dataset, true, self::$overlaydb);
+
+        // We need to reset the context cache
+        accesslib_clear_all_caches(true);
+
+        // Make our role a "student" role
+        set_config('gradebookroles', 1);
+
+        // Load enrol plugin records from the main DB
+        $enrols = self::$origdb->get_records('enrol');
+        if (!empty($enrols)) {
+            foreach ($enrols as $enrol) {
+                self::$overlaydb->import_record('enrol', $enrol);
+            }
+        }
+
+        // Force synchronisation of grade data from Moodle to ELIS
+        pm_synchronize_moodle_class_grades();
+
+        $params = array(
+            'classid' => 1,
+            'userid'  => 120,
+            'grade'   => 75.00000
+        );
+        $this->assertTrue($DB->record_exists(student::TABLE, $params));
+
+        $params['userid']           = 100;
+        $params['grade']            = 77.0000;
+        $params['completestatusid'] = STUSTATUS_PASSED;
+        $this->assertTrue($DB->record_exists(student::TABLE, $params));
+
+        $params['userid'] = 130;
+        $params['grade']  = 82.00000;
+        $this->assertTrue($DB->record_exists(student::TABLE, $params));
+
+        $params['userid'] = 110;
+        $params['grade']  = 88.00000;
+        $this->assertTrue($DB->record_exists(student::TABLE, $params));
+
+        $params['userid']           = 110;
+        $params['completestatusid'] = STUSTATUS_NOTCOMPLETE;
+        $params['grade']            = 0.00000;
+        $this->assertTrue($DB->record_exists(student::TABLE, $params));
     }
 }

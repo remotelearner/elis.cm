@@ -223,13 +223,16 @@ class health_duplicate_enrolments extends crlm_health_check_base {
     function __construct() {
         require_once elispm::lib('data/student.class.php');
         global $DB;
-        $sql = "SELECT COUNT(*)
-                  FROM {".student::TABLE."} enr
-                 WHERE EXISTS (SELECT *
-                                 FROM {".student::TABLE."} enr2
-                                WHERE enr.userid = enr2.userid
-                                  AND enr.classid = enr2.classid
-                                  AND enr.id > enr2.id)";
+
+        $sql = "SELECT COUNT('x')
+                FROM {".student::TABLE."} enr
+                INNER JOIN (
+                    SELECT id
+                    FROM {".student::TABLE."}
+                    GROUP BY userid, classid
+                    HAVING COUNT(id) > 1
+                ) dup
+                ON enr.id = dup.id";
         $this->count = $DB->count_records_sql($sql);
     }
     function exists() {

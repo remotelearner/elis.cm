@@ -1,0 +1,2 @@
+id,courseid,itemtype,iteminstance,gradetype,grademax,grademin,,gradepass,multfactor,plusfactor,aggregationcoef,sortorder,display,hidden,locked,locktime,timecreated,timemodified
+1,2,course,1,1,100.00000,0.00000,0.00000,1.00000,0.00000,0.00000,1,0,0,0,0,0,1343838608,1343838608
