@@ -1,0 +1,12 @@
+diff --git a/elis/core/lib/filtering/radiobuttons.php b/elis/core/lib/filtering/radiobuttons.php
+index b4fa0e9..0fb94b3 100644
+--- a/elis/core/lib/filtering/radiobuttons.php
++++ b/elis/core/lib/filtering/radiobuttons.php
+@@ -33,7 +33,6 @@
+  *
+  * @author     Remote-Learner.net Inc
+  * @author     Brent Boghosian <brent.boghosian@remote-learner.net>
+- * @version    $Id$
+  * @package    elis-core
+  * @subpackage filtering
+  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL

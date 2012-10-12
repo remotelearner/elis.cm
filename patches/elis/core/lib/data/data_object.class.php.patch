@@ -1,0 +1,12 @@
+diff --git a/elis/core/lib/data/data_object.class.php b/elis/core/lib/data/data_object.class.php
+index 8c5c6d1..fd8ede5 100644
+--- a/elis/core/lib/data/data_object.class.php
++++ b/elis/core/lib/data/data_object.class.php
+@@ -977,6 +977,7 @@ function validate_is_unique(elis_data_object $record, array $fields) {
+     $tablename = $classname::TABLE;
+     $db = $record->get_db();
+     $filters = array();
++
+     foreach ($fields as $field) {
+         $filters[] = new field_filter($field, $record->$field);
+     }

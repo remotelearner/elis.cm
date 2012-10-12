@@ -1,0 +1,32 @@
+diff --git a/user/editadvanced_form.php b/user/editadvanced_form.php
+index 400d9d3..7cc897e 100644
+--- a/user/editadvanced_form.php
++++ b/user/editadvanced_form.php
+@@ -201,6 +201,27 @@ class user_editadvanced_form extends moodleform {
+             }
+         }
+ 
++        //start of RL edit
++        if (!empty($user->idnumber) && empty($usernew->idnumber)) {
++            //prevent users from unsetting idnumbers
++            $err['idnumber'] = get_string('idnumberunset', 'elis_program');
++        } else if (!$user or $user->idnumber !== $usernew->idnumber) {
++            //prevent users from setting non-unique idnumbers
++            $exists = $DB->record_exists('user', array('idnumber'=>$usernew->idnumber, 'mnethostid'=>$CFG->mnet_localhost_id));
++            if (!empty($usernew->idnumber) && $exists) {
++                $err['idnumber'] = get_string('idnumberexists', 'elis_program');
++            } else {
++                //prevent users from setting idnumbers that already exist in the Program Management system
++                require_once($CFG->dirroot.'/elis/program/lib/setup.php');
++                require_once(elispm::lib('data/user.class.php'));
++                $exists = $DB->record_exists(user::TABLE, array('idnumber'=>$usernew->idnumber));;
++                if ($exists) {
++                    $err['idnumber'] = get_string('idnumberexistspm', 'elis_program');
++                }
++            }
++        }
++        //end of RL edit
++
+         /// Next the customisable profile fields
+         $err += profile_validation($usernew, $files);
+ 

@@ -1,0 +1,5 @@
+id,username,password,idnumber,firstname,lastname,email,city,country,language,transfercredits,timecreated,timemodified,inactive
+100,student1,6c214c9d2569603eeba8fa8ea5397c01,student1,Student,One,jfilip+s1@gmail.com,Toronto,CA,en,0,1342796464,1342796464,0
+110,student2,2cd5f69bdebd137ac6d8396d555ebc39,student2,Student,Two,jfilip+s2@gmail.com,Sarnia,CA,en,0,1342796464,1342796464,0
+120,student9,3fd3ebd506b1f758156ccfd259f730ef,student9,Student,Nine,jfilip+s9@gmail.com,Halifax,CA,en,0,1342796465,1342796465,0
+130,student10,c14dba6724c16ebfa89b5c4a96995ebb,student10,Student,Ten,jfilip+s10@gmail.com,North Bay,CA,en,0,1342796465,1342796465,0

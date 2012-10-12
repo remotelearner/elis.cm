@@ -1,0 +1,5 @@
+id,name,display,parent,depth
+1,Parent set 1,Some parent user set,0,1
+2,Sub set 1,Sub user set,1,2
+3,Sub set 2,Some other sub set,1,2
+4,Sub-sub set 1,Sub set of a sub set,2,3

@@ -1,0 +1,11 @@
+id,userid,fieldid,data
+1,100,1,First text entry field
+2,100,2,1
+3,100,3,1234567890
+4,100,4,option2
+5,100,5,First text area field
+6,100,6,Second text entry field
+7,100,7,0
+8,100,8,1234509876
+9,100,9,option3
+10,100,10,Second text area field

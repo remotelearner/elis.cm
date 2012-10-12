@@ -1,0 +1,5 @@
+id,username,idnumber,firstname,lastname,inactive,email
+100,assignedactive,assignedactive,Assigned,Active,0,assigned@active.com
+101,unassignedinactive,unassignedinactive,Unassigned,Inactive,1,unassigned@inactive.com
+102,unassignedactive,unassignedactive,Unassigned,Active,0,unassigned@active.com
+103,anotherunassignedactive,anotherunassignedactive,AnotherUnassigned,Active,0,anotherunassigned@active.com

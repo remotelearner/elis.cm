@@ -1,0 +1,24 @@
+diff --git a/elis/core/lang/en/elis_core.php b/elis/core/lang/en/elis_core.php
+index da698ee..7498ba9 100644
+--- a/elis/core/lang/en/elis_core.php
++++ b/elis/core/lang/en/elis_core.php
+@@ -79,7 +79,6 @@ $string['fld_courserole_help'] = '<h1>Course role filter</h1>
+ <p>This filter allows you to filter users based the role they have assigned in the course
+ specified by its shortname from a specified course category (if the shortname textbox is empty,
+ the category is "any category" and the role is "any role" then the filter is not active).</p>';
+-$string['fld_credits'] = 'Credits';
+ $string['fld_curriculum'] = 'Curriculum';
+ $string['fld_description'] = 'Description';
+ $string['fld_email'] = 'Email address';
+@@ -161,9 +160,10 @@ The filter has the following options:</p>
+ <li>ends with - this option allows only lastnames that end with the text entered (if no text is entered, then the filter is disabled)</li>
+ <li>is empty - this option allows only lastnames that are equal to the empty string (the text entered is ignored)</li>
+ </ul>';
++$string['fld_name'] = 'Name';
++$string['fld_startdate'] = 'Start date';
+ $string['fld_length'] = 'Length';
+ $string['fld_lengthdescription'] = 'Length description';
+-$string['fld_name'] = 'Name';
+ $string['fld_priority'] = 'Priority';
+ $string['fld_reqcredits'] = 'Required credits';
+ $string['fld_startdate'] = 'Start date';
