@@ -1930,6 +1930,96 @@ function pm_mymoodle_redirect($editing = false) {
             elis::$config->elis_program->mymoodle_redirect == 1);
 }
 
+// Retrieve the selection record from a session
+function retrieve_session_selection_bulkedit($id, $action) {
+    global $SESSION;
+
+    $pageid = optional_param('id', 1, PARAM_INT);
+    $page = optional_param('s', '', PARAM_ALPHA);
+    $target = optional_param('target', '', PARAM_ALPHA);
+
+    if (empty($target)) {
+        $target = $action;
+    }
+
+    $pagename = $page . $pageid . $target;
+
+    if (isset($SESSION->associationpage[$pagename][$id])) {
+        return $SESSION->associationpage[$pagename][$id];
+    } else {
+        return false;
+    }
+
+    return false;
+}
+
+function retrieve_session_selection($id, $action) {
+    global $SESSION;
+
+    $pageid = optional_param('id', 1, PARAM_INT);
+    $page = optional_param('s', '', PARAM_ALPHA);
+    $target = optional_param('target', '', PARAM_ALPHA);
+
+    if (empty($target)) {
+        $target = $action;
+    }
+
+    $pagename = $page . $pageid . $target;
+
+    if (isset($SESSION->associationpage[$pagename])) {
+        foreach ($SESSION->associationpage[$pagename] as $selectedcheckbox) {
+            $record = json_decode($selectedcheckbox);
+            if($record->id == $id) {
+                return $selectedcheckbox;
+            }
+        }
+    }
+
+    return false;
+}
+
+// Prints the checkbox selection
+function print_checkbox_selection($classid, $page, $target) {
+    global $SESSION;
+
+    $pagename = $page.$classid.$target;
+    $baseurl = get_pm_url()->out_omit_querystring() . '?&id='.$classid.'&s='.$page.'&target=' . $target;
+    echo '<input type="hidden" id="baseurl" value="' . $baseurl .'" /> ';
+
+    if(isset($SESSION->associationpage[$pagename])) {
+        $selectedcheckboxes = $SESSION->associationpage[$pagename];
+        if (is_array($selectedcheckboxes)) {
+            $selection = array();
+            foreach ($selectedcheckboxes as $selectedcheckbox) {
+                $record = json_decode($selectedcheckbox);
+                $selection[] = $record->id;
+            }
+            $result  = implode(',', $selection);
+            echo '<input type="hidden" id="selected_checkboxes" value="' . $result .'" /> ';
+        }
+    }
+}
+
+function print_ids_for_checkbox_selection($ids,$classid,$page,$target) {
+    $baseurl = get_pm_url()->out_omit_querystring() . '?&id='.$classid.'&s='.$page.'&target=' . $target;
+    echo '<input type="hidden" id="baseurl" value="' . $baseurl .'" /> ';
+    echo '<input type="hidden" id="selfurl" value="' . qualified_me() .'" /> ';
+    $result  = implode(',', $ids);
+    echo '<input type="hidden" id="persist_ids_this_page" value="' . $result .'" /> ';
+}
+
+function session_selection_deletion($target) {
+    global $SESSION;
+    $pageid = optional_param('id', 1, PARAM_INT);
+    $page = optional_param('s', '', PARAM_ALPHA);
+
+    $pagename = $page.$pageid.$target;
+
+    if (isset($SESSION->associationpage[$pagename])) {
+        unset($SESSION->associationpage[$pagename]);
+    }
+}
+
 /**
  * Function to append suffix to string, but, only once
  * - if already present doesn't re-append
