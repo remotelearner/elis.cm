@@ -1,5 +1,5 @@
 diff --git a/admin/tool/uploaduser/index.php b/admin/tool/uploaduser/index.php
-index 633b5f2..469efa4 100644
+index 98a244c..338a07b 100644
 --- a/admin/tool/uploaduser/index.php
 +++ b/admin/tool/uploaduser/index.php
 @@ -68,6 +68,11 @@ $strusernotdeletedadmin     = get_string('usernotdeletedadmin', 'error');
