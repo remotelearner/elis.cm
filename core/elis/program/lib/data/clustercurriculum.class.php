@@ -223,7 +223,7 @@ class clustercurriculum extends elis_data_object {
      * @param   array  $extrafilters     Additional filters to apply to the count
      * @return  int                      The number of appropriate records
      */
-    static function count_clusters($curriculumid = 0, $parentclusterid = 0, $extrafilters = array()) {
+    function count_clusters($curriculumid = 0, $parentclusterid = 0, $extrafilters = array()) {
         global $DB;
 
         $select  = 'SELECT COUNT(*) ';

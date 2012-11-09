@@ -450,7 +450,7 @@ class curriculum extends data_object_with_custom_fields {
      * which is an array of any errors encountered when duplicating the
      * object.
      */
-    function duplicate(array $options=array()) {
+    function duplicate($options=array()) {
         require_once elispm::lib('data/track.class.php');
 
         $objs = array('errors' => array());

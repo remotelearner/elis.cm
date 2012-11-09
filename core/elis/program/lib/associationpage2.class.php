@@ -36,10 +36,10 @@ abstract class associationpage2 extends selectionpage {
         return $this->optional_param('_assign', 'unassign', PARAM_ACTION) == 'assign';
     }
 
-    function print_header($_) {
+    function print_header() {
         $id = $this->required_param('id', PARAM_INT); // TBD
 
-        parent::print_header($_);
+        parent::print_header();
 
         $mode = $this->optional_param('mode', '', PARAM_ACTION);
         if ($mode != 'bare') {

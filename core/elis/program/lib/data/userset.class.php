@@ -117,8 +117,6 @@ class userset extends data_object_with_custom_fields {
             $userset_context = $contextclass::instance($this->id);
             $userset_context->delete();
 
-            events_trigger('cluster_deleted', $this->id);
-
             return;
         }
 
@@ -362,7 +360,7 @@ class userset extends data_object_with_custom_fields {
         $filtersql = $context->get_filter('id')->get_sql(true, 'clst', SQL_PARAMS_NAMED);
 
         if (isset($filtersql['join'])) {
-            $cluster_permissions_sql .= $filtersql['join'];
+            $cluster_permission_sql .= $filtersql['join'];
             $params = array_merge($params, $filtersql['join_params']);
         }
         if (isset($filtersql['where'])) {

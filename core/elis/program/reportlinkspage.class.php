@@ -37,9 +37,9 @@ class class_reportlinkspage extends pm_page {
     var $tab_page = 'pmclasspage';
     var $section = 'curr';
 
-    function build_navbar_default($who = null) {
+    function build_navbar_default() {
         global $CFG;
-        parent::build_navbar_default($who);
+        parent::build_navbar_default();
         $this->navbar->add($this->get_page_title_default());
     }
 
@@ -59,10 +59,10 @@ class class_reportlinkspage extends pm_page {
         return new $this->tab_page($params);
     }
 
-    function print_header($_) {
+    function print_header() {
         $id = required_param('id', PARAM_INT);
 
-        parent::print_header($_);
+        parent::print_header();
 
         $this->get_tab_page()->print_tabs(get_class($this), array('id' => $id));
     }
@@ -70,10 +70,7 @@ class class_reportlinkspage extends pm_page {
     function can_do_default() {
         global $USER;
         $id = $this->required_param('id', PARAM_INT);
-
-        // TODO: Ugly, this needs to be overhauled
-        $cpage = new pmclasspage();
-        return $cpage->_has_capability('block/php_report:view', $id)
+        return pmclasspage::_has_capability('block/php_report:view', $id)
             || instructor::user_is_instructor_of_class(cm_get_crlmuserid($USER->id), $id);
     }
 

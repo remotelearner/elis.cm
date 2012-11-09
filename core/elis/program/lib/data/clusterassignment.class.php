@@ -130,7 +130,6 @@ class clusterassignment extends elis_data_object {
      */
     static function update_enrolments($userid = 0, $clusterid = 0) {
         global $DB;
-        require_once(elispm::lib('data/usermoodle.class.php'));
         //error_log("/elis/program/lib/data/clusterassignment.class.php::update_enrolments({$userid}, {$clusterid})");
 
         //convert provided parameters to SQL conditions
@@ -295,28 +294,5 @@ class clusterassignment extends elis_data_object {
                    AND clutrk.autoenrol = 1
                    {$extrawhere}";
         $DB->execute($sql, $extraparams);
-
-        //update site-level "cluster groups"
-        //TODO: make sure all "cluster groups" scenarios are handled here, and look at
-        //performance in more detal
-        if (!empty($userid) && file_exists(elispm::file('plugins/userset_groups/lib.php'))) {
-            require_once(elispm::file('plugins/userset_groups/lib.php'));
-
-            //need the Moodle user id
-            $mdluserid = $DB->get_field(usermoodle::TABLE, 'muserid', array('cuserid' => $userid));
-
-            if ($mdluserid) {
-                //find all assignments for this user
-                $assignments = $DB->get_recordset(clusterassignment::TABLE, array('userid' => $userid));
-
-                foreach ($assignments as $assignment) {
-                    //update site-level group assignments
-                    userset_groups_update_site_course($assignment->clusterid, true, $mdluserid);
-                }
-            }
-
-            //update course-level group assignment
-            userset_groups_update_groups(array('mdlusr.cuserid' =>  $userid));
-        }
     }
 }

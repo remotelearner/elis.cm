@@ -75,10 +75,7 @@ class clusteruserselectpage extends selectionpage {
             $filters[] = new select_filter($extrasql, $params);
         }
 
-        // TODO: Ugly, this needs to be overhauled
-        $upage = new usersetpage();
-
-        if (!$upage->_has_capability('elis/program:userset_enrol')) {
+        if (!usersetpage::_has_capability('elis/program:userset_enrol')) {
             //perform SQL filtering for the more "conditional" capability
 
             //get the context for the "indirect" capability

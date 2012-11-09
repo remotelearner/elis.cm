@@ -68,23 +68,12 @@ class pmclassform extends cmform {
             empty($this->_customdata['obj']->id)) {
             $courses = array();
             if (!empty($USER->id)) {
-                // This is necessary for creating a new class instance but will prevent a parent course from appearing
-                // when the user has class edit permissions but not class creation permission -- ELIS-5954
-                $contexts = get_contexts_by_capability_for_user('course', 'elis/program:class_create', $USER->id);
+                $contexts = get_contexts_by_capability_for_user(
+                                'course', 'elis/program:class_create',
+                                $USER->id);
                 // get listing of available ELIS courses
-                $courses = course_get_listing('name', 'ASC', 0, 0, '', '', $contexts);
-
-                // Detect if we are editing an existing class instance by checking for an value in the 'id' element
-                $elm = $mform->_elements[$mform->_elementIndex['id']];
-                $id  = $elm->getValue();
-
-                if (!empty($id)) {
-                    // Make sure that the parent course for this class is always included otherwise the display is messed up
-                    // and hitting the form Cancel button causes a DB error -- ELIS-5954
-                    $pmclass = new pmclass($id);
-
-                    $courses = array_merge($courses, course_get_listing('name', 'ASC', 0, 0, $pmclass->course->idnumber));
-                }
+                $courses = course_get_listing('name', 'ASC', 0, 0, '', '',
+                                              $contexts);
             }
 
             // Add course select

@@ -106,11 +106,13 @@ function xmldb_pmplugins_userset_classification_upgrade($oldversion = 0) {
         // Make sure to rename the default classification name from "Cluster" to "User set"
         require_once(elispm::file('plugins/userset_classification/usersetclassification.class.php'));
 
+        //make sure there are no custom fields with invalid categories
+        pm_fix_orphaned_fields();
+
         $field = field::find(new field_filter('shortname', USERSET_CLASSIFICATION_FIELD));
 
         if ($field->valid()) {
             $field = $field->current();
-
             $category = $field->category;
 
 	        $default = usersetclassification::find(new field_filter('shortname', 'regular'));
@@ -130,6 +132,7 @@ function xmldb_pmplugins_userset_classification_upgrade($oldversion = 0) {
 	            foreach ($owners as $owner) {
 	                if ($owner->plugin == 'cluster_classification') {
 	                    $owner->plugin = 'userset_classification';
+
 	                    $owner->save();
 	                } else if ($owner->plugin == 'manual') {
 	                    $owner->param_options_source = 'userset_classifications';

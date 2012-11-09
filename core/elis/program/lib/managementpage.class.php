@@ -532,7 +532,7 @@ abstract class managementpage extends pm_page {
             $who = $this;
         }
         if ($addparent) {
-            parent::build_navbar_default($who, $addparent = true, $params = array());
+            parent::build_navbar_default($who);
         }
         $url = $this->get_new_page($params, true)->url; // TBD: who->
         $who->navbar->add(get_string("manage_{$this->data_class}", 'elis_program'), $url);
