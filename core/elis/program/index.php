@@ -23,7 +23,6 @@
  * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
-
 require_once dirname(__FILE__) . '/lib/setup.php';
 
 /// This is the main entry point for the program management system. It can be called from anywhere.

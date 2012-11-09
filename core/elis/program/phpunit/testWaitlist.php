@@ -54,6 +54,7 @@ class waitlistTest extends elis_database_test {
 	    require_once(elispm::lib('data/usermoodle.class.php'));
 
         return array('config' => 'moodle',
+                     'message_read' => 'moodle',
                      'user' => 'moodle',
                      course::TABLE => 'elis_program',
 		             pmclass::TABLE => 'elis_program',

@@ -209,6 +209,9 @@ class instructorpage extends associationpage {
         $users = pm_process_user_enrolment_data(); // ELIS-4089 -- JJF
 
         if (!empty($users)) {
+            // Delete/reset checkbox selection for add action
+            session_selection_deletion('add');
+
             foreach ($users as $uid => $user) {
                 if (!empty($user['assign'])) {
                     $insrecord            = array();
@@ -436,6 +439,11 @@ class instructorpage extends associationpage {
 
         echo cm_delete_form($url, $message, $optionsyes, $optionsno);
     }
+
+    function do_checkbox_selection_session() {
+        parent::checkbox_selection_session();
+    }
+
 }
 
 /**

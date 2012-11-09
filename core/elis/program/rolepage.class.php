@@ -225,6 +225,7 @@ abstract class rolepage extends associationpage2 {
     }
 
     protected function process_assignment($data) {
+        $this->session_selection_deletion();
         $context = $this->get_context();
 
         //make sure the current user can assign roles on the current context
@@ -249,6 +250,7 @@ abstract class rolepage extends associationpage2 {
     }
 
     protected function process_unassignment($data) {
+        $this->session_selection_deletion();
         $context = $this->get_context();
 
         //make sure the current user can assign roles on the current context
@@ -422,7 +424,7 @@ abstract class rolepage extends associationpage2 {
         $baseurl .= "&role={$role}";
 
         $records = $records ? $records : array();
-        $columns = array('_selection' => array('header' => ''),
+        $columns = array('_selection' => array('header' => get_string('select')),
                          'idnumber'   => array('header' => get_string('idnumber')),
                          'name'       => array('header' => array('firstname' => array('header' => get_string('firstname')),
                                                                  'lastname' => array('header' => get_string('lastname'))

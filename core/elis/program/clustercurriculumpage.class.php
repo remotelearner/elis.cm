@@ -371,16 +371,6 @@ class clustercurriculumpage extends clustercurriculumbasepage {
         // Exclude clusters the user does not have the capability to manage/see
         $context = get_contexts_by_capability_for_user('cluster', 'elis/program:userset_view', $USER->id);
 
-        foreach ($clusters as $clusid => $clusdata) {
-            $haspermission = $context->context_allowed($clusid, 'cluster');
-
-            if (!$haspermission) {
-                  unset($clusters[$clusid]);
-            }
-        }
-
-
-
         echo '<form action="index.php" method="post">';
 
         $mdlcrsoptions = array('copyalways' => get_string('program_copy_mdlcrs_copyalways', 'elis_program'),
@@ -390,11 +380,12 @@ class clustercurriculumpage extends clustercurriculumbasepage {
             );
 
         $contexts = curriculumpage::get_contexts('elis/program:associate');
-
         foreach ($clusters as $clusid => $clusdata) {
+            if (!$context->context_allowed($clusid, 'cluster')) {
+                continue;
+            }
 
             $assocurr = clustercurriculum::get_curricula($clusid);
-
             if (!empty($assocurr)) {
 
                 $first = true;
@@ -451,8 +442,6 @@ class clustercurriculumpage extends clustercurriculumbasepage {
                         );
                     $table->rowclass[] = 'clus_cpy_row';
                 }
-
-
             }
         }
 
@@ -464,10 +453,7 @@ class clustercurriculumpage extends clustercurriculumbasepage {
         // Get all curriculums, removing curricula that have already
         // been listed
         $curriculums = curriculum_get_listing($sort, $dir, 0, 0, '', '', $contexts);
-
-
         foreach ($curriculums as $curriculumid => $curriculumdata) {
-
             if (false === array_search($curriculumid, $curriculumshown)) {
                 $checkbox_ids = "'".self::CPY_CURR_PREFIX.$curriculumid."',
                                  '".self::CPY_CURR_TRK_PREFIX.$curriculumid."',
@@ -538,11 +524,9 @@ class clustercurriculumpage extends clustercurriculumbasepage {
         echo '</div>';
         echo '</div>';
         echo '</form>';
-
     }
 
     function do_copycurr() {
-
         global $CFG;
 
         // TODO: replace print_object messages with notice messages

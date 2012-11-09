@@ -25,6 +25,35 @@
 
 var cache = [];
 
+/**
+ * Update the listing of available tracks on the create / edis class form based
+ * on the provided JSON encoded response text
+ * 
+ * @param string responseText The text containing a JSON encoded list of tracks
+ */
+function update_trk_multiselect_from_response(responseText) {
+    // Obtain the element that represent the associated tracks
+    var id_track = document.getElementById("id_track");
+
+    if(id_track != null) {
+        // Clear out previous selection
+        id_track.innerHTML = '';
+
+        var tracks = eval(responseText);
+
+        for (var i = 0; i < tracks.length; i++) {
+            // Append the appropriate option to the select element
+            option = document.createElement('option');
+            attr = document.createAttribute('value')
+            attr.nodeValue = tracks[i].id;
+            option.setAttributeNode(attr);
+            option.appendChild(document.createTextNode(tracks[i].name));
+
+            id_track.appendChild(option);
+        }
+    }
+}
+
 function update_trk_multiselect() {
     crsid = document.getElementById("id_courseid").value;
 
@@ -33,12 +62,7 @@ function update_trk_multiselect() {
     }
 
     var set_trk_list = function(o) {
-        var id_track = document.getElementById("id_track");
-
-        if(id_track != null) {
-            cache[crsid] = o.responseText;
-            id_track.innerHTML = o.responseText;
-        }
+    	update_trk_multiselect_from_response(o.responseText);
     }
 
 
@@ -48,11 +72,7 @@ function update_trk_multiselect() {
     }
 
     if(cache[crsid] != null) {
-        var id_track = document.getElementById("id_track");
-
-        if(id_track != null) {
-            id_track.innerHTML = cache[crsid];
-        }
+        update_trk_multiselect_from_response(cache[crsid]);
     } else {
         YAHOO.util.Connect.asyncRequest('GET', 'lib/data/tracklib.php?courseid=' + crsid, callback, null);
     }

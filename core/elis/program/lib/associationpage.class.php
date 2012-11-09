@@ -621,6 +621,138 @@ class associationpage extends pm_page {
     function print_search() {
         pmsearchbox($this);
     }
+
+    function bulk_apply_all() {
+        global $SESSION;
+
+        $target = optional_param('target', '', PARAM_ALPHA);
+        $page = optional_param('s', '', PARAM_ALPHA);
+        $id = optional_param('id', 1, PARAM_INT);
+        $blktpl = optional_param('bulktpl', '', PARAM_CLEAN);
+        $pagename = $page . $id . $target;
+        $blktpl = json_decode($blktpl);
+
+        if (!empty($SESSION->associationpage[$pagename]) && is_array($SESSION->associationpage[$pagename])) {
+            foreach($SESSION->associationpage[$pagename] as $uid => $rec) {
+                if (!empty($rec->selected) && $rec->selected === true) {
+                    if (!empty($blktpl->enrolment_date_checked) && $blktpl->enrolment_date_checked === true) {
+                        $rec->enrolment_date->day = $blktpl->enrolment_date->day;
+                        $rec->enrolment_date->month = $blktpl->enrolment_date->month;
+                        $rec->enrolment_date->year = $blktpl->enrolment_date->year;
+                    }
+                    if (!empty($blktpl->completion_date_checked) && $blktpl->completion_date_checked === true) {
+                        $rec->completion_date->day = $blktpl->completion_date->day;
+                        $rec->completion_date->month = $blktpl->completion_date->month;
+                        $rec->completion_date->year = $blktpl->completion_date->year;
+                    }
+                    if (!empty($blktpl->status_checked)) {
+                        $rec->status = $blktpl->status;
+                    }
+                    if (!empty($blktpl->grade_checked)) {
+                        $rec->grade = $blktpl->grade;
+                    }
+                    if (!empty($blktpl->credits_checked)) {
+                        $rec->credits = $blktpl->credits;
+                    }
+                    if (!empty($blktpl->locked_checked)) {
+                        $rec->locked = $blktpl->locked;
+                    }
+                }
+            }
+        }
+    }
+
+    function bulk_checkbox_selection_deselectall() {
+        global $SESSION;
+
+        $target = optional_param('target', '', PARAM_ALPHA);
+        $page = optional_param('s', '', PARAM_ALPHA);
+        $id = optional_param('id', 1, PARAM_INT);
+        $pagename = $page . $id . $target;
+
+        if (!empty($SESSION->associationpage[$pagename])) {
+            foreach ($SESSION->associationpage[$pagename] as $userid => $rec) {
+                unset($SESSION->associationpage[$pagename][$userid]->selected);
+            }
+        }
+
+        return true;
+    }
+
+    function bulk_checkbox_selection_reset($target) {
+        session_selection_deletion($target);
+    }
+
+    // Store checkbox data into session
+    function bulk_checkbox_selection_session() {
+        global $SESSION;
+        $selection = optional_param('selected_checkboxes', '', PARAM_CLEAN);
+        $target = optional_param('target', '', PARAM_ALPHA);
+        $page = optional_param('s', '', PARAM_ALPHA);
+        $id = optional_param('id', 1, PARAM_INT);
+
+        $selectedcheckboxes = json_decode($selection);
+
+        if (is_array($selectedcheckboxes)) {
+            $pagename = $page . $id . $target;
+
+            if (!isset($SESSION->associationpage[$pagename])) {
+                $SESSION->associationpage[$pagename] = array();
+            }
+
+            foreach ($selectedcheckboxes as $selectedcheckbox) {
+                $record = json_decode($selectedcheckbox);
+
+                if(isset($record->changed) && $record->changed === true) {
+                    $SESSION->associationpage[$pagename][$record->id] = $record;
+                } else {
+                    if (isset($SESSION->associationpage[$pagename][$record->id])) {
+                        unset($SESSION->associationpage[$pagename][$record->id]);
+                    }
+                }
+            }
+        }
+    }
+    // Store checkbox data into session
+    function checkbox_selection_session() {
+        global $SESSION;
+        $selection = optional_param('selected_checkboxes', '', PARAM_CLEAN);
+        $target = optional_param('target', '', PARAM_ALPHA);
+        $page = optional_param('s', '', PARAM_ALPHA);
+        $id = optional_param('id', 1, PARAM_INT);
+
+        $selectedcheckboxes = json_decode($selection);
+
+        if (is_array($selectedcheckboxes)) {
+            $pagename = $page . $id . $target;
+
+            if (!isset($SESSION->associationpage[$pagename])) {
+                $SESSION->associationpage[$pagename] = array();
+            }
+
+            $existing_selection = array();
+            $new_selection = array();
+            foreach ($selectedcheckboxes as $selectedcheckbox) {
+                $record = json_decode($selectedcheckbox);
+                /* If only the id is provided, the selection was stored previously
+                 * Get the corresponding session data, if available
+                 */
+                if(isset($record->bare)) {
+                    $result = retrieve_session_selection($record->id, $target);
+                    if ($result) {
+                        $existing_selection[] = $result;
+                    }
+                } else {
+                    // New selection record
+                    $new_selection[] = $selectedcheckbox;
+                }
+            }
+
+            $result = array_merge($existing_selection, $new_selection);
+            $SESSION->associationpage[$pagename] = $result;
+        }
+    }
+
 }
 
 class association_page_table extends display_table {
