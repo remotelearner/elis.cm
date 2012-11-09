@@ -158,6 +158,7 @@ class studentcurriculumpage extends associationpage2 {
     }
 
     protected function process_assignment($data) {
+        $this->session_selection_deletion();
         $userid  = $data->id;
         foreach ($data->_selection as $curid) {
             $stucur = new curriculumstudent(array('userid' => $userid,
@@ -172,6 +173,7 @@ class studentcurriculumpage extends associationpage2 {
     }
 
     protected function process_unassignment($data) {
+        $this->session_selection_deletion();
         $userid  = $data->id;
         foreach ($data->_selection as $associd) {
             $curstu = new curriculumstudent($associd);
@@ -366,7 +368,7 @@ class studentcurriculumpage extends associationpage2 {
 
     protected function create_selection_table($records, $baseurl) {
         $records = $records ? $records : array();
-        $columns = array('_selection' => array('header' => ''),
+        $columns = array('_selection' => array('header' => get_string('select')),
                          'idnumber' => array('header' => get_string('idnumber','elis_program')),
                          'name' => array('header' => get_string('name','elis_program')),
                          'description' => array('header' => get_string('description','elis_program')),

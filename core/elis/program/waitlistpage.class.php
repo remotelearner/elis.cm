@@ -79,7 +79,6 @@ class waitlistpage extends selectionpage {
     function get_selection_filter() {
         $alpha      = $this->optional_param('alpha', '', PARAM_ALPHA);
         $namesearch = trim($this->optional_param('search', '', PARAM_CLEAN));
-        // FIXME:
         return array('alpha' => $alpha, 'namesearch' => $namesearch);
     }
 
@@ -118,9 +117,9 @@ class waitlistpage extends selectionpage {
             $sort = 'lastname';
         }
 
-        $items = waitlist::get_students($id, $sort, $dir, $page, $perpage, $filter['namesearch'], $filter['alpha']);
+        $items = waitlist::get_students($id, $sort, $dir, $page * $perpage, $perpage, $filter['namesearch'], $filter['alpha']);
         $numitems = waitlist::count_records($id, $filter['namesearch'], $filter['alpha']);
-
+        //error_log("waitlistpage::get_records(): count(items) = ". count($items). ", numitems = {$numitems}");
         return array($items, $numitems);
     }
 
@@ -186,6 +185,8 @@ class waitlistpage extends selectionpage {
         $id = $this->required_param('id', PARAM_INT);
         $recs = explode(',', $this->required_param('selected',PARAM_TEXT));
 
+        $this->session_selection_deletion();
+
         // make sure everything is an int
         foreach ($recs as $key => $val) {
             $recs[$key] = (int)$val;
@@ -212,6 +213,8 @@ class waitlistpage extends selectionpage {
     function do_overenrol() {
         $id = $this->required_param('id', PARAM_INT);
         $recs = explode(',', $this->required_param('selected', PARAM_TEXT));
+
+        $this->session_selection_deletion();
 
         // make sure everything is an int
         foreach ($recs as $key => $val) {
@@ -240,11 +243,11 @@ class waitlist_table extends selection_table {
     const LANG_FILE = 'elis_program';
 
     function __construct(&$items, $url) {
-        $sort         = optional_param('sort', 'lastname', PARAM_ALPHA);
-        $dir          = optional_param('dir', 'ASC', PARAM_ALPHA);
+        $sort         = optional_param('sort', 'timecreated', PARAM_CLEAN);
+        $dir          = optional_param('dir', 'ASC', PARAM_CLEAN);
 
         $columns = array(
-            '_selection'  => array('header' => '', 'sortable' => false,
+            '_selection'  => array('header' => get_string('select'), 'sortable' => false,
                                    'display_function' => array(&$this, 'get_item_display__selection')), // TBD
             'idnumber'    => array('header' => get_string('idnumber',        self::LANG_FILE)),
             'name'        => array('header' => get_string('name',            self::LANG_FILE)),

@@ -180,8 +180,8 @@ class instructor extends elis_data_object {
      */
     function edit_form_html($classid, $sort = 'name', $dir = 'ASC', $page = 0,
                             $perpage = 30, $namesearch = '', $alpha = '') {
-        global $CFG, $OUTPUT; // ^^^ set new non-zero default for $perpage
-
+        global $CFG, $OUTPUT, $SESSION, $PAGE; // ^^^ set new non-zero default for $perpage
+        $action = optional_param('action', '', PARAM_ALPHA);
         $this->classid = $classid;
         $output = '';
         ob_start();
@@ -273,9 +273,18 @@ class instructor extends elis_data_object {
             $table = NULL;
         } else {
             $insobj = new instructor();
-            $table->width = "100%";
+            //$table->width = "100%";
             foreach ($users as $user) {
                 $tabobj = new stdClass;
+
+                $assigntime = $this->assigntime;
+                $completetime = $this->completetime;
+
+                $selection = json_decode(retrieve_session_selection($user->id, 'add'));
+                if ($selection) {
+                    $assigntime = mktime(0, 0, 0, $selection->enrolment_date->month, $selection->enrolment_date->day, $selection->enrolment_date->year);
+                    $completetime = mktime(0, 0, 0, $selection->completion_date->month, $selection->completion_date->day, $selection->completion_date->year);
+                }
               /* **** debug code
                 ob_start();
                 var_dump($user);
@@ -286,7 +295,7 @@ class instructor extends elis_data_object {
                 foreach ($columns as $column => $cdesc) {
                     switch ($column) {
                         case 'assign':
-                            $tabobj->{$column} = '<input type="checkbox" name="users[' . $user->id . '][assign]" value="1" />'.
+                            $tabobj->{$column} = '<input type="checkbox" id="checkbox'. $user->id .'" onClick="select_item(' . $user->id .')" name="users[' . $user->id . '][assign]" value="1" '.($selection?'checked="checked"':''). '/>'.
                                         '<input type="hidden" name="users[' . $user->id . '][idnumber]" '.
                                         'value="' . $user->idnumber . '" />';
                             break;
@@ -301,14 +310,14 @@ class instructor extends elis_data_object {
                             $tabobj->{$column} = cm_print_date_selector('users[' . $user->id . '][startday]',
                                                      'users[' . $user->id . '][startmonth]',
                                                      'users[' . $user->id . '][startyear]',
-                                                     $this->assigntime, true);
+                                                     $assigntime, true);
                             break;
 
                         case 'completetime':
                             $tabobj->{$column} = cm_print_date_selector('users[' . $user->id . '][endday]',
                                                      'users[' . $user->id . '][endmonth]',
                                                      'users[' . $user->id . '][endyear]',
-                                                     $this->completetime, true);
+                                                     $completetime, true);
                             break;
 
                         default:
@@ -319,8 +328,10 @@ class instructor extends elis_data_object {
                 $newarr[] = $tabobj;
                 //$table->data[] = $newarr;
             }
-            $table = new display_table($newarr, $columns, get_pm_url());
+            $table = new display_table($newarr, $columns, get_pm_url(), null, null, array('id' => 'selectiontbl'));
         }
+
+        print_checkbox_selection($classid, 'ins', 'add');
 
         if (empty($this->id)) {
             pmsearchbox(null, 'search', 'get', get_string('show_all_users', self::LANG_FILE));
@@ -337,6 +348,12 @@ class instructor extends elis_data_object {
         }
 
         if (!empty($table) && !empty($newarr)) {
+            if ($action == 'add') {
+                $PAGE->requires->js('/elis/program/js/classform.js');
+                echo '<input type="button" onclick="checkbox_select(true,\'[assign]\')" value="'.get_string('selectall').'" /> ';
+                echo '<input type="button" onclick="checkbox_select(false,\'[assign]\')" value="'.get_string('deselectall').'" /> ';
+            }
+
             echo $table->get_html();
             $pagingbar = new paging_bar($usercount, $page, $perpage,
                              "index.php?s=ins&amp;section=curr&amp;id=$classid&amp;action=add&amp;" .

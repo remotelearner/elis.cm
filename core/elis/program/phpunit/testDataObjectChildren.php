@@ -55,6 +55,7 @@ class testDataObjectChildren extends elis_database_test {
 		return array(
 		    'context' => 'moodle',
 		    'course' => 'moodle',
+		    'log' => 'moodle',
 		    'message' => 'moodle',
 		    'message_working' => 'moodle',
 		    'user' => 'moodle',

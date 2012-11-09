@@ -841,7 +841,7 @@ function course_get_listing($sort='crs.name', $dir='ASC', $startrec=0, $perpage=
 
     if ($alpha) {
         $name_like = $DB->sql_like('crs.name', '?', FALSE);
-        $where[] = (!empty($where) ? ' AND ' : '') . "($name_like)";
+        $where[] = '('.$name_like.')';
         $params[] = "$alpha%";
     }
 

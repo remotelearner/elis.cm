@@ -137,8 +137,12 @@ class customfieldpage extends pm_page {
         if (!empty($category_names)) {
             if ($level == 'user') {
                 // create new field from Moodle field
-                $select = 'shortname NOT IN (SELECT shortname FROM {'.field::TABLE.'})';
-                $moodlefields = $DB->get_records_select('user_info_field', $select, array('sortorder'=>'id,name'));
+                $sql = 'shortname NOT IN
+                        (SELECT shortname FROM {'.field::TABLE.'} ef
+                        INNER JOIN {'.field_contextlevel::TABLE.'} cl
+                        ON ef.id = cl.fieldid WHERE cl.contextlevel = :contextlevel)';
+                $moodlefields = $DB->get_records_select('user_info_field', $sql, array('contextlevel' => $ctxlvl, 'sortorder'=>'id,name'));
+
                 $moodlefields = $moodlefields ? $moodlefields : array();
                 $tmppage->param('action', 'editfield');
                 $tmppage->param('from', 'moodle');
@@ -148,6 +152,7 @@ class customfieldpage extends pm_page {
                 //           array_map(create_function('$x', 'return $x->name;'), $moodlefields),
                 //           'frommoodleform', '', 'choose', '', '', false, 'self', get_string('field_from_moodle', 'elis_program'));
                 $actionurl = new moodle_url($tmppage->out());
+
                 $single_select = new single_select($actionurl, 'id', array_map(create_function('$x', 'return $x->name;'), $moodlefields), null, array(''=>get_string('field_from_moodle', 'elis_program')));
                 echo $OUTPUT->render($single_select);
                 echo '</div>';
@@ -292,17 +297,29 @@ class customfieldpage extends pm_page {
 
         require_once elispm::file('form/customfieldform.class.php');
         $tmppage = new customfieldpage(array('level' => $level, 'action' => 'editfield'), $this);
-        $form = new customfieldform($tmppage->url, $this);
+        $form = new customfieldform($tmppage->url,
+                         array('id'    => $id,
+                               'level' => $level,
+                               'from'  => optional_param('from', '', PARAM_CLEAN)));
         if ($form->is_cancelled()) {
             $tmppage = new customfieldpage(array('level' => $level));
             redirect($tmppage->url, get_string('edit_cancelled', 'elis_program'));
         } else if ($data = $form->get_data()) {
+            $src = !empty($data->manual_field_options_source)
+                   ? $data->manual_field_options_source : '';
             switch ($data->manual_field_control) {
                 case 'checkbox':
-                    $data->defaultdata = $data->defaultdata_checkbox;
+                    if (!$data->multivalued && !empty($src)) {
+                        $elem = "defaultdata_radio_{$src}_"; // *REQUIRES* trailing '_' ???
+                        $data->defaultdata = $data->$elem;
+                        //error_log("/elis/program/customfieldpage.class.php:: defaultdata->{$elem} = {$data->defaultdata}");
+                    } else if (!$data->multivalued && !empty($data->manual_field_options)) {
+                        $data->defaultdata = $data->defaultdata_radio;
+                    } else {
+                        $data->defaultdata = $data->defaultdata_checkbox;
+                    }
                     break;
                 case 'menu':
-                    $src = $data->manual_field_options_source;
                     $elem = !empty($src) ? "defaultdata_menu_{$src}"
                                          : "defaultdata_menu";
                     $data->defaultdata = $data->$elem;
@@ -331,7 +348,7 @@ class customfieldpage extends pm_page {
             if ($data->defaultdata != '') {
                 // save the default value
                 $defaultdata = $data->defaultdata;
-                if ($field->multivalued) {
+                if ($field->multivalued && is_string($defaultdata)) {
                     // parse as a CSV string
                     // until we can use str_getcsv from PHP 5.3...
                     $temp=fopen("php://memory", "rw");
@@ -339,6 +356,11 @@ class customfieldpage extends pm_page {
                     rewind($temp);
                     $defaultdata=fgetcsv($temp);
                     fclose($temp);
+                } else if (!$field->multivalued && is_array($defaultdata)) {
+                    foreach ($defaultdata as $val) {
+                        $defaultdata = $val;
+                        break;
+                    }
                 }
                 field_data::set_for_context_and_field(NULL, $field, $defaultdata);
             } else {
@@ -407,7 +429,7 @@ class customfieldpage extends pm_page {
 
                     $field_record = $DB->get_record(field::TABLE, array('id'=>$id));
                     if (!empty($field_record)) {
-                        foreach ($field_record as $field_item=>$field_value) {
+                        foreach ($field_record AS $field_item => $field_value) {
                             $data_array[$field_item] = $field_value;
                         }
                     }
@@ -416,16 +438,10 @@ class customfieldpage extends pm_page {
                     if (!empty($defaultdata)) {
                         if ($data->multivalued) {
                             $values = array();
-                            // extract the data
-                            foreach ($defaultdata as $data) {
-                                $values[] = $data->data;
+                            foreach ($defaultdata as $defdata) {
+                                $values[] = $defdata->data;
                             }
-                            // represent as a CSV string
-                            $fh=fopen("php://memory", "rw");
-                            fputcsv($fh, $values);
-                            rewind($fh);
-                            $defaultdata=fgets($fh);
-                            fclose($fh);
+                            $defaultdata = $values;
                         } else {
                             foreach ($defaultdata as $defdata) {
                                 $defaultdata = $defdata->data;
@@ -437,7 +453,9 @@ class customfieldpage extends pm_page {
                     $field = new field();
 
                     // Format decimal numbers
-                    if(strcmp($data_array['datatype'],'num') == 0) {
+                    if ($data_array['datatype'] == 'num'
+                        && $manual->param_control != 'menu'
+                    ) {
                         $defaultdata = $field->format_number($defaultdata);
                     }
 
@@ -463,7 +481,6 @@ class customfieldpage extends pm_page {
                     } else {
                         $field = $data;
                     }
-
                     $data_array['defaultdata_checkbox'] = !empty($data_array['defaultdata']);
                     // ELIS-6699 -- If this is not a datetime field, then we can't use the default data value as a timestamp
                     $data_array['defaultdata_datetime'] = ($field->datatype == 'datetime') ? $data_array['defaultdata'] : time();
@@ -471,6 +488,9 @@ class customfieldpage extends pm_page {
                     $data_array[empty($menu_src)
                                 ? 'defaultdata_menu'
                                 : "defaultdata_menu_{$menu_src}"] = $data_array['defaultdata'];
+                    $data_array[empty($menu_src)
+                                ? 'defaultdata_radio'
+                                : "defaultdata_radio_{$menu_src}"] = $data_array['defaultdata'];
                 }
                 $form->set_data($data_array);
             }

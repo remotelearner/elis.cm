@@ -53,4 +53,26 @@ class fieldcategoryform extends cmform {
         $this->add_action_buttons(true);
     }
 
+    public function validation($data, $files) {
+        global $DB;
+        $errors = array();
+        $level = required_param('level', PARAM_ACTION);
+        $ctxlvl = context_elis_helper::get_level_from_name($level);
+        if (!empty($ctxlvl)) {
+            $sql = 'SELECT cat.id
+                FROM {elis_field_categories} cat
+                JOIN {elis_field_category_contexts} ctx ON cat.id = ctx.categoryid
+                WHERE ctx.contextlevel = ? AND cat.name=?';
+            $params = array($ctxlvl,$data['name']);
+            $existing_catname = $DB->get_records_sql($sql,$params);
+            if (!empty($existing_catname)) {
+                $a = new stdClass;
+                $a->tablename = 'elis_field_categories';
+                $a->fields = 'name';
+                $errors['name'] = get_string('data_object_validation_unique', 'elis_core', $a);
+            }
+        }
+        return $errors;
+    }
+
 }

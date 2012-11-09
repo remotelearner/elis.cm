@@ -82,7 +82,13 @@ class trackform extends cmform {
             $mform->addRule('curid', get_string('required'), 'required', NULL, 'client');
             $mform->addHelpButton('curid','trackform:curriculum_curid', 'elis_program');
         } else { // Track editing, do not allow the user to change curriculum
-            $mform->addElement('static', 'curidstatic', get_string('curriculum', 'elis_program') . ':', $curs[$this->_customdata['obj']->curid]->name);
+            // Make sure that the parent program for this track is always included otherwise the display is messed up
+            // and hitting the form Cancel button causes a DB error -- ELIS-5954
+            $track = new track($this->_customdata['obj']->id);
+
+            //$curs = curriculum_get_listing('name', 'ASC', 0, 0, $track->curriculum->name);
+            $mform->addElement('static', 'curidstatic', get_string('curriculum', 'elis_program') . ':', $track->curriculum->name);
+            // ELIS-7735: ^^^ was $curs[$this->_customdata['obj']->curid]->name
             $mform->addHelpButton('curidstatic', 'trackform:curriculum_curidstatic', 'elis_program');
 
             $mform->addElement('hidden', 'curid');

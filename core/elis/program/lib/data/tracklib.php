@@ -35,17 +35,23 @@ require_login(0, false);
 
 $tracks = track_get_listing();
 $curcrsassign = curriculumcourse_get_list_by_course($courseid);
-$output = '';
+$allowed_tracks = array();
 
+// Obtain all tracks belonging to tracks that the course description is
+// associated to
 if(!empty($curcrsassign)) {
     foreach ($curcrsassign as $recid => $curcrsrec) {
         foreach ($tracks as $trackid => $trackrec) {
             if ($trackrec->curid == $curcrsrec->curriculumid) {
-                $output .= '<option value="'.$trackid.'">'.$trackrec->name.'</option>'."\n";
+                $allowed_track = new stdClass;
+                $allowed_track->name = $trackrec->name;
+                $allowed_track->id = $trackid;
+                $allowed_tracks[] = $allowed_track;
             }
 
         }
     }
 }
 
-echo $output;
+// JSON encode our data so that we can handle it without using innerHtml
+echo json_encode($allowed_tracks);

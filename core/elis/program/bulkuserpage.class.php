@@ -148,6 +148,8 @@ class bulkuserpage extends selectionpage {
 
         $users = explode(',',$this->required_param('selectedusers',PARAM_TEXT));
 
+        $this->session_selection_deletion();
+
         // make sure everything is an int
         foreach ($users as $key => $val) {
             $users[$key] = (int)$val;
@@ -160,6 +162,7 @@ class bulkuserpage extends selectionpage {
                                 WHERE id in ('.  implode(',', $users) .')');
 
         $tmppage = new bulkuserpage();
+
         if ($result) {
             redirect($tmppage->url, get_string('success_bulk_inactive', 'elis_program'));
         } else {
@@ -169,6 +172,8 @@ class bulkuserpage extends selectionpage {
 
     function do_delete() { // action_delete()
         require_once elispm::lib('data/user.class.php');
+
+        $this->session_selection_deletion();
 
         $users = explode(',', $this->required_param('selectedusers', PARAM_TEXT));
         // make sure everything is an int
@@ -198,7 +203,7 @@ class bulkusertable extends selection_table {
 
     function __construct(&$items, $url) {
         $columns = array(
-            '_selection'  => array('header' => '', 'sortable' => false),
+            '_selection'  => array('header' => get_string('select'), 'sortable' => false),
             'idnumber'    => array('header' => get_string('id', 'elis_program')),
              'name'       => array('header' => get_string('name', 'elis_program')),
              'country'    => array('header' => get_string('country', 'elis_program')),
@@ -207,6 +212,7 @@ class bulkusertable extends selection_table {
 
         $sort = optional_param('sort', 'name', PARAM_ALPHA);
         $dir = optional_param('dir', 'ASC', PARAM_ALPHA);
+
         if ($dir !== 'DESC') {
             $dir = 'ASC';
         }

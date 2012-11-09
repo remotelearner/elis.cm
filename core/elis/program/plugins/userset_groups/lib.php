@@ -414,25 +414,25 @@ function userset_groups_update_groups($attributes = array()) {
     $enabled = get_config('pmplugins_userset_groups', 'userset_groups');
 
     //nothing to do if global setting is off
-    if(!empty($enabled)) {
+    if (!empty($enabled)) {
 
         //whenever we're given a cluster id, see if we can eliminate
         //any processed in the case where the cluster does not allow
         //synching to a group
         $clusterid = 0;
-        if(!empty($attributes['clst.id'])) {
+        if (!empty($attributes['clst.id'])) {
             $clusterid = $attributes['clst.id'];
         }
 
         //proceed if no cluster is specified or one that allows group
         //synching is specified
-        if($clusterid === 0 || userset_groups_userset_allows_groups($clusterid)) {
+        if ($clusterid === 0 || userset_groups_userset_allows_groups($clusterid)) {
 
             $condition = '';
             $params = array();
-            if(!empty($attributes)) {
-                foreach($attributes as $key => $value) {
-                    if(empty($condition)) {
+            if (!empty($attributes)) {
+                foreach ($attributes as $key => $value) {
+                    if (empty($condition)) {
                         $condition = "WHERE $key = ?";
                         $params[] = $value;
                     } else {
@@ -474,21 +474,24 @@ function userset_groups_update_groups($attributes = array()) {
             //error_log("userset_groups_update_groups()");
             $records = $DB->get_recordset_sql($sql, $params);
 
-            if($records->valid()) {
+            if (!empty($records) && $records->valid()) {
                 //used to track changes in clusters
                 $last_cluster_id = 0;
                 $last_group_id = 0;
+                $last_mdlcourse = 0;
 
                 foreach ($records as $record) {
 
                     //make sure the cluster allows synching to groups
-                    if(userset_groups_userset_allows_groups($record->clusterid)) {
+                    if (userset_groups_userset_allows_groups($record->clusterid)) {
 
                         //if first record cluster is different from last, create / retrieve group
-                        if($last_cluster_id === 0 || $last_cluster_id !== $record->clusterid) {
+                        if ($last_cluster_id === 0 ||
+                            $last_cluster_id !== $record->clusterid ||
+                            $last_mdlcourse !== $record->courseid) {
 
                             //determine if group already exists
-                            if($DB->record_exists('groups', array('name' => $record->clustername, 'courseid' => $record->courseid))) {
+                            if ($DB->record_exists('groups', array('name' => $record->clustername, 'courseid' => $record->courseid))) {
                                 $sql = "SELECT *
                                         FROM {groups} grp
                                         WHERE name = :name
@@ -505,16 +508,14 @@ function userset_groups_update_groups($attributes = array()) {
 
                             $last_cluster_id = $record->clusterid;
                             $last_group_id = $group->id;
+                            $last_mdlcourse = $record->courseid;
                         }
 
                         //add user to group
                         userset_groups_add_member($last_group_id, $record->userid);
                     }
-
                 }
-
             }
-
         }
     }
 
