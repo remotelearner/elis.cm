@@ -61,9 +61,9 @@ abstract class selectionpage extends pm_page { // TBD
         return $mode == 'bare';
     }
 
-    function print_header($_) {
+    function print_header() {
         if (!$this->is_bare()) {
-            parent::print_header($_);
+            parent::print_header();
             $this->print_tabs();
         }
     }
@@ -158,7 +158,7 @@ abstract class selectionpage extends pm_page { // TBD
         global $SESSION;
         $id = optional_param('id', 1, PARAM_INT);
 
-        $pagename = $this->page_identity();
+        $pagename = $this->page_identity($id);
 
         if (isset($SESSION->selectionpage[$pagename])) {
             unset($SESSION->selectionpage[$pagename]);
@@ -296,9 +296,8 @@ abstract class selectionpage extends pm_page { // TBD
             if (is_array($selectedcheckboxes)) {
                 $filtered = array();
                 foreach ($selectedcheckboxes as $id) {
-                    if ($DB->record_exists(user::TABLE, array('id' => $id))) {
-                        $filtered[] = $id;
-                    }
+                    // ELIS-6431: removed check that id is valid userid (to fix waitlistpage)
+                    $filtered[] = $id;
                 }
                 $selection  = implode(',', $filtered);
                 echo '<input type="hidden" id="selected_checkboxes" value="' . $selection .'" /> ';

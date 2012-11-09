@@ -77,11 +77,8 @@ class clustercurriculumbasepage extends associationpage {
         $clusterid = $this->required_param('clusterid', PARAM_INT);
         $curriculumid = $this->required_param('curriculumid', PARAM_INT);
 
-        // TODO: Ugly, this needs to be overhauled
-        $uspage = new usersetpage();
-        $cpage  = new curriculumpage();
-        return $uspage->_has_capability('elis/program:associate', $clusterid)
-            && $cpage->_has_capability('elis/program:associate', $curriculumid);
+        return usersetpage::_has_capability('elis/program:associate', $clusterid)
+            && curriculumpage::_has_capability('elis/program:associate', $curriculumid);
     }
 
     /**
@@ -156,11 +153,8 @@ class clustercurriculumbasepage extends associationpage {
         $clusterid = $record->clusterid;
         $curriculumid = $record->curriculumid;
 
-        // TODO: Ugly, this needs to be overhauled
-        $uspage = new usersetpage();
-        $cpage  = new curriculumpage();
-        return $uspage->_has_capability('elis/program:associate', $clusterid)
-            && $cpage->_has_capability('elis/program:associate', $curriculumid);
+        return usersetpage::_has_capability('elis/program:associate', $clusterid)
+            && curriculumpage::_has_capability('elis/program:associate', $curriculumid);
     }
 
     function can_do_delete() {
@@ -217,7 +211,7 @@ class clustercurriculumbasepage extends associationpage {
      * @param $obj The association object being edited.
      * @param $parent_obj The basic data object being associated with.
      */
-    function print_edit_form($obj, $parent_obj, $sort, $dir) {
+    function print_edit_form($obj, $parent_obj) {
         $parent_id = required_param('id', PARAM_INT);
 //        $association_id = required_param('association_id', PARAM_INT);
 
@@ -252,14 +246,12 @@ class clustercurriculumpage extends clustercurriculumbasepage {
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
 
-        // TODO: Ugly, this needs to be overhauled
-        $uspage = new usersetpage();
-        if ($uspage->_has_capability('elis/program:userset_view', $id)) {
+        if (usersetpage::_has_capability('elis/program:userset_view', $id)) {
             //allow viewing but not managing associations
         	return true;
         }
 
-        return $uspage->_has_capability('elis/program:associate', $id);
+        return usersetpage::_has_capability('elis/program:associate', $id);
     }
 
     function display_default() {
@@ -379,16 +371,6 @@ class clustercurriculumpage extends clustercurriculumbasepage {
         // Exclude clusters the user does not have the capability to manage/see
         $context = get_contexts_by_capability_for_user('cluster', 'elis/program:userset_view', $USER->id);
 
-        foreach ($clusters as $clusid => $clusdata) {
-            $haspermission = $context->context_allowed($clusid, 'cluster');
-
-            if (!$haspermission) {
-                  unset($clusters[$clusid]);
-            }
-        }
-
-
-
         echo '<form action="index.php" method="post">';
 
         $mdlcrsoptions = array('copyalways' => get_string('program_copy_mdlcrs_copyalways', 'elis_program'),
@@ -398,11 +380,12 @@ class clustercurriculumpage extends clustercurriculumbasepage {
             );
 
         $contexts = curriculumpage::get_contexts('elis/program:associate');
-
         foreach ($clusters as $clusid => $clusdata) {
+            if (!$context->context_allowed($clusid, 'cluster')) {
+                continue;
+            }
 
             $assocurr = clustercurriculum::get_curricula($clusid);
-
             if (!empty($assocurr)) {
 
                 $first = true;
@@ -459,8 +442,6 @@ class clustercurriculumpage extends clustercurriculumbasepage {
                         );
                     $table->rowclass[] = 'clus_cpy_row';
                 }
-
-
             }
         }
 
@@ -472,10 +453,7 @@ class clustercurriculumpage extends clustercurriculumbasepage {
         // Get all curriculums, removing curricula that have already
         // been listed
         $curriculums = curriculum_get_listing($sort, $dir, 0, 0, '', '', $contexts);
-
-
         foreach ($curriculums as $curriculumid => $curriculumdata) {
-
             if (false === array_search($curriculumid, $curriculumshown)) {
                 $checkbox_ids = "'".self::CPY_CURR_PREFIX.$curriculumid."',
                                  '".self::CPY_CURR_TRK_PREFIX.$curriculumid."',
@@ -546,11 +524,9 @@ class clustercurriculumpage extends clustercurriculumbasepage {
         echo '</div>';
         echo '</div>';
         echo '</form>';
-
     }
 
     function do_copycurr() {
-
         global $CFG;
 
         // TODO: replace print_object messages with notice messages
@@ -660,14 +636,13 @@ class curriculumclusterpage extends clustercurriculumbasepage {
 
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
-        // TODO: Ugly, this needs to be overhauled
-        $cpage = new curriculumpage();
-        if ($cpage->_has_capability('elis/program:program_view', $id)) {
+
+        if (curriculumpage::_has_capability('elis/program:program_view', $id)) {
             //allow viewing but not managing associations
         	return true;
         }
 
-        return $cpage->_has_capability('elis/program:associate', $id);
+        return curriculumpage::_has_capability('elis/program:associate', $id);
     }
 
     function display_default() {

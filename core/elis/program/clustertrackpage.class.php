@@ -66,11 +66,8 @@ class clustertrackbasepage extends associationpage {
         $clusterid = $this->required_param('clusterid', PARAM_INT);
         $trackid = $this->required_param('trackid', PARAM_INT);
 
-        // TODO: Ugly, this needs to be overhauled
-        $uspage = new usersetpage();
-        $tpage  = new trackpage();
-        return $uspage->_has_capability('elis/program:associate', $clusterid)
-            && $tpage->_has_capability('elis/program:associate', $trackid);
+        return usersetpage::_has_capability('elis/program:associate', $clusterid)
+            && trackpage::_has_capability('elis/program:associate', $trackid);
     }
 
     function do_add() {
@@ -139,12 +136,9 @@ class clustertrackbasepage extends associationpage {
         $record = new clustertrack($association_id);
         $clusterid = $record->clusterid;
         $trackid = $record->trackid;
-
-        // TODO: Ugly, this needs to be overhauled
-        $uspage = new usersetpage();
-        $tpage  = new trackpage();
-        return $uspage->_has_capability('elis/program:associate', $clusterid)
-            && $tpage->_has_capability('elis/program:associate', $trackid);
+//echo '<br>association id: '.$association_id.' clusterid: '.$clusterid.' trackid: '.$trackid.'*<br>';
+        return usersetpage::_has_capability('elis/program:associate', $clusterid)
+            && trackpage::_has_capability('elis/program:associate', $trackid);
     }
 
     function can_do_delete() {
@@ -200,7 +194,7 @@ class clustertrackbasepage extends associationpage {
      * @param $obj The association object being edited.
      * @param $parent_obj The basic data object being associated with.
      */
-    function print_edit_form($obj, $parent_obj, $sort, $dir) {
+    function print_edit_form($obj, $parent_obj) {
         $parent_id = required_param('id', PARAM_INT);
 //        $association_id = required_param('association_id', PARAM_INT);
 
@@ -230,15 +224,12 @@ class clustertrackpage extends clustertrackbasepage {
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
 
-        // TODO: Ugly, this needs to be overhauled
-        $uspage = new usersetpage();
-
-        if ($uspage->_has_capability('elis/program:userset_view', $id)) {
+        if (usersetpage::_has_capability('elis/program:userset_view', $id)) {
             //allow viewing but not managing associations
         	return true;
         }
 
-        return $uspage->_has_capability('elis/program:associate', $id);
+        return usersetpage::_has_capability('elis/program:associate', $id);
     }
 
     function display_default() {
@@ -314,14 +305,12 @@ class trackclusterpage extends clustertrackbasepage {
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
 
-        // TODO: Ugly, this needs to be overhauled
-        $tpage = new trackpage();
-        if ($tpage->_has_capability('elis/program:track_view', $id)) {
+        if (trackpage::_has_capability('elis/program:track_view', $id)) {
             //allow viewing but not managing associations
         	return true;
         }
 
-        return $tpage->_has_capability('elis/program:associate', $id);
+        return trackpage::_has_capability('elis/program:associate', $id);
     }
 
     function display_default() {

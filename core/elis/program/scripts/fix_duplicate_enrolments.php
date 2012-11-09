@@ -41,7 +41,7 @@ function cleanup() {
     $tablename  = student::TABLE;
     $tempname   = $tablename .'_temp';
 
-    $table = new xmldb_table($tempname);
+    $table = new XMLDBTable($tempname);
     if ($dbman->table_exists($table)) {
         if (!$dbman->drop_table($table)) {
             mtrace(' <<< Could not remove temporary table: '.$tempname);

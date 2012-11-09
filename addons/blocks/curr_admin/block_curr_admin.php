@@ -337,6 +337,18 @@ class block_curr_admin extends block_base {
         $this->content->text = $tree->convert_to_markup();
         $this->content->footer = '';
 
+        $module = array('name'=>'block_curr_admin', 'fullpath'=>'/blocks/curr_admin/menumodule.js', 'requires'=>array('yui2-treeview'));
+        $PAGE->requires->js_module($module);
+        $PAGE->requires->js_init_call(
+                'M.block_curr_admin.init_tree',
+                array(
+                    $tree->get_js_object(),
+                    $CFG->httpswwwroot
+                ),
+                true,
+                $module
+        );
+
         return $this->content;
     }
 

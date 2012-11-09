@@ -78,8 +78,7 @@ class usersetpage extends managementpage {
         global $USER;
 
         //check the standard capability
-        $page = new usersetpage();
-        if ($page->_has_capability('elis/program:userset_enrol', $clusterid)) {
+        if (self::_has_capability('elis/program:userset_enrol', $clusterid)) {
             return true;
         }
 
@@ -250,13 +249,13 @@ class usersetpage extends managementpage {
         return !$contexts->is_empty();
     }
 
-    function build_navbar_view($who = null, $id_param = 'id', $extra_params = array()) {
+    function build_navbar_view() {
         // cluster name is already added by build_navbar_default, so don't
         // print it again
         return $this->build_navbar_default();
     }
 
-    public function build_navbar_default($who = null, $addparent = true, $params = array()) {
+    public function build_navbar_default() {
         global $CFG, $DB;
 
         parent::build_navbar_default();

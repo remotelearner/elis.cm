@@ -17,9 +17,9 @@ class resultsconfigpage extends pm_page {
         return has_capability('elis/program:config', $context);
     }
 
-    function build_navbar_default($who = null) {
+    function build_navbar_default() {
         global $CFG;
-        parent::build_navbar_default($who);
+        parent::build_navbar_default();
         $page = $this->get_new_page(array('action' => 'default'), true);
         //$this->navbar->add(get_string('learningplan', 'elis_program'), "{$CFG->wwwroot}/elis/program/");
         $this->navbar->add(get_string('results_engine_defaults_config','elis_program'), $page->url);

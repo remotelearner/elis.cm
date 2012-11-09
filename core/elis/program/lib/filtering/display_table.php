@@ -130,6 +130,13 @@ class generalized_filter_display_table extends generalized_filter_type {
 
                 if ((! is_array($fields)) && ($fields == 'all')) {
                     foreach ($ctxtfields as $id => $field) {
+                        // ELIS-5862: skip password fields!
+                        $fieldobj = new field($field->id);
+                        if (!$fieldobj || !isset($fieldobj->owners['manual'])
+                            || !($manual = new field_owner($fieldobj->owners['manual'])) ||
+                            $manual->param_control == 'password') {
+                            continue;
+                        }
                         $list['custom_'. $id] = $field->name;
                     }
                     return $list;

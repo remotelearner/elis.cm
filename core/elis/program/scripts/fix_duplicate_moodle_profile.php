@@ -47,7 +47,7 @@ $result = true;
 $dbman = $DB->get_manager();
 
 // Delete duplicate class completion element grades
-$xmldbtable = new xmldb_table('user_info_data_temp');
+$xmldbtable = new XMLDBTable('user_info_data_temp');
 
 if ($dbman->table_exists($xmldbtable)) {
     $dbman->drop_table($xmldbtable);

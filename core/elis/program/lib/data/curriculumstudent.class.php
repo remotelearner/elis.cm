@@ -411,13 +411,10 @@ class curriculumstudent extends elis_data_object {
     public static function can_manage_assoc($userid, $curid) {
         global $USER, $DB;
 
-        // TODO: Ugly, this needs to be overhauled
-        $cpage = new curriculumpage();
-
-        if (!curriculumpage::can_enrol_into_curriculum($curid)) {
+        if(!curriculumpage::can_enrol_into_curriculum($curid)) {
             //the users who satisfty this condition are a superset of those who can manage associations
             return false;
-        } else if ($cpage->_has_capability('elis/program:program_enrol', $curid)) {
+        } else if (curriculumpage::_has_capability('elis/program:program_enrol', $curid)) {
             //current user has the direct capability
             return true;
         }

@@ -1254,6 +1254,11 @@ function pm_migrate_tags() {
                            'crs' => 'course',
                            'cls' => 'class');
 
+    //set up ELIS table mapping
+    $tables = array('cur' => 'curriculum',
+                           'crs' => 'course',
+                           'cls' => 'pmclass');
+
     //lookup on all tags
     $tag_lookup = $DB->get_records('crlm_tag', null, '', 'id, name');
     foreach ($tag_lookup as $id => $tag) {
@@ -1265,6 +1270,7 @@ function pm_migrate_tags() {
 
         //calculate the context level integer
         $contextlevel = context_elis_helper::get_level_from_name($contextname);
+            $contextclass = context_elis_helper::get_class_for_level($contextlevel);
 
         //make sure one or more tags are used at the current context level
         if ($DB->record_exists('crlm_tag_instance', array('instancetype' => $instancetype))) {
@@ -1293,20 +1299,27 @@ function pm_migrate_tags() {
                                                                            'options'         => $options,
                                                                            'edit_capability' => '',
                                                                            'view_capability' => ''));
+
+            //clean up any tags with invalid instancids
+            $sql = "DELETE FROM {crlm_tag_instance}
+                    WHERE NOT EXISTS (
+                        SELECT 'x' FROM {".$tables[$instancetype]::TABLE."} ct
+                        WHERE ct.id = {crlm_tag_instance}.instanceid)
+                    AND {crlm_tag_instance}.instancetype = '$instancetype'";
+            $success = $DB->execute($sql);
+
             //set up data for all relevant entries
             $sql = "SELECT instanceid, GROUP_CONCAT(tagid) AS tagids, data
                     FROM {crlm_tag_instance}
                     WHERE instancetype = ?
                     GROUP BY instanceid";
-            if ($records = $DB->get_recordset_sql($sql, array($instancetype))) {
+            if ($success && $records = $DB->get_recordset_sql($sql, array($instancetype))) {
                 foreach ($records as $record) {
                     $tagids = explode(',', $record->tagids);
                     foreach ($tagids as $k => $v) {
                         $tagids[$k] = $tag_lookup[$v];
                     }
 
-                    $contextlevel = context_elis_helper::get_level_from_name($contextname);
-                    $contextclass = context_elis_helper::get_class_for_level($contextlevel);
                     $context      = $contextclass::instance($record->instanceid);
 
                     field_data::set_for_context_and_field($context, $field, $tagids);
@@ -1483,7 +1496,7 @@ function pm_fix_duplicate_class_enrolments() {
     $dbman = $DB->get_manager();
 
     // Delete duplicate class completion element grades
-    $xmldbtable = new xmldb_table('crlm_class_graded_temp');
+    $xmldbtable = new XMLDBTable('crlm_class_graded_temp');
 
     if ($dbman->table_exists($xmldbtable)) {
         $dbman->drop_table($xmldbtable);
@@ -1586,7 +1599,7 @@ function pm_fix_duplicate_moodle_users() {
     $dbman = $DB->get_manager();
 
     // Delete duplicate class completion element grades
-    $xmldbtable = new xmldb_table('user_idnumber_temp');
+    $xmldbtable = new XMLDBTable('user_idnumber_temp');
 
     if ($dbman->table_exists($xmldbtable)) {
         $dbman->drop_table($xmldbtable);
@@ -1595,7 +1608,7 @@ function pm_fix_duplicate_moodle_users() {
     $result = true;
 
     // Create temporary table for storing qualifying idnumbers
-    $table = new xmldb_table('user_idnumber_temp');
+    $table = new XMLDBTable('user_idnumber_temp');
     $table->add_field('idnumber', XMLDB_TYPE_CHAR, '255', NULL, XMLDB_NOTNULL);
     $dbman->create_table($table);
 
@@ -1706,7 +1719,7 @@ function pm_fix_duplicate_pm_users() {
     $dbman = $DB->get_manager();
 
     // Delete duplicate class completion element grades
-    $xmldbtable = new xmldb_table('crlm_user_idnumber_temp');
+    $xmldbtable = new XMLDBTable('crlm_user_idnumber_temp');
 
     if ($dbman->table_exists($xmldbtable)) {
         $dbman->drop_table($xmldbtable);
@@ -1715,7 +1728,7 @@ function pm_fix_duplicate_pm_users() {
     $result = true;
 
     // Create temporary table for storing qualifying idnumbers
-    $table = new xmldb_table('crlm_user_idnumber_temp');
+    $table = new XMLDBTable('crlm_user_idnumber_temp');
     $table->add_field('idnumber', XMLDB_TYPE_CHAR, '255', NULL, XMLDB_NOTNULL);
     $dbman->create_table($table);
 
@@ -1930,47 +1943,29 @@ function pm_mymoodle_redirect($editing = false) {
             elis::$config->elis_program->mymoodle_redirect == 1);
 }
 
-/**
- * Function to append suffix to string, but, only once
- * - if already present doesn't re-append
- *
- * @param string $str     The string to append to
- * @param string $suffix  The string to append
- * @param array  $options associate array of options, including:
- *                        'maxlength' => int - maximum length of returned str
- *                        'prepend'   => bool, false appends, true prepends $suffix
- *                        'casesensitive' => bool, caseinsensitive by default
- *                        'strict' => bool, true if $suffix must end (begin for prepend)
- * @return string         The appended string
- */
-function append_once($str, $suffix, $options = array()) {
-    $has_suffix = empty($options['casesensitive']) ? stripos($str, $suffix)
-                                                   : strpos($str, $suffix);
-    $prepend = !empty($options['prepend']);
-    $strict = !empty($options['strict']);
-    $maxlen = !empty($options['maxlength'])
-              ? ($options['maxlength'] - strlen($suffix))
-              : 0;
-    if ($prepend) {
-        if ($has_suffix === FALSE || ($strict && $has_suffix !== 0)) {
-            if ($maxlen) {
-                $str = substr($str, 0, $maxlen);
-            }
-            return $suffix . $str;
-        }
-    } else if ($has_suffix === FALSE ||
-              ($strict && $has_suffix != (strlen($str) - strlen($suffix)))) {
-        if ($maxlen) {
-            $str = substr($str, 0, $maxlen);
-        }
-        return $str . $suffix;
+// Retrieve the selection record from a session
+function retrieve_session_selection_bulkedit($id, $action) {
+    global $SESSION;
+
+    $pageid = optional_param('id', 1, PARAM_INT);
+    $page = optional_param('s', '', PARAM_ALPHA);
+    $target = optional_param('target', '', PARAM_ALPHA);
+
+    if (empty($target)) {
+        $target = $action;
     }
 
-    // $suffix already in $str
-    return $str;
+    $pagename = $page . $pageid . $target;
+
+    if (isset($SESSION->associationpage[$pagename][$id])) {
+        return $SESSION->associationpage[$pagename][$id];
+    } else {
+        return false;
+    }
+
+    return false;
 }
 
-// Retrieve the selection record from a session
 function retrieve_session_selection($id, $action) {
     global $SESSION;
 
@@ -2018,6 +2013,14 @@ function print_checkbox_selection($classid, $page, $target) {
     }
 }
 
+function print_ids_for_checkbox_selection($ids,$classid,$page,$target) {
+    $baseurl = get_pm_url()->out_omit_querystring() . '?&id='.$classid.'&s='.$page.'&target=' . $target;
+    echo '<input type="hidden" id="baseurl" value="' . $baseurl .'" /> ';
+    echo '<input type="hidden" id="selfurl" value="' . qualified_me() .'" /> ';
+    $result  = implode(',', $ids);
+    echo '<input type="hidden" id="persist_ids_this_page" value="' . $result .'" /> ';
+}
+
 function session_selection_deletion($target) {
     global $SESSION;
     $pageid = optional_param('id', 1, PARAM_INT);
@@ -2029,3 +2032,100 @@ function session_selection_deletion($target) {
         unset($SESSION->associationpage[$pagename]);
     }
 }
+
+/**
+ * Function to append suffix to string, but, only once
+ * - if already present doesn't re-append
+ *
+ * @param string $str     The string to append to
+ * @param string $suffix  The string to append
+ * @param array  $options associate array of options, including:
+ *                        'maxlength' => int - maximum length of returned str
+ *                        'prepend'   => bool, false appends, true prepends $suffix
+ *                        'casesensitive' => bool, caseinsensitive by default
+ *                        'strict' => bool, true if $suffix must end (begin for prepend)
+ * @return string         The appended string
+ */
+function append_once($str, $suffix, $options = array()) {
+    $has_suffix = empty($options['casesensitive']) ? stripos($str, $suffix)
+                                                   : strpos($str, $suffix);
+    $prepend = !empty($options['prepend']);
+    $strict = !empty($options['strict']);
+    $maxlen = !empty($options['maxlength'])
+              ? ($options['maxlength'] - strlen($suffix))
+              : 0;
+    if ($prepend) {
+        if ($has_suffix === FALSE || ($strict && $has_suffix !== 0)) {
+            if ($maxlen) {
+                $str = substr($str, 0, $maxlen);
+            }
+            return $suffix . $str;
+        }
+    } else if ($has_suffix === FALSE ||
+              ($strict && $has_suffix != (strlen($str) - strlen($suffix)))) {
+        if ($maxlen) {
+            $str = substr($str, 0, $maxlen);
+        }
+        return $str . $suffix;
+    }
+
+    // $suffix already in $str
+    return $str;
+}
+
+/**
+ * Function to move any custom fields with an invalid category
+ * into a category called Miscellaneous
+ *
+ */
+function pm_fix_orphaned_fields() {
+    global $DB;
+
+    $misc_cat = get_string('misc_category','elis_program');
+    //set up context array
+    $context_array = context_elis_helper::get_all_levels();
+    foreach ($context_array as $contextlevel=>$contextname) {
+
+        //find all fields with non existant category assignments
+        $sql = "SELECT field.id
+                  FROM {".field::TABLE."} field
+                  JOIN {".field_contextlevel::TABLE."} ctx ON ctx.fieldid = field.id AND ctx.contextlevel = ?
+                  WHERE NOT EXISTS (
+                    SELECT 'x' FROM {".field_category::TABLE."} category
+                    WHERE category.id = field.categoryid)";
+        $params = array($contextlevel);
+        $rs = $DB->get_recordset_sql($sql, $params);
+
+        //if any are found - then check if miscellaneous category exists - if not, create it
+        foreach ($rs as $field) {
+            $sql = "SELECT category.id
+                    FROM {".field_category::TABLE."} category
+                    JOIN {".field_category_contextlevel::TABLE."} categorycontext
+                      ON categorycontext.categoryid = category.id
+                    WHERE categorycontext.contextlevel = ?
+                      AND category.name = ?";
+            $params = array($contextlevel,$misc_cat);
+
+            $categoryid = $DB->get_field_sql($sql, $params);
+
+            //create a miscellaneous category if it doesn't already exist
+            if (!$categoryid) {
+                // create an empty category
+                $category = new field_category(array('name'=>$misc_cat));
+                $category->save();
+                $categorycontext = new field_category_contextlevel();
+                $categorycontext->categoryid = $category->id;
+                $categorycontext->contextlevel = $contextlevel;
+                $categorycontext->save();
+                $categoryid = $category->id;
+            }
+            $field = new field($field->id);
+
+            // set the field category to the Miscellaneous category
+            $field->categoryid = $categoryid;
+            $field->save();
+        }
+        $rs->close();
+    }
+}
+

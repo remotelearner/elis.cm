@@ -110,12 +110,8 @@ class instructorpage extends associationpage {
         global $USER;
 
         //check the standard capability
-
-        // TODO: Ugly, this needs to be overhauled
-        $cpage = new pmclasspage();
-
-        if ($cpage->_has_capability('elis/program:assign_class_instructor', $classid)
-           || $cpage->_has_capability('elis/program:assign_userset_user_class_instructor', $classid)) {
+        if(pmclasspage::_has_capability('elis/program:assign_class_instructor', $classid)
+           || pmclasspage::_has_capability('elis/program:assign_userset_user_class_instructor', $classid)) {
             return true;
         }
 
@@ -211,6 +207,7 @@ class instructorpage extends associationpage {
     function do_savenew() { // action_savenew
         $clsid = required_param('id', PARAM_INT);
         $users = pm_process_user_enrolment_data(); // ELIS-4089 -- JJF
+
         if (!empty($users)) {
             // Delete/reset checkbox selection for add action
             session_selection_deletion('add');

@@ -45,7 +45,7 @@ class healthpage extends pm_page {
         return has_capability('moodle/site:config', $context);
     }
 
-    function build_navbar_default($who = null) {
+    function build_navbar_default() {
         global $CFG, $PAGE;
 
         $this->navbar->add(get_string('learningplan', 'elis_program'), "{$CFG->wwwroot}/elis/program/");

@@ -95,7 +95,7 @@ class cmform extends moodleform {
                     $mform->addElement('header', "category_{$lastcat}", htmlspecialchars($rec->categoryname));
                 }
 
-                manual_field_add_form_element($this, $mform, $context, $this->_customdata, $field, true, $edit_cap, $view_cap);
+                manual_field_add_form_element($this, $mform, $context, $this->_customdata, $field, true, $edit_cap, $view_cap, $entity);
             }
         }
     }

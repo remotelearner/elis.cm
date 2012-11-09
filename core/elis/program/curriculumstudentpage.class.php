@@ -117,9 +117,7 @@ class studentcurriculumpage extends associationpage2 {
 
             return $DB->count_records_select($sql, $params) > 0;
         } else {
-            // TODO: Ugly, this needs to be overhauled
-            $upage = new userpage();
-            return $upage->_has_capability('elis/program:user_view', $id);
+            return userpage::_has_capability('elis/program:user_view', $id);
         }
     }
 
@@ -147,7 +145,7 @@ class studentcurriculumpage extends associationpage2 {
         return $this->get_parent_page();
     }
 
-    function build_navbar_default($who = null, $addparent = true, $params = array()) {
+    function build_navbar_default() {
         $this->get_parent_page()->build_navbar_view($this);
     }
 
@@ -504,9 +502,7 @@ class curriculumstudentpage extends associationpage2 {
         if ($this->is_assigning()) {
             return curriculumpage::can_enrol_into_curriculum($id);
         } else {
-            // TODO: Ugly, this needs to be overhauled
-            $cpage = new curriculumpage();
-            return $cpage->_has_capability('elis/program:program_view', $id);
+            return curriculumpage::_has_capability('elis/program:program_view', $id);
         }
     }
 
@@ -534,7 +530,7 @@ class curriculumstudentpage extends associationpage2 {
         return $this->get_parent_page();
     }
 
-    function build_navbar_default($who = null, $addparent = true, $params = array()) {
+    function build_navbar_default() {
         $this->get_parent_page()->build_navbar_view($this);
     }
 
@@ -630,10 +626,7 @@ class curriculumstudentpage extends associationpage2 {
             $params = array_merge($params,$extrasql[1]);
         }
 
-        // TODO: Ugly, this needs to be overhauled
-        $cpage = new curriculumpage();
-
-        if (!$cpage->_has_capability('elis/program:program_enrol', $id)) {
+        if (!curriculumpage::_has_capability('elis/program:program_enrol', $id)) {
             //perform SQL filtering for the more "conditional" capability
             $context = pm_context_set::for_user_with_capability('cluster', 'elis/program:program_enrol_userset_user', $USER->id);
 
@@ -780,11 +773,7 @@ class curriculum_user_selection_table extends selection_table {
         $pageurl->params(array('_assign' => optional_param('_assign', 'unassign', PARAM_CLEAN)));
         parent::__construct($items, $columns, $pageurl);
         $id = required_param('id', PARAM_INT);
-
-        // TODO: Ugly, this needs to be overhauled
-        $cpage = new curriculumpage();
-
-        if (!$cpage->_has_capability('elis/program:program_enrol', $id)) {
+        if (!curriculumpage::_has_capability('elis/program:program_enrol', $id)) {
             $context = pm_context_set::for_user_with_capability('cluster', 'elis/program:program_enrol_userset_user', $USER->id);
 
             $allowed_clusters = array();

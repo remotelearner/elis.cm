@@ -351,13 +351,10 @@ class usertrack extends elis_data_object {
 
         $allowed_clusters = array();
 
-        // TODO: Ugly, this needs to be overhauled
-        $tpage = new trackpage();
-
-        if (!trackpage::can_enrol_into_track($trackid)) {
+        if(!trackpage::can_enrol_into_track($trackid)) {
             //the users who satisfty this condition are a superset of those who can manage associations
             return false;
-        } else if ($tpage->_has_capability('elis/program:track_enrol', $trackid)) {
+        } else if (trackpage::_has_capability('elis/program:track_enrol', $trackid)) {
             //current user has the direct capability
             return true;
         }
@@ -435,10 +432,7 @@ class usertrack extends elis_data_object {
             $sql .= 'AND usr.inactive = 0 ';
         }
 
-        // TODO: Ugly, this needs to be overhauled
-        $tpage = new trackpage();
-
-        if (!$tpage->_has_capability('elis/program:track_enrol', $trackid)) {
+        if (!trackpage::_has_capability('elis/program:track_enrol', $trackid)) {
             //perform SQL filtering for the more "conditional" capability
             //get the context for the "indirect" capability
             $context = pm_context_set::for_user_with_capability('cluster', 'elis/program:track_enrol_userset_user', $USER->id);
@@ -508,10 +502,7 @@ class usertrack extends elis_data_object {
             $sql .= 'AND usr.inactive = 0 ';
         }
 
-        // TODO: Ugly, this needs to be overhauled
-        $tpage = new trackpage();
-
-        if (!$tpage->_has_capability('elis/program:track_enrol', $trackid)) {
+        if (!trackpage::_has_capability('elis/program:track_enrol', $trackid)) {
             //perform SQL filtering for the more "conditional" capability
             //get the context for the "indirect" capability
             $context = pm_context_set::for_user_with_capability('cluster', 'elis/program:track_enrol_userset_user', $USER->id);
