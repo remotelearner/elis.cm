@@ -49,7 +49,7 @@ class certificatelistpage extends pm_page {
         return get_string('certificatelist', 'elis_program');
     }
 
-    function build_navbar_default() {
+    function build_navbar_default($who = null) {
         $page = new certificatelistpage(array());
         $this->navbar->add($this->get_title_default(), $page->url);
     }

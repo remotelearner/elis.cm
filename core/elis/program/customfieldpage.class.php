@@ -540,8 +540,8 @@ class customfieldpage extends pm_page {
         // FIXME:
     }
 
-    public function build_navbar_default() {
-        parent::build_navbar_default();
+    public function build_navbar_default($who = null) {
+        parent::build_navbar_default($who);
 
         $url = $this->get_new_page(array('level'=>'user'), true)->url;
         $this->navbar->add(get_string("manage_custom_fields", 'elis_program'), $url);

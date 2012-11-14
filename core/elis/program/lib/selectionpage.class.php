@@ -61,9 +61,9 @@ abstract class selectionpage extends pm_page { // TBD
         return $mode == 'bare';
     }
 
-    function print_header() {
+    function print_header($_) {
         if (!$this->is_bare()) {
-            parent::print_header();
+            parent::print_header($_);
             $this->print_tabs();
         }
     }
@@ -119,6 +119,19 @@ abstract class selectionpage extends pm_page { // TBD
         return new selectionform();
     }
 
+    function do_get_checkbox_selection() {
+        global $SESSION;
+        $id = optional_param('id', 1, PARAM_INT);
+        $pagename = $this->page_identity($id);
+        //error_log("selectionpage.class.php::do_get_checkbox_selection(): pagename = {$pagename}");
+        if (isset($SESSION->selectionpage[$pagename])) {
+            $selectedcheckboxes = $SESSION->selectionpage[$pagename];
+            if (is_array($selectedcheckboxes)) {
+                echo implode(',', $selectedcheckboxes);
+            }
+        }
+    }
+
     // Store the checkbox selection into a session
     function do_checkbox_selection_session() {
         global $SESSION;
@@ -139,9 +152,8 @@ abstract class selectionpage extends pm_page { // TBD
     }
 
     // Retrieve a unique page name identified by the page name, id and action
-    function page_identity($id) {
+    function page_identity($id = 1) {
         $pagename = $this->pagename;
-
         if (method_exists($this, 'is_assigning')) {
             if ($this->is_assigning()) {
                 $pagename = $this->pagename . $id . 'is_assigning';
@@ -149,7 +161,6 @@ abstract class selectionpage extends pm_page { // TBD
                 $pagename = $this->pagename . $id . 'is_not_assigning';
             }
         }
-
         return $pagename;
     }
 

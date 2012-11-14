@@ -55,7 +55,6 @@ class testDataObjectChildren extends elis_database_test {
 		return array(
 		    'context' => 'moodle',
 		    'course' => 'moodle',
-		    'log' => 'moodle',
 		    'message' => 'moodle',
 		    'message_working' => 'moodle',
 		    'user' => 'moodle',
@@ -414,28 +413,28 @@ class testDataObjectChildren extends elis_database_test {
 	}
 
 
-	/**
-	 *
-	 *
-	 * @dataProvider objectDataProvider
-	 */
-	public function testDataClass($classname, $data) {
-	    global $DB;
+    /**
+     *
+     *
+     * @dataProvider objectDataProvider
+     */
+    public function testDataClass($classname, $data) {
+        global $DB;
 
-	    $this->load_csv_data();
+        $this->load_csv_data();
 
-	    // Some classes will set these values on save, so we need to recalculate them here. =/
-	    $timenow = time();
+        // Some classes will set these values on save, so we need to recalculate them here. =/
+        $timenow = time();
 
         if (isset($data['timecreated'])) {
-	        $data['timecreated'] = $timenow;
-	    }
-	    if (isset($data['timemodified'])) {
-	        $data['timemodified'] = $timenow;
-	    }
+            $data['timecreated'] = $timenow;
+        }
+        if (isset($data['timemodified'])) {
+            $data['timemodified'] = $timenow;
+        }
 
-	    // Initialize a new data object and save it to the database
-	    $data_class = new $classname($data);
+        // Initialize a new data object and save it to the database
+        $data_class = new $classname($data);
         $data_class->save();
 
         $this->assertGreaterThan(0, $data_class->id, 'class: '.$classname);
@@ -445,9 +444,21 @@ class testDataObjectChildren extends elis_database_test {
         // Build an object for comparing the DB return against
         $objclass = (object)$data;
         $objclass->id = $recordid;
+        $objclass = (array)$objclass;
 
         // Verify that the properties are save by reading the DB record directly
         $dbobject = $DB->get_record($classname::TABLE, array('id' => $recordid));
+        $dbobject = (array)$dbobject;
+        if (isset($dbobject['timecreated'])) {
+            $dbobject['timecreated'] = $timenow;
+        }
+        if (isset($dbobject['timemodified'])) {
+            $dbobject['timemodified'] = $timenow;
+        }
+
+        //sort the two arrays so we dont get out of order assert fails
+        asort($dbobject);
+        asort($objclass);
         $this->assertEquals($objclass, $dbobject, 'class: '.$classname);
 
         // Initialize a new object by record ID
@@ -455,6 +466,7 @@ class testDataObjectChildren extends elis_database_test {
 
         // Verify that each property from the data is setup in the new object
         foreach ($data as $key => $val) {
+            if ($key === 'timemodified' || $key === 'timecreated') { continue; } //cannot accurately test these values
             $this->assertEquals($val, $new_object->$key, 'class: '.$classname.'->'.$key);
         }
 	}

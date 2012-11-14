@@ -193,7 +193,7 @@ function xmldb_elis_program_upgrade($oldversion=0) {
         require_once(elispm::lib('data/user.class.php'));
 
         //create table for storing the association between Moodle and PM users
-        $table = new XMLDBTable('crlm_user_moodle');
+        $table = new xmldb_table('crlm_user_moodle');
         $table->comment = 'Association between Moodle and CM users';
 
         //fields

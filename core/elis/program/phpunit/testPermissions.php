@@ -50,7 +50,12 @@ class testPermissions extends elis_database_test {
                      'role_assignments' => 'moodle',
                      'role_capabilities' => 'moodle',
                      'user' => 'moodle',
-                     'config' => 'moodle');
+                     'config' => 'moodle',
+                     'elis_field_data_char' => 'elis_core',
+                     'elis_field_data_int' => 'elis_core',
+                     'elis_field_data_num' => 'elis_core',
+                     'elis_field_data_text' => 'elis_core'
+               );
     }
 
     /**

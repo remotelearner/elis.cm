@@ -37,8 +37,8 @@ class configclsdefaultpage extends pm_page {
         return has_capability('elis/program:config', $context) || has_capability('elis/program:manage', $context);
     }
 
-    function build_navbar_default() {
-        parent::build_navbar_default();
+    function build_navbar_default($who = null) {
+        parent::build_navbar_default($who);
         $this->navbar->add(get_string('defaultcls', 'elis_program'), $this->url);
     }
 

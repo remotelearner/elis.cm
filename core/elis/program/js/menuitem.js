@@ -31,49 +31,52 @@
  */
 function loadNodeData(node, fnLoadComplete) {
 
-	var callback = {
-	
-	    //success function
-	    success: function(o) {
+    //URL of our script (wwwroot is pre-set by the calling PHP script)
+    var url = document.wwwroot + '/blocks/curr_admin/load_menu.php?data=' + node.contentElId;
+
+    var callback = {
+
+        //success function
+        success: function(o) {
 
             //YUI can fire multiple expand events for the same node
             //so make sure it hasn't already been loaded
-		    if(o.responseText != '' && node.children == '') {
-		        var responseObject = YAHOO.lang.JSON.parse(o.responseText);
-		    
-		        //loop through and append new child nodes
-		        for(var i = 0; i < responseObject.children.length; i++) {
-		            var childObject = responseObject.children[i];
-		            
-		            //this actually creates the node in the menu
+            if(o.responseText != '' && node.children == '') {
+                var responseObject = YAHOO.lang.JSON.parse(o.responseText);
+
+                //loop through and append new child nodes
+                for(var i = 0; i < responseObject.children.length; i++) {
+                    var childObject = responseObject.children[i];
+
+                    //this actually creates the node in the menu
                     var newNode = new YAHOO.widget.TextNode(childObject.label, node);
-                    
+
                     //information about parent elements is held in this value
                     newNode.contentElId = childObject.contentElId;
-                    
+
                     //CSS styling
                     newNode.labelStyle = childObject.labelStyle;
-                    
+
                     //specifies if we should not show the + icon
                     newNode.isLeaf = childObject.isLeaf;
-		        }
-		    }
-		    
-		    //indicate that loading is complete
-		    fnLoadComplete();
-	    },
-	    
-	    //failure function
-	    failure: function(o) {
-	    
-	        //DO NOT warn the user in any way because this failure can happen
-	    	//in an innocuous way if you navigate to another page while the menu is loading
-	    	
-	    	//indicate that loading is complete
-	    	fnLoadComplete();
-	    }
-         
-	}
+                }
+            }
+
+            //indicate that loading is complete
+            fnLoadComplete();
+        },
+
+        //failure function
+        failure: function(o) {
+
+            //DO NOT warn the user in any way because this failure can happen
+            //in an innocuous way if you navigate to another page while the menu is loading
+
+            //indicate that loading is complete
+            fnLoadComplete();
+        }
+
+    }
 
     if (node.contentElId != "") {
         //URL of our script (wwwroot is pre-set by the calling PHP script)
@@ -92,33 +95,37 @@ function loadNodeData(node, fnLoadComplete) {
  * @param  object  tree_object  The object representing tree contents
  */
 function render_curr_admin_tree(tree_object) {
-    /**
-    * Override YUI functionality to not escape HTML tags
-    *
-    * todo: convert menuitem code to user href attribute rather than HTML
-    * content
-    */
-   YAHOO.widget.TextNode.prototype.getContentHtml = function() {
-       var sb = [];
-       sb[sb.length] = this.href ? '<a' : '<span';
-       sb[sb.length] = ' id="' + YAHOO.lang.escapeHTML(this.labelElId) + '"';
-       sb[sb.length] = ' class="' + YAHOO.lang.escapeHTML(this.labelStyle) + '"';
-       if (this.href) {
-           sb[sb.length] = ' href="' + YAHOO.lang.escapeHTML(this.href) + '"';
-           sb[sb.length] = ' target="' + YAHOO.lang.escapeHTML(this.target) + '"';
-       }
-       if (this.title) {
-           sb[sb.length] = ' title="' + YAHOO.lang.escapeHTML(this.title) + '"';
-       }
-       sb[sb.length] = ' >';
-       sb[sb.length] = this.label;
-       sb[sb.length] = this.href?'</a>':'</span>';
-       return sb.join("");
-   };
+    YUI().use('yui2-treeview', function(Y) {
+        /**
+         * Override YUI functionality to not escape HTML tags
+         *
+         * todo: convert menuitem code to user href attribute rather than HTML
+         * content
+         */
+        YAHOO.widget.TextNode.prototype.getContentHtml = function() {
+            var sb = [];
 
-    var curr_admin_tree = new YAHOO.widget.TreeView("block_curr_admin_tree", tree_object.children);
+            sb[sb.length] = this.href ? '<a' : '<span';
+            sb[sb.length] = ' id="' + YAHOO.lang.escapeHTML(this.labelElId) + '"';
+            sb[sb.length] = ' class="' + YAHOO.lang.escapeHTML(this.labelStyle) + '"';
+            if (this.href) {
+                sb[sb.length] = ' href="' + YAHOO.lang.escapeHTML(this.href) + '"';
+                sb[sb.length] = ' target="' + YAHOO.lang.escapeHTML(this.target) + '"';
+            }
+            if (this.title) {
+                sb[sb.length] = ' title="' + YAHOO.lang.escapeHTML(this.title) + '"';
+            }
+            sb[sb.length] = ' >';
+            sb[sb.length] = this.label;
+            sb[sb.length] = this.href?'</a>':'</span>';
+            return sb.join("");
+        };
 
-    //set up dynamic loading
-    curr_admin_tree.setDynamicLoad(loadNodeData);
-    curr_admin_tree.render();
+        var curr_admin_tree = new YAHOO.widget.TreeView("block_curr_admin_tree", tree_object.children);
+
+        //set up dynamic loading
+        curr_admin_tree.setDynamicLoad(loadNodeData);
+
+        curr_admin_tree.render();
+    });
 }

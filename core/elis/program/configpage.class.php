@@ -41,7 +41,7 @@ class configpage extends pm_page {
         return has_capability('elis/program:config', $context);
     }
 
-    function build_navbar_default() { // was build_navigation_default
+    function build_navbar_default($who = null) { // was build_navigation_default
         global $CFG;
 
         $page = $this->get_new_page(array('action' => 'default'), true);

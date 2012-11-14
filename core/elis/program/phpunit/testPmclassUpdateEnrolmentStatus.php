@@ -47,7 +47,11 @@ class pmclassUpdateEnrolmentStatusTest extends elis_database_test {
                      pmclass::TABLE          => 'elis_program',
                      student::TABLE          => 'elis_program',
                      student_grade::TABLE    => 'elis_program',
-                     user::TABLE             => 'elis_program'
+                     user::TABLE             => 'elis_program',
+                     'elis_field_data_char'  => 'elis_core',
+                     'elis_field_data_int'   => 'elis_core',
+                     'elis_field_data_num'   => 'elis_core',
+                     'elis_field_data_text'  => 'elis_core'
                );
     }
 

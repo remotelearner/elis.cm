@@ -22,6 +22,36 @@
  * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
  */
 
+/// Globals
+
+// whether or not the scripts from the innerhtml have already been run
+var innerhtml_scripts_run = false;
+
+var lastrequest = basepage;
+
+var selection = new Array();
+
+var selection_field = null;
+
+var set_content_callback = {
+    success: set_content
+};
+
+YAHOO.util.Event.onDOMReady(function() {
+    make_links_internal();
+    window.selection_field = get_element_by_name("_selection");
+    var set_checkboxes_callback = {
+        success: set_checkboxes_success
+    };
+    YAHOO.util.Connect.asyncRequest("GET", window.basepage + '&mode=bare&action=get_checkbox_selection', set_checkboxes_callback);
+});
+
+var onbeforeunload = function(e) {
+    update_checkbox_selection();
+}
+
+YAHOO.util.Event.addListener(document, 'unload', onbeforeunload);
+
 /**
  * Returns the first element found that has the given name attribute
  */
@@ -29,12 +59,8 @@ function get_element_by_name(name) {
     return YAHOO.util.Dom.getElementsBy(function(el) { return el.getAttribute("name") == name; })[0];
 }
 
-window.onbeforeunload = function(e) {
-    update_checkbox_selection();
-}
-
 function update_checkbox_selection() {
-    var selectedcheckboxes = YAHOO.lang.JSON.stringify(selection);
+    var selectedcheckboxes = YAHOO.lang.JSON.stringify(window.selection);
     // Send the selected checkboxes synchronously
     YUI().use("io-base", function(Y) {
         var uri = basepage + "&action=checkbox_selection_session";
@@ -43,7 +69,7 @@ function update_checkbox_selection() {
             sync: true,
             data: 'selected_checkboxes=' + selectedcheckboxes
         };
-        request = Y.io(uri, cfg);
+        var request = Y.io(uri, cfg);
     });
 }
 
@@ -62,10 +88,6 @@ function make_links_internal() {
         YAHOO.util.Event.addListener(el, "submit", load_form, el.getAttribute('id'));
     });
 }
-
-
-// whether or not the scripts from the innerhtml have already been run
-var innerhtml_scripts_run = false;
 
 /**
  * When we receive new content from the server, replace the list_display div
@@ -87,21 +109,15 @@ function set_content(resp) {
     }
 }
 
-var set_content_callback = {
-    success: set_content
-};
-
-var lastrequest = basepage;
-
 /**
  * event handler for links within the list_display div
  */
 function load_link(ev) {
     var target = YAHOO.util.Event.getTarget(ev);
     if (!target.getAttribute("href")) return;
-    lastrequest = target.getAttribute("href");
-    var selectedcheckboxes = JSON.stringify(selection);
-    YAHOO.util.Connect.asyncRequest("POST", lastrequest + "&mode=bare", set_content_callback, "selected_checkboxes=" + selectedcheckboxes);
+    window.lastrequest = target.getAttribute("href");
+    var selectedcheckboxes = YAHOO.lang.JSON.stringify(window.selection);
+    YAHOO.util.Connect.asyncRequest("POST", window.lastrequest + "&mode=bare", set_content_callback, "selected_checkboxes=" + selectedcheckboxes);
     YAHOO.util.Event.preventDefault(ev);
 }
 
@@ -112,13 +128,11 @@ function load_form(ev) {
     var target = YAHOO.util.Event.getTarget(ev);
     var data = YAHOO.util.Connect.setForm(target);
     var link = target.getAttribute('action');
-    lastrequest = link + '?' + data;
-    var selectedcheckboxes = JSON.stringify(selection);
+    window.lastrequest = link + '?' + data;
+    var selectedcheckboxes = YAHOO.lang.JSON.stringify(window.selection);
     YAHOO.util.Connect.asyncRequest("POST", link + "?mode=bare", set_content_callback, "selected_checkboxes=" + selectedcheckboxes);
     YAHOO.util.Event.preventDefault(ev);
 }
-
-var selection = new Array();
 
 /**
  * event handler for "show selected only" checkbox
@@ -126,59 +140,64 @@ var selection = new Array();
 function change_selected_display() {
     var selected_only = get_element_by_name("selectedonly");
     if (selected_only.checked) {
-        if (selection != null) {
-            var data = '[' + selection.join(',') + ']';
+        if (window.selection != null) {
+            var data = '[' + window.selection.join(',') + ']';
             if (!data) {
                 data = "[]";
             }
         YAHOO.util.Connect.asyncRequest("POST", basepage + "&mode=bare&_showselection="+data, set_content_callback, "selected_checkboxes=" + data);
         }
     } else {
-        var selectedcheckboxes = JSON.stringify(selection);
+        var selectedcheckboxes = YAHOO.lang.JSON.stringify(window.selection);
         YAHOO.util.Connect.asyncRequest("POST", basepage + "&mode=bare", set_content_callback, "selected_checkboxes=" + selectedcheckboxes);
     }
 }
 
-var selection_field = null;
-
-YAHOO.util.Event.onDOMReady(function() {
-    make_links_internal();
-    selection_field = get_element_by_name("_selection");
-    var sessionselection = document.getElementById('selected_checkboxes');
-    // Load any selected checkboxes into an array
-    if (sessionselection != null) {
-        var checkedselection = sessionselection.value.split(',');
-        for (var i = 0; i < checkedselection.length; i++) {
-            if (checkedselection[i]) {
-                selection.push(checkedselection[i]);
+function set_selected_checkboxes(sessionselection) {
+    var checkedselection = sessionselection.split(',');
+    for (var i = 0; i < checkedselection.length; i++) {
+        if (checkedselection[i]) {
+            var cb = get_element_by_name("select"+ checkedselection[i]);
+            if (cb) {
+                cb.checked = true;
             }
+            window.selection.push(checkedselection[i]);
         }
-        selection_field.value = '[' + selection.join(',') + ']';
     }
+    window.selection_field = get_element_by_name("_selection");
+    window.selection_field.value = '[' + window.selection.join(',') + ']';
     mark_selected();
-    document.getElementById("numselected").innerHTML = selection.length;
-});
+}
+
+function set_checkboxes_success(resp) {
+    //alert('set_checkboxes_success: '+ resp.responseText);
+    var selectedelem = document.getElementById('selected_checkboxes');
+    if (selectedelem) {
+        selectedelem.value = resp.responseText;
+    }
+    set_selected_checkboxes(resp.responseText);
+}
 
 function select_item(id) {
     if (get_element_by_name("select"+id).checked) {
         // Add checkbox selection
         if (checkbox_selection_index(id) == -1) {
-            selection.push(id);
+            window.selection.push(id);
         }
     } else {
         // Remove checkbox selection
         var pos = checkbox_selection_index(id);
         if (pos != -1) {
-            selection.splice(pos, 1);
+            window.selection.splice(pos, 1);
         }
     }
-    selection_field.value = '[' + selection.join(',') + ']';
+    window.selection_field.value = '[' + window.selection.join(',') + ']';
     document.getElementById("numselected").innerHTML = selection.length;
 }
 
 function checkbox_selection_index(element) {
-    for (var i = 0; i < selection.length; i++) {
-        if (selection[i] == element) {
+    for (var i = 0; i < window.selection.length; i++) {
+        if (window.selection[i] == element) {
             return i;
         }
     }
@@ -204,8 +223,9 @@ function mark_selected() {
     }
     var sessionselection = document.getElementById('selected_checkboxes');
     var length = 0;
-    if (sessionselection.value) {
+    if (sessionselection && sessionselection.value) {
         length = sessionselection.value.split(',').length;
+        //alert('checkbox_selection.js::mark_selected(): length = '+ length);
     }
 
     document.getElementById("numonotherpages").innerHTML = (length - numselected);

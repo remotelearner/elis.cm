@@ -45,7 +45,7 @@ abstract class enginepage extends pm_page {
     public $form_class = 'cmEngineForm';
 
     protected $parent_page;
-    public $section;
+    protected $section;
     protected $_form;
 
     public function __construct($params = null) {
@@ -202,7 +202,7 @@ abstract class enginepage extends pm_page {
     /**
      * Build the default navigation bar.
      */
-    function build_navbar_default() {
+    function build_navbar_default($who = null) {
 
         //obtain the base of the navbar from the parent page class
         $parent_template = $this->get_parent_page()->get_new_page();

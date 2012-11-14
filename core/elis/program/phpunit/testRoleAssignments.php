@@ -46,7 +46,6 @@ class curriculumCustomFieldsTest extends elis_database_test {
             'course' => 'moodle',
             'events_queue' => 'moodle',
             'events_queue_handlers' => 'moodle',
-		    'log' => 'moodle',
             'message' => 'moodle',
             'message_working' => 'moodle',
             'role' => 'moodle',
@@ -426,7 +425,7 @@ class curriculumCustomFieldsTest extends elis_database_test {
             'useridfrom'   => $testuser->id,
             'useridto'     => $admin->id,
             'subject'      => get_string('unreadnewmessage', 'message', $fullname),
-            'smallmessage' => $fullname.' has been enrolled in the class '.$pmclass->idnumber.'.'
+            'smallmessage' => $fullname.' has been enrolled in the class instance '.$pmclass->idnumber.'.'
         );
 
         $this->assertTrue($DB->record_exists_select('message', $select, $params));

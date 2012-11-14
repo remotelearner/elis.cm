@@ -1,8 +1,8 @@
 diff --git a/user/editadvanced_form.php b/user/editadvanced_form.php
-index 243789b..3473dba 100644
+index 400d9d3..7cc897e 100644
 --- a/user/editadvanced_form.php
 +++ b/user/editadvanced_form.php
-@@ -197,6 +197,27 @@ class user_editadvanced_form extends moodleform {
+@@ -201,6 +201,27 @@ class user_editadvanced_form extends moodleform {
              }
          }
  

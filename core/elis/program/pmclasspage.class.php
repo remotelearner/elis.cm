@@ -86,8 +86,12 @@ class pmclasspage extends managementpage {
         global $USER;
 
         //check the standard capability
-        if(pmclasspage::_has_capability('elis/program:class_enrol', $classid)
-           || pmclasspage::_has_capability('elis/program:class_enrol_userset_user', $classid)) {
+
+        // TODO: Ugly, this needs to be overhauled
+        $cpage = new pmclasspage();
+
+        if($cpage->_has_capability('elis/program:class_enrol', $classid)
+           || $cpage->_has_capability('elis/program:class_enrol_userset_user', $classid)) {
             return true;
         }
 
@@ -146,7 +150,7 @@ class pmclasspage extends managementpage {
         global $DB, $CFG;
 
         $reports_installed = $DB->record_exists('block', array('name' => 'php_report'));
-        if ($reports_installed) {
+        if ($reports_installed && file_exists($CFG->dirroot .'/blocks/php_report/php_report_base.php')) {
             require_once($CFG->dirroot .'/blocks/php_report/php_report_base.php');
         }
 
@@ -205,7 +209,7 @@ class pmclasspage extends managementpage {
     /**
      * Constructs navigational breadcrumbs
      */
-    function build_navbar_default() {
+    function build_navbar_default($who = null, $addparent = true, $params = array()) {
         //get the parent courseid if possible
         $action = $this->optional_param('action', '', PARAM_CLEAN);
         $cancel = $this->optional_param('cancel', '', PARAM_CLEAN);
