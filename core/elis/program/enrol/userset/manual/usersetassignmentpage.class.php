@@ -56,10 +56,13 @@ class userclusterbasepage extends associationpage {
 
         $allowed_clusters = array();
 
+        // TODO: Ugly, this needs to be overhauled
+        $upage = new usersetpage();
+
         if (!usersetpage::can_enrol_into_cluster($clustid)) {
             //the users who satisfty this condition are a superset of those who can manage associations
             return false;
-        } else if (usersetpage::_has_capability('elis/program:userset_enrol', $clustid)) {
+        } else if ($upage->_has_capability('elis/program:userset_enrol', $clustid)) {
             //current user has the direct capability
             return true;
         }
@@ -93,7 +96,9 @@ class userclusterpage extends userclusterbasepage {
 
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
-        return userpage::_has_capability('elis/program:user_view', $id);
+        // TODO: Ugly, this needs to be overhauled
+        $upage = new userpage();
+        return $upage->_has_capability('elis/program:user_view', $id);
     }
 
     function can_do_add() {
@@ -244,7 +249,9 @@ class clusteruserpage extends userclusterbasepage {
 
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
-        return usersetpage::_has_capability('elis/program:userset_view', $id);
+        // TODO: Ugly, this needs to be overhauled
+        $uspage = new usersetpage();
+        return $uspage->_has_capability('elis/program:userset_view', $id);
     }
 
     function can_do_add() {

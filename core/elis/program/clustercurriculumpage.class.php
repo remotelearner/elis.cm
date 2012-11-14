@@ -77,8 +77,11 @@ class clustercurriculumbasepage extends associationpage {
         $clusterid = $this->required_param('clusterid', PARAM_INT);
         $curriculumid = $this->required_param('curriculumid', PARAM_INT);
 
-        return usersetpage::_has_capability('elis/program:associate', $clusterid)
-            && curriculumpage::_has_capability('elis/program:associate', $curriculumid);
+        // TODO: Ugly, this needs to be overhauled
+        $uspage = new usersetpage();
+        $cpage  = new curriculumpage();
+        return $uspage->_has_capability('elis/program:associate', $clusterid)
+            && $cpage->_has_capability('elis/program:associate', $curriculumid);
     }
 
     /**
@@ -153,8 +156,11 @@ class clustercurriculumbasepage extends associationpage {
         $clusterid = $record->clusterid;
         $curriculumid = $record->curriculumid;
 
-        return usersetpage::_has_capability('elis/program:associate', $clusterid)
-            && curriculumpage::_has_capability('elis/program:associate', $curriculumid);
+        // TODO: Ugly, this needs to be overhauled
+        $uspage = new usersetpage();
+        $cpage  = new curriculumpage();
+        return $uspage->_has_capability('elis/program:associate', $clusterid)
+            && $cpage->_has_capability('elis/program:associate', $curriculumid);
     }
 
     function can_do_delete() {
@@ -211,7 +217,7 @@ class clustercurriculumbasepage extends associationpage {
      * @param $obj The association object being edited.
      * @param $parent_obj The basic data object being associated with.
      */
-    function print_edit_form($obj, $parent_obj) {
+    function print_edit_form($obj, $parent_obj, $sort, $dir) {
         $parent_id = required_param('id', PARAM_INT);
 //        $association_id = required_param('association_id', PARAM_INT);
 
@@ -246,12 +252,14 @@ class clustercurriculumpage extends clustercurriculumbasepage {
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
 
-        if (usersetpage::_has_capability('elis/program:userset_view', $id)) {
+        // TODO: Ugly, this needs to be overhauled
+        $uspage = new usersetpage();
+        if ($uspage->_has_capability('elis/program:userset_view', $id)) {
             //allow viewing but not managing associations
         	return true;
         }
 
-        return usersetpage::_has_capability('elis/program:associate', $id);
+        return $uspage->_has_capability('elis/program:associate', $id);
     }
 
     function display_default() {
@@ -636,13 +644,14 @@ class curriculumclusterpage extends clustercurriculumbasepage {
 
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
-
-        if (curriculumpage::_has_capability('elis/program:program_view', $id)) {
+        // TODO: Ugly, this needs to be overhauled
+        $cpage = new curriculumpage();
+        if ($cpage->_has_capability('elis/program:program_view', $id)) {
             //allow viewing but not managing associations
         	return true;
         }
 
-        return curriculumpage::_has_capability('elis/program:associate', $id);
+        return $cpage->_has_capability('elis/program:associate', $id);
     }
 
     function display_default() {

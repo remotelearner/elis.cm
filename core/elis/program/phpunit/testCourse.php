@@ -26,6 +26,9 @@
  *
  */
 
+if (!isset($_SERVER['HTTP_USER_AGENT'])) {
+    define('CLI_SCRIPT', true);
+}
 require_once(dirname(__FILE__) . '/../../core/test_config.php');
 global $CFG;
 require_once($CFG->dirroot . '/elis/program/lib/setup.php');

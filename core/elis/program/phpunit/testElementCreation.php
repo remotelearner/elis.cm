@@ -31,6 +31,7 @@ require_once($CFG->dirroot . '/elis/program/lib/setup.php');
 require_once(elis::lib('testlib.php'));
 require_once('PHPUnit/Extensions/Database/DataSet/CsvDataSet.php');
 require_once(elis::lib('data/customfield.class.php'));
+require_once(elispm::file('enrol/userset/moodle_profile/userset_profile.class.php'));
 require_once(elispm::lib('data/curriculum.class.php'));
 require_once(elispm::lib('data/track.class.php'));
 require_once(elispm::lib('data/course.class.php'));
@@ -45,20 +46,22 @@ class test_element_creation extends elis_database_test {
 
     protected static function get_overlay_tables() {
         return array(
-            'context'              => 'moodle',
-            'course'               => 'moodle',
-            'user'                 => 'moodle',
-            field_data_char::TABLE => 'elis_core',
-            field_data_text::TABLE => 'elis_core',
-            field_data_int::TABLE => 'elis_core',
-            curriculum::TABLE      => 'elis_program',
-            track::TABLE           => 'elis_program',
-            course::TABLE          => 'elis_program',
-            coursetemplate::TABLE  => 'elis_program',
-            pmclass::TABLE         => 'elis_program',
-            user::TABLE            => 'elis_program',
-            usermoodle::TABLE      => 'elis_program',
-            userset::TABLE         => 'elis_program'
+            'context'               => 'moodle',
+            'course'                => 'moodle',
+            'user'                  => 'moodle',
+            field_data_num::TABLE   => 'elis_core',
+            field_data_char::TABLE  => 'elis_core',
+            field_data_text::TABLE  => 'elis_core',
+            field_data_int::TABLE   => 'elis_core',
+            userset_profile::TABLE  => 'elis_program',
+            curriculum::TABLE       => 'elis_program',
+            track::TABLE            => 'elis_program',
+            course::TABLE           => 'elis_program',
+            coursetemplate::TABLE   => 'elis_program',
+            pmclass::TABLE          => 'elis_program',
+            user::TABLE             => 'elis_program',
+            usermoodle::TABLE       => 'elis_program',
+            userset::TABLE          => 'elis_program'
         );
     }
 

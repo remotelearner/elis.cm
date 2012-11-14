@@ -61,7 +61,7 @@ class bulkuserpage extends selectionpage {
         return get_string('userbulk', 'admin');
     }
 
-    function build_navbar_default() {
+    function build_navbar_default($who = null) {
         return $this->navbar->add(get_string('userbulk', 'admin'), $this->url);
     }
 

@@ -30,13 +30,19 @@ require_once($CFG->dirroot . '/elis/program/lib/setup.php');
 require_once(elis::lib('testlib.php'));
 require_once('PHPUnit/Extensions/Database/DataSet/CsvDataSet.php');
 require_once(elispm::lib('data/curriculumstudent.class.php'));
+require_once(elispm::lib('data/curriculum.class.php'));
+require_once(elispm::lib('data/user.class.php'));
 
 class curriculumstudentTest extends elis_database_test {
     protected $backupGlobalsBlacklist = array('DB');
 
-	protected static function get_overlay_tables() {
-		return array(curriculumstudent::TABLE => 'elis_program');
-	}
+    protected static function get_overlay_tables() {
+        return array(
+            curriculumstudent::TABLE => 'elis_program',
+            curriculum::TABLE => 'elis_program',
+            user::TABLE => 'elis_program',
+        );
+    }
 
     protected function load_csv_data() {
         $dataset = new PHPUnit_Extensions_Database_DataSet_CsvDataSet();
@@ -56,5 +62,18 @@ class curriculumstudentTest extends elis_database_test {
                                                          'userid' => 1));
 
         $curriculumstudent->save();
+    }
+
+    public function testComplete() {
+        $dataset = new PHPUnit_Extensions_Database_DataSet_CsvDataSet();
+        $dataset->addTable(user::TABLE, elis::component_file('program', 'phpunit/pmuser.csv'));
+        $dataset->addTable(curriculum::TABLE, elis::component_file('program', 'phpunit/curriculum.csv'));
+        $dataset->addTable(curriculumstudent::TABLE, elis::component_file('program', 'phpunit/curriculum_student.csv'));
+        load_phpunit_data_set($dataset, true, self::$overlaydb);
+
+        $cs = new curriculumstudent(2);
+        $cs->load();
+
+        $cs->complete(time(),5);
     }
 }

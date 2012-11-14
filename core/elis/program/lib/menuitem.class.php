@@ -39,7 +39,7 @@ class menuitemlisting {
 
         //expand the tree based on where you currently are
         $this->append_path_items();
-        
+
         //remove any elements that should not be visible
         $this->filter_permissions();
 
@@ -124,21 +124,21 @@ class menuitemlisting {
         //make sure the current page was reached via the curr admin menu
         if (isset($USER->currentitypath)) {
             $parts = explode('/', $USER->currentitypath);
-            
+
             //track the last element along the path
             $parent_element_id = 'root';
-            
+
             //track the last encountered cluster and curriculum ids
             $parent_cluster_id = 0;
             $parent_curriculum_id = 0;
-            
+
             //track where we are within the curr entity path
             $position_in_path = 0;
-            
+
             //store the path as we build it up so that newly created links
             //expand the tree as well
             $cumulative_path = '';
-            
+
             foreach ($parts as $part) {
                 //convert to notation used by the tree
                 $current_element_id = str_replace('-', '_', $part);
@@ -153,21 +153,21 @@ class menuitemlisting {
                 } else if ($current_parts[0] == 'curriculum') {
                     $parent_curriculum_id = $current_parts[1];
                 }
-                
+
                 //append the current element to the working path
                 if (empty($cumulative_path)) {
                     $cumulative_path = $part;
                 }  else {
                     $cumulative_path .= '/' . $part;
                 }
-                
+
                 //load children for all nodes except for the lowest-level ones
                 if ($position_in_path < count($parts) - 1) {
-                
+
                     //automatically load all correct children
                     if ($children = block_curr_admin_load_menu_children($current_parts[0], !isset($current_parts[1]) ? '' : $current_parts[1], $parent_cluster_id, $parent_curriculum_id, $cumulative_path)) {
                         foreach ($children as $child) {
-                        
+
                             $node = clone($child);
                             //make the loaded node a child of the current one
                             $node->parent = $current_element_id;
@@ -177,20 +177,20 @@ class menuitemlisting {
                             }
                         }
                     }
-                    
+
                 }
-                
+
                 //force the parent element to expand
                 foreach ($this->listing as $listing_key => $listing_entry) {
                     if ($listing_entry->name == $parent_element_id) {
                         $this->listing[$listing_key]->forceexpand = true;
                     }
                 }
-                
+
                 $parent_element_id = $current_element_id;
-                
+
                 $position_in_path++;
-                
+
             }
 
         }
@@ -478,9 +478,11 @@ class treerepresentation {
     /**
      * Converts the tree representation to html markup
      *
+     * @param   string  $uniqueid        The unique id of the filter element
+     * @param   int     $execution_mode  The mode in which the report is being run
      * @return  string  The appropriate markup
      */
-    function convert_to_markup() {
+    function convert_to_markup($uniqueid = '', $execution_mode = null) {
         global $CFG;
 
         //this prevents handling an empty tree
@@ -503,11 +505,8 @@ class treerepresentation {
         //<![CDATA[
         var object = $js_object;
         var wwwroot = \"{$CFG->wwwroot}\";
-        //register the tree module so it doesn't get loaded again
-        YUI().use('yui2-treeview', function(Y) {
-            YAHOO.util.Event.onDOMReady(function() {
+        YAHOO.util.Event.onDOMReady(function() {
                 render_curr_admin_tree(object);
-            });
         });
         //]]>
         </script>";*/
@@ -532,7 +531,7 @@ class treerepresentation {
      *
      * @param   string    $key  The name of the page being requested
      *
-     * @return  menuitem        The appropriate item 
+     * @return  menuitem        The appropriate item
      */
     function get_listing_entry($key) {
         return $this->listing->listing[$key];
@@ -541,15 +540,15 @@ class treerepresentation {
     /**
      * Determines the section the user is currently in
      */
-    function get_current_section() {
+    static function get_current_section() {
         global $CURMAN, $PAGE;
-        
+
         //return the report shortname if we are specifically on a PHP report page
         $report = optional_param('report', '', PARAM_CLEAN);
         if ($report !== '') {
             return $report;
         }
-        
+
         //this code is based on code found in the curr_admin block
         return (isset($CURMAN->page->section) ? $CURMAN->page->section : (isset($PAGE->section) ? $PAGE->section : ''));
     }
@@ -651,7 +650,7 @@ class treerepresentationnode {
      */
     function get_js_object($expanded_sections) {
         $object = new stdClass;
-        
+
         //display text
         $object->label = $this->parent->get_listing_entry($this->name)->title;
 
@@ -667,13 +666,13 @@ class treerepresentationnode {
             foreach ($this->children as $child) {
                 $object->children[] = $child->get_js_object($expanded_sections);
             }
-            
+
             //flag as expanded when appropriate
             if (in_array($this->name, $expanded_sections)) {
                 $object->expanded = true;
             }
         }
-        
+
         //if the node itself is forced to expand (based on current page), expand it
         if (!empty($this->parent->get_listing_entry($this->name)->forceexpand)) {
             $object->expanded = true;

@@ -29,6 +29,7 @@ global $CFG;
 require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 require_once(elis::lib('testlib.php'));
 require_once(elispm::file('rolepage.class.php'));
+require_once(elispm::file('enrol/userset/moodle_profile/userset_profile.class.php'));
 
 /**
  * Class that behaves like the cluster role page but allows for unit tests to
@@ -64,16 +65,23 @@ class testRoles extends elis_database_test {
         require_once(elispm::lib('data/usermoodle.class.php'));
         require_once(elispm::lib('data/userset.class.php'));
 
-        return array(clusterassignment::TABLE => 'elis_program',
-                     user::TABLE => 'elis_program',
-                     usermoodle::TABLE => 'elis_program',
-                     userset::TABLE => 'elis_program',
-                     'config_plugins' => 'moodle',
-                     'context' => 'moodle',
-                     'role' => 'moodle',
-                     'role_assignments' => 'moodle',
-                     'role_capabilities' => 'moodle',
-                     'user' => 'moodle');
+        return array(
+            clusterassignment::TABLE => 'elis_program',
+            user::TABLE => 'elis_program',
+            usermoodle::TABLE => 'elis_program',
+            userset::TABLE => 'elis_program',
+            userset_profile::TABLE  => 'elis_program',
+            'config_plugins' => 'moodle',
+            'context' => 'moodle',
+            'role' => 'moodle',
+            'role_assignments' => 'moodle',
+            'role_capabilities' => 'moodle',
+            'user' => 'moodle',
+            'elis_field_data_char' => 'elis_core',
+            'elis_field_data_int' => 'elis_core',
+            'elis_field_data_num' => 'elis_core',
+            'elis_field_data_text' => 'elis_core'
+        );
     }
 
     /**

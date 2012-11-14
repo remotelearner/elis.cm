@@ -58,7 +58,7 @@ class waitlistpage extends selectionpage {
     /**
      * Constructs navigational breadcrumbs
      */
-    function build_navbar_default() {
+    function build_navbar_default($who = null) {
         $id = $this->required_param('id', PARAM_INT);
         $classpage = new pmclasspage(array('id' => $id));
         $classpage->build_navbar_view();

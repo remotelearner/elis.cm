@@ -30,6 +30,7 @@ require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 require_once(elis::lib('testlib.php'));
 require_once('PHPUnit/Extensions/Database/DataSet/CsvDataSet.php');
 require_once(elispm::lib('data/usertrack.class.php'));
+require_once(elispm::file('enrol/userset/moodle_profile/userset_profile.class.php'));
 
 class testTrackAssignmentGetAvailableUsers extends elis_database_test {
     /**
@@ -44,20 +45,27 @@ class testTrackAssignmentGetAvailableUsers extends elis_database_test {
         require_once(elispm::lib('data/usermoodle.class.php'));
         require_once(elispm::lib('data/userset.class.php'));
 
-        return array(clusterassignment::TABLE => 'elis_program',
-                     clustertrack::TABLE => 'elis_program',
-                     curriculum::TABLE => 'elis_program',
-                     track::TABLE => 'elis_program',
-                     usertrack::TABLE => 'elis_program',
-                     user::TABLE => 'elis_program',
-                     usermoodle::TABLE => 'elis_program',
-                     userset::TABLE => 'elis_program',
-                     'config' => 'moodle',
-                     'config_plugins' => 'moodle',
-                     'context' => 'moodle',
-                     'role' => 'moodle',
-                     'role_assignments' => 'moodle',
-                     'user' => 'moodle');
+        return array(
+            clusterassignment::TABLE => 'elis_program',
+            clustertrack::TABLE => 'elis_program',
+            curriculum::TABLE => 'elis_program',
+            track::TABLE => 'elis_program',
+            usertrack::TABLE => 'elis_program',
+            user::TABLE => 'elis_program',
+            usermoodle::TABLE => 'elis_program',
+            userset::TABLE => 'elis_program',
+            userset_profile::TABLE  => 'elis_program',
+            'config' => 'moodle',
+            'config_plugins' => 'moodle',
+            'context' => 'moodle',
+            'role' => 'moodle',
+            'role_assignments' => 'moodle',
+            'user' => 'moodle',
+            'elis_field_data_char' => 'elis_core',
+            'elis_field_data_int' => 'elis_core',
+            'elis_field_data_num' => 'elis_core',
+            'elis_field_data_text' => 'elis_core'
+        );
     }
 
     /**

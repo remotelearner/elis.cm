@@ -48,24 +48,27 @@ class duplicateTest extends elis_database_test {
     }
 
     protected static function get_overlay_tables() {
-        return array('course' => 'moodle',
-                     'context' => 'moodle',
-                     'elis_field_categories' => 'elis_core',
-                     'elis_field_category_contexts' => 'elis_core',
-                     'elis_field' => 'elis_core',
-                     'elis_field_contextlevels' => 'elis_core',
-                     'elis_field_owner' => 'elis_core',
-                     'elis_field_data_text' => 'elis_core',
-                     pmclass::TABLE => 'elis_program',
-                     course::TABLE => 'elis_program',
-                     curriculum::TABLE => 'elis_program',
-                     track::TABLE => 'elis_program',
-                     trackassignment::TABLE => 'elis_program',
-                     userset::TABLE => 'elis_program',
-                     clustertrack::TABLE => 'elis_program',
-                     clustercurriculum::TABLE => 'elis_program',
-                     curriculum::TABLE => 'elis_program',
-                     curriculumcourse::TABLE => 'elis_program');
+        return array(
+            'course' => 'moodle',
+            'context' => 'moodle',
+            'elis_field_categories' => 'elis_core',
+            'elis_field_category_contexts' => 'elis_core',
+            'elis_field' => 'elis_core',
+            'elis_field_contextlevels' => 'elis_core',
+            'elis_field_owner' => 'elis_core',
+            'elis_field_data_text' => 'elis_core',
+            pmclass::TABLE => 'elis_program',
+            course::TABLE => 'elis_program',
+            curriculum::TABLE => 'elis_program',
+            track::TABLE => 'elis_program',
+            trackassignment::TABLE => 'elis_program',
+            userset::TABLE => 'elis_program',
+            usertrack::TABLE => 'elis_program',
+            clustertrack::TABLE => 'elis_program',
+            clustercurriculum::TABLE => 'elis_program',
+            curriculum::TABLE => 'elis_program',
+            curriculumcourse::TABLE => 'elis_program'
+        );
     }
 
     protected function load_csv_data() {

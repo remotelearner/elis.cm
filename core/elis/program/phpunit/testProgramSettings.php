@@ -43,13 +43,16 @@ class programSettingsTest extends elis_database_test {
      * @return array The mapping to tables to their component
      */
     protected static function get_overlay_tables() {
-        return array('config_plugins' => 'moodle',
-                     'config' => 'moodle',
-                     'context' => 'moodle',
-                     'role' => 'moodle',
-                     'role_capabilities' => 'moodle',
-                     'role_assignments' => 'moodle',
-                     'user' => 'moodle');
+        return array(
+            'config_plugins' => 'moodle',
+            'config' => 'moodle',
+            'context' => 'moodle',
+            'log' => 'moodle',
+            'role' => 'moodle',
+            'role_capabilities' => 'moodle',
+            'role_assignments' => 'moodle',
+            'user' => 'moodle'
+        );
     }
 
     /**

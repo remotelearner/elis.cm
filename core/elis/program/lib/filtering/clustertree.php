@@ -143,7 +143,7 @@ class checkbox_treerepresentation extends treerepresentation {
      * @uses    $CFG
      * @return  string                   The appropriate markup
      */
-    function convert_to_markup($uniqueid, $execution_mode) {
+    function convert_to_markup($uniqueid = '', $execution_mode = null) {
         global $CFG;
 
         //this prevents handling an empty tree

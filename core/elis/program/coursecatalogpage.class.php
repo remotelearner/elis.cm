@@ -65,7 +65,7 @@ class coursecatalogpage extends pm_page {
         return get_string('coursecatalog', 'elis_program');
     }
 
-    function build_navbar_default() { // get_navigation_default()
+    function build_navbar_default($who = null) { // get_navigation_default()
         $this->build_navbar_current();
     }
 

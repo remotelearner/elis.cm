@@ -44,24 +44,25 @@ class usermanagementGetsUsersTest extends elis_database_test {
         require_once(elispm::lib('data/usermoodle.class.php'));
         require_once(elispm::lib('data/userset.class.php'));
 
-        return array('elis_field' => 'elis_core',
-                     clusterassignment::TABLE => 'elis_program',
-                     'crlm_class_enrolment'   => 'elis_program',
-                     'crlm_curriculum_assignment' => 'elis_program',
-                     course::TABLE => 'elis_program',
-                     user::TABLE => 'elis_program',
-                     usermoodle::TABLE => 'elis_program',
-                     usertrack::TABLE  => 'elis_program',
-                     userset::TABLE => 'elis_program',
-                     'config' => 'moodle',
-                     'context' => 'moodle',
-                     'course' => 'moodle',
-                     'enrol' => 'moodle',
-                     'role' => 'moodle',
-                     'role_assignments' => 'moodle',
-                     'role_capabilities' => 'moodle',
-                     'user' => 'moodle',
-                     'user_enrolments' => 'moodle');
+        return array(
+            'elis_field' => 'elis_core',
+            clusterassignment::TABLE => 'elis_program',
+            'crlm_class_enrolment'   => 'elis_program',
+            'crlm_curriculum_assignment' => 'elis_program',
+            user::TABLE => 'elis_program',
+            usermoodle::TABLE => 'elis_program',
+            usertrack::TABLE  => 'elis_program',
+            userset::TABLE => 'elis_program',
+            'config' => 'moodle',
+            'context' => 'moodle',
+            'course' => 'moodle',
+            'enrol' => 'moodle',
+            'role' => 'moodle',
+            'role_assignments' => 'moodle',
+            'role_capabilities' => 'moodle',
+            'user' => 'moodle',
+            'user_enrolments' => 'moodle'
+        );
     }
 
     /**
@@ -138,13 +139,17 @@ class usermanagementGetsUsersTest extends elis_database_test {
                                       'country' => 'CA'));
         $clusteruser->save();
 
+        // Copy the site-level course record from the real DB
+        //$sitecourse = self::$origdb->get_record('course', array('id' => SITEID));
+        //self::$overlaydb->import_record('course', $sitecourse);
+        //var_dump($sitecourse);die();
+
         //set up our test role
         $syscontext = get_context_instance(CONTEXT_SYSTEM);
         $roleid = create_role('clusteradmin', 'clusteradmin', 'clusteradmin');
         assign_capability('elis/program:user_edit', CAP_ALLOW, $roleid, $syscontext->id);
         //assign the userset administrator an appropriate role on the userset
-        $contextclass = context_elis_helper::get_class_for_level(CONTEXT_ELIS_USERSET);
-        $instance     = $contextclass::instance(1);
+        $instance     = context_elis_userset::instance(1);
         role_assign($roleid, $USER->id, $instance->id);
 
         //assign the user to the user set

@@ -32,6 +32,10 @@ require_once('PHPUnit/Extensions/Database/DataSet/CsvDataSet.php');
 require_once(elis::lib('data/customfield.class.php'));
 require_once(elispm::lib('data/user.class.php'));
 require_once(elispm::lib('data/usermoodle.class.php'));
+require_once(elispm::lib('data/usertrack.class.php'));
+require_once(elispm::lib('data/curriculumstudent.class.php'));
+require_once(elispm::lib('data/student.class.php'));
+require_once(elispm::file('enrol/userset/moodle_profile/userset_profile.class.php'));
 
 class curriculumCustomFieldsTest extends elis_database_test {
     protected $backupGlobalsBlacklist = array('DB');
@@ -49,7 +53,11 @@ class curriculumCustomFieldsTest extends elis_database_test {
             field_contextlevel::TABLE => 'elis_core',
             field_data_char::TABLE => 'elis_core',
             field_data_int::TABLE => 'elis_core',
-            clusterassignment::TABLE => 'elis_program'
+            clusterassignment::TABLE => 'elis_program',
+            curriculumstudent::TABLE => 'elis_program',
+            student::TABLE => 'elis_program',
+            userset_profile::TABLE  => 'elis_program',
+            usertrack::TABLE => 'elis_program',
         );
     }
 

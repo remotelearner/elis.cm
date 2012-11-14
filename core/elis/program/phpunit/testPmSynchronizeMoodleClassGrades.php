@@ -806,7 +806,7 @@ class pmSynchronizeMoodleClassGradesTest extends elis_database_test {
 
         //call and validate
         pm_synchronize_moodle_class_grades();
-        $this->assert_num_students(1);        
+        $this->assert_num_students(1);
         $exists = $DB->record_exists(student::TABLE, array('enrolmenttime' => 999999));
         $this->assertTrue($exists);
     }
@@ -827,7 +827,7 @@ class pmSynchronizeMoodleClassGradesTest extends elis_database_test {
 
         //call and validate
         pm_synchronize_moodle_class_grades(100);
-        $this->assert_num_students(1);        
+        $this->assert_num_students(1);
         $exists = $DB->record_exists(student::TABLE, array('enrolmenttime' => 999999));
         $this->assertTrue($exists);
     }
@@ -854,7 +854,7 @@ class pmSynchronizeMoodleClassGradesTest extends elis_database_test {
         $maxtime = time();
 
         //validate
-        $this->assert_num_students(1);        
+        $this->assert_num_students(1);
         $enrolment = $DB->get_record(student::TABLE, array('id' => 1));
         $this->assertGreaterThanOrEqual($mintime, $enrolment->enrolmenttime);
         $this->assertLessThanOrEqual($maxtime, $enrolment->enrolmenttime);
@@ -883,7 +883,7 @@ class pmSynchronizeMoodleClassGradesTest extends elis_database_test {
         $maxtime = time();
 
         //validate
-        $this->assert_num_students(1);        
+        $this->assert_num_students(1);
         $enrolment = $DB->get_record(student::TABLE, array('id' => 1));
         $this->assertGreaterThanOrEqual($mintime, $enrolment->enrolmenttime);
         $this->assertLessThanOrEqual($maxtime, $enrolment->enrolmenttime);
@@ -1008,7 +1008,7 @@ class pmSynchronizeMoodleClassGradesTest extends elis_database_test {
 
         //set up PM class enrolment with sufficient grade
         $coursegradegrade = new grade_grade(array('itemid' => 1,
-                                                  'userid' => 100,                                                  
+                                                  'userid' => 100,
                                                   'finalgrade' => 100));
         $coursegradegrade->insert();
 
@@ -1046,11 +1046,11 @@ class pmSynchronizeMoodleClassGradesTest extends elis_database_test {
 
         //set up PM class enrolment with sufficient grade
         $coursegradegrade = new grade_grade(array('itemid' => 1,
-                                                  'userid' => 100,                                                  
+                                                  'userid' => 100,
                                                   'finalgrade' => 100));
         $coursegradegrade->insert();
         $coursegradegrade = new grade_grade(array('itemid' => 1,
-                                                  'userid' => 101,                                                  
+                                                  'userid' => 101,
                                                   'finalgrade' => 100));
         $coursegradegrade->insert();
 
@@ -1423,7 +1423,7 @@ class pmSynchronizeMoodleClassGradesTest extends elis_database_test {
 
         //assign a student grade
         $coursegradegrade = new grade_grade(array('itemid' => 1,
-                                                  'userid' => 100,                                                  
+                                                  'userid' => 100,
                                                   'finalgrade' => 100));
         $coursegradegrade->insert();
 
@@ -1480,11 +1480,11 @@ class pmSynchronizeMoodleClassGradesTest extends elis_database_test {
 
         //assign student grades
         $coursegradegrade = new grade_grade(array('itemid' => 1,
-                                                  'userid' => 100,                                                  
+                                                  'userid' => 100,
                                                   'finalgrade' => 100));
         $coursegradegrade->insert();
         $coursegradegrade = new grade_grade(array('itemid' => 1,
-                                                  'userid' => 101,                                                  
+                                                  'userid' => 101,
                                                   'finalgrade' => 100));
         $coursegradegrade->insert();
 
@@ -2129,6 +2129,7 @@ class pmSynchronizeMoodleClassGradesTest extends elis_database_test {
         $dataset->addTable('role_assignments', elis::component_file('program', 'phpunit/gsync_role_assignments.csv'));
         $dataset->addTable('user', elis::component_file('program', 'phpunit/gsync_mdl_user.csv'));
         $dataset->addTable('user_enrolments', elis::component_file('program', 'phpunit/gsync_user_enrolments.csv'));
+        $dataset->addTable('enrol', elis::component_file('program', 'phpunit/gsync_enrol.csv'));
 
         $dataset->addTable(pmclass::TABLE, elis::component_file('program', 'phpunit/gsync_class.csv'));
         $dataset->addTable(student::TABLE, elis::component_file('program', 'phpunit/gsync_class_enrolment.csv'));
@@ -2144,14 +2145,6 @@ class pmSynchronizeMoodleClassGradesTest extends elis_database_test {
 
         // Make our role a "student" role
         set_config('gradebookroles', 1);
-
-        // Load enrol plugin records from the main DB
-        $enrols = self::$origdb->get_records('enrol');
-        if (!empty($enrols)) {
-            foreach ($enrols as $enrol) {
-                self::$overlaydb->import_record('enrol', $enrol);
-            }
-        }
 
         // Force synchronisation of grade data from Moodle to ELIS
         pm_synchronize_moodle_class_grades();

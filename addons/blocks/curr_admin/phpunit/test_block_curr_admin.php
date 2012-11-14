@@ -178,8 +178,15 @@ class test_block_curr_admin extends elis_database_test {
     public function test_block_curr_admin_load_menu_children_course() {
         global $testcrs, $testrole, $testuser, $USER;
 
-        // create test user
-        $testuser = get_test_user('testELIS4093');
+        // create test user - ensure the returned user is NOT a site admin. if they are, our capability restrictions won't work
+        $i=0;
+        while(true) {
+            $testuser = get_test_user('testELIS4093_'.$i);
+            if (!is_siteadmin($testuser)) {
+                break;
+            }
+            $i++;
+        }
 
         // create role with cap: 'elis/program:class_view'
         $testrole = new stdClass;
@@ -236,7 +243,7 @@ class test_block_curr_admin extends elis_database_test {
         $USER = $testuser;
         $items = block_curr_admin_load_menu_children_course($testcrs->id, 0, 0, 5, '');
 
-        $this->assertTrue(count($items) == 1);
+        $this->assertEquals(1,count($items));
         $this->assertTrue($items[0]->name == 'pmclass_2');
     }
 }

@@ -64,8 +64,11 @@ class curriculumcoursebasepage extends associationpage {
         }
 
         // the user must have 'block/curr_admin:associate' permissions on both ends
-        return curriculumpage::_has_capability('elis/program:associate', $curriculumid)
-            && coursepage::_has_capability('elis/program:associate', $courseid);
+        // TODO: Ugly, this needs to be overhauled
+        $curpage = new curriculumpage();
+        $crspage = new coursepage();
+        return $curpage->_has_capability('elis/program:associate', $curriculumid)
+            && $crspage->_has_capability('elis/program:associate', $courseid);
     }
 
     function can_do_edit() {
@@ -76,8 +79,11 @@ class curriculumcoursebasepage extends associationpage {
         $curriculumid = $record->curriculumid;
         $courseid = $record->courseid;
 
-        return curriculumpage::_has_capability('elis/program:associate', $curriculumid)
-            && coursepage::_has_capability('elis/program:associate', $courseid);
+        // TODO: Ugly, this needs to be overhauled
+        $curpage = new curriculumpage();
+        $crspage = new coursepage();
+        return $curpage->_has_capability('elis/program:associate', $curriculumid)
+            && $crspage->_has_capability('elis/program:associate', $courseid);
     }
 
     function can_do_delete() {
@@ -116,13 +122,14 @@ class curriculumcoursepage extends curriculumcoursebasepage {
 
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
-
-        if (curriculumpage::_has_capability('elis/program:program_view', $id)) {
+        // TODO: Ugly, this needs to be overhauled
+        $cpage = new curriculumpage();
+        if ($cpage->_has_capability('elis/program:program_view', $id)) {
             //allow viewing but not managing associations
         	return true;
         }
 
-        return curriculumpage::_has_capability('elis/program:associate', $id);
+        return $cpage->_has_capability('elis/program:associate', $id);
     }
 
     /**
@@ -133,7 +140,9 @@ class curriculumcoursepage extends curriculumcoursebasepage {
     function can_do_prereqedit() {
     	$id = $this->required_param('id', PARAM_INT);
 
-    	return curriculumpage::_has_capability('elis/program:associate', $id);
+        // TODO: Ugly, this needs to be overhauled
+        $cpage = new curriculumpage();
+        return $cpage->_has_capability('elis/program:associate', $id);
     }
 
     /**
@@ -144,7 +153,9 @@ class curriculumcoursepage extends curriculumcoursebasepage {
     function can_do_coreqedit() {
     	$id = $this->required_param('id', PARAM_INT);
 
-    	return curriculumpage::_has_capability('elis/program:associate', $id);
+        // TODO: Ugly, this needs to be overhauled
+        $cpage = new curriculumpage();
+        return $cpage->_has_capability('elis/program:associate', $id);
     }
 
     function display_default() {
@@ -182,7 +193,7 @@ class curriculumcoursepage extends curriculumcoursebasepage {
         $items = curriculumcourse_get_listing($id, $sort, $dir, 0, 0, $namesearch, $alpha);
         $numitems = curriculumcourse_count_records($id, $namesearch, $alpha);
 
-        $this->print_num_items($numitems);
+        $this->print_num_items($numitems, $numitems);
         $this->print_alpha();
         $this->print_search();
 
@@ -231,8 +242,11 @@ class curriculumcoursepage extends curriculumcoursebasepage {
                 $prereqs = array();
             }
 
+            // TODO: Ugly, this needs to be overhauled
+            $cpage = new coursepage();
+
             foreach ($prereqs as $prereq) {
-                if (coursepage::_has_capability('elis/program:course_view', $prereq)
+                if ($cpage->_has_capability('elis/program:course_view', $prereq)
                     && $curcrs->add_prerequisite($prereq, !empty($form_data->add_to_curriculum))) {
                     $added++;
                 }
@@ -293,8 +307,13 @@ class curriculumcoursepage extends curriculumcoursebasepage {
 
             /// Process requested corequisite additions.
             $coreqs = isset($form_data->coreqs)? $form_data->coreqs: array();
+
+            // TODO: Ugly, this needs to be overhauled
+            $cpage = new coursepage();
+            return $cpage->_has_capability('elis/program:associate', $id);
+
             foreach ($coreqs as $coreq) {
-                if (coursepage::_has_capability('elis/program:course_view', $coreq)
+                if ($cpage->_has_capability('elis/program:course_view', $coreq)
                     && $curcrs->add_corequisite($coreq, !empty($form_data->add_to_curriculum))) {
                     $added++;
                 }
@@ -345,13 +364,14 @@ class coursecurriculumpage extends curriculumcoursebasepage {
 
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
-
-        if (coursepage::_has_capability('elis/program:program_view', $id)) {
+        // TODO: Ugly, this needs to be overhauled
+        $cpage = new coursepage();
+        if ($cpage->_has_capability('elis/program:program_view', $id)) {
             //allow viewing but not managing associations
         	return true;
         }
 
-        return coursepage::_has_capability('elis/program:associate', $id);
+        return $cpage->_has_capability('elis/program:associate', $id);
     }
 
     function display_default() {
@@ -384,7 +404,7 @@ class coursecurriculumpage extends curriculumcoursebasepage {
         $items = curriculumcourse_get_curriculum_listing($id, $sort, $dir, 0, 0, $namesearch, $alpha);
         $numitems = curriculumcourse_count_curriculum_records($id, $namesearch, $alpha);
 
-        $this->print_num_items($numitems);
+        $this->print_num_items($numitems, $numitems);
         $this->print_alpha();
         $this->print_search();
 

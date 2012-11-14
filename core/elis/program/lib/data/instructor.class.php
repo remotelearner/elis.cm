@@ -500,7 +500,11 @@ class instructor extends elis_data_object {
 
         //if appropriate, limit selection to users belonging to clusters that
         //the current user can manage instructor assignments for
-        if (!pmclasspage::_has_capability('elis/program:assign_class_instructor', $this->classid)) {
+
+        // TODO: Ugly, this needs to be overhauled
+        $cpage = new pmclasspage();
+
+        if (!$cpage->_has_capability('elis/program:assign_class_instructor', $this->classid)) {
             //perform SQL filtering for the more "conditional" capability
 
             $allowed_clusters = instructor::get_allowed_clusters($this->classid);
@@ -627,10 +631,13 @@ class instructor extends elis_data_object {
     public static function can_manage_assoc($userid, $classid) {
         global $DB, $USER;
 
-        if(!instructorpage::can_enrol_into_class($classid)) {
+        // TODO: Ugly, this needs to be overhauled
+        $cpage = new pmclasspage();
+
+        if (!instructorpage::can_enrol_into_class($classid)) {
             //the users who satisfty this condition are a superset of those who can manage associations
             return false;
-        } else if (pmclasspage::_has_capability('elis/program:assign_class_instructor', $classid)) {
+        } else if ($cpage->_has_capability('elis/program:assign_class_instructor', $classid)) {
             //current user has the direct capability
             return true;
         }
@@ -672,7 +679,10 @@ class instructor extends elis_data_object {
 
         $allowed_clusters = array();
 
-        if (pmclasspage::_has_capability('elis/program:assign_userset_user_class_instructor', $clsid)) {
+        // TODO: Ugly, this needs to be overhauled
+        $cpage = new pmclasspage();
+
+        if ($cpage->_has_capability('elis/program:assign_userset_user_class_instructor', $clsid)) {
             require_once elispm::lib('data/clusterassignment.class.php');
             $cmuserid = pm_get_crlmuserid($USER->id);
             $userclusters = clusterassignment::find(new field_filter('userid', $cmuserid));

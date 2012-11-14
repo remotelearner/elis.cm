@@ -592,6 +592,11 @@ function block_curr_admin_get_item_css_class($class, $category = false) {
  */
 function block_curr_admin_get_tree_category_mapping() {
     global $CFG;
+
+    if (!file_exists($CFG->dirroot .'/blocks/php_report/php_report_base.php')) {
+        return array();
+    }
+
     require_once($CFG->dirroot .'/blocks/php_report/php_report_base.php');
 
     //categories, in a pre-determined order

@@ -114,8 +114,25 @@ class curriculumCustomFieldsTest extends elis_database_test {
     public function testPmMigrateTags() {
         global $DB;
 
+        $db = $DB; // self::$overlaydb;
+        // ELIS-7599: create bogus tag instance data (ala 1.9)
+        $tagid = $db->insert_record('crlm_tag', (object)array(
+                                           'name'         => 'bogus_tag',
+                                           'description'  => 'Bogus Tag Description',
+                                           'timecreated'  => 1327958800,
+                                           'timemodified' => 1327958800));
+        $db->insert_record('crlm_tag_instance', (object)array(
+                                           'instancetype' => 'cur',
+                                           'instanceid'   => 999999,
+                                           'tagid'        => $tagid,
+                                           'data'         => '',
+                                           'timecreated'  => 1327958800,
+                                           'timemodified' => 1327958800));
+
         // Migrate the legacy tag data to new ELIS fields
         pm_migrate_tags();
+
+        $this->assertTrue(!$db->get_records('crlm_tag_instance', array('tagid' => $tagid)));
 
         // Initialize the program object
         $program = new curriculum(1);

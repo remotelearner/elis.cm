@@ -317,6 +317,9 @@ class userTest extends elis_database_test {
         // only the first text field should be changed; everything else should
         // be the same
         $dataset->addFullReplacement('First text entry field', $src->profile_field_sometext);
+        $ret = $dataset->addFullReplacement('Second text entry field', $src->profile_field_sometextfrompm); // TBD: ELIS-7616
+        //var_dump($src);
+        //var_dump($ret);
         $this->assertDataSetsEqual($dataset, $result);
     }
 }

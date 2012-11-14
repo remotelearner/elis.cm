@@ -140,9 +140,9 @@ class curriculumstudent extends elis_data_object {
         // Send notifications
 
         /// Does the user receive a notification?
-        $sendtouser       = elis::$config->elis_program->notify_curriculumcompleted_user;
-        $sendtorole       = elis::$config->elis_program->notify_curriculumcompleted_role;
-        $sendtosupervisor = elis::$config->elis_program->notify_curriculumcompleted_supervisor;
+        $sendtouser = (!empty(elis::$config->elis_program->notify_curriculumcompleted_user)) ? true : false;
+        $sendtorole = (!empty(elis::$config->elis_program->notify_curriculumcompleted_role)) ? true : false;
+        $sendtosupervisor = (!empty(elis::$config->elis_program->notify_curriculumcompleted_supervisor)) ? true : false;
 
         /// If nobody receives a notification, we're done.
         if (!$sendtouser && !$sendtorole && !$sendtosupervisor) {
@@ -411,10 +411,13 @@ class curriculumstudent extends elis_data_object {
     public static function can_manage_assoc($userid, $curid) {
         global $USER, $DB;
 
-        if(!curriculumpage::can_enrol_into_curriculum($curid)) {
+        // TODO: Ugly, this needs to be overhauled
+        $cpage = new curriculumpage();
+
+        if (!curriculumpage::can_enrol_into_curriculum($curid)) {
             //the users who satisfty this condition are a superset of those who can manage associations
             return false;
-        } else if (curriculumpage::_has_capability('elis/program:program_enrol', $curid)) {
+        } else if ($cpage->_has_capability('elis/program:program_enrol', $curid)) {
             //current user has the direct capability
             return true;
         }

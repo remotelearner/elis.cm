@@ -14,7 +14,7 @@
 }
 
 .block_curr_admin .tree_icon a {
-	display: block;
+    display: block;
     margin-left: 22px;
 }
 
@@ -23,141 +23,141 @@
 }
 
 .block_curr_admin .block_curr_admin_nonjs {
-	padding-left: 0px;
-	margin-left: 0px;
-	margin: 0px;
+    padding-left: 0px;
+    margin-left: 0px;
+    margin: 0px;
 }
 
 .block_curr_admin .block_curr_admin_nonjs ul {
-	padding-left: 20px;
+    padding-left: 20px;
 }
 
 /* Category image */
 .block_curr_admin .block_curr_admin_nonjs .category {
-    background: transparent url(pix/folder.png) no-repeat;
+    background: transparent url([[pix:block_curr_admin|folder]]) no-repeat;
     display: block;
 }
 
 /* Images for specific element types */
 
 .block_curr_admin .curr_dashboard {
-    background: transparent url(../elis/program/pix/dashboard.png) no-repeat;
+    background: transparent url([[pix:elis_program|dashboard]]) no-repeat;
 }
 
 .block_curr_admin .curr_bulkuser {
-    background: transparent url(../elis/program/pix/bulkuser.png) no-repeat;
+    background: transparent url([[pix:elis_program|bulkuser]]) no-repeat;
 }
 
 .block_curr_admin .curr_resultsconfig {
-    background: transparent url(../elis/program/pix/calculator.png) no-repeat;
+    background: transparent url([[pix:elis_program|calculator]]) no-repeat;
 }
 
 .block_curr_admin .curr_reportslist {
-    background: transparent url(../elis/program/pix/reportslist.png) no-repeat;
+    background: transparent url([[pix:elis_program|reportslist]]) no-repeat;
 }
 
 .block_curr_admin .curr_customfields {
-    background: transparent url(../elis/program/pix/customfields.png) no-repeat;
+    background: transparent url([[pix:elis_program|customfields]]) no-repeat;
 }
 
 .block_curr_admin .curr_clusterclassification {
-	background: transparent url(../elis/program/pix/clusterclassification.png) no-repeat;
+    background: transparent url([[pix:elis_program|cluster]]) no-repeat;
 }
 
 .block_curr_admin .curr_configuration {
-    background: transparent url(../elis/program/pix/configuration.png) no-repeat;
+    background: transparent url([[pix:elis_program|configuration]]) no-repeat;
 }
 
 .block_curr_admin .curr_notifications {
-    background: transparent url(../elis/program/pix/notifications.png) no-repeat;
+    background: transparent url([[pix:elis_program|notifications]]) no-repeat;
 }
 
 .block_curr_admin .curr_integrationpoint {
-    background: transparent url(../elis/program/pix/integrationpoint.png) no-repeat;
+    background: transparent url([[pix:elis_program|integrationpoint]]) no-repeat;
 }
 
 .block_curr_admin .curr_defaultcls {
-    background: transparent url(../elis/program/pix/defaultsettings.png) no-repeat;
+    background: transparent url([[pix:elis_program|defaultsettings]]) no-repeat;
 }
 
 .block_curr_admin .curr_defaultcrs {
-    background: transparent url(../elis/program/pix/defaultsettings.png) no-repeat;
+    background: transparent url([[pix:elis_program|defaultsettings]]) no-repeat;
 }
 
 .block_curr_admin .curr_managetags {
-	background: transparent url(../elis/program/pix/tag.gif) no-repeat;
+    background: transparent url([[pix:elis_program|tag]]) no-repeat;
 }
 
 .block_curr_admin .curr_manageenvironments {
-    background: transparent url(../elis/program/pix/environment.png) no-repeat;
+    background: transparent url([[pix:elis_program|environment]]) no-repeat;
 }
 
 .block_curr_admin .curr_manageusers {
-	background: transparent url(../elis/program/pix/user.gif) no-repeat;
+    background: transparent url([[pix:elis_program|user]]) no-repeat;
 }
 
 .block_curr_admin .curr_manageclusters {
-	background: transparent url(../elis/program/pix/cluster.gif) no-repeat;
+    background: transparent url([[pix:elis_program|cluster]]) no-repeat;
 }
 
 .block_curr_admin .curr_certificatelist {
-    background: transparent url(../elis/program/pix/certificate.png) no-repeat;
+    background: transparent url([[pix:elis_program|certificate]]) no-repeat;
 }
 
 .block_curr_admin .curr_managecurricula {
-	background: transparent url(../elis/program/pix/curriculum.gif) no-repeat;
+    background: transparent url([[pix:elis_program|curriculum]]) no-repeat;
 }
 
 .block_curr_admin .curr_managecourses {
-	background: transparent url(../elis/program/pix/course.gif) no-repeat;
+    background: transparent url([[pix:elis_program|course]]) no-repeat;
 }
 
 .block_curr_admin .curr_manageclasses {
-	background: transparent url(../elis/program/pix/class.gif) no-repeat;
+    background: transparent url([[pix:elis_program|class]]) no-repeat;
 }
 
 .block_curr_admin .curr_managetracks {
-	background: transparent url(../elis/program/pix/track.gif) no-repeat;
+    background: transparent url([[pix:elis_program|track]]) no-repeat;
 }
 
 .block_curr_admin .curr_currentcourses {
-	background: transparent url(../elis/program/pix/class.gif) no-repeat;
+    background: transparent url([[pix:elis_program|class]]) no-repeat;
 }
 
 .block_curr_admin .curr_availablecourses {
-	background: transparent url(../elis/program/pix/curriculum.gif) no-repeat;
+    background: transparent url([[pix:elis_program|curriculum]]) no-repeat;
 }
 
 .block_curr_admin .curr_waitlist {
-	background: transparent url(../elis/program/pix/waiting.png) no-repeat;
+    background: transparent url([[pix:elis_program|waiting]]) no-repeat;
 }
 
 .block_curr_admin .curr_schedulereports {
-	background: transparent url(../elis/program/pix/schedule.gif) no-repeat;
+    background: transparent url([[pix:elis_program|schedule]]) no-repeat;
 }
 
 .block_curr_admin .curr_reportinstance {
-    background: transparent url(../elis/program/pix/report.gif) no-repeat;
+    background: transparent url([[pix:elis_program|report]]) no-repeat;
 }
 
 /* Images for instances in curr_admin menu */
 
 .block_curr_admin .curr_cluster_instance {
-    background: transparent url(../elis/program/pix/cluster.gif) no-repeat;
+    background: transparent url([[pix:elis_program|cluster]]) no-repeat;
 }
 
 .block_curr_admin .curr_curriculum_instance {
-	background: transparent url(../elis/program/pix/curriculum.gif) no-repeat;
+    background: transparent url([[pix:elis_program|curriculum]]) no-repeat;
 }
 
 .block_curr_admin .curr_course_instance {
-	background: transparent url(../elis/program/pix/course.gif) no-repeat;
+    background: transparent url([[pix:elis_program|course]]) no-repeat;
 }
 
 .block_curr_admin .curr_track_instance {
-	background: transparent url(../elis/program/pix/track.gif) no-repeat;
+    background: transparent url([[pix:elis_program|track]]) no-repeat;
 }
 
 .block_curr_admin .curr_class_instance {
-	background: transparent url(../elis/program/pix/class.gif) no-repeat;
+    background: transparent url([[pix:elis_program|class]]) no-repeat;
 }
