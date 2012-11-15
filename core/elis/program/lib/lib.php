@@ -27,6 +27,279 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/elis/program/lib/setup.php');
+require_once($CFG->libdir .'/gradelib.php');
+
+/**
+ * This class iterates over all users that are graded in a course.
+ * Returns detailed info about users and their grades.
+ *
+ * Used by: pm_synchronize_moodle_class_grades()
+ * Modified from: /grade/lib.php
+ */
+class elis_graded_users_iterator {
+    public $course;
+    public $grade_items;
+    public $groupid;
+    public $users_rs;
+    public $grades_rs;
+    public $gradestack;
+    public $sortfield1;
+    public $sortorder1;
+    public $sortfield2;
+    public $sortorder2;
+    public $req_users; // ELIS-7947: request specific users in array, see below
+
+    /**
+     * Constructor
+     *
+     * @param object $course A course object
+     * @param array  $grade_items array of grade items, if not specified only user info returned
+     * @param int    $groupid iterate only group users if present
+     * @param string $sortfield1 The first field of the users table by which the array of users will be sorted
+     * @param string $sortorder1 The order in which the first sorting field will be sorted (ASC or DESC)
+     * @param string $sortfield2 The second field of the users table by which the array of users will be sorted
+     * @param string $sortorder2 The order in which the second sorting field will be sorted (ASC or DESC)
+     * @param mixed  $req_users  Optional array of desired users - empty for all (default)
+     */
+    public function elis_graded_users_iterator($course, $grade_items=null, $groupid=0,
+                                $sortfield1 = 'lastname', $sortorder1 = 'ASC',
+                                $sortfield2 = 'firstname', $sortorder2 = 'ASC',
+                                $req_users = null) {
+        $this->course      = $course;
+        $this->grade_items = $grade_items;
+        $this->groupid     = $groupid;
+        $this->sortfield1  = $sortfield1;
+        $this->sortorder1  = $sortorder1;
+        $this->sortfield2  = $sortfield2;
+        $this->sortorder2  = $sortorder2;
+
+        $this->gradestack  = array();
+
+        $this->req_users   = $req_users;
+    }
+
+    /**
+     * Initialise the iterator
+     * @return boolean success
+     */
+    public function init() {
+        global $CFG, $DB;
+
+        $this->close();
+
+        grade_regrade_final_grades($this->course->id);
+        $course_item = grade_item::fetch_course_item($this->course->id);
+        if ($course_item->needsupdate) {
+            // can not calculate all final grades - sorry
+            return false;
+        }
+
+        $coursecontext = get_context_instance(CONTEXT_COURSE, $this->course->id);
+        $relatedcontexts = get_related_contexts_string($coursecontext);
+
+        list($gradebookroles_sql, $params) =
+            $DB->get_in_or_equal(explode(',', $CFG->gradebookroles), SQL_PARAMS_NAMED, 'grbr');
+
+        //limit to users with an active enrolment
+        list($enrolledsql, $enrolledparams) = get_enrolled_sql($coursecontext);
+
+        $params = array_merge($params, $enrolledparams);
+
+        if ($this->groupid) {
+            $groupsql = "INNER JOIN {groups_members} gm ON gm.userid = u.id";
+            $groupwheresql = "AND gm.groupid = :groupid";
+            // $params contents: gradebookroles
+            $params['groupid'] = $this->groupid;
+        } else {
+            $groupsql = "";
+            $groupwheresql = "";
+        }
+
+        if (empty($this->sortfield1)) {
+            // we must do some sorting even if not specified
+            $ofields = ", u.id AS usrt";
+            $order   = "usrt ASC";
+        } else {
+            $ofields = ", u.$this->sortfield1 AS usrt1";
+            $order   = "usrt1 $this->sortorder1";
+            if (!empty($this->sortfield2)) {
+                $ofields .= ", u.$this->sortfield2 AS usrt2";
+                $order   .= ", usrt2 $this->sortorder2";
+            }
+            if ($this->sortfield1 != 'id' and $this->sortfield2 != 'id') {
+                // user order MUST be the same in both queries,
+                // must include the only unique user->id if not already present
+                $ofields .= ", u.id AS usrt";
+                $order   .= ", usrt ASC";
+            }
+        }
+
+        // ELIS-7947: requested specific users
+        $req_users = '';
+        if (!empty($this->req_users)) {
+            $req_users = 'AND u.id IN ('. implode(',', $this->req_users) .')';
+        }
+
+        // $params contents: gradebookroles and groupid (for $groupwheresql)
+        $users_sql = "SELECT u.* $ofields
+                        FROM {user} u
+                        JOIN ($enrolledsql) je ON je.id = u.id
+                             $groupsql
+                        JOIN (
+                                  SELECT DISTINCT ra.userid
+                                    FROM {role_assignments} ra
+                                   WHERE ra.roleid $gradebookroles_sql
+                                     AND ra.contextid $relatedcontexts
+                             ) rainner ON rainner.userid = u.id
+                         WHERE u.deleted = 0 {$req_users}
+                             $groupwheresql
+                    ORDER BY $order";
+        $this->users_rs = $DB->get_recordset_sql($users_sql, $params);
+
+        if (!empty($this->grade_items)) {
+            $itemids = array_keys($this->grade_items);
+            list($itemidsql, $grades_params) = $DB->get_in_or_equal($itemids, SQL_PARAMS_NAMED, 'items');
+            $params = array_merge($params, $grades_params);
+            // $params contents: gradebookroles, enrolledparams, groupid (for $groupwheresql) and itemids
+
+            $grades_sql = "SELECT g.* $ofields
+                             FROM {grade_grades} g
+                             JOIN {user} u ON g.userid = u.id
+                             JOIN ($enrolledsql) je ON je.id = u.id
+                                  $groupsql
+                             JOIN (
+                                      SELECT DISTINCT ra.userid
+                                        FROM {role_assignments} ra
+                                       WHERE ra.roleid $gradebookroles_sql
+                                         AND ra.contextid $relatedcontexts
+                                  ) rainner ON rainner.userid = u.id
+                              WHERE u.deleted = 0 {$req_users}
+                              AND g.itemid $itemidsql
+                              $groupwheresql
+                         ORDER BY $order, g.itemid ASC";
+            $this->grades_rs = $DB->get_recordset_sql($grades_sql, $params);
+        } else {
+            $this->grades_rs = false;
+        }
+        return true;
+    }
+
+    /**
+     * Returns information about the next user
+     * @return mixed array of user info, all grades and feedback or null when no more users found
+     */
+    function next_user() {
+        if (!$this->users_rs) {
+            return false; // no users present
+        }
+
+        if (!$this->users_rs->valid()) {
+            if ($current = $this->_pop()) {
+                // this is not good - user or grades updated between the two reads above :-(
+            }
+
+            return false; // no more users
+        } else {
+            $user = $this->users_rs->current();
+            $this->users_rs->next();
+        }
+
+        // find grades of this user
+        $grade_records = array();
+        while (true) {
+            if (!$current = $this->_pop()) {
+                break; // no more grades
+            }
+
+            if (empty($current->userid)) {
+                break;
+            }
+
+            if ($current->userid != $user->id) {
+                // grade of the next user, we have all for this user
+                $this->_push($current);
+                break;
+            }
+
+            $grade_records[$current->itemid] = $current;
+        }
+
+        $grades = array();
+        $feedbacks = array();
+
+        if (!empty($this->grade_items)) {
+            foreach ($this->grade_items as $grade_item) {
+                if (array_key_exists($grade_item->id, $grade_records)) {
+                    $feedbacks[$grade_item->id]->feedback       = $grade_records[$grade_item->id]->feedback;
+                    $feedbacks[$grade_item->id]->feedbackformat = $grade_records[$grade_item->id]->feedbackformat;
+                    unset($grade_records[$grade_item->id]->feedback);
+                    unset($grade_records[$grade_item->id]->feedbackformat);
+                    $grades[$grade_item->id] = new grade_grade($grade_records[$grade_item->id], false);
+                } else {
+                    $feedbacks[$grade_item->id]->feedback       = '';
+                    $feedbacks[$grade_item->id]->feedbackformat = FORMAT_MOODLE;
+                    $grades[$grade_item->id] =
+                        new grade_grade(array('userid'=>$user->id, 'itemid'=>$grade_item->id), false);
+                }
+            }
+        }
+
+        $result = new stdClass();
+        $result->user      = $user;
+        $result->grades    = $grades;
+        $result->feedbacks = $feedbacks;
+        return $result;
+    }
+
+    /**
+     * Close the iterator, do not forget to call this function.
+     * @return void
+     */
+    function close() {
+        if ($this->users_rs) {
+            $this->users_rs->close();
+            $this->users_rs = null;
+        }
+        if ($this->grades_rs) {
+            $this->grades_rs->close();
+            $this->grades_rs = null;
+        }
+        $this->gradestack = array();
+    }
+
+    /**
+     * _push
+     *
+     * @param grade_grade $grade Grade object
+     *
+     * @return void
+     */
+    function _push($grade) {
+        array_push($this->gradestack, $grade);
+    }
+
+    /**
+     * _pop
+     *
+     * @return object current grade object
+     */
+    function _pop() {
+        global $DB;
+        if (empty($this->gradestack)) {
+            if (empty($this->grades_rs) || !$this->grades_rs->valid()) {
+                return null; // no grades present
+            }
+
+            $current = $this->grades_rs->current();
+
+            $this->grades_rs->next();
+
+            return $current;
+        } else {
+            return array_pop($this->gradestack);
+        }
+    }
+}
 
 /**Callback function for ELIS Config/admin: Cluster Group Settings
  *
@@ -378,7 +651,7 @@ function pm_synchronize_moodle_class_grades($moodleuserid = 0) {
             // get the Moodle course grades
             // IMPORTANT: this iterator must be sorted using the Moodle
             // user ID
-            $gradedusers = new graded_users_iterator($moodlecourse, $gis, 0, 'id', 'ASC', null);
+            $gradedusers = new elis_graded_users_iterator($moodlecourse, $gis, 0, 'id', 'ASC', '', '', $moodleuserid ? array($moodleuserid) : null);
             $gradedusers->init();
 
             // only create a new enrolment record if there is only one CM
