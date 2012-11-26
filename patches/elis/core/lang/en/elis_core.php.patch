@@ -1,8 +1,18 @@
 diff --git a/elis/core/lang/en/elis_core.php b/elis/core/lang/en/elis_core.php
-index 5ca8510..7703b41 100644
+index 5ca8510..edba83e 100644
 --- a/elis/core/lang/en/elis_core.php
 +++ b/elis/core/lang/en/elis_core.php
-@@ -79,7 +79,6 @@ $string['fld_courserole_help'] = '<h1>Course role filter</h1>
+@@ -27,6 +27,9 @@
+ defined('MOODLE_INTERNAL') || die();
+ 
+ $string['allitemsselected'] = 'All items selected';
++$string['autocomplete_nofields'] = 'No valid search_fields option received when constructing autocomplete filter';
++$string['autocomplete_noreport'] = 'No "report" option received when constructing autocomplete filter!';
++$string['autocomplete_notable'] = 'No table specified when constructing autocomplete filter';
+ $string['data_object_construct_invalid_source'] = 'Attempted to construct a data_object from an invalid source';
+ $string['data_object_validation_not_empty'] = '{$a->tablename} record cannot have empty {$a->field} field';
+ $string['data_object_validation_unique'] = '{$a->tablename} record must have unique {$a->fields} fields';
+@@ -79,7 +82,6 @@ $string['fld_courserole_help'] = '<h1>Course role filter</h1>
  <p>This filter allows you to filter users based the role they have assigned in the course
  specified by its shortname from a specified course category (if the shortname textbox is empty,
  the category is "any category" and the role is "any role" then the filter is not active).</p>';
@@ -10,7 +20,7 @@ index 5ca8510..7703b41 100644
  $string['fld_curriculum'] = 'Curriculum';
  $string['fld_description'] = 'Description';
  $string['fld_email'] = 'Email address';
-@@ -161,9 +160,10 @@ The filter has the following options:</p>
+@@ -161,9 +163,10 @@ The filter has the following options:</p>
  <li>ends with - this option allows only lastnames that end with the text entered (if no text is entered, then the filter is disabled)</li>
  <li>is empty - this option allows only lastnames that are equal to the empty string (the text entered is ignored)</li>
  </ul>';

@@ -65,6 +65,7 @@ class healthpage extends pm_page {
     function display_default() {
         global $OUTPUT, $core_health_checks;
         $verbose = $this->optional_param('verbose', false, PARAM_BOOL);
+        @set_time_limit(0);
 
         $issues = array(
             healthpage::SEVERITY_CRITICAL => array(),
@@ -342,32 +343,44 @@ class health_curriculum_course extends crlm_health_check_base {
 class health_user_sync extends crlm_health_check_base {
     function __construct() {
         global $CFG, $DB;
-        $params = array($CFG->mnet_localhost_id);
-        $sql = "SELECT COUNT(*) FROM {user} WHERE
-                username != 'guest'
-                AND deleted = 0
-                AND confirmed = 1
-                AND mnethostid = ?
-                AND idnumber != ''
-                AND firstname != ''
-                AND lastname != ''
-                AND email != ''
-                AND country != ''
-                AND NOT EXISTS (SELECT 'x'
-                                FROM {". user::TABLE ."} cu
-                                WHERE cu.idnumber = {$CFG->prefix}user.idnumber)
-                AND NOT EXISTS (SELECT 'x'
-                                FROM {". user::TABLE ."} cu
-                                WHERE cu.username = {$CFG->prefix}user.username)";
+        $params = array($CFG->mnet_localhost_id, $CFG->mnet_localhost_id);
+        $sql = "SELECT COUNT('x')
+                  FROM {user}
+                 WHERE username != 'guest'
+                   AND deleted = 0
+                   AND confirmed = 1
+                   AND mnethostid = ?
+                   AND idnumber != ''
+                   AND firstname != ''
+                   AND lastname != ''
+                   AND email != ''
+                   AND country != ''
+                   AND NOT EXISTS (
+                         SELECT 'x'
+                           FROM {".user::TABLE."} cu
+                          WHERE cu.idnumber = {user}.idnumber
+                     )
+                   AND NOT EXISTS (
+                       SELECT 'x'
+                         FROM {".user::TABLE."} cu
+                        WHERE cu.username = {user}.username
+                          AND {user}.mnethostid = ?
+                     )";
 
         $this->count = $DB->count_records_sql($sql, $params);
 
-        $sql = "SELECT COUNT(*) FROM {user} usr
-                WHERE deleted = 0
-                  AND idnumber IN (
-                  SELECT idnumber FROM {user}
-                  WHERE username != 'guest' AND deleted = 0
-                  AND confirmed = 1 AND mnethostid = ? AND id != usr.id)";
+        $sql = "SELECT COUNT('x')
+                  FROM {user} usr
+                 WHERE deleted = 0
+                   AND idnumber IN (
+                         SELECT idnumber
+                           FROM {user}
+                          WHERE username != 'guest'
+                            AND deleted = 0
+                            AND confirmed = 1
+                            AND mnethostid = ?
+                            AND id != usr.id
+                     )";
 
         $this->dupids = $DB->count_records_sql($sql, $params);
     }

@@ -580,6 +580,23 @@ function xmldb_elis_program_upgrade($oldversion=0) {
 
         //rebuild user set context paths to fix problems related to changing hierarchy
         context_elis_helper::build_all_paths(false, array(CONTEXT_ELIS_USERSET));
+        upgrade_plugin_savepoint($result, 2012062900, 'elis', 'program');
+    }
+
+    if ($result && $oldversion < 2012062901) {
+        // add username index "username_ix" to crlm_user table
+        $table = new xmldb_table('crlm_user');
+
+        $index = new xmldb_index('username_ix', XMLDB_INDEX_NOTUNIQUE, array('username'));
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        $index = new xmldb_index('idnumber_ix', XMLDB_INDEX_NOTUNIQUE, array('idnumber'));
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+        upgrade_plugin_savepoint($result, 2012062901, 'elis', 'program');
     }
 
     return $result;

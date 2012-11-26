@@ -318,7 +318,9 @@
       <INDEXES>
         <INDEX NAME="mdl_crlmuser_idn_ix" UNIQUE="false" FIELDS="idnumber" NEXT="lastname_ix"/>
         <INDEX NAME="lastname_ix" UNIQUE="false" FIELDS="lastname" PREVIOUS="mdl_crlmuser_idn_ix" NEXT="firstname_ix"/>
-        <INDEX NAME="firstname_ix" UNIQUE="false" FIELDS="firstname" PREVIOUS="lastname_ix"/>
+        <INDEX NAME="firstname_ix" UNIQUE="false" FIELDS="firstname" PREVIOUS="lastname_ix" NEXT="username_ix"/>
+        <INDEX NAME="username_ix" UNIQUE="false" FIELDS="username" PREVIOUS="firstname_ix" NEXT="idnumber_ix"/>
+        <INDEX NAME="idnumber_ix" UNIQUE="false" FIELDS="idnumber" PREVIOUS="username_ix"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="crlm_cluster" COMMENT="Cluster definitions." PREVIOUS="crlm_user" NEXT="crlm_usercluster">
