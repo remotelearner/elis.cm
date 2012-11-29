@@ -50,23 +50,25 @@ class test_element_creation extends elis_database_test {
 
     protected static function get_overlay_tables() {
         return array(
-            'context'              => 'moodle',
-            'course'               => 'moodle',
-            'user'                 => 'moodle',
-            curriculum::TABLE      => 'elis_program',
-            track::TABLE           => 'elis_program',
-            course::TABLE          => 'elis_program',
-            coursetemplate::TABLE  => 'elis_program',
-            field::TABLE           => 'elis_core',
-            field_data_int::TABLE  => 'elis_core',
-            field_data_num::TABLE  => 'elis_core',
-            field_data_char::TABLE => 'elis_core',
-            field_data_text::TABLE => 'elis_core',
-            pmclass::TABLE         => 'elis_program',
-            user::TABLE            => 'elis_program',
-            usermoodle::TABLE      => 'elis_program',
-            userset_profile::TABLE => 'elis_program',
-            userset::TABLE         => 'elis_program'
+            'context'                  => 'moodle',
+            'course'                   => 'moodle',
+            'user'                     => 'moodle',
+            'grading_areas'            => 'moodle',
+            'elis_files_userset_store' => 'repository_elis_files',
+            curriculum::TABLE          => 'elis_program',
+            track::TABLE               => 'elis_program',
+            course::TABLE              => 'elis_program',
+            coursetemplate::TABLE      => 'elis_program',
+            field::TABLE               => 'elis_core',
+            field_data_int::TABLE      => 'elis_core',
+            field_data_num::TABLE      => 'elis_core',
+            field_data_char::TABLE     => 'elis_core',
+            field_data_text::TABLE     => 'elis_core',
+            pmclass::TABLE             => 'elis_program',
+            user::TABLE                => 'elis_program',
+            usermoodle::TABLE          => 'elis_program',
+            userset_profile::TABLE     => 'elis_program',
+            userset::TABLE             => 'elis_program'
         );
     }
 

@@ -46,7 +46,12 @@ class pmMigrateMoodleUsersTest extends elis_database_test {
                      'user' => 'moodle',
                      'user_info_data' => 'moodle',
                      user::TABLE => 'elis_program',
-                     usermoodle::TABLE => 'elis_program');
+                     usermoodle::TABLE => 'elis_program',
+                     'elis_field_data_char' => 'elis_core',
+                     'elis_field_data_int' => 'elis_core',
+                     'elis_field_data_num' => 'elis_core',
+                     'elis_field_data_text' => 'elis_core'
+               );
     }
 
     /**

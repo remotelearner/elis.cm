@@ -81,7 +81,9 @@ class curriculumpage extends managementpage {
         global $USER;
 
         //check the standard capability
-        if(curriculumpage::_has_capability('elis/program:program_enrol', $curriculumid)) {
+        // TODO: Ugly, this needs to be overhauled
+        $cpage = new curriculumpage();
+        if($cpage->_has_capability('elis/program:program_enrol', $curriculumid)) {
             return true;
         }
 

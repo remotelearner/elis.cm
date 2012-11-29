@@ -782,7 +782,10 @@ class pmclass extends data_object_with_custom_fields {
 
         $allowed_clusters = array();
 
-        if (pmclasspage::_has_capability('elis/program:class_enrol_userset_user', $clsid)) {
+        // TODO: Ugly, this needs to be overhauled
+        $cpage = new pmclasspage();
+
+        if ($cpage->_has_capability('elis/program:class_enrol_userset_user', $clsid)) {
             require_once elispm::lib('data/clusterassignment.class.php');
             $cmuserid = pm_get_crlmuserid($USER->id);
             $userclusters = clusterassignment::find(new field_filter('userid', $cmuserid));
@@ -829,7 +832,7 @@ class pmclass extends data_object_with_custom_fields {
      * which is an array of any errors encountered when duplicating the
      * object.
      */
-    function duplicate($options=array()) {
+    function duplicate(array $options=array()) {
         //needed by the rollover lib
         global $CFG;
         require_once(elis::lib('rollover/lib.php'));

@@ -65,10 +65,10 @@ class trackform extends cmform {
         $curs = array();
         if (!empty($USER->id)) {
             // TBD: and/or capability 'elis/program:track_edit|view' ?
-            $contexts = get_contexts_by_capability_for_user('curriculum',
-                            'elis/program:track_create', $USER->id);
-            $curs = curriculum_get_listing('name', 'ASC', 0, 0, '', '',
-                        $contexts);
+            // This is necessary for creating a new track but will prevent a parent programs from appearing
+            // when the user has track edit permissions but not track creation permission -- ELIS-5954
+            $contexts = get_contexts_by_capability_for_user('curriculum', 'elis/program:track_create', $USER->id);
+            $curs = curriculum_get_listing('name', 'ASC', 0, 0, '', '', $contexts);
         }
         if (empty($this->_customdata['obj']->id)) {
             $curid_options = array();
@@ -86,9 +86,9 @@ class trackform extends cmform {
             // and hitting the form Cancel button causes a DB error -- ELIS-5954
             $track = new track($this->_customdata['obj']->id);
 
-            //$curs = curriculum_get_listing('name', 'ASC', 0, 0, $track->curriculum->name);
-            $mform->addElement('static', 'curidstatic', get_string('curriculum', 'elis_program') . ':', $track->curriculum->name);
-            // ELIS-7735: ^^^ was $curs[$this->_customdata['obj']->curid]->name
+            $curs = curriculum_get_listing('name', 'ASC', 0, 0, $track->curriculum->name);
+
+            $mform->addElement('static', 'curidstatic', get_string('curriculum', 'elis_program') . ':', $curs[$this->_customdata['obj']->curid]->name);
             $mform->addHelpButton('curidstatic', 'trackform:curriculum_curidstatic', 'elis_program');
 
             $mform->addElement('hidden', 'curid');

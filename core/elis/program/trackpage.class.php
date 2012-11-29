@@ -82,7 +82,11 @@ class trackpage extends managementpage {
         global $USER;
 
         //check the standard capability
-        if(trackpage::_has_capability('elis/program:track_enrol', $trackid)) {
+
+        // TODO: Ugly, this needs to be overhauled
+        $tpage = new trackpage();
+
+        if ($tpage->_has_capability('elis/program:track_enrol', $trackid)) {
             return true;
         }
 
@@ -177,7 +181,7 @@ class trackpage extends managementpage {
     /**
      * Overrides the default navigation to include curriculum breadcrumbs if appropriate
      */
-    function build_navbar_default() {
+    function build_navbar_default($who = null, $addparent = true, $params = array()) {
         $action = $this->optional_param('action', '', PARAM_CLEAN);
         $cancel = $this->optional_param('cancel', '', PARAM_CLEAN);
         $paramname = '';
@@ -195,7 +199,7 @@ class trackpage extends managementpage {
         parent::build_navbar_default(null, $lp_bc, $params);
     }
 
-    function build_navbar_view() {
+    function build_navbar_view($who = null, $id_param = 'id', $extra_params = array()) {
         $paramname = '';
         $curid = $this->get_cm_id(false, $paramname);
         parent::build_navbar_view(null, 'id', $curid ? array($paramname => $curid): array());

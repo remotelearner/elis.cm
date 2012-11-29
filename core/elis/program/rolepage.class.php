@@ -54,7 +54,7 @@ abstract class rolepage extends associationpage2 {
         return print_context_name($this->get_context(), false);
     }
 
-    function build_navbar_default() {
+    function build_navbar_default($who = null, $addparent = true, $params = array()) {
         global $DB;
 
         //obtain the base of the navbar from the parent page class
@@ -407,7 +407,7 @@ abstract class rolepage extends associationpage2 {
         return $records;
     }
 
-    protected function print_record_count($count) {
+    protected function print_record_count($count, $label = null) {
         print_string('usersfound','elis_program',$count);
     }
 

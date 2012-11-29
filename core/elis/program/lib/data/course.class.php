@@ -453,7 +453,7 @@ class course extends data_object_with_custom_fields {
      * Check for any course nags that need to be handled.
      *
      */
-    function check_for_nags() {
+    public static function check_for_nags() {
         global $CFG, $DB;
 
         $sendtouser =       elis::$config->elis_program->notify_courserecurrence_user;
@@ -723,7 +723,7 @@ class course extends data_object_with_custom_fields {
      * which is an array of any errors encountered when duplicating the
      * object.
      */
-    function duplicate($options) {
+    function duplicate(array $options) {
         require_once elispm::lib('data/pmclass.class.php');
         require_once elispm::lib('data/coursetemplate.class.php');
 

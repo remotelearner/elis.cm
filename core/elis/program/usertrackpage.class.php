@@ -66,7 +66,9 @@ class usertrackpage extends usertrackbasepage {
 
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
-        return userpage::_has_capability('elis/program:user_view', $id);
+        // TODO: Ugly, this needs to be overhauled
+        $upage = new userpage();
+        return $upage->_has_capability('elis/program:user_view', $id);
     }
 
     function can_do_add() {
@@ -202,7 +204,9 @@ class trackuserpage extends usertrackbasepage {
 
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
-        return trackpage::_has_capability('elis/program:track_view', $id);
+        // TODO: Ugly, this needs to be overhauled
+        $tpage = new trackpage();
+        return $tpage->_has_capability('elis/program:track_view', $id);
     }
 
     function can_do_add() {

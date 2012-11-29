@@ -74,7 +74,7 @@ class associationpage extends pm_page {
         return new $this->tab_page($params);
     }
 
-    function print_header() {
+    function print_header($_) {
         $id = $this->required_param('id', PARAM_INT);
         $default_tab = !empty($this->default_tab) ? $this->default_tab : get_class($this);
         $action = $this->optional_param('action', $default_tab, PARAM_CLEAN);
@@ -83,7 +83,7 @@ class associationpage extends pm_page {
         }
         $association_id = $this->optional_param('association_id', 0, PARAM_INT);
 
-        parent::print_header();
+        parent::print_header($_);
         $params = array('id' => $id);
         if (!empty($association_id)) {
             $params['association_id'] = $association_id;
@@ -284,7 +284,7 @@ class associationpage extends pm_page {
      * @param $obj The association object being edited.
      * @param $parent_obj The basic data object being associated with.
      */
-    function print_edit_form($obj, $parent_obj) {
+    function print_edit_form($obj, $parent_obj, $sort, $dir) {
         $parent_id = $this->required_param('id', PARAM_INT);
         $params = array('action' => 'edit', 'id' => $parent_id, 'association_id' => $obj->id);
         if ($parentid = $this->optional_param('parent', 0, PARAM_INT)) {
@@ -381,7 +381,7 @@ class associationpage extends pm_page {
         return $this->get_page_title_default();
     }
 
-    public function build_navbar_default() { // build_navigation_default
+    public function build_navbar_default($who = null, $addparent = true, $params = array()) { // build_navigation_default
         //parent::build_navbar_default();
         $id = $this->required_param('id', PARAM_INT);
         $params = array('action' => 'view', 'id' => $id);
@@ -519,7 +519,7 @@ class associationpage extends pm_page {
      * Prints out the item count for the list interface with the appropriate formatting.
      * @param $numitems number of items
      */
-    function print_num_items($numitems) {
+    function print_num_items($numitems, $max) {
         $a = new stdClass;
         $a->num = $numitems;
         echo '<div style="float:right;">' . get_string('items_found', self::LANG_FILE, $a) . '</div>';
@@ -622,97 +622,6 @@ class associationpage extends pm_page {
         pmsearchbox($this);
     }
 
-    function bulk_apply_all() {
-        global $SESSION;
-
-        $target = optional_param('target', '', PARAM_ALPHA);
-        $page = optional_param('s', '', PARAM_ALPHA);
-        $id = optional_param('id', 1, PARAM_INT);
-        $blktpl = optional_param('bulktpl', '', PARAM_CLEAN);
-        $pagename = $page . $id . $target;
-        $blktpl = json_decode($blktpl);
-
-        if (!empty($SESSION->associationpage[$pagename]) && is_array($SESSION->associationpage[$pagename])) {
-            foreach($SESSION->associationpage[$pagename] as $uid => $rec) {
-                if (!empty($rec->selected) && $rec->selected === true) {
-                    if (!empty($blktpl->enrolment_date_checked) && $blktpl->enrolment_date_checked === true) {
-                        $rec->enrolment_date->day = $blktpl->enrolment_date->day;
-                        $rec->enrolment_date->month = $blktpl->enrolment_date->month;
-                        $rec->enrolment_date->year = $blktpl->enrolment_date->year;
-                    }
-                    if (!empty($blktpl->completion_date_checked) && $blktpl->completion_date_checked === true) {
-                        $rec->completion_date->day = $blktpl->completion_date->day;
-                        $rec->completion_date->month = $blktpl->completion_date->month;
-                        $rec->completion_date->year = $blktpl->completion_date->year;
-                    }
-                    if (!empty($blktpl->status_checked)) {
-                        $rec->status = $blktpl->status;
-                    }
-                    if (!empty($blktpl->grade_checked)) {
-                        $rec->grade = $blktpl->grade;
-                    }
-                    if (!empty($blktpl->credits_checked)) {
-                        $rec->credits = $blktpl->credits;
-                    }
-                    if (!empty($blktpl->locked_checked)) {
-                        $rec->locked = $blktpl->locked;
-                    }
-                }
-            }
-        }
-    }
-
-    function bulk_checkbox_selection_deselectall() {
-        global $SESSION;
-
-        $target = optional_param('target', '', PARAM_ALPHA);
-        $page = optional_param('s', '', PARAM_ALPHA);
-        $id = optional_param('id', 1, PARAM_INT);
-        $pagename = $page . $id . $target;
-
-        if (!empty($SESSION->associationpage[$pagename])) {
-            foreach ($SESSION->associationpage[$pagename] as $userid => $rec) {
-                unset($SESSION->associationpage[$pagename][$userid]->selected);
-            }
-        }
-
-        return true;
-    }
-
-    function bulk_checkbox_selection_reset($target) {
-        session_selection_deletion($target);
-    }
-
-    // Store checkbox data into session
-    function bulk_checkbox_selection_session() {
-        global $SESSION;
-        $selection = optional_param('selected_checkboxes', '', PARAM_CLEAN);
-        $target = optional_param('target', '', PARAM_ALPHA);
-        $page = optional_param('s', '', PARAM_ALPHA);
-        $id = optional_param('id', 1, PARAM_INT);
-
-        $selectedcheckboxes = json_decode($selection);
-
-        if (is_array($selectedcheckboxes)) {
-            $pagename = $page . $id . $target;
-
-            if (!isset($SESSION->associationpage[$pagename])) {
-                $SESSION->associationpage[$pagename] = array();
-            }
-
-            foreach ($selectedcheckboxes as $selectedcheckbox) {
-                $record = json_decode($selectedcheckbox);
-
-                if(isset($record->changed) && $record->changed === true) {
-                    $SESSION->associationpage[$pagename][$record->id] = $record;
-                } else {
-                    if (isset($SESSION->associationpage[$pagename][$record->id])) {
-                        unset($SESSION->associationpage[$pagename][$record->id]);
-                    }
-                }
-            }
-        }
-    }
     // Store checkbox data into session
     function checkbox_selection_session() {
         global $SESSION;

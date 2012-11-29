@@ -31,6 +31,7 @@ require_once(elis::lib('testlib.php'));
 require_once(elispm::lib('data/curriculum.class.php'));
 require_once(elis::lib('data/customfield.class.php'));
 require_once(elis::file('core/fields/moodle_profile/custom_fields.php'));
+require_once(elis::file('program/enrol/userset/moodle_profile/userset_profile.class.php'));
 require_once(elis::file('core/fields/manual/custom_fields.php'));
 require_once(elispm::lib('data/usermoodle.class.php'));
 require_once elispm::file('form/cmform.class.php');
@@ -74,6 +75,7 @@ class curriculumCustomFieldsTest extends elis_database_test {
             'user_info_category' => 'moodle',
             'user_info_field' => 'moodle',
             'user_info_data' => 'moodle',
+            userset_profile::TABLE => 'elis_program',
             field_category::TABLE => 'elis_core',
             field_category_contextlevel::TABLE => 'elis_core',
             field::TABLE => 'elis_core',
