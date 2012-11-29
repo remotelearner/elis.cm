@@ -73,13 +73,13 @@ class generalized_filter_autocomplete_eliswithcustomfields extends generalized_f
 
         //instance fields - fields to search from the instance's table
         if (!isset($options['instance_fields'])) {
-            error('No "instance_fields" option received when constructing autocomplete_eliswithcustomfields.');
+            print_error('autocomplete_noinstance', 'elis_program');
         }
         $this->instance_fields = $options['instance_fields'];
 
         //get instance contextid
         if (!isset($options['contextlevel']) || !isset($this->context_level_map[$options['contextlevel']])) {
-            error('No valid "contextlevel" option received when constructing autocomplete_eliswithcustomfields.');
+            print_error('autocomplete_nocontext', 'elis_program');
         }
         $this->instancetable = 'crlm_'.$this->context_level_map[$options['contextlevel']];
         $this->contextlevel = $options['contextlevel'];
