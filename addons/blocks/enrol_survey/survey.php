@@ -141,6 +141,11 @@ if ($survey_form->is_cancelled()) {
     $DB->update_record('user', $moodle_user); // *MUST* be called before save()
     $elis_user->save();
 
+    $usernew = $DB->get_record('user', array('id' => $moodle_user->id));
+    if (!empty($usernew)) {
+        events_trigger('user_updated', $usernew);
+    }
+
     if (!is_survey_taken($USER->id, $instanceid) && empty($incomplete)) {
         $dataobject = new object();
         $dataobject->blockinstanceid = $instanceid;

@@ -79,11 +79,21 @@ class gradeElementsSortTest extends elis_database_test {
 
         // Test idnumber descending sorting
         $sort = student::retrieve_grade_elements(100, 100, 103, 'idnumber', 'DESC');
-        $this->assertEquals(array_values($dataset), array_values($sort));
+        $sortvalues = array();
+        foreach ($sort as $val) {
+            $sortvalues[] = $val;
+        }
+        unset($sort);
+        $this->assertEquals(array_values($dataset), $sortvalues);
 
         // Test grade ascending sorting
         $sort = student::retrieve_grade_elements(100, 100, 103, 'grade', 'ASC');
-        $this->assertEquals(array_values($dataset), array_values($sort));
+        $sortvalues = array();
+        foreach ($sort as $val) {
+            $sortvalues[] = $val;
+        }
+        unset($sort);
+        $this->assertEquals(array_values($dataset), $sortvalues);
 
         $dataset = array();
         // Swap
@@ -92,15 +102,30 @@ class gradeElementsSortTest extends elis_database_test {
 
         // Test idnumber ascending sorting
         $sort = student::retrieve_grade_elements(100, 100, 103, 'idnumber', 'ASC');
-        $this->assertEquals(array_values($dataset), array_values($sort));
+        $sortvalues = array();
+        foreach ($sort as $val) {
+            $sortvalues[] = $val;
+        }
+        unset($sort);
+        $this->assertEquals(array_values($dataset), $sortvalues);
 
         // Test grade descending sorting
         $sort = student::retrieve_grade_elements(100, 100, 103, 'grade', 'DESC');
-        $this->assertEquals(array_values($dataset), array_values($sort));
+        $sortvalues = array();
+        foreach ($sort as $val) {
+            $sortvalues[] = $val;
+        }
+        unset($sort);
+        $this->assertEquals(array_values($dataset), $sortvalues);
 
         // Test empty array on no results
         $sort = student::retrieve_grade_elements(-1, 100, 103, 'grade', 'DESC');
-        $this->assertEquals(array(), $sort);
+        $sortvalues = array();
+        foreach ($sort as $val) {
+            $sortvalues[] = $val;
+        }
+        unset($sort);
+        $this->assertEquals(array(), $sortvalues);
     }
 
 }

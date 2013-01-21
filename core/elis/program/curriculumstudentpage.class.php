@@ -260,7 +260,7 @@ class studentcurriculumpage extends associationpage2 {
         $params = array('userid'=>$id);
 
         $count = $DB->count_records_select(curriculum::TABLE, $where, $params);
-        $users = $DB->get_records_select(curriculum::TABLE, $where, $params, $sortclause, '*', $pagenum*$perpage, $perpage);
+        $users = $DB->get_recordset_select(curriculum::TABLE, $where, $params, $sortclause, '*', $pagenum*$perpage, $perpage);
 
         return array($users, $count);
     }
@@ -312,7 +312,7 @@ class studentcurriculumpage extends associationpage2 {
         $params = array('userid1' => $id, 'userid2' => $id);
 
         $count = $DB->count_records_select(curriculum::TABLE, $where, $params);
-        $curricula = $DB->get_records_sql($sql, $params, $pagenum*$perpage, $perpage);
+        $curricula = $DB->get_recordset_sql($sql, $params, $pagenum*$perpage, $perpage);
 
         return array($curricula, $count);
     }
@@ -365,11 +365,11 @@ class studentcurriculumpage extends associationpage2 {
               ORDER BY $sortclause";
 
         $params = array('userid1' => $id, 'userid2' => $id);
-        return $DB->get_records_sql($sql, $params, $page * $perpage, $perpage);
+        return $DB->get_recordset_sql($sql, $params, $page * $perpage, $perpage);
     }
 
     protected function create_selection_table($records, $baseurl) {
-        $records = $records ? $records : array();
+        $records = (is_array($records) || ($records instanceof Iterator && $records->valid())) ? $records : array();
         $columns = array('_selection' => array('header' => get_string('select')),
                          'idnumber' => array('header' => get_string('idnumber','elis_program')),
                          'name' => array('header' => get_string('name','elis_program')),
@@ -660,7 +660,7 @@ class curriculumstudentpage extends associationpage2 {
         }
 
         $count = $DB->count_records_select(user::TABLE, $where, $params);
-        $users = $DB->get_records_select(user::TABLE, $where, $params, $sortclause, '*', $pagenum*$perpage, $perpage);
+        $users = $DB->get_recordset_select(user::TABLE, $where, $params, $sortclause, '*', $pagenum*$perpage, $perpage);
 
         return array($users, $count);
     }
@@ -728,8 +728,8 @@ class curriculumstudentpage extends associationpage2 {
 
         $fields = 'curass.id, usr.id AS userid, usr.firstname, usr.lastname, usr.idnumber, usr.country, usr.language, curass.timecreated';
         $count = $DB->count_records_select(user::TABLE, $where, $params);
-        $users = $DB->get_records_sql($sql, $params, $pagenum*$perpage, $perpage);
-        //$users = $DB->get_records_select(user::TABLE, $where, $params, $sortclause, $fields, $pagenum*$perpage, $perpage);
+        $users = $DB->get_recordset_sql($sql, $params, $pagenum*$perpage, $perpage);
+        //$users = $DB->get_recordset_select(user::TABLE, $where, $params, $sortclause, $fields, $pagenum*$perpage, $perpage);
 
         return array($users, $count);
     }

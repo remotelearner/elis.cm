@@ -1,0 +1,10 @@
+diff --git a/install/lang/es_mx/langconfig.php b/install/lang/es_mx/langconfig.php
+index f7c639b..eea0465 100644
+--- a/install/lang/es_mx/langconfig.php
++++ b/install/lang/es_mx/langconfig.php
+@@ -32,4 +32,4 @@ defined('MOODLE_INTERNAL') || die();
+ 
+ $string['parentlanguage'] = '';
+ $string['thisdirection'] = 'ltr';
+-$string['thislanguage'] = 'Español - Mexico';
++$string['thislanguage'] = 'Español - México';

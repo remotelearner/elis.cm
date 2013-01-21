@@ -99,11 +99,15 @@ class testTrackAssignmentGetListing extends elis_database_test {
         $listing = track_assignment_get_listing(1);
 
         //validate the number of rows
-        $this->assertEquals(1, count($listing));
+        $count = 0;
+        foreach ($listing as $entity) {
+            $count++;
 
-        //validate the aggregated count in the first row
-        $entity = reset($listing);
-        $this->assertEquals(2, $entity->enrolments);
+            //validate the aggregated count in the first row
+            $this->assertEquals(2, $entity->enrolments);
+        }
+        unset($listing);
+        $this->assertEquals(1, $count);
     }
 
     /**
@@ -124,10 +128,14 @@ class testTrackAssignmentGetListing extends elis_database_test {
         $listing = track_assignment_get_listing(1);
 
         //validate the number of rows
-        $this->assertEquals(1, count($listing));
+        $count = 0;
+        foreach ($listing as $entity) {
+            $count++;
 
-        //validate the aggregated count in the first row
-        $entity = reset($listing);
-        $this->assertEquals(1, $entity->enrolments);
+            //validate the aggregated count in the first row
+            $this->assertEquals(1, $entity->enrolments);
+        }
+        unset($listing);
+        $this->assertEquals(1, $count);
     }
 }

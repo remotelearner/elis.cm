@@ -110,12 +110,13 @@ class clustertrack extends elis_data_object {
                 ORDER BY u.lastname';
 
         $params = array($cluster);
-        $users = $DB->get_records_sql($sql, $params);
-        if ($users && !empty($autoenrol)) {
+        $users = $DB->get_recordset_sql($sql, $params);
+        if (!empty($autoenrol)) {
             foreach ($users as $user) {
                 usertrack::enrol($user->userid, $track);
             }
         }
+        unset($users);
 
         events_trigger('pm_userset_track_associated', $record);
 
@@ -149,14 +150,12 @@ class clustertrack extends elis_data_object {
                 . 'WHERE cu.clusterid = :clusterid AND cu.autoenrol=\'1\' AND f.userid IS NULL';
             $params['clusterid'] = $this->clusterid;
 
-            $usertracks = $this->_db->get_records_sql($sql, $params);
-
-            if ($usertracks) {
-                foreach ($usertracks as $usertrack) {
-                    $ut = new usertrack($usertrack->id);
-                    $ut->unenrol();
-                }
+            $usertracks = $this->_db->get_recordset_sql($sql, $params);
+            foreach ($usertracks as $usertrack) {
+                $ut = new usertrack($usertrack->id);
+                $ut->unenrol();
             }
+            unset($usertracks);
         }
 
         parent::delete();
@@ -366,13 +365,11 @@ class clustertrack extends elis_data_object {
                     ORDER BY u.lastname';
             $params = array($cluster);
 
-            $users = $DB->get_records_sql($sql, $params);
-
-            if ($users) {
-                foreach ($users as $user) {
-                    usertrack::enrol($user->userid, $track);
-                }
+            $users = $DB->get_recordset_sql($sql, $params);
+            foreach ($users as $user) {
+                usertrack::enrol($user->userid, $track);
             }
+            unset($users);
         }
 
         return $result;

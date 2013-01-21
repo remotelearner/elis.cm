@@ -152,7 +152,7 @@ class checkbox_treerepresentation extends treerepresentation {
         }
 
         //use the appropriate css for the menu
-        $style = '<style>@import url("'. $CFG->wwwroot .'/lib/yui/2.8.2/build/treeview/assets/skins/sam/treeview.css");</style>'; // TBV
+        $style = '<style>@import url("'.$CFG->wwwroot.'/lib/yui/2.9.0/build/treeview/assets/skins/sam/treeview.css");</style>'; // TBV
 
         //YUI needs an appropriate div to place the tree in
         $result = $style ."<div id=\"cluster_param_tree_". $this->instanceid ."_". $uniqueid ."\" class=\"ygtv-checkbox felement\"></div>";
@@ -556,14 +556,7 @@ class generalized_filter_clustertree extends generalized_filter_type {
         /**
          * CSS includes
          */
-        $mform->addElement('html', '<style>@import url("'. $CFG->wwwroot .'/lib/yui/2.8.2/build/treeview/assets/skins/sam/treeview-skin.css");</style>'. $js);
-
-        /**(use "git add" and/or "git commit -a")
-         * JavaScript includes
-         */
-
-        //include the necessary javascript libraries for the YUI TreeView
-        $PAGE->requires->yui2_lib(array('yahoo', 'dom', 'event', 'treeview', 'json', 'connection'));
+        $mform->addElement('html', '<style>@import url("'.$CFG->wwwroot.'/lib/yui/2.9.0/build/treeview/assets/skins/sam/treeview-skin.css");</style>'.$js);
 
         //include our custom code that handles the YUI Treeview menu
         //$PAGE->requires->js('/elis/program/js/clustertree.js');
@@ -610,13 +603,6 @@ class generalized_filter_clustertree extends generalized_filter_type {
         $menuitemlisting = new menuitemlisting($cm_entity_pages);
         $tree = new checkbox_treerepresentation($menuitemlisting, $this->options['report_id']);
 
-        $tree_html = $tree->convert_to_markup($this->_uniqueid, $this->execution_mode);
-        $params = array($this->options['report_id'],
-                        $this->_uniqueid,
-                        $this->options['dropdown_button_text'],
-                        $this->options['tree_button_text']);
-        $param_string = implode('", "', $params);
-
         /**
          * UI element setup
          */
@@ -653,7 +639,6 @@ class generalized_filter_clustertree extends generalized_filter_type {
             $this->_filterhelp = null;
         }
 
-
         //add filterhelp and label to this filter
         //import required css for the fieldset
         $style = '<style>@import url("'. $CFG->wwwroot .'/elis/program/styles.css");</style>';
@@ -673,11 +658,10 @@ class generalized_filter_clustertree extends generalized_filter_type {
         $mform->addElement('html', $style . $nested_fieldset . $legend);
         $mform->addElement('static', $this->_uniqueid .'_help', '');
 
-        //cluster select dropdown
-        $mform->addElement('select', $this->_uniqueid .'_dropdown', $title,
-                           $choices_array,
-                           array('onchange' =>
-                             'this.selectedIndex = dropdown_separator(this);'));
+        // cluster select dropdown
+        $selectparams = array('onchange' => 'this.selectedIndex = dropdown_separator(this);');
+        $mform->addElement('select', $this->_uniqueid .'_dropdown', $title, $choices_array, $selectparams);
+
         //dropdown / cluster tree state storage
         $mform->addElement('hidden', $this->_uniqueid .'_usingdropdown');
         // Must use addHelpButton() to NOT open help link on page, but in popup!
@@ -690,10 +674,31 @@ class generalized_filter_clustertree extends generalized_filter_type {
             $mform->setDefault($this->_uniqueid .'_usingdropdown', 1);
         }
 
-        // dress it up like an mform element
-        $tree_html = '<div class="fitem"><div class="fitemtitle"></div>'. $tree_html .'</div>';
-        //cluster tree
-        $mform->addElement('html', $tree_html);
+        $module = array(
+            'name' => 'clustertree',
+            'fullpath' => '/elis/program/js/clustertree_module.js',
+            'requires' => array('yui2-treeview'),
+        );
+        $PAGE->requires->js_module($module);
+        $initcallopts = array(
+            $CFG->httpswwwroot,
+            $tree->instanceid,
+            $this->_uniqueid,
+            $tree->get_js_object(),
+            $this->execution_mode,
+            $this->options['report_id'],
+            $this->options['dropdown_button_text'],
+            $this->options['tree_button_text']
+        );
+        $PAGE->requires->js_init_call('M.clustertree.init_tree', $initcallopts, true, $module);
+
+        // cluster tree
+        $clustertreehtml = '<div class="fitem"><div class="fitemtitle"></div>'.
+                           '<style>@import url("'.$CFG->wwwroot.'/lib/yui/2.9.0/build/treeview/assets/skins/sam/treeview.css");</style>'.
+                           '<div id="cluster_param_tree_'.$tree->instanceid.'_'.$this->_uniqueid.'" class="ygtv-checkbox felement"></div>'.
+                           '</div>';
+        $mform->addElement('html', $clustertreehtml);
+
         //list of explicitly selected elements
         $mform->addElement('hidden', $this->_uniqueid .'_listing');
         //list of selected and unexpanded elements
@@ -714,14 +719,6 @@ class generalized_filter_clustertree extends generalized_filter_type {
         $mform->addElement('button', $this->_uniqueid .'_toggle', '',
                            array('onclick' =>
                                  'clustertree_toggle_tree("'. $param_string .'")'));
-
-        //script to do the work
-        $initialize_state_script = '
-<script type="text/javascript">
-    clustertree_set_toggle_state("'. $param_string .'");
-</script>';
-
-        $mform->addElement('html', $initialize_state_script);
 
         // close hacked nested fieldset
         if ($this->options['fieldset']) {

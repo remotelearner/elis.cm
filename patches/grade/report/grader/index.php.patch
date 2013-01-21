@@ -1,0 +1,13 @@
+diff --git a/grade/report/grader/index.php b/grade/report/grader/index.php
+index 4549995..2770aed 100644
+--- a/grade/report/grader/index.php
++++ b/grade/report/grader/index.php
+@@ -107,7 +107,7 @@ grade_regrade_final_grades($courseid);
+ 
+ // Perform actions
+ if (!empty($target) && !empty($action) && confirm_sesskey()) {
+-    grade_report_grader::process_action($target, $action);
++    grade_report_grader::do_process_action($target, $action);
+ }
+ 
+ $reportname = get_string('pluginname', 'gradereport_grader');

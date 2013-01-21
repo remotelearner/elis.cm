@@ -29,13 +29,40 @@ global $CFG;
 require_once($CFG->dirroot . '/elis/program/lib/setup.php');
 require_once(elis::lib('testlib.php'));
 require_once('PHPUnit/Extensions/Database/DataSet/CsvDataSet.php');
+
+/*Data objects*/
+require_once(elispm::lib('data/course.class.php'));
+require_once(elispm::lib('data/coursetemplate.class.php'));
+require_once(elispm::lib('data/curriculum.class.php'));
+require_once(elispm::lib('data/curriculumstudent.class.php'));
+require_once(elispm::lib('data/pmclass.class.php'));
+require_once(elispm::lib('data/student.class.php'));
+require_once(elispm::lib('data/track.class.php'));
+require_once(elispm::lib('data/user.class.php'));
+require_once(elispm::lib('data/usermoodle.class.php'));
 require_once(elispm::lib('data/usertrack.class.php'));
+
+require_once(elispm::file('phpunit/datagenerator.php'));
 
 class usertrackTest extends elis_database_test {
     protected $backupGlobalsBlacklist = array('DB');
 
 	protected static function get_overlay_tables() {
-		return array(usertrack::TABLE => 'elis_program');
+		return array(
+            course::TABLE => 'elis_program',
+            coursetemplate::TABLE => 'elis_program',
+            curriculum::TABLE => 'elis_program',
+            curriculumstudent::TABLE => 'elis_program',
+            pmclass::TABLE => 'elis_program',
+            student::TABLE => 'elis_program',
+            track::TABLE => 'elis_program',
+            trackassignment::TABLE => 'elis_program',
+            user::TABLE => 'elis_program',
+            usermoodle::TABLE => 'elis_program',
+            usertrack::TABLE => 'elis_program',
+            'context' => 'moodle',
+            'user' => 'moodle'
+        );
 	}
 
     protected function load_csv_data() {
@@ -56,5 +83,30 @@ class usertrackTest extends elis_database_test {
                                          'trackid' => 1));
 
         $usertrack->save();
+    }
+
+    public function test_enrol() {
+        global $DB;
+
+        //fixture
+        $elis_gen = new elis_program_datagen_unit($DB);
+        $pgm = $elis_gen->create_program();
+        $track = $elis_gen->create_track(array('curid' => $pgm->id));
+        $course = $elis_gen->create_course();
+        $pmclass = $elis_gen->create_pmclass(array('courseid' => $course->id));
+        $user = $elis_gen->create_user();
+
+        $elis_gen->assign_class_to_track($pmclass->id, $course->id, $track->id, true);
+
+        $result = usertrack::enrol($user->id,$track->id);
+        $this->assertTrue($result);
+
+        //validate curriculumstudent rec
+        $rec = $DB->get_record(curriculumstudent::TABLE,array('curriculumid'=>$pgm->id, 'userid'=>$user->id));
+        $this->assertNotEmpty($rec);
+
+        //validate student rec
+        $rec = $DB->get_record(student::TABLE,array('classid'=>$pmclass->id, 'userid'=>$user->id));
+        $this->assertNotEmpty($rec);
     }
 }

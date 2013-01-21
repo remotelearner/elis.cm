@@ -1,0 +1,13 @@
+diff --git a/user/selector/lib.php b/user/selector/lib.php
+index 2319332..f757f31 100644
+--- a/user/selector/lib.php
++++ b/user/selector/lib.php
+@@ -137,7 +137,7 @@ abstract class user_selector_base {
+      * Clear the list of excluded user ids.
+      */
+     public function clear_exclusions() {
+-        $exclude = array();
++        $this->exclude = array();
+     }
+ 
+     /**

@@ -1,0 +1,14 @@
+diff --git a/auth/shibboleth/index_form.html b/auth/shibboleth/index_form.html
+index 1e93cf2..29943d6 100644
+--- a/auth/shibboleth/index_form.html
++++ b/auth/shibboleth/index_form.html
+@@ -40,8 +40,7 @@ if ($show_instructions) {
+             </form>
+             <p>
+             <?php
+-                print_string("auth_shibboleth_contact_administrator", "auth_shibboleth");
+-                echo '<a href="mailto:'.get_admin()->email.'"> Moodle Administrator</a>.';
++                print_string("auth_shib_contact_administrator", "auth_shibboleth", get_admin()->email);
+             ?>
+             </p>
+           </div>

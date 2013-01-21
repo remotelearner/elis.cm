@@ -1,0 +1,25 @@
+diff --git a/mod/lti/backup/moodle2/backup_lti_stepslib.php b/mod/lti/backup/moodle2/backup_lti_stepslib.php
+index b728116..2c0b038 100644
+--- a/mod/lti/backup/moodle2/backup_lti_stepslib.php
++++ b/mod/lti/backup/moodle2/backup_lti_stepslib.php
+@@ -70,6 +70,7 @@ class backup_lti_activity_structure_step extends backup_activity_structure_step
+             'timemodified',
+             'typeid',
+             'toolurl',
++            'securetoolurl',
+             'preferheight',
+             'launchcontainer',
+             'instructorchoicesendname',
+@@ -79,8 +80,11 @@ class backup_lti_activity_structure_step extends backup_activity_structure_step
+             'instructorchoiceallowsetting',
+             'grade',
+             'instructorcustomparameters',
++            'debuglaunch',
+             'showtitlelaunch',
+-            'showdescriptionlaunch'
++            'showdescriptionlaunch',
++            'icon',
++            'secureicon',
+             )
+         );
+ 

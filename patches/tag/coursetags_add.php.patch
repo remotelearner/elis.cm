@@ -1,0 +1,13 @@
+diff --git a/tag/coursetags_add.php b/tag/coursetags_add.php
+index 969dda3..d5b68fc 100644
+--- a/tag/coursetags_add.php
++++ b/tag/coursetags_add.php
+@@ -35,7 +35,7 @@ if (empty($CFG->usetags)) {
+     print_error('tagsaredisabled', 'tag');
+ }
+ 
+-$returnurl = optional_param('returnurl', null, PARAM_TEXT);
++$returnurl = optional_param('returnurl', null, PARAM_LOCALURL);
+ $keyword = optional_param('coursetag_new_tag', '', PARAM_TEXT);
+ $courseid = optional_param('entryid', 0, PARAM_INT);
+ $userid = optional_param('userid', 0, PARAM_INT);

@@ -34,7 +34,13 @@ global $CFG;
 require_once($CFG->dirroot . '/elis/program/lib/setup.php');
 require_once(elis::lib('testlib.php'));
 require_once('PHPUnit/Extensions/Database/DataSet/CsvDataSet.php');
+
 require_once(elispm::lib('data/course.class.php'));
+require_once(elispm::lib('data/curriculumcourse.class.php'));
+require_once(elispm::lib('data/pmclass.class.php'));
+require_once(elispm::lib('data/user.class.php'));
+
+require_once(elispm::file('phpunit/datagenerator.php'));
 
 /** Since class is defined within course.class.php
  *  testDataObjectsFieldsAndAssociations.php will not auto test this class
@@ -46,7 +52,11 @@ class coursecompletionTest extends elis_database_test {
         return array(
             'context' => 'moodle',
             'course' => 'moodle',
-            course::TABLE => 'elis_program'
+            course::TABLE => 'elis_program',
+            curriculumcourse::TABLE => 'elis_program',
+            pmclass::TABLE => 'elis_program',
+            student::TABLE => 'elis_program',
+            user::TABLE => 'elis_program',
         );
     }
 
@@ -88,4 +98,54 @@ class coursecompletionTest extends elis_database_test {
         }
     }
 
+    public function test_get_completion_counts() {
+        global $DB;
+
+        //fixture
+        $elis_gen = new elis_program_datagen_unit($DB);
+        $pmcourse = $elis_gen->create_course();
+        $class = $elis_gen->create_pmclass(array('courseid' => $pmcourse->id));
+        $class2 = $elis_gen->create_pmclass(array('courseid' => $pmcourse->id));
+        $user = $elis_gen->create_user();
+        $user2 = $elis_gen->create_user();
+        $elis_gen->assign_user_to_class($user->id,$class->id);
+        $elis_gen->assign_user_to_class($user2->id,$class2->id);
+
+        $course = new course;
+        $course->id = $pmcourse->id;
+        $completion_counts = $course->get_completion_counts();
+
+        //verify results
+        $this->assertInternalType('array',$completion_counts);
+        $this->assertEquals(3,sizeof($completion_counts));
+        $this->assertArrayHasKey(STUSTATUS_NOTCOMPLETE,$completion_counts);
+        $this->assertArrayHasKey(STUSTATUS_FAILED,$completion_counts);
+        $this->assertArrayHasKey(STUSTATUS_PASSED,$completion_counts);
+        $this->assertEquals(2,$completion_counts[STUSTATUS_NOTCOMPLETE]);
+        $this->assertEquals(0,$completion_counts[STUSTATUS_FAILED]);
+        $this->assertEquals(0,$completion_counts[STUSTATUS_PASSED]);
+    }
+
+    public function test_get_assigned_curricula() {
+        //fixture
+        $dataset = new PHPUnit_Extensions_Database_DataSet_CsvDataSet();
+        $dataset->addTable(curriculumcourse::TABLE, elis::component_file('program', 'phpunit/curriculum_course.csv'));
+        load_phpunit_data_set($dataset, true, self::$overlaydb);
+
+        //test
+        $course = new course;
+        $course->id = 100;
+        $curriculumcourse = $course->get_assigned_curricula();
+
+        //verify
+        $this->assertNotEmpty($curriculumcourse);
+        $this->assertInternalType('array',$curriculumcourse);
+        $count = 0;
+        foreach ($curriculumcourse as $curriculumid => $curriculumcourseid) {
+            $this->assertEquals(1,$curriculumid);
+            $this->assertEquals(2,$curriculumcourseid);
+            $count++;
+        }
+        $this->assertEquals(1,$count);
+    }
 }

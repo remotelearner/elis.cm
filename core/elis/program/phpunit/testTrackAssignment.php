@@ -29,7 +29,14 @@ global $CFG;
 require_once($CFG->dirroot . '/elis/program/lib/setup.php');
 require_once(elis::lib('testlib.php'));
 require_once('PHPUnit/Extensions/Database/DataSet/CsvDataSet.php');
+
+require_once(elispm::lib('data/coursetemplate.class.php'));
+require_once(elispm::lib('data/curriculum.class.php'));
 require_once(elispm::lib('data/track.class.php'));
+require_once(elispm::lib('data/usermoodle.class.php'));
+require_once(elispm::lib('data/usertrack.class.php'));
+
+require_once(elispm::file('phpunit/datagenerator.php'));
 
 /** Since class is defined within track.class.php
  *  testDataObjectsFieldsAndAssociations.php will not auto test this class
@@ -41,13 +48,18 @@ class trackassignmentTest extends elis_database_test {
         return array(
             'context' => 'moodle',
             'course' => 'moodle',
+            'user' => 'moodle',
             user::TABLE => 'elis_program',
             student::TABLE => 'elis_program',
             pmclass::TABLE => 'elis_program',
             course::TABLE => 'elis_program',
             track::TABLE => 'elis_program',
             trackassignment::TABLE => 'elis_program',
+            coursetemplate::TABLE => 'elis_program',
+            curriculum::TABLE => 'elis_program',
             curriculumcourse::TABLE => 'elis_program',
+            usermoodle::TABLE => 'elis_program',
+            usertrack::TABLE => 'elis_program'
         );
     }
 
@@ -180,5 +192,55 @@ class trackassignmentTest extends elis_database_test {
         $trackassignment->save();
         $trackassignments = $DB->get_records(trackassignment::TABLE, array('trackid' => 1, 'classid' => 100));
         $this->assertEquals(count($trackassignments), 1);
+    }
+
+    public function test_get_assigned_tracks() {
+        //fixture
+        $dataset = new PHPUnit_Extensions_Database_DataSet_CsvDataSet();
+        $dataset->addTable(trackassignment::TABLE, elis::component_file('program', 'phpunit/trackassignment.csv'));
+        load_phpunit_data_set($dataset, true, self::$overlaydb);
+
+        //test
+        $trackassignment = new trackassignment;
+        $trackassignment->classid = 100;
+        $assigned_tracks = $trackassignment->get_assigned_tracks();
+
+        //verify we got a non-empty array
+        $this->assertNotEmpty($assigned_tracks);
+        $this->assertInternalType('array',$assigned_tracks);
+
+        //verify contents
+        $count = 0;
+        foreach ($assigned_tracks as $trackid => $trackassignmentid) {
+            $this->assertEquals(1,$trackid);
+            $this->assertEquals(1,$trackassignmentid);
+            $count++;
+        }
+        $this->assertEquals(1,$count);
+    }
+
+    public function test_enrol_all_track_users_in_class() {
+        //fixture
+        $dataset = new PHPUnit_Extensions_Database_DataSet_CsvDataSet();
+        $dataset->addTable(course::TABLE, elis::component_file('program', 'phpunit/pmcourse.csv'));
+        $dataset->addTable(pmclass::TABLE, elis::component_file('program', 'phpunit/pmclass.csv'));
+        $dataset->addTable(trackassignment::TABLE, elis::component_file('program', 'phpunit/trackassignment.csv'));
+        $dataset->addTable(usertrack::TABLE, elis::component_file('program', 'phpunit/user_track.csv'));
+        $dataset->addTable(user::TABLE, elis::component_file('program', 'phpunit/user2.csv'));
+        load_phpunit_data_set($dataset, true, self::$overlaydb);
+
+        //test
+        $trackassignment = new trackassignment;
+        $trackassignment->classid = 100;
+        $trackassignment->trackid = 1;
+        ob_start();
+        $trackassignment->enrol_all_track_users_in_class();
+        $output = ob_get_contents();
+        ob_end_clean();
+
+        $this->assertEquals(
+                get_string('n_users_enrolled', 'elis_program', 1),
+                $output
+        );
     }
 }

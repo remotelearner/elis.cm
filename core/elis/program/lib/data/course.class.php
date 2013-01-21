@@ -113,7 +113,7 @@ class course extends data_object_with_custom_fields {
         }
     }
 
-    public function setUrl($url = null, $action = array()) {
+    public function seturl($url = null, $action = array()) {
         if(!($url instanceof moodle_url)) {
             $url = new moodle_url($url, $action);
         }
@@ -240,14 +240,14 @@ class course extends data_object_with_custom_fields {
      * Get a list of the course completion elements for the current course.
      *
      * @param none
-     * @return array The list of course IDs.
+     * @return recordset The list of course IDs.
      */
     function get_completion_elements() {
         if (!$this->id) {
-            return false;
+            return array();
         }
 
-        return $this->_db->get_records(coursecompletion::TABLE, array('courseid'=>$this->id));
+        return $this->_db->get_recordset(coursecompletion::TABLE, array('courseid'=>$this->id));
     }
 
     /*
@@ -273,20 +273,16 @@ class course extends data_object_with_custom_fields {
         }
         $sql .= 'GROUP BY cce.completestatusid';
 
-        $rows = $this->_db->get_records_sql($sql, array($this->id));
-
         $ret = array(STUSTATUS_NOTCOMPLETE=>0, STUSTATUS_FAILED=>0, STUSTATUS_PASSED=>0);
 
-        if (empty($rows)) {
-            return $ret;
-        }
-
+        $rows = $this->_db->get_recordset_sql($sql, array($this->id));
         foreach($rows as $row) {
             // We add the counts to the existing array, which should be as good as an assignment
             // because we never have duplicate statuses.  Of course, stranger things have happened.
 
             $ret[$row->status] += $row->count;
         }
+        unset($rows);
 
         return $ret;
     }
@@ -331,21 +327,19 @@ class course extends data_object_with_custom_fields {
      * @return array The list of curricula IDs.
      */
     function get_assigned_curricula() {
-      $assigned = array();
+        $assigned = array();
 
-      if (!$this->id) {
-          return false;
-      }
+        if (!$this->id) {
+            return false;
+        }
 
-      $result = $this->_db->get_records(curriculumcourse::TABLE, array('courseid'=>$this->id));
-
-      if ($result) {
-          foreach ($result as $data) {
+        $result = $this->_db->get_recordset(curriculumcourse::TABLE, array('courseid'=>$this->id));
+        foreach ($result as $data) {
             $assigned[$data->curriculumid] = $data->id;
-          }
-      }
+        }
+        unset($result);
 
-      return $assigned;
+        return $assigned;
     }
 
     /**
@@ -770,12 +764,12 @@ class course extends data_object_with_custom_fields {
 
         // copy completion elements
         $compelems = $this->get_completion_elements();
-        if (!empty($compelems)) {
-            foreach ($compelems as $compelem) {
-                unset($compelem->id);
-                $clone->save_completion_element($compelem);
-            }
+        foreach ($compelems as $compelem) {
+            unset($compelem->id);
+            $clone->save_completion_element($compelem);
         }
+        unset($compelems);
+
 
         // copy template
         $template = $this->_db->get_record(coursetemplate::TABLE, array('courseid'=>$this->id));

@@ -397,6 +397,7 @@ function pm_get_users_by_capability($contextlevel, $instance_id, $capability) {
                     $users = $users + $newusers;
                 }
             }
+            unset($parents);
         }
     }
     return $users;
@@ -405,32 +406,20 @@ function pm_get_users_by_capability($contextlevel, $instance_id, $capability) {
 function _cmctx_get_curriculum_containing_course($instance_id) {
     global $DB;
     require_once elispm::lib('data/curriculumcourse.class.php');
-    $result =$DB->get_records(curriculumcourse::TABLE, array('courseid' => $instance_id), '', 'curriculumid');
-    if ($result) {
-        return $result;
-    } else {
-        return array();
-    }
+    $result =$DB->get_recordset(curriculumcourse::TABLE, array('courseid' => $instance_id), '', 'curriculumid');
+    return ($result->valid() === true) ? $result : array();
 }
 
 function _cmctx_get_track_containing_class($instance_id) {
     global $DB;
     require_once elispm::lib('data/track.class.php');
-    $result = $DB->get_records(trackassignment::TABLE, array('classid' => $instance_id), '', 'trackid');
-    if ($result) {
-        return $result;
-    } else {
-        return array();
-    }
+    $result = $DB->get_recordset(trackassignment::TABLE, array('classid' => $instance_id), '', 'trackid');
+    return ($result->valid() === true) ? $result : array();
 }
 
 function _cmctx_get_cluster_containing_user($instance_id) {
     global $DB;
     require_once elispm::lib('data/clusterassignment.class.php');
-    $result = $DB->get_records(clusterassignment::TABLE, array('userid' => $instance_id), '', 'DISTINCT clusterid');
-    if ($result) {
-        return $result;
-    } else {
-        return array();
-    }
+    $result = $DB->get_recordset(clusterassignment::TABLE, array('userid' => $instance_id), '', 'DISTINCT clusterid');
+    return ($result->valid() === true) ? $result : array();
 }

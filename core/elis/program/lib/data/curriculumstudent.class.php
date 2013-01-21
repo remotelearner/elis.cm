@@ -309,14 +309,13 @@ class curriculumstudent extends elis_data_object {
     public static function get_completed_for_user($userid) {
         global $DB;
 
-        $rows = $DB->get_records_select(curriculumstudent::TABLE, "userid = $userid and completed != 0", null, '', 'id');
-        $rows = ($rows == false ? array() : $rows);
-
         $r = array();
 
+        $rows = $DB->get_recordset_select(curriculumstudent::TABLE, "userid = $userid and completed != 0", null, '', 'id');
         foreach($rows as $row) {
             $r[] = new curriculumstudent($row->id);
         }
+        unset($rows);
 
         return $r;
     }
@@ -325,8 +324,9 @@ class curriculumstudent extends elis_data_object {
      * Get a list of the curricula assigned to this student.
      *
      * @param int $userid The user id.
+     * @param int $cnt    Optional return count
      */
-    public static function get_curricula($userid = 0) {
+    public static function get_curricula($userid = 0, &$cnt = null) {
         global $USER, $DB;
 
         if ($userid <= 0) {
@@ -352,8 +352,14 @@ class curriculumstudent extends elis_data_object {
         $sort    = 'ORDER BY cur.priority ASC, cur.name, curcrs.position DESC ';
 
         $sql = $select.$tables.$join.$where.$group.$sort;
-
-        return $DB->get_recordset_sql($sql, $params);
+        $rs  = $DB->get_recordset_sql($sql, $params);
+        if ($cnt !== null) {
+            $cnt = $rs->valid()
+                   ? $DB->count_records_sql("SELECT COUNT('x') ".
+                              $tables.$join.$where, $params)
+                   : 0;
+        }
+        return $rs;
     }
 
     /**

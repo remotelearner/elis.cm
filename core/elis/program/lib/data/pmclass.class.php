@@ -160,17 +160,13 @@ class pmclass extends data_object_with_custom_fields {
         WHERE cce.classid = ? {$inactive}
         GROUP BY cce.completestatusid";
 
-        $rows = $DB->get_records_sql($sql, array($clsid));
-
         $ret = array(STUSTATUS_NOTCOMPLETE=>0, STUSTATUS_FAILED=>0, STUSTATUS_PASSED=>0);
 
-        if (empty($rows)) {
-            return $ret;
-        }
-
+        $rows = $DB->get_recordset_sql($sql, array($clsid));
         foreach ($rows as $row) {
             $ret[$row->status] = $row->count;
         }
+        unset($rows);
 
         return $ret;
     }
@@ -356,7 +352,7 @@ class pmclass extends data_object_with_custom_fields {
 
         $timenow = time();
 
-        if (!empty($elements)) {
+        if (!empty($elements) && $elements->valid() === true) {
             // for each student, find out how many required completion elements are
             // incomplete, and when the last completion element was graded
             $sql = 'SELECT s.*, grades.incomplete, grades.maxtime
@@ -419,6 +415,7 @@ class pmclass extends data_object_with_custom_fields {
                 }
             }
         }
+        unset($elements);
     }
 
     /**
@@ -454,13 +451,11 @@ class pmclass extends data_object_with_custom_fields {
             $params[] = $pmuserid;
         }
 
-        $broken_classes = $DB->get_records_sql($sql, $params);
-        if (!empty($broken_classes)) {
-            foreach ($broken_classes as $class) {
-                $DB->delete_records(classmoodlecourse::TABLE,
-                         array('id' => $class->id));
-            }
+        $broken_classes = $DB->get_recordset_sql($sql, $params);
+        foreach ($broken_classes as $class) {
+            $DB->delete_records(classmoodlecourse::TABLE, array('id' => $class->id));
         }
+        unset($broken_classes);
 
         return true;
     }
@@ -708,11 +703,10 @@ class pmclass extends data_object_with_custom_fields {
 
         foreach ($crss as $crsid => $crs) {
             $curcourse = curriculumcourse_get_list_by_course($crsid);
-            if (is_array($curcourse)) {
-                foreach ($curcourse as $rowid => $obj) {
-                    $curcourselist[$obj->curriculumid][$obj->courseid] = $obj->id;
-                }
+            foreach ($curcourse as $rowid => $obj) {
+                $curcourselist[$obj->curriculumid][$obj->courseid] = $obj->id;
             }
+            unset($curcourse);
         }
         return $curcourselist;
     }
@@ -994,7 +988,7 @@ class pmclass extends data_object_with_custom_fields {
  * @param   boolean         $onlyopen    If true, only consider classes whose end date has not been passed
  * @param   pm_context_set  $contexts    Contexts to provide permissions filtering, of null if none
  * @param   int             $clusterid   Id of a cluster that the class must be assigned to via a track
- * @return  object array                 Returned records
+ * @return  recordset                    Returned records
  */
 function pmclass_get_listing($sort = 'crsname', $dir = 'ASC', $startrec = 0,
                              $perpage = 0, $namesearch = '', $alpha = '', $id = 0, $onlyopen=false,
@@ -1088,7 +1082,7 @@ function pmclass_get_listing($sort = 'crsname', $dir = 'ASC', $startrec = 0,
 
     $sql = $select.$tables.$join.$where.$sort;
 
-    return $DB->get_records_sql($sql, $params, $startrec, $perpage);
+    return $DB->get_recordset_sql($sql, $params, $startrec, $perpage);
 }
 
 /**

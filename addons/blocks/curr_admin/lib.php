@@ -308,22 +308,20 @@ function block_curr_admin_load_menu_children_curriculum($id, $parent_cluster_id,
     $course_filter = array('contexts' => coursepage::get_contexts('elis/program:course_view'));
 
     $listing = curriculumcourse_get_listing($id, 'position', 'ASC', 0, $num_block_icons, '', '', $course_filter);
+    foreach ($listing as $item) {
+        $item->id = $item->courseid;
+        $params = array('id'     => $item->id,
+                        'action' => 'view');
 
-    if (!empty($listing)) {
-        foreach ($listing as $item) {
-            $item->id = $item->courseid;
-            $params = array('id'     => $item->id,
-                            'action' => 'view');
+        //count associated classes
+        $class_contexts = pmclasspage::get_contexts('elis/program:class_view');
+        $class_count = pmclass_count_records('', '', $item->id, false, $class_contexts, $parent_cluster_id);
 
-            //count associated classes
-            $class_contexts = pmclasspage::get_contexts('elis/program:class_view');
-            $class_count = pmclass_count_records('', '', $item->id, false, $class_contexts, $parent_cluster_id);
+        $isLeaf = empty($class_count);
 
-            $isLeaf = empty($class_count);
-
-            $result_items[] = block_curr_admin_get_menu_item('course', $item, 'root', $course_css_class, $parent_cluster_id, $parent_curriculum_id, $params, $isLeaf, $parent_path);
-        }
+        $result_items[] = block_curr_admin_get_menu_item('course', $item, 'root', $course_css_class, $parent_cluster_id, $parent_curriculum_id, $params, $isLeaf, $parent_path);
     }
+    unset($listing);
 
     //summary item
     $num_records = curriculumcourse_count_records($id, '', '', $course_filter);
@@ -435,15 +433,13 @@ function block_curr_admin_load_menu_children_track($id, $parent_cluster_id, $par
     $class_filter = array('contexts' => pmclasspage::get_contexts('elis/program:class_view'));
 
     $listing = track_assignment_get_listing($id, 'cls.idnumber', 'ASC', 0, $num_block_icons, '', '', $class_filter);
-
-    if (!empty($listing)) {
-        foreach ($listing as $item) {
-            $item->id = $item->classid;
-            $params = array('id'     => $item->id,
-                            'action' => 'view');
-            $result_items[] = block_curr_admin_get_menu_item('pmclass', $item, 'root', $class_css_class, $parent_cluster_id, $parent_curriculum_id, $params, false, $parent_path);
-        }
+    foreach ($listing as $item) {
+        $item->id = $item->classid;
+        $params = array('id'     => $item->id,
+                        'action' => 'view');
+        $result_items[] = block_curr_admin_get_menu_item('pmclass', $item, 'root', $class_css_class, $parent_cluster_id, $parent_curriculum_id, $params, false, $parent_path);
     }
+    unset($listing);
 
     //summary item
     $num_records = track_assignment_count_records($id, '', '', $class_filter);
@@ -518,14 +514,13 @@ function block_curr_admin_load_menu_children_course($id, $parent_cluster_id, $pa
     $listing = pmclass_get_listing('crsname', 'asc', 0, $num_block_icons, '', '',
                                    $id, false, $class_contexts, $parent_cluster_id);
 
-    if (!empty($listing)) {
-        foreach ($listing as $item) {
-            $item->clsname = $item->idnumber;
-            $params = array('id' => $item->id,
-                            'action' => 'view');
-            $result_items[] = block_curr_admin_get_menu_item('pmclass', $item, 'root', $class_css_class, $parent_cluster_id, $parent_curriculum_id, $params, false, $parent_path);
-        }
+    foreach ($listing as $item) {
+        $item->clsname = $item->idnumber;
+        $params = array('id' => $item->id,
+                        'action' => 'view');
+        $result_items[] = block_curr_admin_get_menu_item('pmclass', $item, 'root', $class_css_class, $parent_cluster_id, $parent_curriculum_id, $params, false, $parent_path);
     }
+    unset($listing);
 
     //summary item
     $num_records = pmclass_count_records('', '', $id, false, $class_contexts, $parent_cluster_id);
@@ -770,12 +765,11 @@ function block_curr_admin_create_instance() {
 
     // First delete instances
     $params = array('blockname' => 'curr_admin');
-    $instances = $DB->get_records('block_instances', $params);
-    if (!empty($instances)) {
-        foreach($instances as $instance) {
-            blocks_delete_instance($instance);
-        }
+    $instances = $DB->get_recordset('block_instances', $params);
+    foreach($instances as $instance) {
+        blocks_delete_instance($instance);
     }
+    unset($instances);
 
     // Set up the new instance
     $block_instance_record = new stdclass;

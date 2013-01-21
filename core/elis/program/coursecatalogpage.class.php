@@ -99,8 +99,8 @@ class coursecatalogpage extends pm_page {
 
     function build_navbar_available() { // get_navigation_available()
         //$action = optional_param('action', 'default', PARAM_CLEAN);
-        //$page = $this->get_new_page(array('action' => $action), true); //new coursecatalogpage(array()); 
-        $page = $this->get_new_page(); //new coursecatalogpage(array()); 
+        //$page = $this->get_new_page(array('action' => $action), true); //new coursecatalogpage(array());
+        $page = $this->get_new_page(); //new coursecatalogpage(array());
         $this->navbar->add(get_string('availablecourses', 'elis_program'),
                            $page->url);
     }
@@ -125,12 +125,14 @@ class coursecatalogpage extends pm_page {
         global $OUTPUT;
         $crsid = cm_get_param('crsid', 0);
 
-        if ($classes = pmclass_get_listing('startdate', 'ASC', 0, 0, '', '', $crsid, true)) {
+        $classes = pmclass_get_listing('startdate', 'ASC', 0, 0, '', '', $crsid, true);
+        if ($classes->valid() === true) {
             $table = new addclasstable($classes);
             $table->print_table();
         } else {
             echo $OUTPUT->heading(get_string('no_classes_available', 'elis_program'));
         }
+        unset($classes);
     }
 
     public function display_waitlist() { // action_waitlist
@@ -158,7 +160,8 @@ class coursecatalogpage extends pm_page {
 
                 echo '<div id="curriculum'. $usercur->curid ."\" {$this->div_attrs} class=\"yui-skin-sam\">";
 
-                if($courses = student::get_waitlist_in_curriculum($cuserid, $usercur->curid)) {
+                $courses = student::get_waitlist_in_curriculum($cuserid, $usercur->curid);
+                if($courses->valid() === true) {
                     echo "<div id=\"$usercur->curid\"></div>";
 
                     $table = new waitlisttable($courses);
@@ -166,7 +169,7 @@ class coursecatalogpage extends pm_page {
                 } else {
                     echo '<p>' . get_string('nocoursesinthiscurriculum', 'elis_program') . '</p>';
                 }
-
+                unset($courses);
 
                 echo '</div>';
             }
@@ -373,30 +376,38 @@ class coursecatalogpage extends pm_page {
 
         // This is for a Moodle user, so get the Curriculum user id.
         $cuserid = cm_get_crlmuserid($USER->id);
+        if (empty($cuserid)) {
+            return;
+        }
 
         // Needed for the hide buttons
         $this->include_js();
 
-        $usercurs = curriculumstudent::get_curricula($cuserid);
-        $instrclasses = user::get_instructed_classes($cuserid);
-        $noncurclasses = user::get_non_curriculum_classes($cuserid);
+        $usercnt = 0;
+        $usercurs = curriculumstudent::get_curricula($cuserid, $usercnt);
+        $instrcnt = 0;
+        $instrclasses = user::get_instructed_classes($cuserid, $instrcnt);
+        $noncurcnt = 0;
+        $noncurclasses = user::get_non_curriculum_classes($cuserid, $noncurcnt);
 
-        $numtables = 0;
-        if($usercurs) $numtables += count($usercurs);
-        if($instrclasses) $numtables += count($instrclasses);
-        if($noncurclasses) $numtables += count($noncurclasses);
-
-        if($numtables > elis::$config->elis_program->catalog_collapse_count) {
+        $numtables = $usercnt + $instrcnt + $noncurcnt;
+        if ($numtables > elis::$config->elis_program->catalog_collapse_count) {
             $buttonLabel = get_string('show');
             $extraclass = ' hide';
         } else {
             $buttonLabel = get_string('hide');
             $extraclass = '';
         }
+
         // Process our curricula in turn, outputting the courses within each.
-        if ($usercurs) {
+        if ($usercnt) {
             $showcurid = optional_param('showcurid',0,PARAM_INT);
             foreach ($usercurs as $usercur) {
+                // make sure the curriculum still exists!
+                $curr = curriculum::find(new field_filter('id', $usercur->curid));
+                if (empty($curr) || empty($curr->rs) || !$curr->rs->valid()) {
+                    continue;
+                }
                 if ($classes = user::get_current_classes_in_curriculum($cuserid, $usercur->curid)) {
                     if ($showcurid > 0) {
                         // If we are passed the showcurid parameter then override the default show/hide settings
@@ -423,7 +434,7 @@ class coursecatalogpage extends pm_page {
         }
 
         // Print out a table for classes not belonging to any curriculum
-        if ($noncurclasses) {
+        if ($noncurcnt) {
             $labelshow = get_string('show');
             $labelhide = get_string('hide');
             echo $OUTPUT->heading('<div class="clearfix"></div><div class="headermenu"><script id="noncurrscript" type="text/javascript">toggleVisibleInit("noncurrscript", "noncurrbutton", "' . $buttonLabel . '", "'.$labelhide.'", "'.$labelshow.'", "noncurr");</script></div>'. get_string('othercourses', 'elis_program'));
@@ -440,7 +451,7 @@ class coursecatalogpage extends pm_page {
         }
 
         // Print out a table for classes we instruct
-        if ($instrclasses) {
+        if ($instrcnt) {
             echo $OUTPUT->heading('<div class="clearfix"></div><div class="headermenu"><script id="instrscript" type="text/javascript">toggleVisibleInit("instrscript", "instrbutton", "' . $buttonLabel . '", "Hide", "Show", "instr");</script></div>'. get_string('instructedcourses', 'elis_program'));
 
             echo "<div id=\"instr\" {$this->div_attrs} class=\"yui-skin-sam" . $extraclass . '">';

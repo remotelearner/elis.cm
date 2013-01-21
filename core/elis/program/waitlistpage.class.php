@@ -138,7 +138,7 @@ class waitlistpage extends selectionpage {
                  WHERE watlst.classid = ?
                    AND watlst.id IN ('. implode(',',$selection) .")
               ORDER BY $sort $dir";
-        return $DB->get_records_sql($sql, array($id));
+        return $DB->get_recordset_sql($sql, array($id));
     }
 
     function create_selection_table($records, $baseurl) {

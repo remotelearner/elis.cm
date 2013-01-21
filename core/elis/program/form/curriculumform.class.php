@@ -115,19 +115,27 @@ class cmCurriculaForm extends cmform {
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
 
-        if(!empty($data['timetocomplete'])) {
-            $datedelta = new datedelta($data['timetocomplete']);
-
-            if(!$datedelta->getDateString()) {
+        if (!empty($data['timetocomplete'])) {
+            if (!datedelta::validate($data['timetocomplete'])) {
                 $errors['timetocomplete'] = get_string('error_not_timeformat', 'elis_program');
+            } else {
+                $datedelta = new datedelta($data['timetocomplete']);
+
+                if ($datedelta->is_zero() || !$datedelta->getDateString()) {
+                    $errors['timetocomplete'] = get_string('error_invalid_timeperiod', 'elis_program');
+                }
             }
         }
 
-        if(!empty($data['frequency'])) {
-            $datedelta = new datedelta($data['frequency']);
+        if (!empty($data['frequency'])) {
+            if (!datedelta::validate($data['frequency'])) {
+                $errors['frequency'] = get_string('error_not_timeformat', 'elis_program');
+            } else {
+                $datedelta = new datedelta($data['frequency']);
 
-            if(!$datedelta->getDateString()) {
-                $errors['frequency'] = get_string('error_not_durrationformat', 'elis_program');
+                if ($datedelta->is_zero() || !$datedelta->getDateString()) {
+                    $errors['frequency'] = get_string('error_invalid_timeperiod', 'elis_program');
+                }
             }
         }
 

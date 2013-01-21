@@ -485,9 +485,8 @@ class associationpage extends pm_page {
 
         //todo: make usersetassignmentpage consistent with other pages and
         //change all pages to use recordsets
-        $empty = empty($items) || $items instanceof Iterator && !$items->valid();
 
-        if ($empty) {
+        if (empty($items) || ($items instanceof Iterator && $items->valid() === false)) {
             $a = new stdClass;
 
             //determining if we are searching
@@ -548,17 +547,16 @@ class associationpage extends pm_page {
             //$taken_ids[] = $taken_item->id;
         }
 
-        if (!($avail = $items)) {
-            $avail = array();
-        }
+        $items = (is_array($items) || ($items instanceof Iterator && $items->valid()===true)) ? $items : array();
 
         $menu = array();
 
-        foreach ($avail as $info) {
+        foreach ($items as $info) {
             if (!in_array($info->id, $taken_ids)) {
                 $menu[$info->id] = $info->$namefield;
             }
         }
+        unset($items);
 
         echo '<div align="center"><br />';
 
@@ -622,8 +620,112 @@ class associationpage extends pm_page {
         pmsearchbox($this);
     }
 
+    /**
+     * Receives a request to apply a value to all selected items. Saves the new information for each selected item.
+     */
+    public function bulk_apply_all() {
+        global $SESSION;
+
+        $target = optional_param('target', '', PARAM_ALPHA);
+        $page = optional_param('s', '', PARAM_ALPHA);
+        $id = optional_param('id', 1, PARAM_INT);
+        $blktpl = optional_param('bulktpl', '', PARAM_CLEAN);
+        $pagename = $page . $id . $target;
+        $blktpl = json_decode($blktpl);
+
+        if (!empty($SESSION->associationpage[$pagename]) && is_array($SESSION->associationpage[$pagename])) {
+            foreach ($SESSION->associationpage[$pagename] as $uid => $rec) {
+                if (!empty($rec->selected) && $rec->selected === true) {
+                    if (!empty($blktpl->enrolment_date_checked) && $blktpl->enrolment_date_checked === true) {
+                        $rec->enrolment_date->day = $blktpl->enrolment_date->day;
+                        $rec->enrolment_date->month = $blktpl->enrolment_date->month;
+                        $rec->enrolment_date->year = $blktpl->enrolment_date->year;
+                    }
+                    if (!empty($blktpl->completion_date_checked) && $blktpl->completion_date_checked === true) {
+                        $rec->completion_date->day = $blktpl->completion_date->day;
+                        $rec->completion_date->month = $blktpl->completion_date->month;
+                        $rec->completion_date->year = $blktpl->completion_date->year;
+                    }
+                    if (!empty($blktpl->status_checked)) {
+                        $rec->status = $blktpl->status;
+                    }
+                    if (!empty($blktpl->grade_checked)) {
+                        $rec->grade = $blktpl->grade;
+                    }
+                    if (!empty($blktpl->credits_checked)) {
+                        $rec->credits = $blktpl->credits;
+                    }
+                    if (!empty($blktpl->locked_checked)) {
+                        $rec->locked = $blktpl->locked;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Removes saved checkboxes for the page specified by target, s, and id input vars.
+     */
+    public function bulk_checkbox_selection_deselectall() {
+        global $SESSION;
+
+        $target = optional_param('target', '', PARAM_ALPHA);
+        $page = optional_param('s', '', PARAM_ALPHA);
+        $id = optional_param('id', 1, PARAM_INT);
+        $pagename = $page . $id . $target;
+
+        if (!empty($SESSION->associationpage[$pagename])) {
+            foreach ($SESSION->associationpage[$pagename] as $userid => $rec) {
+                unset($SESSION->associationpage[$pagename][$userid]->selected);
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Resets all saved changes.
+     * @param  string $target The the section for the current page to reset. (ex. "bulkedit")
+     */
+    public function bulk_checkbox_selection_reset($target) {
+        session_selection_deletion($target);
+    }
+
+    /**
+     * Store checkbox data into session
+     */
+    public function bulk_checkbox_selection_session() {
+        global $SESSION;
+        $selection = optional_param('selected_checkboxes', '', PARAM_CLEAN);
+        $target = optional_param('target', '', PARAM_ALPHA);
+        $page = optional_param('s', '', PARAM_ALPHA);
+        $id = optional_param('id', 1, PARAM_INT);
+
+        $selectedcheckboxes = json_decode($selection);
+
+        if (is_array($selectedcheckboxes)) {
+            $pagename = $page . $id . $target;
+
+            if (!isset($SESSION->associationpage[$pagename])) {
+                $SESSION->associationpage[$pagename] = array();
+            }
+
+            foreach ($selectedcheckboxes as $selectedcheckbox) {
+                $record = json_decode($selectedcheckbox);
+
+                if(isset($record->changed) && $record->changed === true) {
+                    $SESSION->associationpage[$pagename][$record->id] = $record;
+                } else {
+                    if (isset($SESSION->associationpage[$pagename][$record->id])) {
+                        unset($SESSION->associationpage[$pagename][$record->id]);
+                    }
+                }
+            }
+        }
+    }
+
     // Store checkbox data into session
-    function checkbox_selection_session() {
+    public function checkbox_selection_session() {
         global $SESSION;
         $selection = optional_param('selected_checkboxes', '', PARAM_CLEAN);
         $target = optional_param('target', '', PARAM_ALPHA);

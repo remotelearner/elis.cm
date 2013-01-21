@@ -323,6 +323,7 @@ class pmclasspage extends managementpage {
         }
 
         $this->print_list_view($items, $numitems, $columns, $filter=null, $alphaflag=true, $searchflag=true);
+        unset($items);
     }
 
     function do_delete() {

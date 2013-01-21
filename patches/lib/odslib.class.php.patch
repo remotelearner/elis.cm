@@ -1,0 +1,13 @@
+diff --git a/lib/odslib.class.php b/lib/odslib.class.php
+index be1a5d9..8192a37 100644
+--- a/lib/odslib.class.php
++++ b/lib/odslib.class.php
+@@ -50,7 +50,7 @@ class MoodleODSWorkbook {
+     /* Create one Moodle Worksheet
+      * @param string $name Name of the sheet
+      */
+-    function &add_worksheet($name = '') {
++    function add_worksheet($name = '') {
+     /// Create the Moodle Worksheet. Returns one pointer to it
+         $ws = new MoodleODSWorksheet($name);
+         $this->worksheets[] =& $ws;

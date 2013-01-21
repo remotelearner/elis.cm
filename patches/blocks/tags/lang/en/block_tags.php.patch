@@ -1,0 +1,12 @@
+diff --git a/blocks/tags/lang/en/block_tags.php b/blocks/tags/lang/en/block_tags.php
+index 265cd5a..4998f68 100644
+--- a/blocks/tags/lang/en/block_tags.php
++++ b/blocks/tags/lang/en/block_tags.php
+@@ -31,6 +31,7 @@ $string['arrowtitle'] = 'Click here to enter the suggested text (grey letters).'
+ $string['communitytags'] = 'Community tags:';
+ $string['communitytags1'] = 'community tags';
+ $string['communitytags2'] = 'Show all user created course tags';
++$string['configtitle'] = 'Block title';
+ $string['coursetags'] = 'Course tags:';
+ $string['coursetags1'] = 'course tags';
+ $string['coursetags2'] = 'Show tags for this course';

@@ -145,7 +145,12 @@ class testTrackAssignmentGetAvailableUsers extends elis_database_test {
         pm_set_config('legacy_show_inactive_users', 1);
         elis::$config = new elis_config();
 
-        $users = usertrack::get_available_users(1);
+        $users_recset = usertrack::get_available_users(1);
+        $users = array();
+        foreach ($users_recset as $key => $user) {
+            $users[$key] = $user;
+        }
+        unset($users_recset);
 
         //note: this includes the user we are currently using for permissions reasons
         $this->assertEquals(4, count($users));
@@ -183,7 +188,12 @@ class testTrackAssignmentGetAvailableUsers extends elis_database_test {
         pm_set_config('legacy_show_inactive_users', 0);
         elis::$config = new elis_config();
 
-        $users = usertrack::get_available_users(1);
+        $users_recset = usertrack::get_available_users(1);
+        $users = array();
+        foreach ($users_recset as $key => $user) {
+            $users[$key] = $user;
+        }
+        unset($users_recset);
 
         //note: this includes the user we are currently using for permissions reasons
         $this->assertEquals(3, count($users));
@@ -233,7 +243,12 @@ class testTrackAssignmentGetAvailableUsers extends elis_database_test {
         pm_set_config('legacy_show_inactive_users', 1);
         elis::$config = new elis_config();
 
-        $users = usertrack::get_available_users(1, $sort, $dir);
+        $users_recset = usertrack::get_available_users(1, $sort, $dir);
+        $users = array();
+        foreach ($users_recset as $key => $user) {
+            $users[$key] = $user;
+        }
+        unset($users_recset);
 
         //note: this includes the user we are currently using for permissions reasons
         $this->assertEquals(4, count($users));
@@ -253,7 +268,12 @@ class testTrackAssignmentGetAvailableUsers extends elis_database_test {
         set_config('siteguest', '');
         set_config('siteadmins', '');
 
-        $users = usertrack::get_available_users(1, 'lastname', 'ASC', 'AnotherUnassigned Active');
+        $users_recset = usertrack::get_available_users(1, 'lastname', 'ASC', 'AnotherUnassigned Active');
+        $users = array();
+        foreach ($users_recset as $key => $user) {
+            $users[$key] = $user;
+        }
+        unset($users_recset);
 
         $this->assertEquals(1, count($users));
 
@@ -278,7 +298,12 @@ class testTrackAssignmentGetAvailableUsers extends elis_database_test {
         set_config('siteguest', '');
         set_config('siteadmins', '');
 
-        $users = usertrack::get_available_users(1, 'lastname', 'ASC', '', 'A');
+        $users_recset = usertrack::get_available_users(1, 'lastname', 'ASC', '', 'A');
+        $users = array();
+        foreach ($users_recset as $key => $user) {
+            $users[$key] = $user;
+        }
+        unset($users_recset);
 
         //note: this includes the user we are currently using for permissions reasons
         $this->assertEquals(2, count($users));
@@ -306,7 +331,12 @@ class testTrackAssignmentGetAvailableUsers extends elis_database_test {
         pm_set_config('legacy_show_inactive_users', 0);
         elis::$config = new elis_config();
 
-        $users = usertrack::get_available_users(1, 'lastname', 'ASC', '', '', 0, 1);
+        $users_recset = usertrack::get_available_users(1, 'lastname', 'ASC', '', '', 0, 1);
+        $users = array();
+        foreach ($users_recset as $key => $user) {
+            $users[$key] = $user;
+        }
+        unset($users_recset);
 
         //validate that only one record is picked up when paging with page size 1
         $this->assertEquals(1, count($users));
@@ -381,7 +411,12 @@ class testTrackAssignmentGetAvailableUsers extends elis_database_test {
         //assume the role of the user with the role assignment
         $USER = $moodleuser;
 
-        $users = usertrack::get_available_users(1);
+        $users_recset = usertrack::get_available_users(1);
+        $users = array();
+        foreach ($users_recset as $key => $user) {
+            $users[$key] = $user;
+        }
+        unset($users_recset);
 
         $this->assertEquals(1, count($users));
 

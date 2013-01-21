@@ -75,5 +75,15 @@ class curriculumstudentTest extends elis_database_test {
         $cs->load();
 
         $cs->complete(time(),5);
+
+        //verify
+        $completed = curriculumstudent::get_completed_for_user(103);
+        $count = 0;
+        foreach ($completed as $cstu) {
+            $this->assertTrue(($cstu instanceof curriculumstudent));
+            $this->assertEquals(103,$cstu->userid);
+            $count++;
+        }
+        $this->assertEquals(1,$count);
     }
 }

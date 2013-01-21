@@ -1,0 +1,12 @@
+diff --git a/mod/quiz/overrideedit.php b/mod/quiz/overrideedit.php
+index 1a62b02..499f0bb 100644
+--- a/mod/quiz/overrideedit.php
++++ b/mod/quiz/overrideedit.php
+@@ -169,6 +169,7 @@ if ($mform->is_cancelled()) {
+         $fromform->id = $DB->insert_record('quiz_overrides', $fromform);
+     }
+ 
++    quiz_update_open_attempts(array('quizid'=>$quiz->id));
+     quiz_update_events($quiz, $fromform);
+ 
+     add_to_log($cm->course, 'quiz', 'edit override',

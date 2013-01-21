@@ -53,20 +53,18 @@ $track_classes_fixed_cnt = 0;
 $sql = "SELECT trkcls.id, trkcls.trackid, trkcls.courseid, trkcls.classid, trk.curid
          FROM {crlm_track_class} trkcls
          JOIN {crlm_track} trk ON trk.id = trkcls.trackid";
-$classes = $DB->get_records_sql($sql);
-
-if (is_array($classes)) {
-    foreach ($classes as $trackClassId=>$trackClassObj) {
-        $select = "curriculumid = {$trackClassObj->curid} AND courseid = {$trackClassObj->courseid}";
-        $cnt = $DB->count_records_select(curriculumcourse::TABLE, $select);
-        if ($cnt < 1) {
-            $sql = "DELETE FROM {crlm_track_class}
-                          WHERE id = {$trackClassObj->id} LIMIT 1";
-            $DB->execute($sql);
-            $track_classes_fixed_cnt++;
-        }
+$classes = $DB->get_recordset_sql($sql);
+foreach ($classes as $trackClassId=>$trackClassObj) {
+    $select = "curriculumid = {$trackClassObj->curid} AND courseid = {$trackClassObj->courseid}";
+    $cnt = $DB->count_records_select(curriculumcourse::TABLE, $select);
+    if ($cnt < 1) {
+        $sql = "DELETE FROM {crlm_track_class}
+                      WHERE id = {$trackClassObj->id} LIMIT 1";
+        $DB->execute($sql);
+        $track_classes_fixed_cnt++;
     }
 }
+unset($classes);
 
 if ($track_classes_fixed_cnt > 0) {
     mtrace("{$track_classes_fixed_cnt} classes removed from tracks.{$br}");

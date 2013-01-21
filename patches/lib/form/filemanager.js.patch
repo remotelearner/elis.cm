@@ -1,0 +1,15 @@
+diff --git a/lib/form/filemanager.js b/lib/form/filemanager.js
+index 1e879f2..0c868d5 100644
+--- a/lib/form/filemanager.js
++++ b/lib/form/filemanager.js
+@@ -218,9 +218,9 @@ M.form_filemanager.init = function(Y, options) {
+                 params: {'filepath':filepath},
+                 callback: function(id, obj, args) {
+                     scope.filecount = obj.filecount;
+-                    scope.check_buttons();
+                     scope.options = obj;
+                     scope.lazyloading = {};
++                    scope.check_buttons();
+                     scope.render(obj);
+                 }
+             }, true);

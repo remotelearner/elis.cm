@@ -1,0 +1,13 @@
+diff --git a/mod/feedback/item/multichoice/multichoice_form.php b/mod/feedback/item/multichoice/multichoice_form.php
+index 25074fd..6dd192d 100644
+--- a/mod/feedback/item/multichoice/multichoice_form.php
++++ b/mod/feedback/item/multichoice/multichoice_form.php
+@@ -29,7 +29,7 @@ class feedback_multichoice_form extends feedback_item_form {
+ 
+         $mform->addElement('header', 'general', get_string($this->type, 'feedback'));
+ 
+-        $mform->addElement('checkbox', 'required', get_string('required', 'feedback'));
++        $mform->addElement('advcheckbox', 'required', get_string('required', 'feedback'), '' , null , array(0, 1));
+ 
+         $mform->addElement('text',
+                             'name',

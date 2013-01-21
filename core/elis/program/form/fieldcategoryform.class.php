@@ -64,13 +64,14 @@ class fieldcategoryform extends cmform {
                 JOIN {elis_field_category_contexts} ctx ON cat.id = ctx.categoryid
                 WHERE ctx.contextlevel = ? AND cat.name=?';
             $params = array($ctxlvl,$data['name']);
-            $existing_catname = $DB->get_records_sql($sql,$params);
-            if (!empty($existing_catname)) {
+            $existing_catname = $DB->get_recordset_sql($sql,$params);
+            if ($existing_catname->valid() === true) {
                 $a = new stdClass;
                 $a->tablename = 'elis_field_categories';
                 $a->fields = 'name';
                 $errors['name'] = get_string('data_object_validation_unique', 'elis_core', $a);
             }
+            unset($existing_catname);
         }
         return $errors;
     }

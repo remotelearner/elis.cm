@@ -1,0 +1,12 @@
+diff --git a/mod/quiz/backup/moodle2/restore_quiz_stepslib.php b/mod/quiz/backup/moodle2/restore_quiz_stepslib.php
+index 58a38d1..8014bc1 100644
+--- a/mod/quiz/backup/moodle2/restore_quiz_stepslib.php
++++ b/mod/quiz/backup/moodle2/restore_quiz_stepslib.php
+@@ -306,6 +306,7 @@ class restore_quiz_activity_structure_step extends restore_questions_activity_st
+         $data->timestart = $this->apply_date_offset($data->timestart);
+         $data->timefinish = $this->apply_date_offset($data->timefinish);
+         $data->timemodified = $this->apply_date_offset($data->timemodified);
++        $data->timecheckstate = $this->apply_date_offset($data->timecheckstate);
+ 
+         // Deals with up-grading pre-2.3 back-ups to 2.3+.
+         if (!isset($data->state)) {

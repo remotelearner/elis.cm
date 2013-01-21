@@ -1,0 +1,13 @@
+diff --git a/backup/backup.class.php b/backup/backup.class.php
+index 642708f..c3cc5f8 100644
+--- a/backup/backup.class.php
++++ b/backup/backup.class.php
+@@ -109,7 +109,7 @@ abstract class backup implements checksumable {
+     const OPERATION_RESTORE ='restore';// We are performing one restore
+ 
+     // Version (to keep CFG->backup_version (and release) updated automatically)
+-    const VERSION = 2012061800;
++    const VERSION = 2012062500;
+     const RELEASE = '2.3';
+ }
+ 

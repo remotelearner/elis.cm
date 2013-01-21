@@ -57,11 +57,11 @@ class generalized_filter_courseclassselect extends generalized_filter_dependents
         $choices_array = array('0' => get_string('selectaclass', 'elis_program'));
 
         $contexts = get_contexts_by_capability_for_user('class', 'block/php_report:view', $USER->id);
-        if ($records = pmclass_get_listing('idnumber', 'ASC', 0, 0, '', '', 0, false, $contexts)) {
-            foreach ($records as $record) {
-                $choices_array[$record->id] = $record->idnumber;
-            }
+        $records = pmclass_get_listing('idnumber', 'ASC', 0, 0, '', '', 0, false, $contexts);
+        foreach ($records as $record) {
+            $choices_array[$record->id] = $record->idnumber;
         }
+        unset($records);
 
         $options['choices'] = $choices_array;
 
@@ -96,7 +96,8 @@ class generalized_filter_courseclassselect extends generalized_filter_dependents
 
         // Fetch array of allowed classes
         $contexts = get_contexts_by_capability_for_user('class', 'block/php_report:view', $USER->id);
-        if ($records = pmclass_get_listing('crsname', 'ASC', 0, 0, '', '', 0, false, $contexts)) {
+        $records = pmclass_get_listing('crsname', 'ASC', 0, 0, '', '', 0, false, $contexts);
+        if ($records->valid() === true) {
             $allowed_courses = array();
             foreach ($records as $record) {
                 if (!in_array($record->courseid, $allowed_courses)) {
@@ -114,6 +115,7 @@ class generalized_filter_courseclassselect extends generalized_filter_dependents
                 }
             }
         }
+        unset($records);
 
         return $courses_array;
     }

@@ -179,9 +179,7 @@ abstract class managementpage extends pm_page {
      * @param $table the table object to print
      */
     public function print_table($items, $columns) {
-        if (!$items) {
-            $this->print_no_items();
-        } else {
+        if ((is_array($items) && !empty($items)) || ($items instanceof Iterator && $items->valid() === true)) {
             $this->print_add_button();
             echo html_writer::empty_tag('br', array('clear' => 'all'));
 
@@ -189,6 +187,8 @@ abstract class managementpage extends pm_page {
             echo html_writer::start_tag('div', array('style' => 'overflow-x:auto;overflow-y:hidden;-ms-overflow-y:hidden;'));
             echo $table->get_html();
             echo html_writer::end_tag('div');
+        } else {
+            $this->print_no_items();
         }
     }
 

@@ -66,6 +66,7 @@ function results_engine_cron() {
             break;
         }
     }
+    unset($actives);
 }
 
 /**
@@ -102,7 +103,7 @@ function results_engine_manual($context) {
          .' WHERE '. implode(' AND ', $where);
 
     $params = array($level, $context->instanceid);
-    $classes = $DB->get_records_sql($sql, $params);
+    $classes = $DB->get_recordset_sql($sql, $params);
 
     foreach ($classes as $class) {
         $class->cron = false;
@@ -112,6 +113,7 @@ function results_engine_manual($context) {
         results_engine_process($class);
         $processed = true;
     }
+    unset($classes);
     return $processed;
 }
 
@@ -180,7 +182,7 @@ function results_engine_check($class) {
  *   days             - number of days to offset triggerstartdate
  *   criteriatype     - what mark to look at, 0 for final mark, anything else is an element id
  *
- * @return array An array of class objects
+ * @return array A recordset of class objects
  * @uses $DB
  */
 function results_engine_get_active() {
@@ -218,8 +220,7 @@ function results_engine_get_active() {
     $params = array($courselevel, $classlevel, RESULTS_ENGINE_SCHEDULED, RESULTS_ENGINE_GRADE_SET,
                     $classlevel, RESULTS_ENGINE_SCHEDULED, RESULTS_ENGINE_GRADE_SET);
 
-    $actives = $DB->get_records_sql($sql, $params);
-    return $actives;
+    return $DB->get_recordset_sql($sql, $params);
 }
 
 /**

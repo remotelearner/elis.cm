@@ -206,6 +206,11 @@ class coursepage extends managementpage {
         $crs = new course($id);
         $crs->seturl(null, array('s'=>'crs', 'section'=>'curr', 'action'=>'selem'));
         $form = $crs->create_completion_form($this->optional_param('elemid', 0, PARAM_INT));
+        if (!$form->is_cancelled() && !$form->is_validated()) {
+            $this->print_tabs('elem', array('id' => $id));
+            $form->display();
+            return;
+        }
         if (!$form->is_cancelled()) {
             $elemrecord = new Object();
             $elemrecord->id                = optional_param('elemid', 0, PARAM_INT);
@@ -254,7 +259,7 @@ class coursepage extends managementpage {
 
         $elements = $crs->get_completion_elements();
 
-        if ($elements) {
+        if (!empty($elements) && $elements->valid() === true) {
             $columns = array(
                 'idnumber'          => array('header'=>get_string('completion_idnumber','elis_program')),
                 'name'              => array('header'=>get_string('completion_name','elis_program')),
@@ -307,6 +312,7 @@ class coursepage extends managementpage {
         } else {
             $output .= '<div align="center">' . get_string('no_completion_elements', 'elis_program') . '</div>';
         }
+        unset($elements);
 
         $output .= '<br clear="all" />' . "\n";
         $output .= '<div align="center">';

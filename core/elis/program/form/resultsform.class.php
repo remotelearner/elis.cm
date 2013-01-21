@@ -130,11 +130,11 @@ class cmEngineForm extends cmform {
 
         $conditions = array('courseid' => $this->_customdata['courseid']);
 
-        $completions = $DB->get_records(coursecompletion::TABLE, $conditions);
-
+        $completions = $DB->get_recordset(coursecompletion::TABLE, $conditions);
         foreach ($completions as $completion) {
             $grades[$completion->id] = $completion->name;
         }
+        unset($completions);
 
         $page = 'crsenginestatus';
         if ($this->_customdata['enginetype'] == 'class') {
@@ -510,12 +510,13 @@ class cmEngineForm extends cmform {
                     ON fc.fieldid = f.id
                  WHERE fc.contextlevel = '. CONTEXT_ELIS_USER;
 
-        $rows = $DB->get_records_sql($sql);
+        $rows = $DB->get_recordset_sql($sql);
         foreach ($rows as $row) {
             if (!empty($row->id)) {
                 $results[$row->id] = $row->name;
             }
         }
+        unset($rows);
 
         return $results;
     }

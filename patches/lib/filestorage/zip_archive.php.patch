@@ -1,0 +1,28 @@
+diff --git a/lib/filestorage/zip_archive.php b/lib/filestorage/zip_archive.php
+index 9acd1d3..985c356 100644
+--- a/lib/filestorage/zip_archive.php
++++ b/lib/filestorage/zip_archive.php
+@@ -288,7 +288,7 @@ class zip_archive extends file_archive {
+         if (!isset($this->za)) {
+             return false;
+         }
+-        $localname = ltrim($localname, '/'). '/';
++        $localname = trim($localname, '/'). '/';
+         $localname = $this->mangle_pathname($localname);
+ 
+         if ($localname === '/') {
+@@ -296,7 +296,13 @@ class zip_archive extends file_archive {
+             return false;
+         }
+ 
+-        return $this->za->addEmptyDir($localname);
++        if ($localname !== '') {
++            if (!$this->za->addEmptyDir($localname)) {
++                return false;
++            }
++            $this->modified = true;
++        }
++        return true;
+     }
+ 
+     /**

@@ -29,9 +29,19 @@ global $CFG;
 require_once($CFG->dirroot . '/elis/program/lib/setup.php');
 require_once(elis::lib('testlib.php'));
 require_once('PHPUnit/Extensions/Database/DataSet/CsvDataSet.php');
+
+require_once(elispm::lib('data/course.class.php'));
+require_once(elispm::lib('data/curriculum.class.php'));
+require_once(elispm::lib('data/curriculumcourse.class.php'));
+require_once(elispm::lib('data/curriculumstudent.class.php'));
+require_once(elispm::lib('data/pmclass.class.php'));
+require_once(elispm::lib('data/student.class.php'));
 require_once(elispm::lib('data/userset.class.php'));
 require_once(elispm::lib('data/usermoodle.class.php'));
+
 require_once($CFG->dirroot . '/user/profile/lib.php');
+
+require_once(elispm::file('phpunit/datagenerator.php'));
 
 class userTest extends elis_database_test {
     protected $backupGlobalsBlacklist = array('DB');
@@ -55,6 +65,12 @@ class userTest extends elis_database_test {
             field_data_text::TABLE => 'elis_core',
             field_contextlevel::TABLE => 'elis_core',
             field_category_contextlevel::TABLE => 'elis_core',
+            course::TABLE => 'elis_program',
+            curriculum::TABLE => 'elis_program',
+            curriculumcourse::TABLE => 'elis_program',
+            curriculumstudent::TABLE => 'elis_program',
+            pmclass::TABLE => 'elis_program',
+            student::TABLE => 'elis_program',
             user::TABLE => 'elis_program',
             usermoodle::TABLE => 'elis_program',
         );
@@ -321,5 +337,75 @@ class userTest extends elis_database_test {
         //var_dump($src);
         //var_dump($ret);
         $this->assertDataSetsEqual($dataset, $result);
+    }
+
+    public function test_get_dashboard_program_data() {
+        global $DB;
+        $datagen = new elis_program_datagen_unit($DB);
+
+        //create entities
+        $mock_user = $datagen->create_user();
+        $pgm = $datagen->create_program();
+        $pmcourse = $datagen->create_course();
+        $pmclass = $datagen->create_pmclass(array('courseid'=>$pmcourse->id));
+
+        //perform assignments
+        $curcourse = $datagen->assign_course_to_curriculum($pmcourse->id,$pgm->id);
+        $curstu = $datagen->assign_user_to_curriculum($mock_user->id,$pgm->id);
+        $stu = $datagen->assign_user_to_class($mock_user->id,$pmclass->id);
+
+        $expected_usercurs = array(
+            $curstu->id => (object)array(
+                'id' => $curstu->id,
+                'curid' => $pgm->id,
+                'name' => $pgm->name
+            )
+        );
+
+        $expected_curriculas = array(
+            $pgm->id => array(
+                'id' => $pgm->id,
+                'name' => $pgm->name,
+                'data' => array(
+                    array(
+                        $pmcourse->name,
+                        $pmclass->idnumber,
+                        $pmcourse->syllabus,
+                        0,
+                        get_string('n_completed', 'elis_program'),
+                        get_string('na','elis_program')
+                    )
+                )
+            )
+        );
+
+        $expected_classids = array($pmclass->id);
+
+        $expected_totalcurricula = 1;
+        $expected_completecoursesmap = array($pgm->id => 0);
+        $expected_totalcoursesmap = array($pgm->id => 1);
+
+        $user = new user;
+        $user->id = $mock_user->id;
+        list($usercurs, $curriculas, $classids, $totalcurricula, $completecoursesmap, $totalcoursesmap) = $user->get_dashboard_program_data(false,false);
+        $this->assertEquals($expected_usercurs,$usercurs);
+        $this->assertEquals($expected_curriculas,$curriculas);
+        $this->assertEquals($expected_classids,$classids);
+        $this->assertEquals($expected_totalcurricula,$totalcurricula);
+        $this->assertEquals($expected_completecoursesmap,$completecoursesmap);
+        $this->assertEquals($expected_totalcoursesmap,$totalcoursesmap);
+
+
+        $expected_curriculas = array();
+        $expected_totalcurricula = 0;
+        $expected_completecoursesmap = array();
+        $expected_totalcoursesmap = array();
+        list($usercurs, $curriculas, $classids, $totalcurricula, $completecoursesmap, $totalcoursesmap) = $user->get_dashboard_program_data(true,true);
+        $this->assertEquals($expected_usercurs,$usercurs);
+        $this->assertEquals($expected_curriculas,$curriculas);
+        $this->assertEquals($expected_classids,$classids);
+        $this->assertEquals($expected_totalcurricula,$totalcurricula);
+        $this->assertEquals($expected_completecoursesmap,$completecoursesmap);
+        $this->assertEquals($expected_totalcoursesmap,$totalcoursesmap);
     }
 }

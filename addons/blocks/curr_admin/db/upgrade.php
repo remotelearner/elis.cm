@@ -1857,7 +1857,7 @@ function xmldb_block_curr_admin_upgrade($oldversion = 0) {
 
     if ($result && $oldversion < 2011070600) {
         // Convert crlm_config to config_plugins with plugin = 'elis_program'
-        $settings = $DB->get_records('crlm_config');
+        $settings = $DB->get_recordset('crlm_config');
         foreach ($settings as $setting) {
             $setting->plugin = 'elis_program';
             $result = $DB->insert_record('config_plugins', $setting);
@@ -1865,6 +1865,7 @@ function xmldb_block_curr_admin_upgrade($oldversion = 0) {
                 break;
             }
         }
+        unset($settings);
         if ($result) {
             $DB->delete_records('crlm_config'); // TBD: delete ALL???
         }

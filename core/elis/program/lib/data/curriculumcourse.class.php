@@ -366,13 +366,12 @@ class curriculumcourse extends elis_data_object {
             return false;
         }
 
-        $tracks = $this->_db->get_records(track::TABLE, array('curid'=>$this->curriculumid));
-
-        if (is_array($tracks)) {
-            foreach ($tracks as $track_id=>$track_obj) {
-                $result = $this->_db->delete_records(trackassignment::TABLE, array('trackid'=>$track_obj->id, 'courseid'=>$this->courseid));
-            }
+        $tracks = $this->_db->get_recordset(track::TABLE, array('curid'=>$this->curriculumid));
+        foreach ($tracks as $track_id => $track_obj) {
+            $result = $this->_db->delete_records(trackassignment::TABLE, array('trackid'=>$track_obj->id, 'courseid'=>$this->courseid));
         }
+        unset($tracks);
+
         return true;
     }
 
@@ -454,11 +453,11 @@ class curriculumcourse extends elis_data_object {
             return false;
         }
 
-        if ($courses = $this->_db->get_records(courseprerequisite::TABLE, array('curriculumcourseid'=>$this->id))) {
-            foreach ($courses as $course) {
-                $cids[] = $course->courseid;
-            }
+        $courses = $this->_db->get_recordset(courseprerequisite::TABLE, array('curriculumcourseid'=>$this->id));
+        foreach ($courses as $course) {
+            $cids[] = $course->courseid;
         }
+        unset($courses);
 
         return $cids;
     }
@@ -567,11 +566,11 @@ class curriculumcourse extends elis_data_object {
             return false;
         }
 
-        if ($courses = $this->_db->get_records(coursecorequisite::TABLE, array('curriculumcourseid'=>$this->id))) {
-            foreach ($courses as $course) {
-                $cids[] = $course->courseid;
-            }
+        $courses = $this->_db->get_recordset(coursecorequisite::TABLE, array('curriculumcourseid'=>$this->id));
+        foreach ($courses as $course) {
+            $cids[] = $course->courseid;
         }
+        unset($courses);
 
         return $cids;
     }
@@ -674,7 +673,7 @@ class curriculumcourse extends elis_data_object {
  * @param string $descsearch Search string for curriculum description.
  * @param string $alpha Start initial of curriculum name filter.
  * @param array $extrafilters Additional filters to apply to the count
- * @return object array Returned records.
+ * @return recordset Returned records.
  */
 function curriculumcourse_get_listing($curid, $sort='position', $dir='ASC', $startrec=0, $perpage=0, $namesearch='', $alpha='',
                                       $extrafilters = array()) {
@@ -724,7 +723,7 @@ function curriculumcourse_get_listing($curid, $sort='position', $dir='ASC', $sta
 
     $sql = $select.$tables.$join.$on.$where.$sort;
 
-    return $DB->get_records_sql($sql, $params, $startrec, $perpage);
+    return $DB->get_recordset_sql($sql, $params, $startrec, $perpage);
 }
 
 /**
@@ -795,7 +794,7 @@ function curriculumcourse_count_records($curid, $namesearch = '', $alpha = '', $
  * @param string $namesearch Search string for curriculum name.
  * @param string $descsearch Search string for curriculum description.
  * @param string $alpha Start initial of curriculum name filter.
- * @return object array Returned records.
+ * @return recordset Returned records.
  */
 function curriculumcourse_get_curriculum_listing($crsid, $sort='position', $dir='ASC', $startrec=0, $perpage=0, $namesearch='',
                                                  $alpha='', $contexts = null) {
@@ -842,7 +841,7 @@ function curriculumcourse_get_curriculum_listing($crsid, $sort='position', $dir=
 
     $sql = $select.$tables.$join.$on.$where.$sort;
 
-    return $DB->get_records_sql($sql, $params, $startrec, $perpage);
+    return $DB->get_recordset_sql($sql, $params, $startrec, $perpage);
 }
 
 function curriculumcourse_count_curriculum_records($crsid, $namesearch = '', $alpha = '', $contexts = null) {
@@ -892,28 +891,22 @@ function curriculumcourse_count_curriculum_records($crsid, $namesearch = '', $al
  * Returns a list of records based on the course id
  *
  * @param int courseid Course id
- * @return mixed array of crlm_curriculum_course objects or false
+ * @return recordset crlm_curriculum_course objects
  */
 function curriculumcourse_get_list_by_course($courseid) {
     global $DB;
-
-    $curcourse = $DB->get_records(curriculumcourse::TABLE, array('courseid'=>$courseid));
-
-    return $curcourse;
+    return $DB->get_recordset(curriculumcourse::TABLE, array('courseid'=>$courseid));
 }
 
 /**
  * Returns a list of records base on the curriculum id
  *
  * @param int curriculumid Curriculum id
- * @return mixed array of crlm_curriculum_course objects or false
+ * @return recordset crlm_curriculum_course objects
  */
 function curriculumcourse_get_list_by_curr($curriculumid) {
     global $DB;
-
-    $curcourse = $DB->get_records(curriculumcourse::TABLE, array('curriculumid'=>$curriculumid));
-
-    return $curcourse;
+    return $DB->get_recordset(curriculumcourse::TABLE, array('curriculumid'=>$curriculumid));
 }
 
 class courseprerequisite extends elis_data_object {

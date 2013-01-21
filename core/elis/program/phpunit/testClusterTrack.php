@@ -57,4 +57,8 @@ class clustertrackTest extends elis_database_test {
 
         $clustertrack->save();
     }
+
+    public function test_delete() {
+        $this->load_csv_data();
+    }
 }

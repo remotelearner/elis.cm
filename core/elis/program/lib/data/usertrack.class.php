@@ -163,46 +163,42 @@ class usertrack extends elis_data_object {
             // the given track, and if the autoenrol flag is set
             . 'HAVING COUNT(*) = 1 AND MAX(autoenrol) = 1';
         $params = array($trackid);
-        $classes = $DB->get_records_sql($sql, $params);
-        if (!empty($classes)) {
-            foreach ($classes as $class) {
-                // ELIS-3460: check pre-requisites ...
-                $curcrs = new curriculumcourse(
-                                  array('courseid' => $class->courseid,
-                                        'curriculumid' => $track->curid));
-                if (!$curcrs->prerequisites_satisfied($userid)) {
-                    //error_log("/elis/program/lib/data/usertrack.class.php::enrol({$userid}); pre-requisites NOT satisfied for course: {$class->courseid}, curriculum: {$track->curid}");
-                    continue;
-                }
-                $now = time();
-                // enrol user in each autoenrolable class
-                $stu_record = new object();
-                $stu_record->userid = $userid;
-                $stu_record->classid = $class->classid;
-                $stu_record->enrolmenttime = $now;
-                $enrolment = new student($stu_record);
+        $classes = $DB->get_recordset_sql($sql, $params);
+        foreach ($classes as $class) {
+            // ELIS-3460: check pre-requisites ...
+            $curcrs = new curriculumcourse(array('courseid' => $class->courseid, 'curriculumid' => $track->curid));
+            if (!$curcrs->prerequisites_satisfied($userid)) {
+                //error_log("/elis/program/lib/data/usertrack.class.php::enrol({$userid}); pre-requisites NOT satisfied for course: {$class->courseid}, curriculum: {$track->curid}");
+                continue;
+            }
+            $now = time();
+            // enrol user in each autoenrolable class
+            $stu_record = new object();
+            $stu_record->userid = $userid;
+            $stu_record->classid = $class->classid;
+            $stu_record->enrolmenttime = $now;
+            $enrolment = new student($stu_record);
 
-                // catch enrolment limits
-                try {
-                    $status = $enrolment->save();
-                } catch (pmclass_enrolment_limit_validation_exception $e) {
-                    // autoenrol into waitlist
-                    $wait_record = new object();
-                    $wait_record->userid = $userid;
-                    $wait_record->classid = $class->classid;
-                    $wait_record->enrolmenttime = $now;
-                    $wait_record->timecreated = $now;
-                    $wait_record->position = 0;
-                    $wait_list = new waitlist($wait_record);
-                    $wait_list->save();
-                    $status = true;
-                } catch (Exception $e) {
-                    $param = array('message' => $e->getMessage());
-                    echo cm_error(get_string('record_not_created_reason',
-                                             'elis_program', $param));
-                }
+            // catch enrolment limits
+            try {
+                $status = $enrolment->save();
+            } catch (pmclass_enrolment_limit_validation_exception $e) {
+                // autoenrol into waitlist
+                $wait_record = new object();
+                $wait_record->userid = $userid;
+                $wait_record->classid = $class->classid;
+                $wait_record->enrolmenttime = $now;
+                $wait_record->timecreated = $now;
+                $wait_record->position = 0;
+                $wait_list = new waitlist($wait_record);
+                $wait_list->save();
+                $status = true;
+            } catch (Exception $e) {
+                $param = array('message' => $e->getMessage());
+                echo cm_error(get_string('record_not_created_reason', 'elis_program', $param));
             }
         }
+        unset($classes);
 
         return true;
     }
@@ -397,7 +393,7 @@ class usertrack extends elis_data_object {
      * @param int $page The page we are on (0-indexed)
      * @param int $perpage Number of users to display per page
      *
-     * @return array The list of users on the current page
+     * @return recordset The list of users on the current page
      */
     public static function get_available_users($trackid, $sort = 'lastname', $dir = 'ASC', $namesearch = '',
                                                $alpha = '', $page = 0, $perpage = 30) {
@@ -462,7 +458,7 @@ class usertrack extends elis_data_object {
             $sql .= 'ORDER BY '.$sort.' '.$dir.' ';
         }
 
-        return $DB->get_records_sql($select.$sql, $params, $page * $perpage, $perpage);
+        return $DB->get_recordset_sql($select.$sql, $params, $page * $perpage, $perpage);
     }
 
     /**

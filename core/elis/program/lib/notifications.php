@@ -528,7 +528,7 @@ function pm_assign_student_from_mdl($eventdata) {
             $sturec->userid = $pmuserid;
             /// determine enrolment time (ELIS-2972)
             $enroltime = $timenow;
-            $enrolments = $DB->get_records('enrol', array('courseid' => $class->moodlecourseid));
+            $enrolments = $DB->get_recordset('enrol', array('courseid' => $class->moodlecourseid));
             foreach ($enrolments as $enrolment) {
                 $etime = $DB->get_field('user_enrolments', 'timestart',
                                   array('enrolid' => $enrolment->id,
@@ -537,6 +537,7 @@ function pm_assign_student_from_mdl($eventdata) {
                     $enroltime = $etime;
                 }
             }
+            unset($enrolments);
             $sturec->enrolmenttime = $enroltime;
             $sturec->completetime = 0;
             $sturec->completestatusid = STUSTATUS_NOTCOMPLETE;
@@ -713,7 +714,8 @@ function pm_notify_role_unassign_handler($eventdata){
     }
 
     //if the course is not tied to any curriculum admin classes, then we are done
-    if(!$associated_classes = $DB->get_records(classmoodlecourse::TABLE, array('moodlecourseid'=> $course_context->instanceid))) {
+    $associated_classes = $DB->get_recordset(classmoodlecourse::TABLE, array('moodlecourseid'=> $course_context->instanceid));
+    if($associated_classes->valid() !== true) {
         return true;
     }
 
@@ -730,6 +732,7 @@ function pm_notify_role_unassign_handler($eventdata){
             $delete_record->delete();
         }
     }
+    unset($associated_classes);
 
     return true;
 }

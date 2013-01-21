@@ -41,7 +41,8 @@ class user_activity_health_test extends elis_database_test {
             'log' => 'moodle',
             'config_plugins' => 'moodle',
             'etl_user_activity' => 'eliscoreplugins_user_activity',
-            'etl_user_module_activity' => 'eliscoreplugins_user_activity'
+            'etl_user_module_activity' => 'eliscoreplugins_user_activity',
+            'user_info_data' => 'moodle',
         );
     }
 
@@ -138,5 +139,27 @@ class user_activity_health_test extends elis_database_test {
       */
         $this->assertEquals(342, $etluacnt);
         $this->assertEquals(225, $etlumacnt);
+    }
+
+    public function test_duplicate_profile_data() {
+        global $DB;
+        require_once(elispm::file('healthpage.class.php'));
+
+        //set up data
+        $record = new stdClass;
+        $record->fieldid = 1;
+        $record->userid = 1;
+        $record->data = 'test';
+        $DB->insert_record('user_info_data',$record);
+        $DB->insert_record('user_info_data',$record);
+        $DB->insert_record('user_info_data',$record);
+        $DB->insert_record('user_info_data',$record);
+
+        $duplicate_profile_check = new duplicate_moodle_profile();
+        $this->assertEquals(
+                get_string('health_dupmoodleprofiledesc', 'elis_program', 3),
+                $duplicate_profile_check->description()
+        );
+
     }
 }

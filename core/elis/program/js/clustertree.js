@@ -31,7 +31,7 @@
 
 /**
  * Function that always returns true (for use in getNodesBy)
- * 
+ *
  * @param   TextNode     The node being passed in (not used)
  *
  * @return  boolean      true
@@ -109,7 +109,7 @@ function clustertree_remove_from_list(instanceid, list_name, value) {
 
 /**
  * Specifies the values stored in a particular hidden form element
- * 
+ *
  * @param   string        instanceid  Unique report identifier
  * @param   string        list_name   Name of the UI element
  *
@@ -148,8 +148,8 @@ function clustertree_get_list_values(instanceid, list_name) {
  */
 function clustertree_loadNodeData(node, fnLoadComplete, uniqueid, tree_view, instanceid, execution_mode) {
 
-    //URL of our script (wwwroot is pre-set by the calling PHP script)
-    var url = wwwroot + '/elis/program/lib/filtering/helpers/clustertree_load_menu.php?data=' + node.contentElId +
+    // URL of our script (document.wwwroot is set my clustertree_module.js)
+    var url = document.wwwroot + '/elis/program/lib/filtering/helpers/clustertree_load_menu.php?data=' + node.contentElId +
                 '&instanceid=' + instanceid + '&execution_mode=' + execution_mode;
 
     var callback = {
@@ -201,7 +201,7 @@ function clustertree_loadNodeData(node, fnLoadComplete, uniqueid, tree_view, ins
                 clustertree_set_up_onclick(instanceid, added_content_el_ids[i], uniqueid, tree_view);
             }
         },
-	    
+
         //failure function
         failure: function(o) {
             //DO NOT warn the user in any way because this failure can happen
@@ -217,8 +217,8 @@ function clustertree_loadNodeData(node, fnLoadComplete, uniqueid, tree_view, ins
 
 /**
  * Function used to handle clicking on a checkbox
- * 
- * @param  Event   event     The event taking place with regard to a checkbox  
+ *
+ * @param  Event   event     The event taking place with regard to a checkbox
  * @param  array   param     Object containing necessary parameters
  */
 function clustertree_handler_func(event, param) {
@@ -270,7 +270,7 @@ function clustertree_set_up_onclick(instanceid, content_el_id, uniqueid, tree_vi
     array_param[2] = tree_view;
     //report instance id
     array_param[3] = instanceid;
-    
+
     //add an event listener for the click event
     YAHOO.util.Event.addListener(element, 'click', clustertree_handler_func, array_param);
 }
@@ -297,7 +297,7 @@ function clustertree_get_container_elements_by_name(instanceid, elementname) {
 
 /**
  * Obtains the element from a particular container that mathces the specified id
- * 
+ *
  * @param  string       instanceid  Unique report identifier
  * @param  string       elementid   Unique element identifier
  *
@@ -314,7 +314,7 @@ function clustertree_get_container_element_by_id(instanceid, elementid) {
  * but have unloaded children
  *
  * @param  string    instanceid  Unique report identifier
- * @param  TextNode  node        The node we are adding to the list 
+ * @param  TextNode  node        The node we are adding to the list
  * @param  string    uniqueid    The unique id used to identify the filter element
  */
 function clustertree_add_selected_unexpanded(instanceid, node, uniqueid) {
@@ -327,7 +327,7 @@ function clustertree_add_selected_unexpanded(instanceid, node, uniqueid) {
  * but have unloaded children
  *
  * @param  string    instanceid  Unique report identifier
- * @param  TextNode  node        The node we are removing from the list 
+ * @param  TextNode  node        The node we are removing from the list
  * @param  string    uniqueid    The unique id used to identify the filter element
  * @param  boolean   store       Whether to store the unexpanded state
  */
@@ -349,7 +349,6 @@ function clustertree_remove_selected_unexpanded(instanceid, node, uniqueid, stor
  * @param  boolean   store        Whether to store any unexpanded state info
  */
 function clustertree_toggle_highlight(instanceid, node, ideal_state, uniqueid, tree_view, store) {
-	
     if (node.highlightState != ideal_state) {
         //state is not the ideal state, so toggle it
         //*

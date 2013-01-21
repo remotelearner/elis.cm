@@ -215,6 +215,7 @@ $core_health_checks = array(
     'track_classes_check',
     'completion_export_check',
     'dangling_completion_locks',
+    'duplicate_course_los',
     );
 
 /**
@@ -647,15 +648,15 @@ class cron_lastruntimes_check extends crlm_health_check_base {
 class duplicate_moodle_profile extends crlm_health_check_base {
     function __construct() {
         global $DB;
-        $concat = sql_concat('fieldid', "'/'", 'userid');
+        $concat = $DB->sql_concat('fieldid', "'/'", 'userid');
         $sql = "SELECT $concat, COUNT(*)-1 AS dup
                   FROM {user_info_data} dat
               GROUP BY fieldid, userid
                 HAVING COUNT(*) > 1";
-        $this->counts = $DB->get_records_sql($sql);
+        $this->counts = $DB->get_recordset_sql($sql);
     }
     function exists() {
-        return !empty($this->counts);
+        return ($this->counts->valid()===true) ? true : false;
     }
     function severity() {
         return healthpage::SEVERITY_ANNOYANCE;
@@ -664,7 +665,11 @@ class duplicate_moodle_profile extends crlm_health_check_base {
         return get_string('health_dupmoodleprofile', 'elis_program');
     }
     function description() {
-        $count = array_reduce($this->counts, create_function('$a,$b', 'return $a + $b->dup;'), $null);
+        $count = 0;
+        foreach ($this->counts as $dup) {
+            $count += $dup->dup;
+        }
+        $this->counts->close();
         return get_string('health_dupmoodleprofiledesc', 'elis_program', $count);
     }
     function solution() {
@@ -743,3 +748,31 @@ class dangling_completion_locks extends crlm_health_check_base {
         return $msg;
     }
 }
+
+/**
+ * Checks for duplicate course completion elements
+ */
+class duplicate_course_los extends crlm_health_check_base {
+    var $count; // count of max course with duplicate completion elements
+    function __construct() {
+        global $DB;
+        $sql = "SELECT MAX(count) FROM (SELECT COUNT('x') AS count FROM {crlm_course_completion} GROUP BY courseid, idnumber) duplos";
+        $this->count = $DB->get_field_sql($sql);
+    }
+    function exists() {
+        return($this->count > 1);
+    }
+    function severity() {
+        return healthpage::SEVERITY_SIGNIFICANT; // ANNOYANCE ???
+    }
+    function title() {
+        return get_string('health_dupcourselos', 'elis_program');
+    }
+    function description() {
+        return get_string('health_dupcourselosdesc', 'elis_program');
+    }
+    function solution() {
+        return get_string('health_dupcourselossoln', 'elis_program');
+    }
+}
+

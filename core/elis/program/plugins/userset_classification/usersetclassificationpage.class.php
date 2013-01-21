@@ -71,14 +71,15 @@ class usersetclassificationform extends cmform {
             $mform->addHelpButton('param_elis_files_shared_folder', 'usersetclassificationform:elis_files_shared_folder', 'pmplugins_userset_classification');
         }
 
-        $recs = $DB->get_records(usersetclassification::TABLE, null, 'name ASC', 'shortname, name');
+        $recs = $DB->get_recordset(usersetclassification::TABLE, null, 'name ASC', 'shortname, name');
 //                                                  ($table, array $conditions=null, $sort='', $fields='*', $limitfrom=0, $limitnum=0)
         $options = array('' => get_string('same_classification', 'pmplugins_userset_classification'));
-        if ($recs) {
-            foreach ($recs as $rec) {
-                $options[$rec->shortname] = $rec->name;
-            }
+
+        foreach ($recs as $rec) {
+            $options[$rec->shortname] = $rec->name;
         }
+        unset($recs);
+
         $mform->addElement('select', 'param_child_classification', get_string('child_classification', 'pmplugins_userset_classification'), $options);
 
         $this->add_action_buttons();
@@ -129,10 +130,9 @@ class usersetclassificationpage extends managementpage {
             'name'      => array('header' => get_string('name','pmplugins_userset_classification')),
         );
 
-        $items = $DB->get_records(usersetclassification::TABLE, null, '', ('id, shortname, name'));
+        $items = $DB->get_recordset(usersetclassification::TABLE, null, '', ('id, shortname, name'));
         $numitems = $DB->count_records(usersetclassification::TABLE);
 
         $this->print_list_view($items, $numitems, $columns, $filter=null, $alphaflag=true, $searchflag=true);
     }
 }
-?>

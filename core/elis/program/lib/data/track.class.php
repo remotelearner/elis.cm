@@ -126,11 +126,7 @@ class track extends data_object_with_custom_fields {
             'WHERE ccc.curriculumid = ? ';
         $params = array($this->curid);
 
-        $curcourse = $this->_db->get_records_sql($sql, $params);
-
-        if (empty($curcourse)) {
-            $curcourse = array();
-        }
+        $curcourse = $this->_db->get_recordset_sql($sql, $params);
 
         // For every course of the curricula determine which ones need -
         // to have their auto enrol flag set
@@ -217,6 +213,7 @@ class track extends data_object_with_custom_fields {
             $usetemplate = false;
             $autoenrol = false;
         }
+        unset($curcourse);
     }
 
     /**
@@ -399,10 +396,9 @@ class track extends data_object_with_custom_fields {
                        ON usrtrk.trackid = trk.id
                  WHERE prereq.courseid = ? AND usrtrk.userid = ?";
         $params = array($courseid, $userid);
-        $recs = $DB->get_records_sql($sql, $params);
+        $recs = $DB->get_recordset_sql($sql, $params);
 
         // now we just need to loop through them, and enrol them
-        $recs = $recs ? $recs : array();
         foreach ($recs as $trkcls) {
             $curcrs = new curriculumcourse();
             $curcrs->courseid = $trkcls->courseid;
@@ -435,6 +431,7 @@ class track extends data_object_with_custom_fields {
                 }
             }
         }
+        unset($recs);
 
         return true;
     }
@@ -511,7 +508,7 @@ class track extends data_object_with_custom_fields {
 
         // copy classes
         $clstrks = track_assignment_get_listing($this->id);
-        if (!empty($clstrks)) {
+        if ($clstrks->valid() === true) {
             $objs['classes'] = array();
             if (!isset($options['classmap'])) {
                 $options['classmap'] = array();
@@ -539,6 +536,7 @@ class track extends data_object_with_custom_fields {
                 $newclstrk->save();
             }
         }
+        unset($clstrks);
         return $objs;
     }
 }
@@ -617,13 +615,11 @@ class trackassignment extends elis_data_object {
 
         $assigned   = array();
 
-        $result = $this->_db->get_records(trackassignment::TABLE, array('classid' => $this->classid));
-
-        if ($result) {
-            foreach ($result as $data) {
-                $assigned[$data->trackid] = $data->id;
-            }
+        $result = $this->_db->get_recordset(trackassignment::TABLE, array('classid' => $this->classid));
+        foreach ($result as $data) {
+            $assigned[$data->trackid] = $data->id;
         }
+        unset($result);
 
         return $assigned;
     }
@@ -788,9 +784,9 @@ class trackassignment extends elis_data_object {
                                 WHERE s.classid = ? AND s.userid = {".usertrack::TABLE ."}.userid)
                   AND trackid = ?";
         $params = array($this->classid,$this->trackid);
-        $users = $this->_db->get_records_select(usertrack::TABLE, $sql, $params, 'userid');
+        $users = $this->_db->get_recordset_select(usertrack::TABLE, $sql, $params, 'userid');
 
-        if ($users) {
+        if ($users->valid() === true) {
             $timenow = time();
             $count = 0;
             $waitlisted = 0;
@@ -831,6 +827,7 @@ class trackassignment extends elis_data_object {
         } else {
             print_string('all_users_already_enrolled', 'elis_program');
         }
+        unset($users);
     }
 
 }
@@ -1050,7 +1047,7 @@ function track_get_list_from_curr($curid) {
  * @param string $namesearch Search string for curriculum name.
  * @param string $alpha Start initial of curriculum name filter.
  * @param array $extrafilters Additional filters to apply to the count
- * @return object array Returned records.
+ * @return recordset Returned records.
  */
 function track_assignment_get_listing($trackid = 0, $sort='cls.idnumber', $dir='ASC', $startrec=0, $perpage=0, $namesearch='',
                                       $alpha='', $extrafilters = array()) {
@@ -1079,7 +1076,7 @@ function track_assignment_get_listing($trackid = 0, $sort='cls.idnumber', $dir='
                             JOIN {".user::TABLE."} u
                               ON t.userid = u.id
                               {$inactive_condition}
-                           WHERE t.trackid = :trackid                             
+                           WHERE t.trackid = :trackid
                         GROUP BY s.classid) enr ON enr.classid = cls.id ";
     $params['trackid'] = $trackid;
 
@@ -1123,7 +1120,7 @@ function track_assignment_get_listing($trackid = 0, $sort='cls.idnumber', $dir='
     }
 
     $sql = $select.$tables.$join.$where.$sort;
-    return $DB->get_records_sql($sql, $params, $startrec, $perpage);
+    return $DB->get_recordset_sql($sql, $params, $startrec, $perpage);
 }
 
 /**

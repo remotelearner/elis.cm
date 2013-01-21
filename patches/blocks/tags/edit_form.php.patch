@@ -1,0 +1,13 @@
+diff --git a/blocks/tags/edit_form.php b/blocks/tags/edit_form.php
+index eec3202..c1b4d5d 100644
+--- a/blocks/tags/edit_form.php
++++ b/blocks/tags/edit_form.php
+@@ -34,7 +34,7 @@ class block_tags_edit_form extends block_edit_form {
+         // Fields for editing HTML block title and contents.
+         $mform->addElement('header', 'configheader', get_string('blocksettings', 'block'));
+ 
+-        $mform->addElement('text', 'config_title', get_string('pluginname', 'block_tags'));
++        $mform->addElement('text', 'config_title', get_string('configtitle', 'block_tags'));
+         $mform->setType('config_title', PARAM_MULTILANG);
+         $mform->setDefault('config_title', get_string('pluginname', 'block_tags'));
+ 

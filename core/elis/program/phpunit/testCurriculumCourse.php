@@ -35,7 +35,11 @@ class curriculumcourseTest extends elis_database_test {
     protected $backupGlobalsBlacklist = array('DB');
 
 	protected static function get_overlay_tables() {
-		return array(curriculumcourse::TABLE => 'elis_program');
+		return array(
+            curriculumcourse::TABLE => 'elis_program',
+            courseprerequisite::TABLE => 'elis_program',
+            coursecorequisite::TABLE => 'elis_program',
+        );
 	}
 
     protected function load_csv_data() {
@@ -56,5 +60,31 @@ class curriculumcourseTest extends elis_database_test {
                                                        'courseid' => 1));
 
         $curriculumcourse->save();
+    }
+
+    public function test_get_prerequisites() {
+        $dataset = new PHPUnit_Extensions_Database_DataSet_CsvDataSet();
+        $dataset->addTable(curriculumcourse::TABLE, elis::component_file('program', 'phpunit/curriculum_course.csv'));
+        $dataset->addTable(courseprerequisite::TABLE, elis::component_file('program', 'phpunit/pmcourse_prerequisite.csv'));
+        load_phpunit_data_set($dataset, true, self::$overlaydb);
+
+        $curriculumcourse = new curriculumcourse;
+        $curriculumcourse->id = 2;
+        $prereqs = $curriculumcourse->get_prerequisites();
+
+        $this->assertEquals(array(100),$prereqs);
+    }
+
+    public function test_get_corequisites() {
+        $dataset = new PHPUnit_Extensions_Database_DataSet_CsvDataSet();
+        $dataset->addTable(curriculumcourse::TABLE, elis::component_file('program', 'phpunit/curriculum_course.csv'));
+        $dataset->addTable(coursecorequisite::TABLE, elis::component_file('program', 'phpunit/pmcourse_corequisite.csv'));
+        load_phpunit_data_set($dataset, true, self::$overlaydb);
+
+        $curriculumcourse = new curriculumcourse;
+        $curriculumcourse->id = 2;
+        $coreqs = $curriculumcourse->get_corequisites();
+
+        $this->assertEquals(array(100),$coreqs);
     }
 }

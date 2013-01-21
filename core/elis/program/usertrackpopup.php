@@ -165,7 +165,7 @@ if ($dir != 'ASC') {
 <?php
 
 // show list of available users
-if (empty($users)) {
+if ($users->valid() === false) {
     echo '<div>' . get_string('track_no_matching_users', 'elis_program') . '</div>';
 } else {
     echo '<div>' . get_string('track_click_user_enrol_track', 'elis_program') . '</div>';
@@ -212,6 +212,7 @@ if (empty($users)) {
     //print_table($table);
     echo html_writer::table($table);
 }
+unset($users);
 
 echo $OUTPUT->box_end();
 echo $OUTPUT->close_window_button();

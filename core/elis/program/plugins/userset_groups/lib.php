@@ -701,12 +701,12 @@ function userset_groups_get_child_usersets($clusterid) {
 
     $result = array($clusterid);
 
-    if($child_clusters = $DB->get_records(userset::TABLE, array('parent' => $clusterid))) {
-        foreach($child_clusters as $child_cluster) {
-            $child_result = userset_groups_get_child_usersets($child_cluster->id);
-            $result = array_merge($result, $child_result);
-        }
+    $child_clusters = $DB->get_recordset(userset::TABLE, array('parent' => $clusterid));
+    foreach($child_clusters as $child_cluster) {
+        $child_result = userset_groups_get_child_usersets($child_cluster->id);
+        $result = array_merge($result, $child_result);
     }
+    unset($child_clusters);
 
     return $result;
 }

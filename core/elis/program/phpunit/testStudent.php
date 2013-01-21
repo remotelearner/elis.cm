@@ -29,24 +29,46 @@ global $CFG;
 require_once($CFG->dirroot . '/elis/program/lib/setup.php');
 require_once(elis::lib('testlib.php'));
 require_once('PHPUnit/Extensions/Database/DataSet/CsvDataSet.php');
-require_once(elispm::lib('data/user.class.php'));
-require_once(elispm::lib('data/student.class.php'));
-require_once(elispm::lib('data/pmclass.class.php'));
+
+require_once(elispm::lib('data/classmoodlecourse.class.php'));
 require_once(elispm::lib('data/course.class.php'));
+require_once(elispm::lib('data/coursetemplate.class.php'));
+require_once(elispm::lib('data/pmclass.class.php'));
+require_once(elispm::lib('data/student.class.php'));
+require_once(elispm::lib('data/user.class.php'));
+require_once(elispm::lib('data/usermoodle.class.php'));
+require_once(elispm::lib('data/waitlist.class.php'));
+
+require_once($CFG->dirroot.'/lib/phpunit/classes/util.php');
+require_once($CFG->dirroot.'/elis/program/phpunit/datagenerator.php');
 
 class studentTest extends elis_database_test {
     protected $backupGlobalsBlacklist = array('DB');
 
     protected static function get_overlay_tables() {
         return array(
+            'cache_flags' => 'moodle',
             'context' => 'moodle',
-            'user' => 'moodle',
             'course' => 'moodle',
+            'enrol' => 'moodle',
+            'forum' => 'mod_forum',
+            'forum_read' => 'mod_forum',
+            'forum_subscriptions' => 'mod_forum',
+            'forum_track_prefs' => 'mod_forum',
+            'groups' => 'moodle',
+            'groups_members' => 'moodle',
             'message' => 'moodle',
-            user::TABLE => 'elis_program',
-            student::TABLE => 'elis_program',
+            'user' => 'moodle',
+            'user_enrolments' => 'moodle',
+            'user_lastaccess' => 'moodle',
+            classmoodlecourse::TABLE => 'elis_program',
+            course::TABLE => 'elis_program',
+            GRDTABLE => 'elis_program',
             pmclass::TABLE => 'elis_program',
-            course::TABLE => 'elis_program'
+            student::TABLE => 'elis_program',
+            user::TABLE => 'elis_program',
+            usermoodle::TABLE => 'elis_program',
+            waitlist::TABLE => 'elis_program',
         );
     }
 
@@ -105,6 +127,20 @@ class studentTest extends elis_database_test {
         $dataset->addTable(pmclass::TABLE, elis::component_file('program', 'phpunit/pmclass.csv'));
         $dataset->addTable(user::TABLE, elis::component_file('program', 'phpunit/pmuser.csv'));
         $dataset->addTable(student::TABLE, elis::component_file('program', 'phpunit/student.csv'));
+        load_phpunit_data_set($dataset, true, self::$overlaydb);
+    }
+
+    protected function load_csv_data_moodlenrol() {
+        $dataset = new PHPUnit_Extensions_Database_DataSet_CsvDataSet();
+        $dataset->addTable('course', elis::component_file('program', 'phpunit/mdlcourse.csv'));
+        $dataset->addTable('enrol', elis::component_file('program', 'phpunit/enrol.csv'));
+        $dataset->addTable('user', elis::component_file('program', 'phpunit/mdluser.csv'));
+        $dataset->addTable('user_enrolments', elis::component_file('program', 'phpunit/user_enrolments.csv'));
+        $dataset->addTable(classmoodlecourse::TABLE, elis::component_file('program', 'phpunit/class_moodle_course.csv'));
+        $dataset->addTable(pmclass::TABLE, elis::component_file('program', 'phpunit/pmclass.csv'));
+        $dataset->addTable(student::TABLE, elis::component_file('program', 'phpunit/student.csv'));
+        $dataset->addTable(user::TABLE, elis::component_file('program', 'phpunit/pmuser.csv'));
+        $dataset->addTable(usermoodle::TABLE, elis::component_file('program', 'phpunit/usermoodle.csv'));
         load_phpunit_data_set($dataset, true, self::$overlaydb);
     }
 
@@ -191,5 +227,87 @@ class studentTest extends elis_database_test {
         $student->save();
 
         $this->assertTrue(true);
+    }
+
+    public function test_delete() {
+        global $DB;
+
+        $this->load_csv_data_moodlenrol();
+
+        //verify enrolment exists
+        $enrol = $DB->get_record_sql(
+                'SELECT enrol.*
+                  FROM {user_enrolments} enrolments
+                  JOIN {enrol} enrol ON enrol.id = enrolments.enrolid
+                 WHERE enrol.courseid = ?
+                   AND enrolments.userid = ?',
+                array(1,100)
+        );
+        $this->assertNotEmpty($enrol);
+
+        //delete the student record
+        $student = new student;
+        $student->userid = 103;
+        $student->classid = 100;
+        $student->delete();
+
+        //verify enrolment deleted
+        $enrol = $DB->get_record_sql(
+                'SELECT enrol.*
+                  FROM {user_enrolments} enrolments
+                  JOIN {enrol} enrol ON enrol.id = enrolments.enrolid
+                 WHERE enrol.courseid = ?
+                   AND enrolments.userid = ?',
+                array(1,100)
+        );
+        $this->assertEmpty($enrol);
+    }
+
+    public function test_get_students() {
+        //fixture
+        $dataset = new PHPUnit_Extensions_Database_DataSet_CsvDataSet();
+        $dataset->addTable(user::TABLE, elis::component_file('program', 'phpunit/pmuser.csv'));
+        $dataset->addTable(student::TABLE, elis::component_file('program', 'phpunit/student.csv'));
+        load_phpunit_data_set($dataset, true, self::$overlaydb);
+
+        //test
+        $student = new student;
+        $student->classid = 100;
+        $students = $student->get_students();
+        $this->assertNotEmpty($students);
+
+        //verify
+        $found = false;
+        foreach ($students as $userrec) {
+            if ($userrec->id === '103') {
+                $found = true;
+                break;
+            }
+        }
+        $this->assertTrue($found);
+    }
+
+    public function test_get_waiting() {
+        //fixture
+        $dataset = new PHPUnit_Extensions_Database_DataSet_CsvDataSet();
+        $dataset->addTable(user::TABLE, elis::component_file('program', 'phpunit/pmuser.csv'));
+        $dataset->addTable(waitlist::TABLE, elis::component_file('program', 'phpunit/waitlist2.csv'));
+        load_phpunit_data_set($dataset, true, self::$overlaydb);
+
+        //test
+        $student = new student;
+        $student->classid = 100;
+        $users_on_waitlist = $student->get_waiting();
+        $this->assertNotEmpty($users_on_waitlist);
+
+        //verify
+        $found = false;
+        foreach ($users_on_waitlist as $userrec) {
+            if ($userrec->id === '103') {
+                $found = true;
+                break;
+            }
+        }
+        $this->assertTrue($found);
     }
 }

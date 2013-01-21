@@ -95,14 +95,14 @@ class moodlecourseurl {
     function getSubCategories($parentcat) {
         global $DB;
 
-        $categories = $DB->get_records('course_categories', array('parent'=>$parentcat));
+        $categories = $DB->get_recordset('course_categories', array('parent'=>$parentcat));
         return !empty($categories) ? $categories : array();
     }
 
     function getCourses($catid) {
         global $DB;
 
-        $courses = $DB->get_records('course', array('category'=>$catid));
+        $courses = $DB->get_recordset('course', array('category'=>$catid));
         return $courses;
     }
 
@@ -184,15 +184,14 @@ class moodlecourseurl {
             echo $this->printCategories($category, true, $selected);
 
             $courses = $this->getCourses($category->id);
-            $courses = (!empty($courses)) ? $courses : array();
-
-            foreach ($courses as $key2 => $course) {
-                echo $this->printCourses($course);
-            }
-            if (empty($courses)) {
+            if ($courses->valid() === true) {
+                foreach ($courses as $key2 => $course) {
+                    echo $this->printCourses($course);
+                }
+            } else {
                 echo get_string('no_courses', 'elis_program').'<br />';
             }
-
+            unset($courses);
         }
         // Add call to highlight previously selected course
         echo '<script language=javascript >';

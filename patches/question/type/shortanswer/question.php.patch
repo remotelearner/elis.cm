@@ -1,0 +1,16 @@
+diff --git a/question/type/shortanswer/question.php b/question/type/shortanswer/question.php
+index 72f0f4a..f7070d8 100644
+--- a/question/type/shortanswer/question.php
++++ b/question/type/shortanswer/question.php
+@@ -102,6 +102,11 @@ class qtype_shortanswer_question extends question_graded_by_strategy
+             $regexp .= 'i';
+         }
+ 
++        if (function_exists('normalizer_normalize')) {
++            $regexp = normalizer_normalize($regexp, Normalizer::FORM_C);
++            $string = normalizer_normalize($string, Normalizer::FORM_C);
++        }
++
+         return preg_match($regexp, trim($string));
+     }
+ 

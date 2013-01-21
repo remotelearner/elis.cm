@@ -236,8 +236,7 @@ class instructor extends elis_data_object {
         $newarr = array();
         $users = array();
         if (empty($this->id)) {
-            $users     = $this->get_users_avail($sort, $dir, $page * $perpage,
-                                                $perpage, $namesearch, $alpha);
+            $users = $this->get_users_avail($sort, $dir, $page * $perpage, $perpage, $namesearch, $alpha);
             $usercount = $this->count_users_avail($namesearch, $alpha);
 
             pmalphabox(new moodle_url('/elis/program/index.php',
@@ -268,8 +267,8 @@ class instructor extends elis_data_object {
                 $usercount  = 0; // TBD: 1 ???
             }
         }
-
-        if (empty($this->id) && !$users) {
+        $has_users = ((is_array($users) && !empty($users)) || ($users instanceof Iterator && $users->valid() === true)) ? true : false;
+        if (empty($this->id) && $has_users === false) {
             $table = NULL;
         } else {
             $insobj = new instructor();
@@ -328,9 +327,9 @@ class instructor extends elis_data_object {
                 $newarr[] = $tabobj;
                 //$table->data[] = $newarr;
             }
-            $table = new display_table($newarr, $columns, get_pm_url(), null, null, array('id' => 'selectiontbl'));
+            $table = new display_table($newarr, $columns, get_pm_url(), 'sort', 'dir', array('id' => 'selectiontbl'));
         }
-
+        unset($users);
         print_checkbox_selection($classid, 'ins', 'add');
 
         if (empty($this->id)) {
@@ -363,7 +362,7 @@ class instructor extends elis_data_object {
         }
 
         if (empty($this->id)) {
-            if (!$users) {
+            if ($has_users === false) {
                 pmshowmatches($alpha, $namesearch);
             }
             echo '<br /><input type="submit" value="' . get_string('assign_selected', self::LANG_FILE) . '">'."\n";
@@ -392,7 +391,7 @@ class instructor extends elis_data_object {
      *
      * @param int $cid A class ID (optional).
      * @uses $DB
-     * @return array An array of user records.
+     * @return recordset An array of user records.
      */
     function get_instructors($cid = 0) {
         global $DB;
@@ -406,11 +405,11 @@ class instructor extends elis_data_object {
 
         $uids  = array();
 
-        if ($instructors = $DB->get_records(instructor::TABLE, array('classid' => $cid))) {
-            foreach ($instructors as $instructor) {
-                $uids[] = $instructor->userid;
-            }
+        $instructors = $DB->get_recordset(instructor::TABLE, array('classid' => $cid));
+        foreach ($instructors as $instructor) {
+            $uids[] = $instructor->userid;
         }
+        unset($instructors);
 
         if (!empty($uids)) {
             $sql = 'SELECT id, idnumber, username, firstname, lastname
@@ -418,7 +417,7 @@ class instructor extends elis_data_object {
                     WHERE id IN ( ' . implode(', ', $uids) . ' )
                     ORDER BY lastname ASC, firstname ASC';
 
-            return $DB->get_records_sql($sql);
+            return $DB->get_recordset_sql($sql);
         }
         return array();
     }
@@ -427,7 +426,7 @@ class instructor extends elis_data_object {
      * Get a list of the available instructors not already attached to this course.
      *
      * @param string $search A search filter.
-     * @return array An array of user records.
+     * @return recordset An array of user records.
      */
     function get_users_avail($sort = 'name', $dir = 'ASC', $startrec = 0,
                              $perpage = 0, $namesearch = '', $alpha = '') {
@@ -481,17 +480,19 @@ class instructor extends elis_data_object {
 */
         $uids = array();
         $stu = new student();
-        if ($users = $stu->get_students()) {
+        if ($users = $stu->get_students($this->classid)) {
             foreach ($users as $user) {
                 $uids[] = $user->id;
             }
         }
+        unset($users);
 
         if ($users = $this->get_instructors()) {
             foreach ($users as $user) {
                 $uids[] = $user->id;
             }
         }
+        unset($users);
 
         if (!empty($uids)) {
             $where .= (!empty($where) ? ' AND ' : '') . 'usr.id NOT IN ( ' .
@@ -533,7 +534,7 @@ class instructor extends elis_data_object {
 
         $sql = $select.$tables.$join.$on.$where.$sort;
         //error_log("instructor.class::get_users_avail(); sql = {$sql}");
-        return $this->_db->get_records_sql($sql, $params, $startrec, $perpage);
+        return $this->_db->get_recordset_sql($sql, $params, $startrec, $perpage);
     }
 
 
@@ -583,21 +584,45 @@ class instructor extends elis_data_object {
 */
         $uids = array();
         $stu  = new student();
-        if ($users = $stu->get_students()) {
+        if ($users = $stu->get_students($this->classid)) {
             foreach ($users as $user) {
                 $uids[] = $user->id;
             }
         }
+        unset($users);
 
         if ($users = $this->get_instructors()) {
             foreach ($users as $user) {
                 $uids[] = $user->id;
             }
         }
+        unset($users);
 
         if (!empty($uids)) {
             $where .= (!empty($where) ? ' AND ' : '') . 'usr.id NOT IN ( ' .
                       implode(', ', $uids) . ' ) ';
+        }
+
+        //if appropriate, limit selection to users belonging to clusters that
+        //the current user can manage instructor assignments for
+
+        // TODO: Ugly, this needs to be overhauled
+        $cpage = new pmclasspage();
+
+        if (!$cpage->_has_capability('elis/program:assign_class_instructor', $this->classid)) {
+            //perform SQL filtering for the more "conditional" capability
+
+            $allowed_clusters = instructor::get_allowed_clusters($this->classid);
+
+            if (empty($allowed_clusters)) {
+                $where .= (!empty($where) ? ' AND ' : '') . '0=1 ';
+            } else {
+                $cluster_filter = implode(',', $allowed_clusters);
+
+                $where .= (!empty($where) ? ' AND ' : '') . 'usr.id IN (
+                             SELECT userid FROM {'. clusterassignment::TABLE ."}
+                             WHERE clusterid IN ({$cluster_filter}))";
+            }
         }
 
         if (!empty($where)) {
@@ -726,7 +751,7 @@ class instructor extends elis_data_object {
  * @param string $namesearch Search string for instructor name.
  * @param string $alpha Start initial of instructor name filter.
  * @uses $DB
- * @return object array Returned records.
+ * @return recordset Returned records.
  */
 
 function instructor_get_listing($classid, $sort = 'name', $dir = 'ASC', $startrec = 0,
@@ -776,7 +801,7 @@ function instructor_get_listing($classid, $sort = 'name', $dir = 'ASC', $startre
 
     $sql = $select.$tables.$join.$on.$where.$sort;
 
-    return $DB->get_records_sql($sql, $params, $startrec, $perpage);
+    return $DB->get_recordset_sql($sql, $params, $startrec, $perpage);
 }
 
 

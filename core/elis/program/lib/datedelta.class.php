@@ -61,6 +61,34 @@ class datedelta {
         }
     }
 
+    /**
+     * Validate time period has correct format: *h, *d, *w, *m, *y
+     * where '*' above is an integer number
+     *
+     * @param  string $period  Time period to validate
+     * @return bool            true if period in proper format, false otherwise.
+     */
+    public static function validate($period) {
+       $legal_chars = array('h', 'd', 'w', 'm', 'y');
+       foreach (count_chars($period, 1) as $key => $cnt) {
+           $char = chr($key);
+           $do_check = ($char != ',' && $char != ' ' && !ctype_digit($char));
+           if ($do_check && ($cnt > 1 || !in_array(strtolower($char), $legal_chars))) {
+               return false;
+           }
+       }
+       return true;
+    }
+
+    /**
+     * Check if current time period is zero
+     *
+     * @return bool    true if current time period is zero, false otherwise.
+     */
+    public function is_zero() {
+        return(!$this->_hour && !$this->_day && !$this->_week && !$this->_month && !$this->_year);
+    }
+
     public function formatDate($date) {
         $parsedDate = $this->parseDate($date);
         $this->getDateParts($parsedDate);
@@ -141,14 +169,14 @@ class datedelta {
             if ($label) {
                 $dateString .= $this->_day . DATEDELTA_LABEL_DAY . '(s) ';
             } else {
-            $dateString .= $this->_day . DATEDELTA_DAY_STRING . DATEDELTA_DELIMITER;
+                $dateString .= $this->_day . DATEDELTA_DAY_STRING . DATEDELTA_DELIMITER;
             }
         }
         if (!empty($this->_week)) {
             if ($label) {
                 $dateString .= $this->_week . DATEDELTA_LABEL_WEEK . '(s) ';
             } else {
-            $dateString .= $this->_week . DATEDELTA_WEEK_STRING . DATEDELTA_DELIMITER;
+                $dateString .= $this->_week . DATEDELTA_WEEK_STRING . DATEDELTA_DELIMITER;
             }
         }
         if (!empty($this->_month)) {
@@ -170,8 +198,10 @@ class datedelta {
     }
 
 }
+
 /**
-$date = new datedelta('55h,55y,55d');
-echo $date->getDateString(false);
+  $date = new datedelta('55h,55y,55d');
+  echo var_dump(datedelta::validate('55h,55y,55d'));
+  echo $date->getDateString(false);
 */
 

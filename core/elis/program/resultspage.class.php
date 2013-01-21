@@ -45,7 +45,7 @@ abstract class enginepage extends pm_page {
     public $form_class = 'cmEngineForm';
 
     protected $parent_page;
-    protected $section;
+    public $section;
     protected $_form;
 
     public function __construct($params = null) {

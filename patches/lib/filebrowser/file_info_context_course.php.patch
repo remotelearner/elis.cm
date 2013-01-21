@@ -1,0 +1,13 @@
+diff --git a/lib/filebrowser/file_info_context_course.php b/lib/filebrowser/file_info_context_course.php
+index 5e61f56..dae2d8b 100644
+--- a/lib/filebrowser/file_info_context_course.php
++++ b/lib/filebrowser/file_info_context_course.php
+@@ -813,7 +813,7 @@ class file_info_area_backup_section extends file_info {
+             'component' => 'backup',
+             'filearea' => 'section',
+             'emptyfilename' => '.');
+-        $sql1 = "SELECT DISTINCT cs.id sectionid FROM {files} f, {course_sections} cs
++        $sql1 = "SELECT DISTINCT cs.id AS sectionid FROM {files} f, {course_sections} cs
+             WHERE cs.course = :courseid
+             AND f.contextid = :contextid
+             AND f.component = :component

@@ -370,12 +370,13 @@ class userset extends data_object_with_custom_fields {
             $params = array_merge($params, $filtersql['where_parameters']);
         }
 
-        $allowed_clusters = $DB->get_records_sql($cluster_permissions_sql, $params);
-
         $result = array();
+
+        $allowed_clusters = $DB->get_recordset_sql($cluster_permissions_sql, $params);
         foreach ($allowed_clusters as $cluster) {
             $result[] = $cluster->id;
         }
+        unset($allowed_clusters);
 
         return $result;
     }

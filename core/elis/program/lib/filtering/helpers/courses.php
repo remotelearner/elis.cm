@@ -70,11 +70,12 @@ if (!empty($ids)) {
             $namefield = 'name';
         }
 
-        if (is_array($records)) {
+        if ((is_array($records) && !empty($records)) || ($records instanceof Iterator && $records->valid() === true)) {
             foreach ($records as $record) {
                 $choices_array[] = array($record->$idfield, $record->$namefield);
             }
         }
+        unset($records);
     }
 }
 

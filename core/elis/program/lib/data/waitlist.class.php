@@ -116,16 +116,17 @@ class waitlist extends elis_data_object {
 ***** */
 
     /**
-     *
-     * @param <type> $clsid
-     * @param <type> $sort
-     * @param <type> $dir
-     * @param <type> $startrec
-     * @param <type> $perpage
-     * @param <type> $namesearch
-     * @param <type> $alpha
+     * Gets students for a waitlist
+     * 
+     * @param int $clsid
+     * @param string $sort
+     * @param string $dir
+     * @param int $startrec
+     * @param int $perpage
+     * @param string $namesearch
+     * @param string $alpha
      * @uses $DB
-     * @return <type>
+     * @return recordset
      */
     public static function get_students($clsid = 0, $sort = 'timecreated', $dir = 'ASC',
                                         $startrec = 0, $perpage = 0, $namesearch = '',
@@ -170,7 +171,7 @@ class waitlist extends elis_data_object {
         }
 
         $sql = $select.$tables.$join.$on.$where.$sort;
-        return $DB->get_records_sql($sql, $params, $startrec, $perpage);
+        return $DB->get_recordset_sql($sql, $params, $startrec, $perpage);
     }
 
     public static function check_autoenrol_after_course_completion($enrolment) {

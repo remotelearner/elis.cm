@@ -231,8 +231,6 @@ class pmclassform extends cmform {
             $tracks = empty($tracks) ? array() : $tracks;
 
             $curcrsassign = curriculumcourse_get_list_by_course($courseid);
-            $curcrsassign = empty($curcrsassign) ? array() : $curcrsassign;
-
             foreach ($curcrsassign as $recid => $curcrsrec) {
                 foreach ($tracks as $trackid => $trackrec) {
                     if ($trackrec->curid == $curcrsrec->curriculumid) {
@@ -252,6 +250,7 @@ class pmclassform extends cmform {
 
                 }
             }
+            unset($curcrsassign);
 
             $temp = array('assignedtrack' => array_keys($assigned));
             $this->set_data($temp);

@@ -58,6 +58,7 @@ context_elis_helper::$namelevelmap = array(
         'cluster'           => CONTEXT_ELIS_USERSET
     );
 
+
 context_elis::$alllevels = context_elis_helper::$alllevels;
 context_elis::$namelevelmap = context_elis_helper::$namelevelmap;
 context_elis::$component = 'elis_program';
@@ -179,16 +180,17 @@ class context_elis_program extends context_elis {
     public function get_child_contexts() {
         global $DB;
 
+        $result = array();
+
         $sql = "SELECT ctx.*
                   FROM {context} ctx
                  WHERE ctx.path LIKE ? AND (ctx.depth = ? OR ctx.contextlevel = ?)";
         $params = array($this->_path.'/%', $this->depth+1, CONTEXT_ELIS_PROGRAM);
-        $records = $DB->get_records_sql($sql, $params);
-
-        $result = array();
+        $records = $DB->get_recordset_sql($sql, $params);
         foreach ($records as $record) {
-            $result[$record->id] = context::create_instance_from_record($record);
+            $result[$record->id] = context_elis::create_instance_from_record($record);
         }
+        unset($records);
 
         return $result;
     }
@@ -385,16 +387,17 @@ class context_elis_track extends context_elis {
     public function get_child_contexts() {
         global $DB;
 
+        $result = array();
+
         $sql = "SELECT ctx.*
                   FROM {context} ctx
                  WHERE ctx.path LIKE ? AND (ctx.depth = ? OR ctx.contextlevel = ?)";
         $params = array($this->_path.'/%', $this->depth+1, CONTEXT_ELIS_TRACK);
-        $records = $DB->get_records_sql($sql, $params);
-
-        $result = array();
+        $records = $DB->get_recordset_sql($sql, $params);
         foreach ($records as $record) {
-            $result[$record->id] = context::create_instance_from_record($record);
+            $result[$record->id] = context_elis::create_instance_from_record($record);
         }
+        unset($records);
 
         return $result;
     }
@@ -587,16 +590,17 @@ class context_elis_course extends context_elis {
     public function get_child_contexts() {
         global $DB;
 
+        $result = array();
+
         $sql = "SELECT ctx.*
                   FROM {context} ctx
                  WHERE ctx.path LIKE ? AND (ctx.depth = ? OR ctx.contextlevel = ?)";
         $params = array($this->_path.'/%', $this->depth+1, CONTEXT_ELIS_COURSE);
-        $records = $DB->get_records_sql($sql, $params);
-
-        $result = array();
+        $records = $DB->get_recordset_sql($sql, $params);
         foreach ($records as $record) {
-            $result[$record->id] = context::create_instance_from_record($record);
+            $result[$record->id] = context_elis::create_instance_from_record($record);
         }
+        unset($records);
 
         return $result;
     }
@@ -784,16 +788,17 @@ class context_elis_class extends context_elis {
     public function get_child_contexts() {
         global $DB;
 
+        $result = array();
+
         $sql = "SELECT ctx.*
                   FROM {context} ctx
                  WHERE ctx.path LIKE ? AND (ctx.depth = ? OR ctx.contextlevel = ?)";
         $params = array($this->_path.'/%', $this->depth+1, CONTEXT_ELIS_CLASS);
-        $records = $DB->get_records_sql($sql, $params);
-
-        $result = array();
+        $records = $DB->get_recordset_sql($sql, $params);
         foreach ($records as $record) {
-            $result[$record->id] = context::create_instance_from_record($record);
+            $result[$record->id] = context_elis::create_instance_from_record($record);
         }
+        unset($records);
 
         return $result;
     }
@@ -1141,16 +1146,17 @@ class context_elis_userset extends context_elis {
     public function get_child_contexts() {
         global $DB;
 
+        $result = array();
+
         $sql = "SELECT ctx.*
                   FROM {context} ctx
                  WHERE ctx.path LIKE ? AND (ctx.depth = ? OR ctx.contextlevel = ?)";
         $params = array($this->_path.'/%', $this->depth+1, CONTEXT_ELIS_USERSET);
-        $records = $DB->get_records_sql($sql, $params);
-
-        $result = array();
+        $records = $DB->get_recordset_sql($sql, $params);
         foreach ($records as $record) {
-            $result[$record->id] = context::create_instance_from_record($record);
+            $result[$record->id] = context_elis::create_instance_from_record($record);
         }
+        unset($records);
 
         return $result;
     }

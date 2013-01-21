@@ -408,13 +408,13 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
             case 'curriculum':
                 switch ($name) {
                     case 'name':
-                        $records = $DB->get_records('crlm_curriculum', null, 'name', 'id, name');
                         $options['choices'] = array();
-                        if (is_array($records)) {
-                            foreach ($records as $record) {
-                                $options['choices'][$record->id] = $record->name;
-                            }
+                        $records = $DB->get_recordset('crlm_curriculum', null, 'name', 'id, name');
+                        foreach ($records as $record) {
+                            $options['choices'][$record->id] = $record->name;
                         }
+                        unset($records);
+
                         $id    = $this->_uniqueid . $group .'-name';
                         $child = $this->_uniqueid .'course-name';
                         $path  = $CFG->wwwroot .'/elis/program/lib/filtering/helpers/courses.php';
@@ -447,14 +447,13 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
             case 'course':
                 switch ($name) {
                     case 'name':
-                        $records = $DB->get_records('crlm_course', null, 'name', 'id, name');
                         $options['choices'] = array();
-
-                        if (is_array($records)) {
-                            foreach ($records as $record) {
-                                $options['choices'][$record->id] = $record->name;
-                            }
+                        $records = $DB->get_recordset('crlm_course', null, 'name', 'id, name');
+                        foreach ($records as $record) {
+                            $options['choices'][$record->id] = $record->name;
                         }
+                        unset($records);
+
                         $id    = $this->_uniqueid . $group .'-name';
                         $child = $this->_uniqueid .'class-idnumber';
                         $path  = $CFG->wwwroot .'/elis/program/lib/filtering/helpers/classes.php';
@@ -477,14 +476,13 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
                                                 ON c.instanceid = cls.id';
                 switch ($name) {
                     case 'idnumber':
-                        $records = $DB->get_records('crlm_class', null, 'idnumber', 'id, idnumber');
                         $options['choices'] = array();
-
-                        if (is_array($records)) {
-                            foreach ($records as $record) {
-                                $options['choices'][$record->id] = $record->idnumber;
-                            }
+                        $records = $DB->get_recordset('crlm_class', null, 'idnumber', 'id, idnumber');
+                        foreach ($records as $record) {
+                            $options['choices'][$record->id] = $record->idnumber;
                         }
+                        unset($records);
+
                         $options['numeric']  = 1;
                         $options['talias']   = $this->tables[$group]['crlm_class'];
                         $options['dbfield']  = 'id';
@@ -492,14 +490,13 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
                         break;
 
                     case 'environmentid':
-                        $records = $DB->get_records('crlm_environment', null, 'name', 'id, name');
                         $options['choices'] = array();
-
-                        if (is_array($records)) {
-                            foreach ($records as $record) {
-                                $options['choices'][$record->id] = $record->name;
-                            }
+                        $records = $DB->get_recordset('crlm_environment', null, 'name', 'id, name');
+                        foreach ($records as $record) {
+                            $options['choices'][$record->id] = $record->name;
                         }
+                        unset($records);
+
                         $options['numeric']    = 1;
                         $options['talias']     = $this->tables[$group]['crlm_class'];
                         $options['table']      = 'crlm_class';

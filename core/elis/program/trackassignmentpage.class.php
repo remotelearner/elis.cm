@@ -163,6 +163,7 @@ class trackassignmentpage extends associationpage {
 
         $totalitems = track_assignment_get_listing($id);
         $items = track_assignment_get_listing($id, $sort, $dir, $page*$perpage, $perpage, $namesearch, $alpha);
+        $items_is_empty = ($items->valid() === true) ? false : true;
         $numitems = track_assignment_count_records($id, $namesearch, $alpha);
 
         $this->print_alpha();
@@ -176,8 +177,9 @@ class trackassignmentpage extends associationpage {
         }
         $this->print_num_items($numitems, $numitems);
         $this->print_list_view($items, $columns, 'track_classes');
+        unset($items);
 
-        if (empty($items) && empty($namesearch) && empty($alpha)) {
+        if ($items_is_empty === true && empty($namesearch) && empty($alpha)) {
             echo '<div align="center">';
             $tmppage = new trackassignmentpage(array('action'=>'autocreate', 'id'=>$id));
             //print_single_button(null, $tmppage->get_moodle_url()->params, get_string('track_autocreate_button', 'elis_program'));
@@ -203,8 +205,8 @@ class trackassignmentpage extends associationpage {
             $params += $filter_sql['where_parameters'];
         }
 
-        $classes = $DB->get_records_sql($sql, $params);
-        if (empty($classes)) {
+        $classes = $DB->get_recordset_sql($sql, $params);
+        if ($classes->valid() !== true) {
             $sql = "SELECT COUNT(*)
                       FROM {".track::TABLE."} trk
                       JOIN {".curriculum::TABLE."} cur ON cur.id = trk.curid

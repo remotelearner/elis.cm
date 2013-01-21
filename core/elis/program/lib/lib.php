@@ -655,9 +655,15 @@ function pm_synchronize_moodle_class_grades($moodleuserid = 0) {
             /// Get CM completion elements and related Moodle grade items
             $comp_elements = array();
             $gis = array();
-            if (isset($pmclass->course) && (get_class($pmclass->course) == 'course')
-                && ($elements = $pmclass->course->get_completion_elements())) {
 
+            //this will store the initial valid state of the $elements recordset, since once we loop
+            //through it the valid state turns false
+            $compelems_valid = false;
+
+            if (isset($pmclass->course) && (get_class($pmclass->course) == 'course')) {
+
+                $elements = $pmclass->course->get_completion_elements();
+                $compelems_valid = (!empty($elements) && $elements->valid() === true) ? true : false;
                 foreach ($elements as $element) {
                     // In Moodle 1.9, Moodle actually stores the "slashes" on the idnumber field in the grade_items
                     // table so we to check both with and without addslashes. =(  - ELIS-1830
@@ -672,6 +678,7 @@ function pm_synchronize_moodle_class_grades($moodleuserid = 0) {
                         $comp_elements[$gi->id] = $element;
                     }
                 }
+                unset($elements);
             }
             // add grade item for the overall course grade
             $coursegradeitem = grade_item::fetch_course_item($moodlecourse->id);
@@ -683,7 +690,7 @@ function pm_synchronize_moodle_class_grades($moodleuserid = 0) {
                 continue;
             }
 
-            if (!empty($elements)) {
+            if (!empty($compelems_valid) && $compelems_valid === true) {
                 // get current completion element grades if we have any
                 // IMPORTANT: this record set must be sorted using the Moodle
                 // user ID
@@ -764,7 +771,7 @@ function pm_synchronize_moodle_class_grades($moodleuserid = 0) {
 
                     /// Enrolment time will be the earliest found role assignment for this user.
                     $enroltime = $timenow;
-                    $enrolments = $DB->get_records('enrol', array('courseid' => $class->moodlecourseid));
+                    $enrolments = $DB->get_recordset('enrol', array('courseid' => $class->moodlecourseid));
                     foreach ($enrolments as $enrolment) {
                         $etime = $DB->get_field('user_enrolments', 'timestart',
                                           array('enrolid' => $enrolment->id,
@@ -773,6 +780,7 @@ function pm_synchronize_moodle_class_grades($moodleuserid = 0) {
                             $enroltime = $etime;
                         }
                     }
+                    unset($enrolments);
                     $sturec->enrolmenttime = $enroltime;
                     $sturec->completetime = 0;
                     $sturec->endtime = 0;
@@ -796,7 +804,7 @@ function pm_synchronize_moodle_class_grades($moodleuserid = 0) {
                         $sturec->grade = $grade;
 
                         /// Update completion status if all that is required is a course grade.
-                        if (empty($elements)) {
+                        if (empty($compelems_valid)) {
                             if ($pmclass->course->completion_grade <= $sturec->grade) {
                                 $sturec->completetime = $usergradeinfo->get_dategraded();
                                 $sturec->completestatusid = STUSTATUS_PASSED;
@@ -2221,19 +2229,22 @@ function pm_process_user_enrolment_data() {
  * Given a float grade value, return a representation of the number meant for UI display
  *
  * An integer value will be returned without any decimals included and a true floating point value
- * will be reduced to only displaying two decimal digits without any rounding.
+ * will be reduced to only displaying two decimal digits _with_ rounding.
  *
  * @param float $grade The floating point grade value
  * @return string The grade value formatted for display
  */
 function pm_display_grade($grade) {
-    if (preg_match('/([0-9]+)([\.[0-9]+|\.0+])/', $grade, $matches)) {
-        if (count($matches) == 3) {
-            return ($matches[2] == 0 ? $matches[1] : sprintf("%0.2f", $matches[0]));
-        }
+    $val = false;
+    if (is_float($grade)) {
+        // passed value is definitely as float so just round it
+        $val = round($grade, 2, PHP_ROUND_HALF_UP);
+    } else if (preg_match('/([0-9]+)(\.[0-9]+)/', $grade, $matches) && count($matches) == 3) {
+        // passed value is a numeric string with decimals, round if decimals not all zero
+        $val = ($matches[2] == 0) ? $matches[1] : round(floatval($matches[0]), 2, PHP_ROUND_HALF_UP);
     }
-
-    return $grade; // This probably isn't a float value
+    // if we did any rounding of the passed grade then return that
+    return (($val !== false) ? sprintf('%0.2f', $val) : (string)$grade);
 }
 
 /**
@@ -2270,6 +2281,44 @@ function pm_mymoodle_redirect($editing = false) {
     //check the setting
     return (!empty(elis::$config->elis_program->mymoodle_redirect) &&
             elis::$config->elis_program->mymoodle_redirect == 1);
+}
+
+// Retrieve the selection record from a session
+function retrieve_session_selection_bulkedit($id, $action) {
+    global $SESSION;
+
+    $pageid = optional_param('id', 1, PARAM_INT);
+    $page = optional_param('s', '', PARAM_ALPHA);
+    $target = optional_param('target', '', PARAM_ALPHA);
+
+    if (empty($target)) {
+        $target = $action;
+    }
+
+    $pagename = $page . $pageid . $target;
+
+    if (isset($SESSION->associationpage[$pagename][$id])) {
+        return $SESSION->associationpage[$pagename][$id];
+    } else {
+        return false;
+    }
+
+    return false;
+}
+
+/**
+ * Prints inputs required for bulk edit checkbox persistence.
+ * @param  array  $ids     An array of IDs to note as checked.
+ * @param  int    $classid The ID of the class the IDs belong to.
+ * @param  string $page    The page type they're checked on. (ex. stu)
+ * @param  string $target  The page section they're checked on. (ex. bulkedit)
+ */
+function print_ids_for_checkbox_selection($ids, $classid, $page, $target) {
+    $baseurl = get_pm_url()->out_omit_querystring().'?&id='.$classid.'&s='.$page.'&target='.$target;
+    echo '<input type="hidden" id="baseurl" value="'.$baseurl.'" /> ';
+    echo '<input type="hidden" id="selfurl" value="'.qualified_me().'" /> ';
+    $result  = implode(',', $ids);
+    echo '<input type="hidden" id="persist_ids_this_page" value="'.$result.'" /> ';
 }
 
 /**

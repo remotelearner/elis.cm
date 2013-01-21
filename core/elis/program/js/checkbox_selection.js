@@ -1,6 +1,6 @@
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * Copyright (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,10 +19,10 @@
  * @subpackage core
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
  */
 
-/// Globals
+// Globals
 
 // whether or not the scripts from the innerhtml have already been run
 var innerhtml_scripts_run = false;
@@ -33,32 +33,51 @@ var selection = new Array();
 
 var selection_field = null;
 
+// boolean indicating that the submit button has been pressed
+var is_submitting = false;
+
 var set_content_callback = {
     success: set_content
 };
 
+// initialize page settings once the DOM has finished loading
 YAHOO.util.Event.onDOMReady(function() {
     make_links_internal();
     window.selection_field = get_element_by_name("_selection");
+    // add onclick handler to submit button to flag when the form is submitting
+    var submitbutton = document.getElementById('id_submitbutton');
+    if (submitbutton) {
+        submitbutton.onclick = function() {
+            window.is_submitting = true;
+        };
+    }
     var set_checkboxes_callback = {
         success: set_checkboxes_success
     };
     YAHOO.util.Connect.asyncRequest("GET", window.basepage + '&mode=bare&action=get_checkbox_selection', set_checkboxes_callback);
 });
 
+// the onbeforeunload handler to send the current selections, unless the form is submitting
 var onbeforeunload = function(e) {
-    update_checkbox_selection();
+    if (!window.is_submitting) {
+        update_checkbox_selection();
+    }
 }
 
 YAHOO.util.Event.addListener(document, 'unload', onbeforeunload);
 
 /**
  * Returns the first element found that has the given name attribute
+ * @param string   name element name to search for
+ * @return object  the DOM element with the specified name
  */
 function get_element_by_name(name) {
     return YAHOO.util.Dom.getElementsBy(function(el) { return el.getAttribute("name") == name; })[0];
 }
 
+/**
+ * function to send POST request back with currently selected checkboxes
+ */
 function update_checkbox_selection() {
     var selectedcheckboxes = YAHOO.lang.JSON.stringify(window.selection);
     // Send the selected checkboxes synchronously
@@ -153,8 +172,13 @@ function change_selected_display() {
     }
 }
 
+/**
+ * Function to set session checkboxes selections in Javascript variable and on page
+ * @param string sessionselection  comma-separated list of checked/selected checkbox ids
+ */
 function set_selected_checkboxes(sessionselection) {
     var checkedselection = sessionselection.split(',');
+    // Load any selected checkboxes into an array and check enabled checkboxes on page
     for (var i = 0; i < checkedselection.length; i++) {
         if (checkedselection[i]) {
             var cb = get_element_by_name("select"+ checkedselection[i]);
@@ -169,8 +193,13 @@ function set_selected_checkboxes(sessionselection) {
     mark_selected();
 }
 
+/**
+ * Callback function to set session checkboxes selections in form element
+ * and call set_selected_checkboxes (to set elsewhere)
+ * @param string resp  AJAX response of comma-separated list of checked/selected checkbox ids
+ */
 function set_checkboxes_success(resp) {
-    //alert('set_checkboxes_success: '+ resp.responseText);
+    // alert('set_checkboxes_success: '+ resp.responseText);
     var selectedelem = document.getElementById('selected_checkboxes');
     if (selectedelem) {
         selectedelem.value = resp.responseText;
@@ -178,6 +207,11 @@ function set_checkboxes_success(resp) {
     set_selected_checkboxes(resp.responseText);
 }
 
+/**
+ * Function called from checkboxes 'onclick' to add/remove selection to/from list of selected
+ * and update the pages' 'numselected' element with total checkboxes selected.
+ * @param int id  The element id of the checkbox entity
+ */
 function select_item(id) {
     if (get_element_by_name("select"+id).checked) {
         // Add checkbox selection
@@ -195,6 +229,11 @@ function select_item(id) {
     document.getElementById("numselected").innerHTML = selection.length;
 }
 
+/**
+ * Function to get the index in the Javascript array of the specified id
+ * @param int element  The element id of the checkbox entity
+ * @return int  the javascript array index if found, -1 otherwise (not found)
+ */
 function checkbox_selection_index(element) {
     for (var i = 0; i < window.selection.length; i++) {
         if (window.selection[i] == element) {
@@ -225,7 +264,7 @@ function mark_selected() {
     var length = 0;
     if (sessionselection && sessionselection.value) {
         length = sessionselection.value.split(',').length;
-        //alert('checkbox_selection.js::mark_selected(): length = '+ length);
+        // alert('checkbox_selection.js::mark_selected(): length = '+ length);
     }
 
     document.getElementById("numonotherpages").innerHTML = (length - numselected);
@@ -238,6 +277,10 @@ function mark_selected() {
     }
 }
 
+/**
+ * Function to check/uncheck all input elements with 'selectiontable'
+ * @param mixed checked  what to set input elements 'checked' attribute to
+ */
 function checkbox_select(checked) {
     var table = document.getElementById('selectiontable');
     if (table) {

@@ -1,0 +1,13 @@
+diff --git a/mod/feedback/item/multichoicerated/multichoicerated_form.php b/mod/feedback/item/multichoicerated/multichoicerated_form.php
+index e95fb44..0c1632a 100644
+--- a/mod/feedback/item/multichoicerated/multichoicerated_form.php
++++ b/mod/feedback/item/multichoicerated/multichoicerated_form.php
+@@ -29,7 +29,7 @@ class feedback_multichoicerated_form extends feedback_item_form {
+ 
+         $mform->addElement('header', 'general', get_string($this->type, 'feedback'));
+ 
+-        $mform->addElement('checkbox', 'required', get_string('required', 'feedback'));
++        $mform->addElement('advcheckbox', 'required', get_string('required', 'feedback'), '' , null , array(0, 1));
+ 
+         $mform->addElement('text',
+                             'name',

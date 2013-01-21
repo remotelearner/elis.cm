@@ -245,7 +245,8 @@ class instructorpage extends associationpage {
         $insid = required_param('association_id', PARAM_INT);
         $clsid = required_param('id', PARAM_INT);
 
-        $users = cm_get_param('users', array());
+        // ELIS-8286: Using elis/core/lib/page.class.php::optional_param_array() since moodle's doesn't support nested arrays!
+        $users = $this->optional_param_array('users', array(), PARAM_CLEAN);
         $uid   = $userid;
         $user  = current($users);
 
@@ -333,7 +334,7 @@ class instructorpage extends associationpage {
         pmsearchbox($this, 'search', 'get', get_string('show_all_users', self::LANG_FILE));
 
         $table = NULL;
-        if (!$inss) {
+        if ($inss->valid() === false) {
             pmshowmatches($alpha, $namesearch, null, 'no_instructor_matching');
         } else {
             // TBD
@@ -364,6 +365,7 @@ class instructorpage extends associationpage {
                 $table = new instructor_page_table($newarr, $columns, $this);
             }
         }
+        unset($inss);
 
         $options = array('s' => 'ins', 'section' => 'curr', 'action' => 'add',
                          'id' => $clsid);

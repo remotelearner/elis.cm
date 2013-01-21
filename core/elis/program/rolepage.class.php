@@ -334,7 +334,7 @@ abstract class rolepage extends associationpage2 {
         }
 
         $count = $DB->count_records_select(user::TABLE, $where, $params);
-        $users = $DB->get_records_select(user::TABLE, $where, $params, $sortclause, '*', $pagenum*$perpage, $perpage);
+        $users = $DB->get_recordset_select(user::TABLE, $where, $params, $sortclause, '*', $pagenum*$perpage, $perpage);
 
         return array($users, $count);
     }
@@ -394,7 +394,7 @@ abstract class rolepage extends associationpage2 {
         }
 
         $count = $DB->count_records_select(user::TABLE, $where, $params);
-        $users = $DB->get_records_select(user::TABLE, $where, $params, $sortclause, '*', $pagenum*$perpage, $perpage);
+        $users = $DB->get_recordset_select(user::TABLE, $where, $params, $sortclause, '*', $pagenum*$perpage, $perpage);
 
         return array($users, $count);
     }
@@ -423,7 +423,7 @@ abstract class rolepage extends associationpage2 {
         $role = $this->required_param('role', PARAM_INT);
         $baseurl .= "&role={$role}";
 
-        $records = $records ? $records : array();
+        $records = (is_array($records) || ($records instanceof Iterator && $records->valid())) ? $records : array();
         $columns = array('_selection' => array('header' => get_string('select')),
                          'idnumber'   => array('header' => get_string('idnumber')),
                          'name'       => array('header' => array('firstname' => array('header' => get_string('firstname')),
@@ -668,7 +668,7 @@ class cluster_rolepage extends rolepage {
             }
 
             $count = $DB->count_records_select(user::TABLE, $where, $params);
-            $users = $DB->get_records_select(user::TABLE, $where, $params, $sortclause, '*', $pagenum*$perpage, $perpage);
+            $users = $DB->get_recordset_select(user::TABLE, $where, $params, $sortclause, '*', $pagenum*$perpage, $perpage);
 
             return array($users, $count);
         } else {
@@ -722,7 +722,7 @@ class cluster_rolepage extends rolepage {
                       AND EXISTS (SELECT 'x'
                                   FROM {".usermoodle::TABLE."} um
                                   JOIN {".clusterassignment::TABLE."} ca
-                                    ON um.cuserid = ca.userid 
+                                    ON um.cuserid = ca.userid
                                   WHERE {".user::TABLE."}.id = um.cuserid
                                     AND ca.clusterid = :clusterid)";
 
@@ -739,7 +739,7 @@ class cluster_rolepage extends rolepage {
             }
 
             $count = $DB->count_records_select(user::TABLE, $where, $params);
-            $users = $DB->get_records_select(user::TABLE, $where, $params, $sortclause, '*', $pagenum*$perpage, $perpage);
+            $users = $DB->get_recordset_select(user::TABLE, $where, $params, $sortclause, '*', $pagenum*$perpage, $perpage);
 
             return array($users, $count);
         } else {

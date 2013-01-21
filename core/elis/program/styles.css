@@ -79,6 +79,13 @@ td.ygtvcontent {
     background-color: white; /* TBD */
 }
 
+/* Set default handling of white space because the grader report pages
+ * have CSS that will force a different default
+ */
+td.ygtvcontent {
+    white-space: normal;
+}
+
 /* Make sure assigned / unassigned tabs are flush with the left of the page in IE7 */
 .elis_page .tabrow1 {
     left: 0px;

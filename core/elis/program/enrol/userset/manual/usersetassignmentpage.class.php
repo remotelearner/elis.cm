@@ -225,7 +225,7 @@ class userclusterpage extends userclusterbasepage {
                 WHERE {$filtersql['where']}
                 ORDER BY {$sort} {$dir}";
         $totalitems = $DB->get_records_sql($sql, $filtersql['where_parameters']);
-        $items = $DB->get_records_sql($sql, $filtersql['where_parameters'],
+        $items = $DB->get_recordset_sql($sql, $filtersql['where_parameters'],
                        $page * $perpage, $perpage);
 
         echo html_writer::tag('h2', get_string('manually_assigned_usersets', 'usersetenrol_manual'));

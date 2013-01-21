@@ -1,0 +1,13 @@
+diff --git a/mod/scorm/lib.php b/mod/scorm/lib.php
+index c3de373..dd410bb 100644
+--- a/mod/scorm/lib.php
++++ b/mod/scorm/lib.php
+@@ -272,8 +272,6 @@ function scorm_delete_instance($id) {
+             }
+         }
+         $DB->delete_records('scorm_scoes', array('scorm'=>$scorm->id));
+-    } else {
+-        $result = false;
+     }
+     if (! $DB->delete_records('scorm', array('id'=>$scorm->id))) {
+         $result = false;

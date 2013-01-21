@@ -34,6 +34,8 @@ require_once(elispm::lib('data/instructor.class.php'));
 require_once(elispm::lib('data/pmclass.class.php'));
 require_once(elispm::lib('data/course.class.php'));
 
+require_once(elispm::file('phpunit/datagenerator.php'));
+
 class instructorTest extends elis_database_test {
     protected $backupGlobalsBlacklist = array('DB');
 
@@ -45,7 +47,7 @@ class instructorTest extends elis_database_test {
             user::TABLE => 'elis_program',
             instructor::TABLE => 'elis_program',
             pmclass::TABLE => 'elis_program',
-            course::TABLE => 'elis_program'
+            course::TABLE => 'elis_program',
         );
     }
 
@@ -182,5 +184,27 @@ class instructorTest extends elis_database_test {
         $instructor->save();
 
         $this->assertTrue(true);
+    }
+
+    public function test_get_instructors() {
+        global $DB;
+
+        //Fixture
+        $datagen = new elis_program_datagen_unit($DB);
+        $user = $datagen->create_user();
+        $datagen->assign_instructor_to_class($user->id,1);
+
+        //Test
+        $instructor = new instructor;
+        $instructor->classid = 1;
+        $instructors = $instructor->get_instructors();
+
+        //Verify
+        $count = 0;
+        foreach ($instructors as $instructoruser) {
+            $this->assertEquals($user->id, $instructoruser->id);
+            $count++;
+        }
+        $this->assertEquals(1,$count);
     }
 }

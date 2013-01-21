@@ -137,11 +137,11 @@ if ($ADMIN->fulltree) {
         define('NO_ROLE_ID', 0);
     }
     $roles[NO_ROLE_ID] = get_string('noroleselected', 'elis_program');
-    if (($role_records = $DB->get_records('role'))) { // TBD: sort order?
-        foreach($role_records as $id => $role_record) {
-            $roles[$id] = $role_record->name;
-        }
+    $role_records = $DB->get_recordset('role'); // TBD: sort order?
+    foreach($role_records as $id => $role_record) {
+        $roles[$id] = $role_record->name;
     }
+    unset($role_records);
     $settings->add(new admin_setting_configselect('elis_program/default_instructor_role',
                            get_string('instructor_role_setting', 'elis_program'),
                            get_string('instructor_role_help', 'elis_program'),

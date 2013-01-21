@@ -161,10 +161,12 @@ class testRoles extends elis_database_test {
         list($available_users, $count) = $page->get_available_records(new pm_user_filtering());
 
         //list should only contain the userset member
-        $this->assertEquals(1, count($available_users));
-
-        $user = reset($available_users);
-        $this->assertEquals('assigned', $user->idnumber);
+        $available_users_count = 0;
+        foreach ($available_users as $available_user) {
+            $available_users_count++;
+            $this->assertEquals('assigned', $available_user->idnumber);
+        }
+        $this->assertEquals(1, $available_users_count);
     }
 
     /**

@@ -503,7 +503,7 @@ class curriculum extends data_object_with_custom_fields {
         if (!empty($options['courses'])) {
             // copy courses
             $currcrs = curriculumcourse_get_list_by_curr($this->id);
-            if (!empty($currcrs)) {
+            if ($currcrs->valid()) {
                 $objs['courses'] = array();
                 $objs['classes'] = array();
                 foreach ($currcrs as $currcrsdata) {
@@ -529,6 +529,7 @@ class curriculum extends data_object_with_custom_fields {
                     }
                 }
             }
+            unset($currcrs);
         }
 
         if (!empty($objs['errors'])) {
