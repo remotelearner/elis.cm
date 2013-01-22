@@ -2165,19 +2165,22 @@ function pm_process_user_enrolment_data() {
  * Given a float grade value, return a representation of the number meant for UI display
  *
  * An integer value will be returned without any decimals included and a true floating point value
- * will be reduced to only displaying two decimal digits without any rounding.
+ * will be reduced to only displaying two decimal digits _with_ rounding.
  *
  * @param float $grade The floating point grade value
  * @return string The grade value formatted for display
  */
 function pm_display_grade($grade) {
-    if (preg_match('/([0-9]+)([\.[0-9]+|\.0+])/', $grade, $matches)) {
-        if (count($matches) == 3) {
-            return ($matches[2] == 0 ? $matches[1] : sprintf("%0.2f", $matches[0]));
-        }
+    $val = false;
+    if (is_float($grade)) {
+        // passed value is definitely as float so just round it
+        $val = round($grade, 2, PHP_ROUND_HALF_UP);
+    } else if (preg_match('/([0-9]+)(\.[0-9]+)/', $grade, $matches) && count($matches) == 3) {
+        // passed value is a numeric string with decimals, round if decimals not all zero
+        $val = ($matches[2] == 0) ? $matches[1] : round(floatval($matches[0]), 2, PHP_ROUND_HALF_UP);
     }
-
-    return $grade; // This probably isn't a float value
+    // if we did any rounding of the passed grade then return that
+    return (($val !== false) ? sprintf('%0.2f', $val) : (string)$grade);
 }
 
 /**

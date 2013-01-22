@@ -209,7 +209,7 @@
         <FIELD NAME="timeexpired" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time of curriculum expiry (timestamp)" PREVIOUS="timecompleted" NEXT="credits"/>
         <FIELD NAME="credits" TYPE="number" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" DECIMALS="2" COMMENT="The credits completed with." PREVIOUS="timeexpired" NEXT="locked"/>
         <FIELD NAME="locked" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Whether or not this completion can be changed." PREVIOUS="credits" NEXT="certificatecode"/>
-        <FIELD NAME="certificatecode" TYPE="char" LENGTH="40" NOTNULL="false" SEQUENCE="false" ENUM="false" PREVIOUS="locked" NEXT="timecreated"/>
+        <FIELD NAME="certificatecode" TYPE="char" LENGTH="40" NOTNULL="false" SEQUENCE="false" PREVIOUS="locked" NEXT="timecreated"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="certificatecode" NEXT="timemodified"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="timecreated"/>
       </FIELDS>

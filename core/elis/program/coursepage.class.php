@@ -206,6 +206,11 @@ class coursepage extends managementpage {
         $crs = new course($id);
         $crs->seturl(null, array('s'=>'crs', 'section'=>'curr', 'action'=>'selem'));
         $form = $crs->create_completion_form($this->optional_param('elemid', 0, PARAM_INT));
+        if (!$form->is_cancelled() && !$form->is_validated()) {
+            $this->print_tabs('elem', array('id' => $id));
+            $form->display();
+            return;
+        }
         if (!$form->is_cancelled()) {
             $elemrecord = new Object();
             $elemrecord->id                = optional_param('elemid', 0, PARAM_INT);

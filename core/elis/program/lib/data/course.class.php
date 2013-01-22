@@ -113,7 +113,7 @@ class course extends data_object_with_custom_fields {
         }
     }
 
-    public function setUrl($url = null, $action = array()) {
+    public function seturl($url = null, $action = array()) {
         if(!($url instanceof moodle_url)) {
             $url = new moodle_url($url, $action);
         }

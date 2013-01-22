@@ -529,14 +529,15 @@ class user extends data_object_with_custom_fields {
      * Retrieves a list of classes the specified user is currently enrolled in that don't fall under a
      * curriculum the user is assigned to.
      * @param $userid ID of the user
-     * @param $curid ID of the curriculum
+     * @param $curid  ID of the curriculum
+     * @param $cnt    Optional return count
      * @uses $DB
      * @return unknown_type
      */
-    static function get_non_curriculum_classes($userid) {
+    static function get_non_curriculum_classes($userid, &$cnt = null) {
         global $DB;
-        $sql = 'SELECT curcrs.*, crs.name AS coursename, crs.id AS courseid, cls.id AS classid
-                  FROM {'.student::TABLE.'} clsenrol
+        $select = 'SELECT curcrs.*, crs.name AS coursename, crs.id AS courseid, cls.id AS classid';
+        $sql = '  FROM {'.student::TABLE.'} clsenrol
                   JOIN {'.pmclass::TABLE.'} cls ON cls.id = clsenrol.classid
                   JOIN {'.course::TABLE.'} crs ON crs.id = cls.courseid
              LEFT JOIN (SELECT curcrs.courseid
@@ -545,7 +546,13 @@ class user extends data_object_with_custom_fields {
                        ON curcrs.courseid = crs.id
                  WHERE clsenrol.userid = ? AND curcrs.courseid IS NULL';
 
-        return $DB->get_recordset_sql($sql, array($userid, $userid));
+        $params = array($userid, $userid);
+        $rs = $DB->get_recordset_sql($select . $sql, $params);
+        if ($cnt !== null) {
+            $cnt = $rs->valid() ? $DB->count_records_sql("SELECT COUNT('x') {$sql}", $params)
+                                : 0;
+        }
+        return $rs;
     }
 
     /**
@@ -609,18 +616,24 @@ class user extends data_object_with_custom_fields {
     /**
      * Retrieves a list of classes the user instructs.
      * @param $userid ID of the user
+     * @param $cnt    Optional return count
      * @uses $DB
      * @return unknown_type
      */
-    static function get_instructed_classes($userid) {
+    static function get_instructed_classes($userid, &$cnt = null) {
         global $DB;
-        $sql = 'SELECT cls.*, crs.name AS coursename
-                  FROM {'.pmclass::TABLE.'} cls
+        $select = 'SELECT cls.*, crs.name AS coursename';
+        $sql = '  FROM {'.pmclass::TABLE.'} cls
                   JOIN {'.course::TABLE.'} crs ON cls.courseid = crs.id
                   JOIN {'.instructor::TABLE.'} clsinstr ON cls.id = clsinstr.classid
                  WHERE clsinstr.userid = ?
               GROUP BY cls.id ';
-        return $DB->get_recordset_sql($sql, array($userid));
+        $rs = $DB->get_recordset_sql($select . $sql, array($userid));
+        if ($cnt !== null) {
+            $cnt = $rs->valid() ? $DB->count_records_sql("SELECT COUNT('x') {$sql}", array($userid))
+                                : 0;
+        }
+        return $rs;
     }
 
     /**
@@ -1697,7 +1710,7 @@ class pm_user_filtering extends user_filtering {
         default:
             if (strncmp($fieldname, 'field_', 6) === 0) {
                 $f = substr($fieldname, 6);
-                if ($rec = new field($DB->get_record(field::TABLE, array('shortname' => $f)))) {
+                if ($rec = field::get_for_context_level_with_name(CONTEXT_ELIS_USER, $f)) {
                     return new pm_custom_field_filter($fieldname, $rec->shortname, $advanced, $rec);
                 }
             }

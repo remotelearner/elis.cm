@@ -242,7 +242,8 @@ class instructorpage extends associationpage {
         $insid = required_param('association_id', PARAM_INT);
         $clsid = required_param('id', PARAM_INT);
 
-        $users = cm_get_param('users', array());
+        // ELIS-8286: Using elis/core/lib/page.class.php::optional_param_array() since moodle's doesn't support nested arrays!
+        $users = $this->optional_param_array('users', array(), PARAM_CLEAN);
         $uid   = $userid;
         $user  = current($users);
 

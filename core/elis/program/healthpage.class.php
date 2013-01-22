@@ -215,6 +215,7 @@ $core_health_checks = array(
     'track_classes_check',
     'completion_export_check',
     'dangling_completion_locks',
+    'duplicate_course_los',
     );
 
 /**
@@ -743,3 +744,31 @@ class dangling_completion_locks extends crlm_health_check_base {
         return $msg;
     }
 }
+
+/**
+ * Checks for duplicate course completion elements
+ */
+class duplicate_course_los extends crlm_health_check_base {
+    var $count; // count of max course with duplicate completion elements
+    function __construct() {
+        global $DB;
+        $sql = "SELECT MAX(count) FROM (SELECT COUNT('x') AS count FROM {crlm_course_completion} GROUP BY courseid, idnumber) duplos";
+        $this->count = $DB->get_field_sql($sql);
+    }
+    function exists() {
+        return($this->count > 1);
+    }
+    function severity() {
+        return healthpage::SEVERITY_SIGNIFICANT; // ANNOYANCE ???
+    }
+    function title() {
+        return get_string('health_dupcourselos', 'elis_program');
+    }
+    function description() {
+        return get_string('health_dupcourselosdesc', 'elis_program');
+    }
+    function solution() {
+        return get_string('health_dupcourselossoln', 'elis_program');
+    }
+}
+

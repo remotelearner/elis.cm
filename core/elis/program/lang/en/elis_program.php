@@ -416,6 +416,7 @@ $string['error_creating_class'] = 'Error creating Class Instance for Course Desc
 $string['error_curriculum_incomplete'] = 'Error: program not completed.';
 $string['error_date_range'] = 'Start date must be before the end date.';
 $string['error_duration'] = 'Start time must be before the end time.';
+$string['error_invalid_timeperiod'] = 'Cannot have zero time period.';
 $string['error_n_overenrol'] = 'The over enrol capability is required for this';
 $string['error_not_timeformat'] = 'time not in proper format';
 $string['error_not_durrationformat'] = 'durration not in proper format';
@@ -535,6 +536,9 @@ $string['health_danglingcompletionlocks'] = 'Dangling learning objective locks';
 $string['health_danglingcompletionlocksdesc'] = 'There are {$a} learning objective grades that should be locked but will never be updated automatically.';
 $string['health_danglingcompletionlockssoln'] = '<p>Run the script fix_dangling_completion_locks.php to automatically lock the learning objective grades '.
                                                 'that will not be automatically locked.</p>';
+$string['health_dupcourselos'] = 'Duplicate learning objectives for courses';
+$string['health_dupcourselosdesc'] = 'There are duplicate learning objectives in ELIS Course Descriptions.';
+$string['health_dupcourselossoln'] = '<p>The duplicate learning objectives must be manually removed from each course, since we cannot determine which is correct</p>';
 $string['health_duplicate'] = 'Duplicate enrolment records';
 $string['health_duplicatedesc'] = 'There were {$a} duplicate enrolments records in the ELIS enrolments table.';
 $string['health_duplicatesoln'] = '<p>Run the script fix_duplicate_enrolments.php to remove all duplicate enrolment records.</p>';

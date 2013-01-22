@@ -1,5 +1,5 @@
 diff --git a/admin/tool/uploaduser/index.php b/admin/tool/uploaduser/index.php
-index 98a244c..338a07b 100644
+index d3c0999..6910d92 100644
 --- a/admin/tool/uploaduser/index.php
 +++ b/admin/tool/uploaduser/index.php
 @@ -68,6 +68,11 @@ $strusernotdeletedadmin     = get_string('usernotdeletedadmin', 'error');
@@ -14,7 +14,7 @@ index 98a244c..338a07b 100644
  $stremailduplicate          = get_string('useremailduplicate', 'error');
  
  $strinvalidpasswordpolicy   = get_string('invalidpasswordpolicy', 'error');
-@@ -507,7 +512,35 @@ if ($formdata = $mform2->is_cancelled()) {
+@@ -511,7 +516,35 @@ if ($formdata = $mform2->is_cancelled()) {
                          }
                      }
                      if ($existinguser->$column !== $user->$column) {
@@ -51,7 +51,7 @@ index 98a244c..338a07b 100644
                              if ($DB->record_exists('user', array('email'=>$user->email))) {
                                  if ($noemailduplicates) {
                                      $upt->track('email', $stremailduplicate, 'error');
-@@ -656,6 +689,30 @@ if ($formdata = $mform2->is_cancelled()) {
+@@ -660,6 +693,30 @@ if ($formdata = $mform2->is_cancelled()) {
  
              $isinternalauth = $auth->is_internal();
  

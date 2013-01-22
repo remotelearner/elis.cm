@@ -203,7 +203,18 @@ class cmCourseForm extends cmform {
     }
 }
 
-class completionform extends moodleform {
+/**
+ * Completion form class.
+ *
+ * @package    elis
+ * @copyright  2013 Remote-Learner (GPL, BJB)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class completionform extends cmform {
+
+    /**
+     * Completion form definition method
+     */
     public function definition() {
         require_once(elis::lib('form/gradebookidnumber.php'));
 
@@ -250,5 +261,31 @@ class completionform extends moodleform {
         $mform->addHelpButton('required', 'completionform:required', 'elis_program');
 
         $this->add_action_buttons();
+    }
+
+    /**
+     * Completion form validation method
+     *
+     * @param array $data array of ("fieldname"=>value) of submitted data
+     * @param array $files array of uploaded files "element_name"=>tmp_file_path
+     * @uses  $DB
+     * @return array associative array of error messages, indexed by form element
+     */
+    function validation($data, $files) {
+        global $DB;
+
+        $errors = parent::validation($data, $files);
+        $course = $this->_customdata['course'];
+        $params = array($course->id, $data['idnumber']);
+        $sql = 'courseid = ? AND idnumber = ?';
+        if (!empty($data['elemid'])) {
+            $sql .= ' AND id != ?';
+            $params[] = $data['elemid'];
+        }
+        if ($DB->record_exists_select(coursecompletion::TABLE, $sql, $params)) {
+            $errors['idnumber'] = get_string('idnumber_already_used', 'elis_program');
+        }
+
+        return $errors;
     }
 }

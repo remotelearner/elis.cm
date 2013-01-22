@@ -328,7 +328,7 @@ class instructor extends elis_data_object {
                 $newarr[] = $tabobj;
                 //$table->data[] = $newarr;
             }
-            $table = new display_table($newarr, $columns, get_pm_url(), null, null, array('id' => 'selectiontbl'));
+            $table = new display_table($newarr, $columns, get_pm_url(), 'sort', 'dir', array('id' => 'selectiontbl'));
         }
 
         print_checkbox_selection($classid, 'ins', 'add');

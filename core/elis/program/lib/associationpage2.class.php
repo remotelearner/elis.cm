@@ -84,7 +84,9 @@ abstract class associationpage2 extends selectionpage {
         //$unassignedpage->params['_assign'] = 'assign';
         $unassignedpage = $this->get_new_page(array('id' => $id, '_assign' => 'assign'));
         list($assigned_string, $unassigned_string) = $this->get_assigned_strings();
-        if ($this->has_program_enrol_capability()) {
+        $iscurstupage = get_class($this) == 'curriculumstudentpage';
+        if ((!$iscurstupage && $this->can_do_default()) ||
+            ($iscurstupage && curriculumpage::can_enrol_into_curriculum($id))) {
             $row = array(new tabobject('assigned', $assignedpage->url, $assigned_string),
                          new tabobject('unassigned', $unassignedpage->url, $unassigned_string));
         } else {
@@ -93,10 +95,6 @@ abstract class associationpage2 extends selectionpage {
         $rows[] = $row;
 
         print_tabs($rows, $this->is_assigning() ? 'unassigned' : 'assigned', array(), array(get_class($this)));
-    }
-
-    public function has_program_enrol_capability() {
-        return has_capability('elis/program:program_enrol', $this->_get_page_context());
     }
 
     /**

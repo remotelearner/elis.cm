@@ -589,6 +589,17 @@ class student extends elis_data_object {
             );
         }
 
+        // ELIS-6468
+        if ($dir !== 'DESC') {
+            $dir = 'ASC';
+        }
+        if (isset($columns[$sort])) {
+            $columns[$sort]['sortable'] = $dir;
+        } else {
+            $sort = 'name';
+            $columns[$sort]['sortable'] = $dir;
+        }
+
         $users = array();
         if (empty($this->id)) {
             $users     = $this->get_users_avail($sort, $dir, $page * $perpage,
@@ -709,7 +720,7 @@ class student extends elis_data_object {
                 //$table->data[] = $newarr;
             }
             // TBD: student_table() ???
-            $table = new display_table($newarr, $columns, $this->get_base_url(), null, null, array('id' => 'selectiontbl'));
+            $table = new display_table($newarr, $columns, $this->get_base_url(), 'sort', 'dir', array('id' => 'selectiontbl'));
         }
 
         print_checkbox_selection($classid, 'stu', 'add');
@@ -1135,8 +1146,8 @@ class student extends elis_data_object {
                 //$table->data[] = $newarr;
             }
             // TBD: student_table() ???
-            $table = new display_table($newarr, $columns, $this->get_base_url(), null, null,
-                    array('id' => 'selectiontbl', 'width'=>'100%'));
+            $table = new display_table($newarr, $columns, $this->get_base_url(), 'sort', 'dir',
+                             array('id' => 'selectiontbl', 'width'=>'100%'));
         }
 
         print_ids_for_checkbox_selection(
@@ -1274,7 +1285,7 @@ class student extends elis_data_object {
                     //$table->data[] = $newarr;
                 }
                 // TBD: student_table() ???
-                $table = new display_table($newarr, $columns, $this->get_base_url(), null, null, array('id' => 'wowwww'));
+                $table = new display_table($newarr, $columns, $this->get_base_url(), 'sort', 'dir', array('id' => 'wowwww'));
                 if (!empty($table)) { // TBD: $newarr or $table?
                     echo '<br />';
                     echo $table->get_html();
