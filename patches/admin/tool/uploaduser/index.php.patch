@@ -1,5 +1,5 @@
 diff --git a/admin/tool/uploaduser/index.php b/admin/tool/uploaduser/index.php
-index 380db45..2d1541d 100644
+index 911d26a..2d1541d 100644
 --- a/admin/tool/uploaduser/index.php
 +++ b/admin/tool/uploaduser/index.php
 @@ -68,6 +68,11 @@ $strusernotdeletedadmin     = get_string('usernotdeletedadmin', 'error');
@@ -14,20 +14,7 @@ index 380db45..2d1541d 100644
  $stremailduplicate          = get_string('useremailduplicate', 'error');
  
  $strinvalidpasswordpolicy   = get_string('invalidpasswordpolicy', 'error');
-@@ -285,7 +290,11 @@ if ($formdata = $mform2->is_cancelled()) {
-             $userserrors++;
-             continue;
-         }
--
-+        if ($user->username !== clean_param($user->username, PARAM_USERNAME)) {
-+            $upt->track('status', get_string('invalidusername', 'error', 'username'), 'error');
-+            $upt->track('username', $errorstr, 'error');
-+            $userserrors++;
-+        }
-         if ($existinguser = $DB->get_record('user', array('username'=>$user->username, 'mnethostid'=>$CFG->mnet_localhost_id))) {
-             $upt->track('id', $existinguser->id, 'normal', false);
-         }
-@@ -507,7 +516,35 @@ if ($formdata = $mform2->is_cancelled()) {
+@@ -511,7 +516,35 @@ if ($formdata = $mform2->is_cancelled()) {
                          }
                      }
                      if ($existinguser->$column !== $user->$column) {
@@ -64,7 +51,7 @@ index 380db45..2d1541d 100644
                              if ($DB->record_exists('user', array('email'=>$user->email))) {
                                  if ($noemailduplicates) {
                                      $upt->track('email', $stremailduplicate, 'error');
-@@ -658,6 +695,30 @@ if ($formdata = $mform2->is_cancelled()) {
+@@ -662,6 +695,30 @@ if ($formdata = $mform2->is_cancelled()) {
  
              $isinternalauth = $auth->is_internal();
  
@@ -95,16 +82,3 @@ index 380db45..2d1541d 100644
              if (empty($user->email)) {
                  $upt->track('email', get_string('invalidemail'), 'error');
                  $upt->track('status', $strusernotaddederror, 'error');
-@@ -900,7 +961,11 @@ if ($formdata = $mform2->is_cancelled()) {
-                     $newgroupdata = new stdClass();
-                     $newgroupdata->name = $addgroup;
-                     $newgroupdata->courseid = $ccache[$shortname]->id;
--                    if ($ccache[$shortname]->groups[$addgroup]->id = groups_create_group($newgroupdata)){
-+                    $newgroupdata->description = '';
-+                    $gid = groups_create_group($newgroupdata);
-+                    if ($gid){
-+                        $ccache[$shortname]->groups[$addgroup] = new stdClass();
-+                        $ccache[$shortname]->groups[$addgroup]->id   = $gid;
-                         $ccache[$shortname]->groups[$addgroup]->name = $newgroupdata->name;
-                     } else {
-                         $upt->track('enrolments', get_string('unknowngroup', 'error', s($addgroup)), 'error');

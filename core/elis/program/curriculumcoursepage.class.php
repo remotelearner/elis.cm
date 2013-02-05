@@ -311,8 +311,6 @@ class curriculumcoursepage extends curriculumcoursebasepage {
 
             // TODO: Ugly, this needs to be overhauled
             $cpage = new coursepage();
-            return $cpage->_has_capability('elis/program:associate', $id);
-
             foreach ($coreqs as $coreq) {
                 if ($cpage->_has_capability('elis/program:course_view', $coreq)
                     && $curcrs->add_corequisite($coreq, !empty($form_data->add_to_curriculum))) {
