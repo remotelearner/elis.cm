@@ -310,9 +310,9 @@ class customfieldpage extends pm_page {
             switch ($data->manual_field_control) {
                 case 'checkbox':
                     if (!$data->multivalued && !empty($src)) {
-                        $elem = "defaultdata_radio_{$src}_"; // *REQUIRES* trailing '_' ???
-                        $data->defaultdata = $data->$elem;
-                        //error_log("/elis/program/customfieldpage.class.php:: defaultdata->{$elem} = {$data->defaultdata}");
+                        $elem = "defaultdata_radio_{$src}";
+                        $data->defaultdata = isset($data->$elem) ? $data->$elem : ''; // radio buttons unset by default
+                        // error_log("/elis/program/customfieldpage.class.php:: defaultdata->{$elem} = {$data->defaultdata}");
                     } else if (!$data->multivalued && !empty($data->manual_field_options)) {
                         $data->defaultdata = $data->defaultdata_radio;
                     } else {
@@ -579,6 +579,65 @@ class customfieldtable extends display_table {
 class customuserfieldtable extends customfieldtable {
     var $syncerr = false;
 
+    // can sync function property, initially disabled (null)
+    public $cansyncfcn = null;
+
+    /**
+     * Create a new customuserfieldtable object.
+     *
+     * @param mixed $items array (or other iterable) of items to be displayed
+     * in the table.  Each element in the array should be an object, with
+     * fields matching the names in {@var $columns} containing the data.
+     * @param array $columns mapping of column IDs to column configuration.
+     * The column configuration is an array with the following entries:
+     * - header (optional): the plain-text name, used for the table header.
+     *   Can either be a string or an array (for headers that allow sorting on
+     *   multiple values, e.g. first-name/last-name).  If it is an array, then
+     *   the key is an ID used for sorting (if applicable), and the value is
+     *   an array of similar form to the $columns array, but only the 'header'
+     *   and 'sortable' keys are used.  (Defaults to empty.)
+     * - display_function (optional): the function used to display the column
+     *   entry.  This can either be the name of a method, or a PHP callback.
+     *   Takes two arguments: the column ID, and the item (from the $items
+     *   array).  Returns a string (or something that can be cast to a string).
+     *   (Defaults to the get_item_display_default method, which just returns
+     *   htmlspecialchars($item->$column), where $column is the column ID.)
+     * - decorator (optional): a function used to decorate the column entry
+     *   (e.g. add links, change the text style, etc).  This is a PHP callback
+     *   that takes three arguments: the column contents (the return value from
+     *   display_function), the column ID, and the item.  (Defaults to doing
+     *   nothing.)
+     * - sortable (optional): whether the column can be used for sorting.  Can
+     *   be either true, false, display_table::ASC (which indicates that
+     *   the table is sorted by this column in the ascending direction), or
+     *   display_table::DESC.  This has no effect if the header entry is an
+     *   array.  (Defaults to the return value of is_sortable_default, which
+     *   defaults to true unless overridden by a  subclass.)
+     * - wrapped (optional): whether the column data should be wrapped if it is
+     *   too long.  (Defaults to the return value of is_column_wrapped_default,
+     *   which defaults to true unless overridden by a subclass.)
+     * - align (optional): how the column data should be aligned (left, right,
+     *   center).  (Defaults to the return value of get_column_align_default(),
+     *   which defaults to left unless overridden by a subclass.)
+     * @param moodle_url $base_url base url to the page, for changing sort
+     * order. Only needed if the table can be sorted.
+     * @param string $sort_param the name of the URL parameter to add to
+     * $pageurl to specify the column to sort by.
+     * @param string $sortdir_param the name of the URL parameter to add to
+     * $pageurl to specify the direction of the sort.
+     * @param array $attributes associative array of table attributes like:
+     * 'id' => 'tableid', 'width' => '90%', 'cellpadding', 'cellspacing' ...
+     */
+    public function __construct($items, $columns, moodle_url $base_url=null, $sort_param='sort', $sortdir_param='dir', array $attributes = array()) {
+        parent::__construct($items, $columns, $base_url, $sort_param, $sortdir_param, $attributes);
+        if (is_readable(elis::plugin_file("elisfields_moodle_profile",'custom_fields.php'))) {
+            include_once(elis::plugin_file("elisfields_moodle_profile",'custom_fields.php'));
+            if (function_exists('moodle_profile_can_sync')) {
+                $this->cansyncfcn = 'moodle_profile_can_sync';
+            }
+        }
+    }
+
     function get_item_display_syncwithmoodle($column, $item) {
         if ($item->syncwithmoodle === NULL) {
             return get_string('field_no_sync', 'elisfields_moodle_profile');
@@ -587,9 +646,13 @@ class customuserfieldtable extends customfieldtable {
         } else {
             $result = get_string('field_sync_to_moodle', 'elisfields_moodle_profile');
         }
-        if (empty($item->mfieldid)) {
+        $cansync = true;
+        if (!empty($item->mfieldid) && !empty($this->cansyncfcn)) {
+            $cansync = call_user_func($this->cansyncfcn, $item->shortname);
+        }
+        if (empty($item->mfieldid) || !$cansync) {
             $this->syncerr = true;
-            return "$result *";
+            return "<strike>$result</strike> *";
         }
         return $result;
     }

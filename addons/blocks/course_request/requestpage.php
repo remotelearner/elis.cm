@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,23 +20,24 @@
  * @subpackage blocks-course_request
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2011 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot .'/elis/core/lib/table.class.php');
+require_once($CFG->dirroot .'/elis/program/accesslib.php');
 require_once($CFG->dirroot .'/elis/program/lib/page.class.php');
 require_once('request_form.php');
 require_once('approvepage.class.php');
 
-//main lib file for the course request block
+// main lib file for the course request block
 require_once($CFG->dirroot.'/blocks/course_request/lib.php');
 
 class RequestPage extends pm_page {
-    var $pagename = 'crp';      //course request page
-    var $section = 'admn';      //no admin category link but maybe later?
+    var $pagename = 'crp';      // course request page
+    var $section = 'admn';      // no admin category link but maybe later?
     var $folder;
     var $tabs;
 
@@ -54,7 +55,7 @@ class RequestPage extends pm_page {
      * @return  boolean  True if page access is allowed, otherwise false
      */
     function can_do_default() {
-        //check request permissions
+        // check request permissions
         return block_course_request_can_do_request();
     }
 
@@ -64,7 +65,7 @@ class RequestPage extends pm_page {
      * @return  boolean  True if page access is allowed, otherwise false
      */
     function can_do_requests() {
-        //check request permissions
+        // check request permissions
         return block_course_request_can_do_request();
     }
 
@@ -72,8 +73,8 @@ class RequestPage extends pm_page {
         return get_string('request_title', 'block_course_request');
     }
 
-    function build_navbar_default() {
-        //parent::build_navbar_default();
+    function build_navbar_default($who = null) {
+        // parent::build_navbar_default();
         $this->navbar->add(get_string('current_classes', 'block_course_request'), $this->url);
     }
 
@@ -108,8 +109,8 @@ class RequestPage extends pm_page {
             'requestnotice' => array('header' => get_string('request_notice', 'block_course_request')),
         );
 
-        //for self-approval, allow selection of the course template
-        $system_context = get_context_instance(CONTEXT_SYSTEM);
+        // for self-approval, allow selection of the course template
+        $system_context = context_system::instance();
         if (has_capability('block/course_request:approve', $system_context)) {
             $columns['usecoursetemplate'] = array('header' => get_string('use_course_template', 'block_course_request'));
         }
@@ -117,7 +118,7 @@ class RequestPage extends pm_page {
         $items = $this->get_pending_requests($sort, $dir);
 
         // This needs to be able to display the course name instead of an integer record ID value
-        //$formatters = $this->create_link_formatters(array('courseid'), 'course', 'id');
+        // $formatters = $this->create_link_formatters(array('courseid'), 'course', 'id');
         $formatters = null; // *TBD*
 
         $this->print_tabs('requests');
@@ -139,7 +140,7 @@ class RequestPage extends pm_page {
         global $CFG, $DB;
         require_once($CFG->dirroot .'/elis/program/lib/contexts.php');
 
-        $contextlevel = context_level_base::get_custom_context_level($contextlevel_name, 'elis_program');
+        $contextlevel = context_elis_helper::get_level_from_name($contextlevel_name);
 
         $select = "requestid = ? AND contextlevel = ?";
         // Add any custom field data from the request to this class now.
@@ -201,13 +202,13 @@ class RequestPage extends pm_page {
                 $fielddata->requestid = $id;
                 $fielddata->fieldid = $reqfield->fieldid;
 
-                //key that represents the appropriate attribute on the object
+                // key that represents the appropriate attribute on the object
                 $field_key = "field_{$field->shortname}";
 
-                //make sure the field was enabled, especially for preventing the
-                //storage of course fields when using an existing course
+                // make sure the field was enabled, especially for preventing the
+                // storage of course fields when using an existing course
                 if (isset($data->$field_key)) {
-                    //check for multiple fields
+                    // check for multiple fields
                     if (is_array($data->$field_key)) {
                         $fielddata->data = serialize($data->$field_key);
                         $fielddata->multiple = '1';
@@ -215,14 +216,14 @@ class RequestPage extends pm_page {
                         $fielddata->data = $data->$field_key;
                     }
 
-                    //remember the context level that the field corresponds to
+                    // remember the context level that the field corresponds to
                     $fielddata->contextlevel = $reqfield->contextlevel;
                     $DB->insert_record('block_course_request_data', $fielddata);
                 }
             }
 
             require_once($CFG->dirroot .'/elis/program/lib/notifications.php');
-            $syscontext = get_context_instance(CONTEXT_SYSTEM);
+            $syscontext = context_system::instance();
 
             if (has_capability('block/course_request:approve', $syscontext)) {
             // Since we want to automatically approve requests for people approval permission, let's go ahead and create the course/class
@@ -257,18 +258,17 @@ class RequestPage extends pm_page {
                     $newcourse = new course($crsdata);
 
                     if (!empty($CFG->block_course_request_use_course_fields)) {
-                        //course fields are enabled, so add the relevant data
+                        // course fields are enabled, so add the relevant data
                         $this->add_custom_fields($request->id, 'course', $newcourse);
                     }
 
                     $newcourse->save(); // ->add()
 
-                    //do the course role assignment, if applicable
+                    // do the course role assignment, if applicable
                     if (!empty($CFG->block_course_request_course_role)) {
-                        $course_context_level = context_level_base::get_custom_context_level('course', 'elis_program');
-                        if ($context = get_context_instance($course_context_level, $newcourse->id)) {
+                        if ($context = context_elis_course::instance($newcourse->id)) {
                             // TBD: role_assign() now throws exceptions!
-                            $result = role_assign($CFG->block_course_request_course_role, $request->userid, $context->id);
+                            $result = role_assign($CFG->block_course_request_course_role, $request->userid, $context->id, ECR_CD_ROLE_COMPONENT);
                         }
                     }
 
@@ -298,7 +298,7 @@ class RequestPage extends pm_page {
                                         !empty($CFG->block_course_request_use_class_fields);
 
                     if ($set_class_fields) {
-                        //class fields are enabled, so add the relevant data
+                        // class fields are enabled, so add the relevant data
                         $this->add_custom_fields($request->id, 'class', $newclass);
                     }
 
@@ -313,40 +313,40 @@ class RequestPage extends pm_page {
                 // assign role to requester in the newly created class
                 if (!empty($newclass->id)) {
                     if (isset($CFG->block_course_request_class_role) && $CFG->block_course_request_class_role) {
-                        $context = get_context_instance(context_level_base::get_custom_context_level('class', 'elis_program'), $newclass->id);
+                        $context = context_elis_class::instance($newclass->id);
                         // TBD: role_assign() now throws exceptions!
-                        role_assign($CFG->block_course_request_class_role, $request->userid, $context->id);
+                        role_assign($CFG->block_course_request_class_role, $request->userid, $context->id, ECR_CI_ROLE_COMPONENT);
                     }
                 }
 
-                //create a new Moodle course from the course template if applicable
+                // create a new Moodle course from the course template if applicable
                 if (!empty($data->usecoursetemplate) && !empty($newclass->id)) {
                     moodle_attach_class($newclass->id, 0, '', true, true, true);
 
-                    //copy role over into Moodle course
+                    // copy role over into Moodle course
                     if (isset($CFG->block_course_request_class_role) && $CFG->block_course_request_class_role) {
                         require_once($CFG->dirroot .'/elis/program/lib/data/classmoodlecourse.class.php');
                         if ($class_moodle_record = $DB->get_record(classmoodlecourse::TABLE, array('classid' => $newclass->id))) {
-                            $context = get_context_instance(CONTEXT_COURSE, $class_moodle_record->moodlecourseid);
+                            $context = context_course::instance($class_moodle_record->moodlecourseid);
                             // TBD: role_assign() now throws exceptions!
-                            role_assign($CFG->block_course_request_class_role, $request->userid, $context->id);
+                            role_assign($CFG->block_course_request_class_role, $request->userid, $context->id, ECR_MC_ROLE_COMPONENT);
                         }
                     }
                 }
 
                 // Send a notification to the requesting user that their course / class is ready.
 
-                //set additional course / class information for use in the message
+                // set additional course / class information for use in the message
                 if (isset($newclass->idnumber) && isset($newclass->id)) {
                     $request->classidnumber = $newclass->idnumber;
                     $request->classid = $newclass->id;
                 }
                 $request->newcourseid = $courseid;
 
-                //calculate the actual message
+                // calculate the actual message
                 $notice = block_course_request_get_approval_message($request);
 
-                //send it to the requester
+                // send it to the requester
                 notification::notify($notice, $DB->get_record('user', array('id' => $request->userid)));
 
                 print_string('request_submitted_and_auto_approved', 'block_course_request');
@@ -416,7 +416,7 @@ class RequestPage extends pm_page {
         $formatters = array();
         foreach ($columns as $column) {
             // ***TBD***
-            //$formatters[$column] = new recordlinkformatter(new $foreign_class(), $foreign_id);
+            // $formatters[$column] = new recordlinkformatter(new $foreign_class(), $foreign_id);
         }
 
         return $formatters;

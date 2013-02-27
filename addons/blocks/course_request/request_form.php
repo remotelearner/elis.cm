@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
  * @subpackage blocks-course_request
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2011 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
@@ -28,6 +28,7 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot .'/lib/formslib.php');
 require_once($CFG->dirroot .'/elis/core/lib/table.class.php');
+require_once($CFG->dirroot .'/elis/program/accesslib.php');
 require_once($CFG->dirroot .'/elis/program/lib/data/course.class.php');
 require_once($CFG->dirroot .'/elis/program/lib/data/pmclass.class.php');
 require_once($CFG->dirroot .'/elis/program/pmclasspage.class.php');
@@ -39,26 +40,26 @@ class current_form extends moodleform {
     public function definition() {
         $mform = &$this->_form;
 
-        //ensure the user is allowed to view the classes being listed
+        // ensure the user is allowed to view the classes being listed
         $user_classes = pmclass_get_listing('crsname', 'ASC', 0, 11, '', '', 0, false, pmclasspage::get_contexts('elis/program:class_view'));
 
         if (empty($user_classes)) {
-            //show a default label
+            // show a default label
             $mform->addElement('static', 'static_name', get_string('no_courses', 'block_course_request'));
         } else {
-            //we have classes to list
+            // we have classes to list
             $mform->addElement('static', 'static_title', get_string('current_classes', 'block_course_request'));
 
             foreach ($user_classes as $uc) {
-                $context = get_context_instance(context_level_base::get_custom_context_level('class', 'elis_program'), $uc->id);
+                $context = context_elis_class::instance($uc->id);
 
-                //this points to the page that displays the specific class
+                // this points to the page that displays the specific class
                 $target = new pmclasspage(array('id'     => $uc->id,
                                                 'action' => 'view'));
                 $mform->addElement('static', 'course' . $uc->id, '', "<a href=\"{$target->url}\">$uc->idnumber</a>");
             }
 
-            //use a "More" link if there are more than ten classes
+            // use a "More" link if there are more than ten classes
             if (count($user_classes) > 10) {
                 $target = new pmclasspage(array()); // TBV
                 $more = "<a href=\"{$target->url}\">". get_string('moreclasses', 'block_course_request') .'</a>';
@@ -66,7 +67,7 @@ class current_form extends moodleform {
             }
         }
 
-        //button for creating a new request
+        // button for creating a new request
         $mform->addElement('submit', 'add', get_string('request', 'block_course_request'));
     }
 }
@@ -93,7 +94,7 @@ class create_form extends moodleform {
          */
         $course_contexts = get_contexts_by_capability_for_user('course', 'block/course_request:request', $USER->id);
 
-        //this will actually handle all cases because it handles curricula explicitly
+        // this will actually handle all cases because it handles curricula explicitly
         $eliscourses = course_get_listing('crs.name', 'ASC', 0, 0, '', '', $course_contexts);
         $eliscourses = $eliscourses ? $eliscourses : array();
         foreach ($eliscourses as $course) {
@@ -103,9 +104,9 @@ class create_form extends moodleform {
         $mform->addElement('select', 'courseid', get_string('course', 'block_course_request'), $courses, array('onchange' => 'handle_course_change()'));
 
         // If this user has approval permission then let's give them the class id field so we can skip the approval page
-        $syscontext = get_context_instance(CONTEXT_SYSTEM);
+        $syscontext = context_system::instance();
         if (has_capability('block/course_request:approve', $syscontext)) {
-            //indicate that course idnumber is required
+            // indicate that course idnumber is required
             $label = '<span class="required">'.get_string('courseidnumber', 'block_course_request').'*</span>';
             $mform->addElement('text', 'crsidnumber', $label);
             $mform->addRule('crsidnumber', null, 'maxlength', 100);
@@ -113,14 +114,14 @@ class create_form extends moodleform {
             $mform->disabledIf('crsidnumber', 'courseid', 'gt', '0');
         }
 
-        //indicate that course name is required
+        // indicate that course name is required
         $label = '<span class="required">'.get_string('title', 'block_course_request').'*</span>';
         $mform->addElement('text', 'title', $label);
-        //only needed for new courses
+        // only needed for new courses
         $mform->disabledIf('title', 'courseid', 'gt', '0');
 
         if (!empty($CFG->block_course_request_use_course_fields)) {
-            //add course-level custom fields to the interface
+            // add course-level custom fields to the interface
             $this->add_custom_fields('course', true);
         }
     }
@@ -136,16 +137,16 @@ class create_form extends moodleform {
 
         $mform = &$this->_form;
 
-        //determine if the current user can approve requests
-        $syscontext = get_context_instance(CONTEXT_SYSTEM);
+        // determine if the current user can approve requests
+        $syscontext = context_system::instance();
         $can_approve = has_capability('block/course_request:approve', $syscontext);
 
         if ($can_approve) {
             require_once($CFG->dirroot .'/elis/program/lib/data/coursetemplate.class.php');
-            //section header, since we know the section will be displayed
+            // section header, since we know the section will be displayed
             $mform->addElement('header', 'classheader', get_string('createclassheader', 'block_course_request'));
 
-            //indicate that class idnumber is required
+            // indicate that class idnumber is required
             $label = '<span class="required">'.get_string('classidnumber', 'block_course_request').'*</span>';
             $mform->addElement('text', 'clsidnumber', $label);
             $mform->addRule('clsidnumber', null, 'maxlength', 100);
@@ -156,13 +157,13 @@ class create_form extends moodleform {
                 $mform->disabledIf('clsidnumber', 'courseid', 'eq', '0');
             }
 
-            //checkbox for whether to use the course template
+            // checkbox for whether to use the course template
             $mform->addElement('checkbox', 'usecoursetemplate', get_string('use_course_template', 'block_course_request'));
 
-            //new course options should disable the use of course templates
+            // new course options should disable the use of course templates
             $mform->disabledIf('usecoursetemplate', 'courseid', 'eq', '0');
 
-            //query to retrieve courses without valid templates
+            // query to retrieve courses without valid templates
             $course_without_template_sql =
                 'SELECT id FROM {'. course::TABLE .'}
                  WHERE id NOT IN (
@@ -170,31 +171,31 @@ class create_form extends moodleform {
                      WHERE location != ''
                  )";
 
-            //go through courses without templates and force the checkbox to be disabled when they are selected
+            // go through courses without templates and force the checkbox to be disabled when they are selected
             if ($courses_without_templates = $DB->get_records_sql($course_without_template_sql)) {
                 foreach ($courses_without_templates as $course_without_template) {
                     $mform->disabledIf('usecoursetemplate', 'courseid', 'eq', "{$course_without_template->id}");
                 }
             }
 
-            //use config setting to set the default value (works only for self-approval)
+            // use config setting to set the default value (works only for self-approval)
             if (!empty($CFG->block_course_request_use_template_by_default)) {
                 $mform->setDefault('usecoursetemplate', $CFG->block_course_request_use_template_by_default);
             }
         }
 
-        //determine if class fields are enabled
+        // determine if class fields are enabled
         $show_class_fields = !isset($CFG->block_course_request_use_class_fields) ||
                              !empty($CFG->block_course_request_use_class_fields);
 
         if ($show_class_fields) {
-            //determine if we still need to display the class header
+            // determine if we still need to display the class header
             $section_header = null;
             if (!$can_approve) {
                 $section_header = get_string('createclassheader', 'block_course_request');
             }
 
-            //add class-level custom fields to the interface
+            // add class-level custom fields to the interface
             $this->add_custom_fields('class', false, $section_header);
         }
     }
@@ -209,7 +210,7 @@ class create_form extends moodleform {
 
         $mform->addElement('header', 'userheader', get_string('createuserheader', 'block_course_request'));
 
-        //get requester's information
+        // get requester's information
         $mform->addElement('text', 'first', get_string('firstname', 'block_course_request'));
         $mform->addRule('first', get_string('required'), 'required', NULL, 'server');
         $mform->setDefault('first', $USER->firstname);
@@ -237,12 +238,12 @@ class create_form extends moodleform {
         global $CFG, $DB;
         $mform = &$this->_form;
 
-        $contextlevel = context_level_base::get_custom_context_level($contextlevel_name, 'elis_program');
+        $contextlevel = context_elis_helper::get_level_from_name($contextlevel_name);
 
-        //track whether we have already displayed a section header
+        // track whether we have already displayed a section header
         $header_displayed = false;
 
-        //get custom fields that can be selected
+        // get custom fields that can be selected
         $fields = $DB->get_records('block_course_request_fields', array('contextlevel' => $contextlevel));
         $fields = $fields ? $fields : array();
         foreach ($fields as $reqfield) {
@@ -257,15 +258,15 @@ class create_form extends moodleform {
 
             if (empty($manual->param_edit_capability)) {
 
-                //display section header?
+                // display section header?
                 if ($section_header !== null && !$header_displayed) {
-                    //header specified, and hasn't been displayed yet
+                    // header specified, and hasn't been displayed yet
                     $mform->addElement('header', $contextlevel_name.'header', $section_header);
-                    //prevent re-displaying for this section
+                    // prevent re-displaying for this section
                     $header_displayed = true;
                 }
 
-                //add required display if applicable
+                // add required display if applicable
                 $params = unserialize($manual->params);
                 if (!empty($params['required'])) {
                     $field->name = '<span class="required">'.$field->name.'*</span>';
@@ -278,8 +279,8 @@ class create_form extends moodleform {
                 $element_name = "field_{$field->shortname}";
 
                 if ($new_course_only) {
-                    //disable for existing courses
-                    //non-zero implies existing course
+                    // disable for existing courses
+                    // non-zero implies existing course
                     $mform->disabledIf($element_name, 'courseid', 'gt', '0');
                 } else {
                     if (empty($CFG->block_course_request_create_class_with_course)) {
@@ -320,8 +321,8 @@ class create_form extends moodleform {
             }
         }
 
-        //note: no need to call addslashes because data is already escaped
-        $syscontext = get_context_instance(CONTEXT_SYSTEM);
+        $syscontext = context_system::instance();
+
         if (has_capability('block/course_request:approve', $syscontext) && $approval['courseid'] == 0) {
             if ($approval['crsidnumber'] == '') {
                 $errors['crsidnumber'] = 'Required';
@@ -330,8 +331,7 @@ class create_form extends moodleform {
             }
         }
 
-        //determine if the current user can approve requests
-        $syscontext = get_context_instance(CONTEXT_SYSTEM);
+        // determine if the current user can approve requests
         $can_approve = has_capability('block/course_request:approve', $syscontext);
 
         if ($can_approve) {
@@ -399,15 +399,15 @@ class define_request_form {
         $fields = field::get_for_context_level($contextlevel_name)->to_array();
         $fields = $fields ? $fields : array();
 
-        //only retrieve fields for the specified context level
-        $contextlevel = context_level_base::get_custom_context_level($contextlevel_name, 'elis_program');
+        // only retrieve fields for the specified context level
+        $contextlevel = context_elis_helper::get_level_from_name($contextlevel_name);
         $questions = $DB->get_records('block_course_request_fields', array('contextlevel' => $contextlevel));
 
         print '<fieldset class="hidden">';
         if (!empty($questions)) {
             print '<table cellpadding="2">';
             print '<tr align="right">';
-            //print '<th><span style="margin-right:10px;">'. get_string('name_on_form', 'block_course_request') .'</span></th>';
+            // print '<th><span style="margin-right:10px;">'. get_string('name_on_form', 'block_course_request') .'</span></th>';
             print '<th><span style="margin-right:10px;">'. get_string('existing_fields', 'block_course_request') .'</span></th>';
             print '<th><span style="margin-right:10px;">'. $field_header .'</span></th>';
             print '</tr>';
@@ -426,12 +426,12 @@ class define_request_form {
                     $fieldname = 'select a field';
                 }
 
-                //print "<td><input type="text" name=\"custom_name[]\" value=\"$value\" /></td>";
+                // print "<td><input type="text" name=\"custom_name[]\" value=\"$value\" /></td>";
                 print "<td>$fieldname</td>";
 
                 print "<td><select name=\"field[{$question->id}]\" />";
 
-                //print '<option value="none">none</option>';
+                // print '<option value="none">none</option>';
 
                 foreach ($fields as $f) {
                     if ($f->id == $question->fieldid) {
@@ -465,32 +465,32 @@ class define_request_form {
     public function display() {
         global $CFG;
 
-        //use one form for everything because submit buttons need to
-        //interact with fields from various contexts
+        // use one form for everything because submit buttons need to
+        // interact with fields from various contexts
         print '<form class="mform" method="post" action="' . $this->action_url . '">';
 
-        //display fields for the course context
+        // display fields for the course context
         $display_for_course = !empty($CFG->block_course_request_use_course_fields);
 
         if ($display_for_course) {
-            //settings allow this type of configuration
+            // settings allow this type of configuration
             $field_header = get_string('action_fields_course', 'block_course_request');
             $button_text = get_string('add_field_course', 'block_course_request');
             $this->display_for_context('course', $field_header, $button_text);
         }
 
-        //display fields for the class context
+        // display fields for the class context
         $display_for_class = !isset($CFG->block_course_request_use_class_fields) ||
                              !empty($CFG->block_course_request_use_class_fields);
 
         if ($display_for_class) {
-            //settings allow this type of configuration
+            // settings allow this type of configuration
             $field_header = get_string('action_fields_class', 'block_course_request');
             $button_text = get_string('add_field_class', 'block_course_request');
             $this->display_for_context('class', $field_header, $button_text);
         }
 
-        //submit buttons
+        // submit buttons
         print '<div style="margin-top:10px">';
         print '<input type="submit" name="update" value="'. get_string('update', 'block_course_request') .'" />';
         print '<input type="submit" name="exit" value="'. get_string('exit', 'block_course_request') .'" />';

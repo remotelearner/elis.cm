@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,28 +20,29 @@
  * @subpackage blocks-course_request
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2011 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-//require_once($CFG->dirroot .'/elis/program/lib/setup.php');
+require_once($CFG->dirroot .'/elis/program/accesslib.php');
+// require_once($CFG->dirroot .'/elis/program/lib/setup.php');
 require_once($CFG->dirroot .'/elis/program/lib/page.class.php');
 require_once('request_form.php');
 
 class EditRequestPage extends pm_page {
-    var $pagename = 'erp';      //edit request page
-    var $section = 'admn';      //no admin category link but maybe later?
+    var $pagename = 'erp';      // edit request page
+    var $section = 'admn';      // no admin category link but maybe later?
     var $folder;
 
     function can_do_default() {
-        $context = get_context_instance(CONTEXT_SYSTEM);
+        $context = context_system::instance();
         return has_capability('block/course_request:config', $context);
     }
 
     function can_do_requests() {
-        $context = get_context_instance(CONTEXT_SYSTEM);
+        $context = context_system::instance();
         return has_capability('block/course_request:config', $context);
     }
 
@@ -49,7 +50,7 @@ class EditRequestPage extends pm_page {
         return get_string('request_title', 'block_course_request');
     }
 
-    function build_navbar_default() {
+    function build_navbar_default($who = null) {
         $this->navbar->add(get_string('editrequestpages', 'block_course_request'), $this->url);
     }
 
@@ -73,7 +74,7 @@ class EditRequestPage extends pm_page {
             }
             $redir = true;
         } else if ($this->optional_param('update', null, PARAM_TEXT)) {
-            $fields = $this->optional_param('field', array(), PARAM_SEQUENCE);
+            $fields = $this->optional_param_array('field', array(), PARAM_SEQUENCE);
             foreach ($fields as $id => $field) {
                 $rec = new stdClass;
                 $rec->id = $id;
@@ -82,21 +83,19 @@ class EditRequestPage extends pm_page {
             }
             $redir = true;
         } else if ($submitted_data = data_submitted()) {
-            //adding a field for a context level
+            // adding a field for a context level
             require_once($CFG->dirroot .'/elis/program/lib/contexts.php');
 
-            //the context levels we are checking for new fields at
-            $contextlevels = array();            
-            $contextlevels[] = context_level_base::get_custom_context_level('course', 'elis_program');
-            $contextlevels[] = context_level_base::get_custom_context_level('class', 'elis_program');
+            // the context levels we are checking for new fields at
+            $contextlevels = array(CONTEXT_ELIS_COURSE, CONTEXT_ELIS_CLASS);
 
-            //go through all context levels to see if a new field was added at that level
+            // go through all context levels to see if a new field was added at that level
             foreach ($contextlevels as $contextlevel) {
-                //key representing the submit value
+                // key representing the submit value
                 $key = "add_field_{$contextlevel}";
 
                 if (isset($submitted_data->$key)) {
-                    //make the field available for editing
+                    // make the field available for editing
                     $rec = new stdClass;
                     $rec->fieldid = 0;
                     $rec->contextlevel = $contextlevel;

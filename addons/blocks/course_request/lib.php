@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,11 +20,19 @@
  * @subpackage blocks-course_request
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2011 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
 defined('MOODLE_INTERNAL') || die();
+
+// Component parameter for role_assign() calls in requestpage and approvepage
+// Component for ELIS Course Descriptions (CD)
+define('ECR_CD_ROLE_COMPONENT', ''); // TBD: 'enrol_elis'
+// Component for ELIS Class Instances (CI)
+define('ECR_CI_ROLE_COMPONENT', ''); // TBD: 'enrol_elis'
+// Component for Moodle Course (MC)
+define('ECR_MC_ROLE_COMPONENT', 'enrol_elis'); // TBD
 
 /**
  * Determines whether the current user is allowed to make course / class
