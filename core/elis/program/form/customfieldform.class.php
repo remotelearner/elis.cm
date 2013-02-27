@@ -32,6 +32,13 @@ require_once elispm::file('form/cmform.class.php');
 class customfieldform extends cmform {
     var $defaultdata_menu = null;
 
+    /**
+     * Custom field form definition method
+     *
+     * @uses $CFG
+     * @uses $DB
+     * @uses $PAGE
+     */
     function definition() {
         global $CFG, $DB, $PAGE;
         $attrs = array();
@@ -332,9 +339,7 @@ class customfieldform extends cmform {
         // common form elements (copied from /user/profile/definelib.php)
         $form->addElement('header', '_commonsettings', get_string('profilecommonsettings', 'admin'));
         $strrequired = get_string('required');
-
         $form->addElement('text', 'shortname', get_string('profileshortname', 'admin'), array('maxlength'=>'100', 'size'=>'25'));
-        $form->addRule('shortname', $strrequired, 'required', null, 'client');
         $form->setType('shortname', PARAM_SAFEDIR);
 
         $form->addElement('text', 'name', get_string('profilename', 'admin'), array('size'=>'50'));
@@ -502,10 +507,42 @@ class customfieldform extends cmform {
         $item = trim($item, "\r\n");
     }
 
+    /**
+     * Definition after data method to modify form based on form data
+     *
+     * @uses $DB
+     * @uses $PAGE
+     */
     function definition_after_data() {
-        global $PAGE;
+        global $DB, $PAGE;
         parent::definition_after_data();
         $mform = &$this->_form;
+
+        // Disable shortname if user context and Moodle shortname exists
+        $level = $this->_customdata['level'];
+        $shortname = $mform->getElementValue('shortname');
+        $requireshortname = true;
+        if ($level == 'user') { // user custom field from Moodle
+            if (!empty($shortname) && $DB->record_exists('user_info_field', array('shortname' => $shortname))) {
+                $mform->freeze('shortname');
+                $requireshortname = false;
+            }
+        }
+        if ($requireshortname) {
+            $mform->addRule('shortname', get_string('required'), 'required', null, 'client');
+        }
+
+        // Check for specific plugin definition_after_data functions
+        $plugins = get_list_of_plugins('elis/core/fields');
+        foreach ($plugins as $plugin) {
+            if (is_readable(elis::plugin_file("elisfields_{$plugin}",'custom_fields.php'))) {
+                include_once(elis::plugin_file("elisfields_{$plugin}",'custom_fields.php'));
+                if (function_exists("{$plugin}_field_edit_form_definition_after_data")) {
+                    call_user_func("{$plugin}_field_edit_form_definition_after_data", $mform, $level, $shortname);
+                }
+            }
+        }
+
         $td = $mform->getElementValue('defaultdata_menu');
         if (!isset($td)) {
             return;

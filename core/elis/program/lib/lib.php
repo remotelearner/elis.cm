@@ -1126,9 +1126,13 @@ function pm_moodle_user_to_pm($mu) {
     require_once(elis::plugin_file('elisfields_moodle_profile', 'custom_fields.php'));
     foreach ($fields as $field) {
         $field = new field($field);
+        if (!moodle_profile_can_sync($field->shortname)) {
+            continue;
+        }
         if (isset($field->owners['moodle_profile']) &&
             $field->owners['moodle_profile']->exclude == pm_moodle_profile::sync_from_moodle
             && isset($mu->{"profile_field_{$field->shortname}"})) {
+            sync_profile_field_settings_from_moodle($field);
             $fieldname = "field_{$field->shortname}";
             $cu->$fieldname = $mu->{"profile_field_{$field->shortname}"};
         }

@@ -467,14 +467,19 @@ class user extends data_object_with_custom_fields {
             require_once elis::plugin_file('elisfields_moodle_profile','custom_fields.php');
             foreach ($fields as $field) {
                 $field = new field($field);
+                if (!moodle_profile_can_sync($field->shortname)) {
+                    continue;
+                }
+
                 if (isset($field->owners['moodle_profile']) && $field->owners['moodle_profile']->exclude == pm_moodle_profile::sync_to_moodle && isset($mfields[$field->shortname])) {
                     $shortname = $field->shortname;
-                    $fieldname = "field_$shortname";
-                    $mfieldname = "profile_$fieldname";
+                    $fieldname = "field_{$shortname}";
+                    $mfieldname = "profile_{$fieldname}";
                     $mfieldvalue = isset($origrec->$mfieldname) ? $origrec->$mfieldname : null;
                     if ($mfieldvalue != $this->$fieldname) {
                         $record->$mfieldname = $this->$fieldname;
                         $changed = true;
+                        sync_profile_field_settings_to_moodle($field);
                     }
                 }
             }
