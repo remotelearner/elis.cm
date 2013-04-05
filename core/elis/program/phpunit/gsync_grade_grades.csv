@@ -1,0 +1,5 @@
+id,itemid,userid,rawgrade,rawgrademax,rawgrademin,rawscaleid,usermodified,finalgrade,hidden,locked,locktime,exported,overridden,excluded,feedbackformat,informationformat,timecreated,timemodified
+1,1,120,0.0,100.00000,0.00000,0,2,75.00000,0,0,0,0,1343838641,0,0,0,0,1343838641
+2,1,100,0.0,100.00000,0.00000,0,2,77.00000,0,0,0,0,1343838641,0,0,0,0,1343838641
+3,1,130,0.0,100.00000,0.00000,0,2,82.00000,0,0,0,0,1343838641,0,0,0,0,1343838641
+4,1,110,0.0,100.00000,0.00000,0,2,88.00000,0,0,0,0,1343838641,0,0,0,0,1343838641

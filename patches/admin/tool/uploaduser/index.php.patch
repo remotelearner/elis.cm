@@ -1,0 +1,84 @@
+diff --git a/admin/tool/uploaduser/index.php b/admin/tool/uploaduser/index.php
+index 9a6a104..5f0560a 100644
+--- a/admin/tool/uploaduser/index.php
++++ b/admin/tool/uploaduser/index.php
+@@ -68,6 +68,11 @@ $strusernotdeletedadmin     = get_string('usernotdeletedadmin', 'error');
+ $strcannotassignrole        = get_string('cannotassignrole', 'error');
+ 
+ $struserauthunsupported     = get_string('userauthunsupported', 'error');
++//start of RL modifications
++$stridnumberduplicate       = get_string('useridnumberduplicate', 'elis_program');
++$stridnumberduplicatepm     = get_string('useridnumberduplicatepm', 'elis_program');
++$stridnumberunset           = get_string('useridnumberunset', 'elis_program');
++//end of RL modifications
+ $stremailduplicate          = get_string('useremailduplicate', 'error');
+ 
+ $strinvalidpasswordpolicy   = get_string('invalidpasswordpolicy', 'error');
+@@ -511,7 +516,35 @@ if ($formdata = $mform2->is_cancelled()) {
+                         }
+                     }
+                     if ($existinguser->$column !== $user->$column) {
+-                        if ($column === 'email') {
++                        //start of RL modifications
++                        if ($column === 'idnumber') {
++                            //dependencies for PM user functionality
++                            require_once($CFG->dirroot.'/elis/program/lib/setup.php');
++                            require_once(elispm::lib('data/user.class.php'));
++
++                            //unconditionally validate that, when changing idnumber values, we
++                            //are not setting a new one that matches some other user record
++                            if (empty($user->idnumber)) {
++                                //validate that an existing value is not being unset
++                                $upt->track('idnumber', $stridnumberunset, 'error');
++                                $upt->track('status', $strusernotupdated, 'error');
++                                $userserrors++;
++                                continue 2;
++                            } else if ($DB->record_exists('user', array('idnumber' => $user->idnumber))) {
++                                //validate against Moodle
++                                $upt->track('idnumber', $stridnumberduplicate, 'error');
++                                $upt->track('status', $strusernotupdated, 'error');
++                                $userserrors++;
++                                continue 2;
++                            } else if ($DB->record_exists(user::TABLE, array('idnumber' => $user->idnumber))) {
++                                //validate against Program Management
++                                $upt->track('idnumber', $stridnumberduplicatepm, 'error');
++                                $upt->track('status', $strusernotupdated, 'error');
++                                $userserrors++;
++                                continue 2;
++                            }
++                        } else if ($column === 'email') {
++                        //end of RL modifications
+                             if ($DB->record_exists('user', array('email'=>$user->email))) {
+                                 if ($noemailduplicates) {
+                                     $upt->track('email', $stremailduplicate, 'error');
+@@ -662,6 +695,30 @@ if ($formdata = $mform2->is_cancelled()) {
+ 
+             $isinternalauth = $auth->is_internal();
+ 
++            //start of RL modifications
++            if (!empty($user->idnumber)) {
++                //dependencies for PM user functionality
++                require_once($CFG->dirroot.'/elis/program/lib/setup.php');
++                require_once(elispm::lib('data/user.class.php'));
++
++                //unconditionally validate that we aren't creating a user record whose idnumber
++                //matches that of an existing user
++                if ($DB->record_exists('user', array('idnumber' => $user->idnumber))) {
++                    //validate against Moodle
++                    $upt->track('idnumber', $stridnumberduplicate, 'error');
++                    $upt->track('status', $strusernotaddederror, 'error');
++                    $userserrors++;
++                    continue;
++                }  else if ($DB->record_exists(user::TABLE, array('idnumber' => $user->idnumber))) {
++                    //validate against Program Management
++                    $upt->track('idnumber', $stridnumberduplicatepm, 'error');
++                    $upt->track('status', $strusernotupdated, 'error');
++                    $userserrors++;
++                    continue;
++                }
++            }
++            //end of RL modifications
++
+             if (empty($user->email)) {
+                 $upt->track('email', get_string('invalidemail'), 'error');
+                 $upt->track('status', $strusernotaddederror, 'error');

@@ -1,0 +1,2 @@
+id,shortname,name,datatype,description,categoryid,sortorder,multivalued,forceunique,params
+100,test_course_customfield,Test Course Customfield,char,NULL,3,0,0,0,a:0:{}

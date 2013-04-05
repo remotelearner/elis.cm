@@ -1,0 +1,11 @@
+id,shortname,name,datatype,categoryid,sortorder,required,locked,visible,forceunique,signup,defaultdata,param1,param2,param3,param4,param5
+1,sometext,Some text entry,text,1,1,0,0,1,0,0,,20,30,0,0,
+2,somecheckbox,Some checkbox,checkbox,1,2,0,0,1,0,0,,,,,,
+3,somedatetime,Some datetime,datetime,1,3,0,0,1,0,0,,1970,2040,1,,
+4,somemenu,Some menu,menu,1,4,0,0,1,0,0,,option1\noption2\noption3,,,,
+5,sometextarea,Some text area,textarea,1,5,0,0,1,0,0,,80,5,,,
+6,sometextfrompm,Some text entry from PM,text,1,6,0,0,1,0,0,,20,30,0,0,
+7,somecheckboxfrompm,Some checkbox from PM,checkbox,1,7,0,0,1,0,0,,,,,,
+8,somedatetimefrompm,Some datetime from PM,datetime,1,8,0,0,1,0,0,,1970,2040,1,,
+9,somemenufrompm,Some menu from PM,menu,1,9,0,0,1,0,0,,option1\noption2\noption3,,,,
+10,sometextareafrompm,Some text area from PM,textarea,1,10,0,0,1,0,0,,80,5,,,

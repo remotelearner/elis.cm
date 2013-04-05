@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="blocks/enrol_survey/db" VERSION="2010012900" COMMENT="XMLDB file for Moodle blocks/enrol_survey"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+      <TABLE NAME="block_enrol_survey_taken" COMMENT="whether or not a user has taken the survey" >
+          <FIELDS>
+            <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="blockinstanceid"/>
+            <FIELD NAME="blockinstanceid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="id" NEXT="userid"/>
+            <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="blockinstanceid"/>
+          </FIELDS>
+          <KEYS>
+            <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+          </KEYS>
+          <INDEXES>
+            <INDEX NAME="blockinstance_idx" UNIQUE="false" FIELDS="blockinstanceid" NEXT="user_idx"/>
+            <INDEX NAME="user_idx" UNIQUE="false" FIELDS="userid" PREVIOUS="blockinstance_idx"/>
+          </INDEXES>
+        </TABLE>
+  </TABLES>
+</XMLDB>

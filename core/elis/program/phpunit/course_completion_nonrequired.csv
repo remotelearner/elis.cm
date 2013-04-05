@@ -1,0 +1,3 @@
+id,courseid,idnumber,completion_grade,required
+1,100,notrequired,80,0
+2,100,nonrequired2,80,0
