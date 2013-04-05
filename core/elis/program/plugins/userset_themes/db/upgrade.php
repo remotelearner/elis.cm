@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
  * @subpackage programmanagement
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
@@ -80,6 +80,23 @@ function xmldb_pmplugins_userset_themes_upgrade($oldversion = 0) {
         }
 
         upgrade_plugin_savepoint($result, 2011101800, 'pmplugins', 'userset_themes');
+    }
+
+    if ($oldversion < 2011101801) {
+        // rename field if it is still 'Cluster Theme'
+        $field = field::find(new field_filter('shortname', '_elis_userset_theme'));
+
+        if ($field->valid()) {
+            $field = $field->current();
+            $category = $field->category;
+            if ($category->name == 'Cluster Theme') {
+                // the field name hasn't been changed from the old default
+                $category->name = get_string('userset_theme_category', 'pmplugins_userset_themes');
+                $category->save();
+            }
+        }
+
+        upgrade_plugin_savepoint($result, 2011101801, 'pmplugins', 'userset_themes');
     }
 
     return $result;

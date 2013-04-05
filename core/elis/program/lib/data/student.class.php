@@ -974,7 +974,7 @@ class student extends elis_data_object {
                     );
                 }
 
-                echo 'Success';
+                echo get_string('success', self::LANG_FILE);
                 die();
 
             } else {

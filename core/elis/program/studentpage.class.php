@@ -902,8 +902,9 @@ class studentpage extends associationpage {
         echo "<form>";
         // TODO: pass in query parameters
         if ($this->can_do('bulkedit')) {
-            echo "<input type=\"button\" onclick=\"document.location='index.php?s=stu&amp;section=curr&amp;" .
-                "action=bulkedit&amp;id=$clsid&amp;sort=$sort&amp;dir=$dir&amp;perpage=$perpage&amp;alpha=$alpha&amp;search=" . urlencode($namesearch) . "';\" value=\"Bulk Edit\" />";
+            echo "<input type=\"button\" onclick=\"document.location='index.php?s=stu&amp;section=curr&amp;".
+                "action=bulkedit&amp;id=$clsid&amp;sort=$sort&amp;dir=$dir&amp;perpage=$perpage&amp;alpha={$alpha}&amp;search=".
+                urlencode($namesearch)."';\" value=\"".get_string('bulkedit', 'elis_program')."\" />";
         }
         if ($this->can_do('add')) {
             echo "<input type=\"button\" onclick=\"document.location='index.php?s=stu&amp;section=curr&amp;" .
@@ -1064,7 +1065,8 @@ class student_table extends association_page_table {
         if ($usermanagementpage->can_do_view()) {
             $target = $usermanagementpage->get_new_page(array('action' => 'view', 'id' => $item->userid));
             $link = $target->url;
-            $elis_link_begin = '<a href="'.$link.'" alt="ELIS profile" title="ELIS profile">';
+            $elisprofilestr = get_string('elis_profile', 'elis_program');
+            $elis_link_begin = '<a href="'.$link.'" alt="'.$elisprofilestr.'" title="'.$elisprofilestr.'">';
             $elis_link_end = '</a>';
         } else {
             $elis_link_begin = '';
@@ -1079,9 +1081,9 @@ class student_table extends association_page_table {
 
         $mdluid = cm_get_moodleuserid($item->userid);
         if (!empty($mdluid) && has_capability('moodle/user:viewdetails', get_context_instance(CONTEXT_USER, $USER->id))) {
-            $moodle_link_begin = '<a href="'.$CFG->wwwroot.'/user/view.php?id='.
-                    $mdluid .'" alt="Moodle profile" title="Moodle profile">';
-            $moodle_link_end = ' <img src="'. $OUTPUT->pix_url('i/moodle_host') .'" alt="Moodle profile" title="Moodle profile" /></a>';
+            $moodleprofilestr = get_string('moodle_profile', 'elis_program');
+            $moodle_link_begin = '<a href="'.$CFG->wwwroot.'/user/view.php?id='.$mdluid.'" alt="'.$moodleprofilestr.'" title="'.$moodleprofilestr.'">';
+            $moodle_link_end = ' <img src="'.$OUTPUT->pix_url('i/moodle_host').'" alt="'.$moodleprofilestr.'" title="'.$moodleprofilestr.'" /></a>';
         } else {
             $moodle_link_begin = '';
             $moodle_link_end = '';

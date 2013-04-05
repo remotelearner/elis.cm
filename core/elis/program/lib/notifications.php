@@ -826,44 +826,50 @@ function pm_notify_track_assign_handler($eventdata){
  * course role assignment back to moodle based on the configured default role
  *
  * @param  stdClass  $eventdata  The appropriate crlm_class_instructor record
- *
+ * @uses   $CFG
+ * @uses   $DB
  */
 function pm_notify_instructor_assigned_handler($eventdata) {
-    global $CFG, $CURMAN;
+    global $CFG, $DB;
 
-    //make sure we actually have a default instructor role specified
-    if(empty(elis::$config->elis_program->default_instructor_role)) {
+    // ELIS-4684: RLIP can pass overriding role in $eventdata
+    if (empty($eventdata->roleshortname) || !($roleid = $DB->get_field('role', 'id', array('shortname' => $eventdata->roleshortname)))) {
+        $roleid = elis::$config->elis_program->default_instructor_role;
+    }
+
+    // make sure we actually have an instructor role specified
+    if (empty($roleid)) {
         return true;
     }
 
-    //get our curriculum admin class
-    if(!$pmclass = new pmclass($eventdata->classid)) {
+    // get our curriculum admin class
+    if (!$pmclass = new pmclass($eventdata->classid)) {
         return true;
     }
 
-    //make sure our class is tied to a Moodle course
+    // make sure our class is tied to a Moodle course
     $moodlecourseid = $pmclass->get_moodle_course_id();
-    if(empty($moodlecourseid)) {
+    if (empty($moodlecourseid)) {
         return true;
     }
 
-    //retrieve the Moodle course's context
-    if(!$course_context = get_context_instance(CONTEXT_COURSE, $moodlecourseid)) {
+    // retrieve the Moodle course's context
+    if (!$course_context = get_context_instance(CONTEXT_COURSE, $moodlecourseid)) {
         return true;
     }
 
-    //retrieve the appropriate Moodle user based on the event's curriculum admin user
-    if(!$instructor = cm_get_moodleuser($eventdata->userid)) {
+    // retrieve the appropriate Moodle user based on the event's curriculum admin user
+    if (!$instructor = cm_get_moodleuser($eventdata->userid)) {
         return true;
     }
 
-    //make sure the Moodle user does not already have a Non-Editing Teacher, Teacher or Admin role in the course
-    if(has_capability('moodle/course:viewhiddenactivities', $course_context, $instructor->id)) {
+    // make sure the Moodle user does not already have a Non-Editing Teacher, Teacher or Admin role in the course
+    if (has_capability('moodle/course:viewhiddenactivities', $course_context, $instructor->id)) {
         return true;
     }
 
-    //assign the Moodle user to the default instructor role
-    role_assign(elis::$config->elis_program->default_instructor_role, $instructor->id, $course_context->id);
+    // assign the Moodle user to the instructor role
+    role_assign($roleid, $instructor->id, $course_context->id);
     return true;
 }
 

@@ -106,14 +106,16 @@ class moodlecourseurl {
         return $courses;
     }
 
-    function printCourses($courseObj) {
+    public function printCourses($courseObj) {
         global $CFG;
-        $js_escaped_name =  str_replace("'", "\\'", "{$courseObj->fullname} ({$courseObj->shortname})");
+        // ELIS-8338 BJB130313: single quote must be backslashed but double quote must be changed to 'entity'
+        $js_escaped_name = str_replace(array('\\', "'"), array('\\\\', "\'"), "{$courseObj->fullname} ({$courseObj->shortname})");
+        $js_escaped_name = htmlentities($js_escaped_name);
+
         $html_escaped_name = htmlspecialchars($courseObj->fullname);
-        $output = "-> <a name=\"template\" ".
-                  "onClick=\"courseSelect({$courseObj->id}, '{$js_escaped_name}');".
-                  "selectedCourse({$courseObj->id}, 'new'); self.close(); return false;\"".
-                  "id=\"{$courseObj->id}\" class=\"notselect\">{$html_escaped_name}</a><br />";
+        $output = "-> <a name=\"template\" onClick=\"courseSelect({$courseObj->id}, '{$js_escaped_name}'); ".
+                  "selectedCourse({$courseObj->id}, 'new'); self.close(); return false;\" id=\"{$courseObj->id}\" ".
+                  "class=\"notselect\">{$html_escaped_name}</a><br />";
         return $output;
     }
 
