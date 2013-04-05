@@ -31,12 +31,14 @@ class block_enrol_survey_edit_form extends block_edit_form {
 
         $mform->addElement('text', 'config_title', get_string('config_title', 'block_enrol_survey'));
 
-        $available_intervals = array(0        => 'never',
-                                     HOURSECS => 'hour',
-                                     DAYSECS  => 'day',
-                                     YEARSECS => 'year');
+        $availableintervals = array(
+            0        => get_string('never'),
+            HOURSECS => get_string('hour'),
+            DAYSECS  => get_string('day'),
+            YEARSECS => get_string('year')
+        );
 
-        $mform->addElement('select', 'config_cron_time', get_string('config_cron_time', 'block_enrol_survey'), $available_intervals);
+        $mform->addElement('select', 'config_cron_time', get_string('config_cron_time', 'block_enrol_survey'), $availableintervals);
 
     }
 }

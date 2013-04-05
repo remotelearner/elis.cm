@@ -87,6 +87,7 @@ href=\"{$CFG->wwwroot}/blocks/enrol_survey/survey.php?id={$this->instance->id}&c
 />";
         }
 
+        // $this->content->text .= "<br/> crontime = {$this->config->cron_time}";
         return $this->content;
     }
 

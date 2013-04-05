@@ -344,12 +344,12 @@ class instructorpage extends associationpage {
             //todo: convert this to use the standard listing function
             $newarr = array();
             foreach ($inss as $ins) {
-                $deletebutton = '<a href="index.php?s=ins&amp;section=curr&amp;id=' . $clsid .
-                                '&amp;action=delete&amp;association_id=' . $ins->id . '">' .
-                                '<img src="'. $OUTPUT->pix_url('delete', 'elis_program') . '" alt="Delete" title="Delete" /></a>';
-                $editbutton = '<a href="index.php?s=ins&amp;section=curr&amp;id=' . $clsid .
-                              '&amp;action=edit&amp;association_id=' . $ins->id . '">' .
-                              '<img src="'. $OUTPUT->pix_url('edit', 'elis_program') .'" alt="Edit" title="Edit" /></a>';
+                $deletestr = get_string('delete');
+                $deletebutton = '<a href="index.php?s=ins&amp;section=curr&amp;id='.$clsid.'&amp;action=delete&amp;association_id='.$ins->id.'">'.
+                                '<img src="'.$OUTPUT->pix_url('delete', 'elis_program').'" alt="'.$deletestr.'" title="'.$deletestr.'" /></a>';
+                $editstr = get_string('edit');
+                $editbutton = '<a href="index.php?s=ins&amp;section=curr&amp;id='.$clsid.'&amp;action=edit&amp;association_id='.$ins->id.'">'.
+                              '<img src="'.$OUTPUT->pix_url('edit', 'elis_program').'" alt="'.$editstr.'" title="'.$editstr.'" /></a>';
 
                 $tabobj = new stdClass;
                 $tabobj->id = $ins->id;

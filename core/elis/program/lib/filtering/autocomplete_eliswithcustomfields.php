@@ -440,4 +440,28 @@ class generalized_filter_autocomplete_eliswithcustomfields extends generalized_f
 
         return $DB->get_records_sql($sql,$params);
     }
+
+    /**
+     * Returns a human friendly description of the filter used as label.
+     * @param   array   $data  Filter settings
+     * @return  string         Active filter label
+     */
+    public function get_label($data) {
+        if (!$this->_useid) {
+            return parent::get_label($data);
+        } else {
+            $value = $data['value'];
+
+            $a = new object();
+            $a->label = $this->_label;
+            if ($cmuser = new user($value)) {
+                $cmuser->load();
+                $value = fullname($cmuser->to_object());
+            }
+            $a->value = '"'.s($value).'"';
+            $a->operator = get_string('isequalto', 'filters');
+
+            return get_string('selectlabel', 'filters', $a);
+        }
+    }
 }

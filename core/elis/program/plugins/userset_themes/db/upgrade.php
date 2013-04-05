@@ -82,5 +82,22 @@ function xmldb_pmplugins_userset_themes_upgrade($oldversion = 0) {
         upgrade_plugin_savepoint($result, 2011101800, 'pmplugins', 'userset_themes');
     }
 
+    if ($oldversion < 2013020400) {
+        // rename field if it is still 'Cluster Theme'
+        $field = field::find(new field_filter('shortname', '_elis_userset_theme'));
+
+        if ($field->valid()) {
+            $field = $field->current();
+            $category = $field->category;
+            if ($category->name == 'Cluster Theme') {
+                // the field name hasn't been changed from the old default
+                $category->name = get_string('userset_theme_category', 'pmplugins_userset_themes');
+                $category->save();
+            }
+        }
+
+        upgrade_plugin_savepoint($result, 2013020400, 'pmplugins', 'userset_themes');
+    }
+
     return $result;
 }

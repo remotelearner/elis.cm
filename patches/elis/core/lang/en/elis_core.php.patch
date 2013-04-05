@@ -1,8 +1,8 @@
 diff --git a/elis/core/lang/en/elis_core.php b/elis/core/lang/en/elis_core.php
-index 4cc1758..edba83e 100644
+index 564a341..9da9eae 100644
 --- a/elis/core/lang/en/elis_core.php
 +++ b/elis/core/lang/en/elis_core.php
-@@ -82,7 +82,6 @@ $string['fld_courserole_help'] = '<h1>Course role filter</h1>
+@@ -85,7 +85,6 @@ $string['fld_courserole_help'] = '<h1>Course role filter</h1>
  <p>This filter allows you to filter users based the role they have assigned in the course
  specified by its shortname from a specified course category (if the shortname textbox is empty,
  the category is "any category" and the role is "any role" then the filter is not active).</p>';
@@ -10,7 +10,7 @@ index 4cc1758..edba83e 100644
  $string['fld_curriculum'] = 'Curriculum';
  $string['fld_description'] = 'Description';
  $string['fld_email'] = 'Email address';
-@@ -164,9 +163,10 @@ The filter has the following options:</p>
+@@ -167,9 +166,10 @@ The filter has the following options:</p>
  <li>ends with - this option allows only lastnames that end with the text entered (if no text is entered, then the filter is disabled)</li>
  <li>is empty - this option allows only lastnames that are equal to the empty string (the text entered is ignored)</li>
  </ul>';

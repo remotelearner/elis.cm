@@ -37,6 +37,7 @@ String.prototype.ends_with = function (str) {
 YAHOO.util.Event.onDOMReady(function() {
     var sessionselection = document.getElementById('persist_ids_this_page');
     // Load current session data of selected checkboxes
+    // console.log('persist_ids_this_page = ' + sessionselection.value);
     if (sessionselection != null) {
         var checkedselection = sessionselection.value.split(',');
         for (var i = 0; i < checkedselection.length; i++) {
@@ -197,8 +198,10 @@ function do_bulk_value_apply() {
     var changed = false;
 
     // provide visual feedback for users on current page
+    // console.log('updating checked users (' + selectionstatus.length + '): ' + selectionstatus);
     for (var i = 0; i < selectionstatus.length; i++) {
         chbx = document.getElementById('selected' + selectionstatus[i]);
+        // console.log('updating checked userid = '+selectionstatus[i]+', checkbox = ' + chbx);
         if (chbx != null) {
             if (chbx.checked == true) {
                 changed = false;
@@ -231,7 +234,10 @@ function do_bulk_value_apply() {
                     changed = true;
                 }
                 if (changed == true) {
-                    checkbox_select(true,'[changed]','changed');
+                    var chng = document.getElementById('changed' + selectionstatus[i]);
+                    if (chng) {
+                       chng.checked = true;
+                    }
                 }
             }
         }
@@ -336,11 +342,25 @@ var selectionstatus =  new Array();
  */
 function select_item(id) {
     var chbx = document.getElementById('selected'+id);
+    var unenrol = document.getElementById('unenrol'+id);
     var numselected_e = document.getElementById('numselected_allpages');
     var numselected = parseInt(numselected_e.innerHTML);
-    var new_numselected = (chbx.checked == false) ? (numselected-1) : (numselected+1);
+    var new_numselected = numselected;
+    if (chbx.checked == false && unenrol.checked == false) {
+        var ssindex = selectionstatus.indexOf(id);
+        if (ssindex != -1) {
+            if (numselected > 0) {
+                new_numselected = numselected - 1;
+            }
+            selectionstatus.splice(id, 1);
+        }
+    } else {
+        proxy_select(id);
+        if (selectionstatus.indexOf(id) == -1) {
+            new_numselected = numselected + 1;
+        }
+    }
     numselected_e.innerHTML = new_numselected;
-    proxy_select(id);
 }
 
 /**
@@ -348,7 +368,10 @@ function select_item(id) {
  * @param  int id The ID of the item we want to select.
  */
 function proxy_select(id) {
-    document.getElementById('changed'+id).checked=true;
+    document.getElementById('changed'+id).checked = true;
+    if (selectionstatus.indexOf(id) == -1) {
+        selectionstatus.push(id);
+    }
 }
 
 /**

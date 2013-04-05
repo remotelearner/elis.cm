@@ -288,12 +288,12 @@ class coursepage extends managementpage {
             $newarr = array();
 
             foreach ($elements as $element) {
-                $deletebutton = '<a href="index.php?s=crs&amp;section=curr&amp;action=delem&amp;id='.$crs->id.
-                                '&amp;elemid='.$element->id.'">'.
-                                '<img src="pix/delete.gif" alt="Delete" title="Delete" /></a>';
-                $editbutton   = '<a href="index.php?s=crs&amp;section=curr&amp;action=eelem&amp;id='.$crs->id.
-                                '&amp;elemid='.$element->id.'">'.
-                                '<img src="pix/edit.gif" alt="Edit" title="Edit" /></a>';
+                $delstr = get_string('delete');
+                $deletebutton = '<a href="index.php?s=crs&amp;section=curr&amp;action=delem&amp;id='.$crs->id.'&amp;elemid='.$element->id.'">'.
+                                '<img src="pix/delete.gif" alt="'.$delstr.'" title="'.$delstr.'" /></a>';
+                $editstr = get_string('edit');
+                $editbutton   = '<a href="index.php?s=crs&amp;section=curr&amp;action=eelem&amp;id='.$crs->id.'&amp;elemid='.$element->id.'">'.
+                                '<img src="pix/edit.gif" alt="'.$editstr.'" title="'.$editstr.'" /></a>';
                 $newobj = new stdClass;
                 foreach ($columns as $column=>$cdesc) {
                     if ($column == 'required') {
@@ -317,7 +317,12 @@ class coursepage extends managementpage {
         $output .= '<br clear="all" />' . "\n";
         $output .= '<div align="center">';
         $options = array('s' => 'crs', 'section' => 'curr', 'action' => 'celem', 'id' => $crs->id);
-        $button = new single_button(new moodle_url('index.php', $options), 'Add Element', 'get', array('disabled'=>false, 'title'=>'Add Element', 'id'=>''));
+        $addelement = get_string('add_element', 'elis_program');
+        $button = new single_button(new moodle_url('index.php', $options), $addelement, 'get', array(
+            'disabled' => false,
+            'title'    => $addelement,
+            'id'       => ''
+        ));
         echo $OUTPUT->render($button);
         $output .= '</div>';
 
