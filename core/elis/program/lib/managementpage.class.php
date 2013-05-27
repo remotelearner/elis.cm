@@ -614,7 +614,7 @@ class management_page_table extends display_table {
         }
 
         $this->page = $page;
-        $this->display_date_item = new display_date_item();
+        $this->display_date_item = new display_date_item(get_string('pm_date_format', 'elis_program'));
 
         $target = $page->get_new_page($params, true);
         parent::__construct($items, $columns + array('_buttons' => array('sortable' => false, 'wrapped' => false, 'align' => 'center')),

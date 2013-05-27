@@ -319,28 +319,6 @@ class cmEngineForm extends cmform {
             $actiontype = $data['result_type_id'];
         }
 
-        if(!empty($data['timetocomplete'])) {
-            $datedelta = new datedelta($data['timetocomplete']);
-
-            if(!$datedelta->getDateString()) {
-                $errors['timetocomplete'] = get_string('results_error_not_timeformat', 'elis_program');
-            }
-        }
-
-        if(!empty($data['frequency'])) {
-            $datedelta = new datedelta($data['frequency']);
-
-            if(!$datedelta->getDateString()) {
-                $errors['frequency'] = get_string('results_error_not_durrationformat', 'elis_program');
-            }
-        }
-
-        if (!empty($data['idnumber'])) {
-            if (!$this->check_unique(curriculum::TABLE, 'idnumber', $data['idnumber'], $data['id'])) {
-                $errors['idnumber'] = get_string('results_badidnumber', 'elis_program');
-            }
-        }
-
         $errors = array_merge($errors, $this->validate_fold($actiontype, $data));
 
         return $errors;

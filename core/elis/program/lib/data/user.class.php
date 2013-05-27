@@ -760,7 +760,7 @@ class user extends data_object_with_custom_fields {
                                         pm_display_grade($classdata->grade),
                                         $status_mapping[$classdata->completestatusid],
                                         $classdata->completestatusid == STUSTATUS_PASSED && !empty($classdata->completetime) ?
-                                        date('M j, Y', $classdata->completetime) : get_string('na','elis_program')
+                                            userdate($classdata->completetime, get_string('pm_date_format', 'elis_program')) : get_string('na','elis_program')
                                         );
                                 }
                             } else {
@@ -967,7 +967,7 @@ class user extends data_object_with_custom_fields {
                     pm_display_grade($class->grade),
                     $status_mapping[$class->completestatusid],
                     $class->completestatusid == STUSTATUS_PASSED && !empty($class->completetime) ?
-                        date('M j, Y', $class->completetime) : get_string('na','elis_program')
+                        userdate($class->completetime, get_string('pm_date_format', 'elis_program')) : get_string('na','elis_program')
                 );
             }
         }
@@ -1648,14 +1648,6 @@ class pm_user_filtering extends user_filtering {
             $fields = $fields ? $fields : array();
             foreach ($fields as $field) {
                 $fieldnames["field_{$field->shortname}"] = 1;
-            }
-        }
-
-        /// Remove filters if missing capability...
-        $context = get_context_instance(CONTEXT_SYSTEM);
-        if (!has_capability('elis/program:viewreports', $context)) {
-            if (has_capability('elis/program:viewgroupreports', $context)) {
-                unset($fieldnames['clusterid']);
             }
         }
 

@@ -64,16 +64,24 @@ class testRoles extends elis_database_test {
         require_once(elispm::lib('data/usermoodle.class.php'));
         require_once(elispm::lib('data/userset.class.php'));
 
-        return array(clusterassignment::TABLE => 'elis_program',
-                     user::TABLE => 'elis_program',
-                     usermoodle::TABLE => 'elis_program',
-                     userset::TABLE => 'elis_program',
-                     'config_plugins' => 'moodle',
-                     'context' => 'moodle',
-                     'role' => 'moodle',
-                     'role_assignments' => 'moodle',
-                     'role_capabilities' => 'moodle',
-                     'user' => 'moodle');
+        return array(
+            clusterassignment::TABLE => 'elis_program',
+            user::TABLE => 'elis_program',
+            usermoodle::TABLE => 'elis_program',
+            userset::TABLE => 'elis_program',
+            userset_profile::TABLE  => 'elis_program',
+            'config_plugins' => 'moodle',
+            'context' => 'moodle',
+            'role' => 'moodle',
+            'role_assignments' => 'moodle',
+            'role_capabilities' => 'moodle',
+            'role_context_levels' => 'moodle',
+            'user' => 'moodle',
+            'elis_field_data_char' => 'elis_core',
+            'elis_field_data_int' => 'elis_core',
+            'elis_field_data_num' => 'elis_core',
+            'elis_field_data_text' => 'elis_core'
+        );
     }
 
     /**
@@ -239,5 +247,155 @@ class testRoles extends elis_database_test {
 
         //list should only contain the userset member
         $this->assertEquals(1, $count);
+    }
+
+    /**
+     * Data provider for test_pm_get_select_roles()
+     * data format:
+     * array( array( // array of required roles to create
+     *     array( // single role 'object'
+     *         'shortname' => 'role_short_name',
+     *         'name'      => 'role_name',
+     *         'contexts'  => array(contextlevels), // assignable context levels
+     *         'caps'      => array('elis/program:config' => CAP_ALLOW, ...) // CAPS
+     *     ), ... ),
+     *     array(passedcontextlevels), // contextlevel array to pass to pm_get_select_roles_for_contexts() as 2nd param
+     *     array(expectedrolesarray) // expected associative array: roleshortname => rolename
+     * )
+     *
+     */
+    public function pm_get_select_roles_data_provider() {
+        $systemrole = array(
+            'shortname' => 'SystemRole',
+            'name'      => '', // intentionally blank!
+            'contexts'  => array(CONTEXT_SYSTEM),
+            'caps'      => array('elis/program:config' => CAP_ALLOW)
+        );
+        $mdlcrsrole = array(
+            'shortname' => 'MoodleCourseRole',
+            'name'      => 'Moodle Course Role',
+            'contexts'  => array(CONTEXT_COURSE),
+            'caps'      => array('moodle/course:update' => CAP_ALLOW)
+        );
+        $cirole = array(
+            'shortname' => 'elisclassrole',
+            'name'      => 'ELIS Class Instance Role',
+            'contexts'  => array(CONTEXT_ELIS_CLASS),
+            'caps'      => array('elis/program:class_edit' => CAP_ALLOW)
+        );
+        $usrole = array(
+            'shortname' => 'elisusrole',
+            'name'      => 'ELIS Userset Role',
+            'contexts'  => array(CONTEXT_ELIS_USERSET),
+            'caps'      => array('elis/program:userset_view' => CAP_ALLOW)
+        );
+        $prgrole = array(
+            'shortname' => 'elisprgrole',
+            'name'      => 'ELIS Program Role',
+            'contexts'  => array(CONTEXT_ELIS_PROGRAM),
+            'caps'      => array('elis/program:program_view' => CAP_ALLOW)
+        );
+        $trkrole = array(
+            'shortname' => 'elistrkrole',
+            'name'      => 'ELIS Track Role',
+            'contexts'  => array(CONTEXT_ELIS_TRACK),
+            'caps'      => array('elis/program:track_view' => CAP_ALLOW)
+        );
+        $multirole = array(
+            'shortname' => 'multirole',
+            'name'      => 'Multi-Role',
+            'contexts'  => array(CONTEXT_SYSTEM, CONTEXT_ELIS_COURSE, CONTEXT_ELIS_USERSET, CONTEXT_ELIS_TRACK),
+            'caps'      => array('elis/program:user_view' => CAP_ALLOW)
+        );
+        return array(
+            array(
+                array($systemrole), array(CONTEXT_SYSTEM), array('SystemRole' => 'SystemRole')
+            ),
+            array(
+                array($systemrole), array(CONTEXT_ELIS_PROGRAM), array()
+            ),
+            array(
+                array($mdlcrsrole), array(CONTEXT_COURSE), array('MoodleCourseRole' => 'Moodle Course Role')
+            ),
+            array(
+                array($systemrole, $mdlcrsrole), array(CONTEXT_SYSTEM, CONTEXT_COURSE),
+                array(
+                    'SystemRole' => 'SystemRole',
+                    'MoodleCourseRole' => 'Moodle Course Role'
+                )
+            ),
+            array(
+                array($cirole, $mdlcrsrole), array(CONTEXT_ELIS_CLASS), array('elisclassrole' => 'ELIS Class Instance Role')
+            ),
+            array(
+                array($usrole, $mdlcrsrole), array(CONTEXT_ELIS_USERSET), array('elisusrole' => 'ELIS Userset Role')
+            ),
+            array(
+                array($prgrole, $mdlcrsrole), array(CONTEXT_ELIS_PROGRAM), array('elisprgrole' => 'ELIS Program Role')
+            ),
+            array(
+                array($trkrole, $mdlcrsrole), array(CONTEXT_ELIS_TRACK), array('elistrkrole' => 'ELIS Track Role')
+            ),
+            array(
+                array($multirole, $mdlcrsrole), array(CONTEXT_ELIS_COURSE), array('multirole' => 'Multi-Role')
+            ),
+            array(
+                array($multirole, $mdlcrsrole), array(CONTEXT_ELIS_PROGRAM), array()
+            ),
+            array(
+                array($multirole, $mdlcrsrole), array(CONTEXT_COURSE), array('MoodleCourseRole' => 'Moodle Course Role')
+            ),
+            array(
+                array($multirole, $mdlcrsrole), array(CONTEXT_ELIS_USERSET), array('multirole' => 'Multi-Role')
+            ),
+            array(
+                array($multirole, $mdlcrsrole), array(CONTEXT_SYSTEM), array('multirole' => 'Multi-Role')
+            ),
+            array(
+                array($multirole, $systemrole), array(CONTEXT_SYSTEM), array('multirole' => 'Multi-Role', 'SystemRole' => 'SystemRole')
+            )
+        );
+    }
+
+    /**
+     * Method to test function /elis/program/lib/lib.php::pm_get_select_roles_for_contexts()
+     * part of ELIS-8341
+     * @param array $testroles array of role 'objects' to create
+     * @param array $passedcontexts  array of contexts to pass to function under  test
+     * @param array $expectedresults associative array of selectable roles: roleshortname => rolename
+     * @uses $DB
+     * @dataProvider pm_get_select_roles_data_provider
+     */
+    public function test_pm_get_select_roles($testroles, $passedcontexts, $expectedresults) {
+        global $DB;
+        $id2shortname = array();
+
+        // Create specified roles
+        foreach ($testroles as $testrole) {
+            $roleid = create_role($testrole['name'], $testrole['shortname'], 'Default role description');
+            // Assign role capabilities
+            foreach ($testrole['caps'] as $cap => $perm) {
+                assign_capability($cap, $perm, $roleid, 1, true);
+            }
+            // Create assignable contexts array & assign
+            $contexts = array();
+            foreach ($testrole['contexts'] as $contextlevel) {
+                $contexts[$contextlevel] = $contextlevel;
+            }
+            set_role_contextlevels($roleid, $contexts);
+            // save roleid for later conversion
+            $id2shortname[$roleid] = $testrole['shortname'];
+        }
+
+        // call test function
+        $results = array();
+        pm_get_select_roles_for_contexts($results, $passedcontexts);
+
+        // Convert roleid to roleshortname to validate
+        foreach ($results as $id => $name) {
+            $results[$id2shortname[$id]] = $name;
+            unset($results[$id]);
+        }
+        $this->assertEquals($expectedresults, $results);
     }
 }

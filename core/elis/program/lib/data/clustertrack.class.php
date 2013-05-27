@@ -94,6 +94,9 @@ class clustertrack extends elis_data_object {
             return;
         }
 
+        // ELIS-7582
+        @set_time_limit(0);
+
         $record = new clustertrack();
         $record->clusterid = $cluster;
         $record->trackid = $track;
@@ -127,6 +130,9 @@ class clustertrack extends elis_data_object {
     public function delete() {
 
         if ($this->autounenrol) {
+            // ELIS-7582
+            @set_time_limit(0);
+
             // Unenrol all users in the cluster from the track (unless they are
             // in another cluster associated with the track and autoenrolled by
             // that cluster).  Only work on users that were autoenrolled in the
@@ -342,22 +348,23 @@ class clustertrack extends elis_data_object {
      *
      * @return  object                   The updated record
      */
-	public static function update_autoenrol($association_id, $autoenrol) {
-	    global $DB;
+    public static function update_autoenrol($association_id, $autoenrol) {
+        global $DB;
 
-	    $old_autoenrol = $DB->get_field(self::TABLE, 'autoenrol', array('id' => $association_id));
+        $old_autoenrol = $DB->get_field(self::TABLE, 'autoenrol', array('id' => $association_id));
 
-        //update the flag on the association record
-	    $update_record = new stdClass;
-	    $update_record->id = $association_id;
-	    $update_record->autoenrol = $autoenrol;
-	    $result = $DB->update_record(self::TABLE, $update_record);
+        // update the flag on the association record
+        $update_record = new stdClass;
+        $update_record->id = $association_id;
+        $update_record->autoenrol = $autoenrol;
+        $result = $DB->update_record(self::TABLE, $update_record);
 
-        if(!empty($autoenrol) and
-           empty($old_autoenrol) and
-           $cluster = $DB->get_field(self::TABLE, 'clusterid', array('id' => $association_id)) and
-           $track = $DB->get_field(self::TABLE, 'trackid', array('id' => $association_id))) {
-            //Enrol all users in the cluster into track.
+        if (!empty($autoenrol) && empty($old_autoenrol) && ($cluster = $DB->get_field(self::TABLE, 'clusterid',
+            array('id' => $association_id))) && ($track = $DB->get_field(self::TABLE, 'trackid', array('id' => $association_id)))) {
+            // ELIS-7582
+            @set_time_limit(0);
+
+            // Enrol all users in the cluster into track.
             $sql = 'SELECT uc.*
                     FROM {' . clusterassignment::TABLE . '} as uc
                     JOIN {' . user::TABLE . '} as u
@@ -376,7 +383,7 @@ class clustertrack extends elis_data_object {
         }
 
         return $result;
-	}
+    }
 
     public function set_from_data($data) {
         $this->_load_data_from_record($data, true);

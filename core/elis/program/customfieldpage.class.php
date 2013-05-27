@@ -307,6 +307,10 @@ class customfieldpage extends pm_page {
         } else if ($data = $form->get_data()) {
             $src = !empty($data->manual_field_options_source)
                    ? $data->manual_field_options_source : '';
+            // ELIS-8066: strip CRs "\r" from menu options & default data (below)
+            if (!empty($data->manual_field_options)) {
+                $data->manual_field_options = str_replace("\r", '', $data->manual_field_options);
+            }
             switch ($data->manual_field_control) {
                 case 'checkbox':
                     if (!$data->multivalued && !empty($src)) {
@@ -314,7 +318,7 @@ class customfieldpage extends pm_page {
                         $data->defaultdata = isset($data->$elem) ? $data->$elem : ''; // radio buttons unset by default
                         // error_log("/elis/program/customfieldpage.class.php:: defaultdata->{$elem} = {$data->defaultdata}");
                     } else if (!$data->multivalued && !empty($data->manual_field_options)) {
-                        $data->defaultdata = $data->defaultdata_radio;
+                        $data->defaultdata = str_replace("\r", '', $data->defaultdata_radio);
                     } else {
                         $data->defaultdata = $data->defaultdata_checkbox;
                     }
@@ -323,6 +327,9 @@ class customfieldpage extends pm_page {
                     $elem = !empty($src) ? "defaultdata_menu_{$src}"
                                          : "defaultdata_menu";
                     $data->defaultdata = $data->$elem;
+                    if (empty($src)) {
+                        $data->defaultdata = str_replace("\r", '', $data->defaultdata);
+                    }
                     break;
                 case 'datetime':
                     $data->defaultdata = $data->defaultdata_datetime;

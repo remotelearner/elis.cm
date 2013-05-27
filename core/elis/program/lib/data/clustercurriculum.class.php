@@ -95,22 +95,27 @@ class clustercurriculum extends elis_data_object {
             return;
         }
 
+        // ELIS-7582
+        @set_time_limit(0);
+
         $record = new clustercurriculum();
         $record->clusterid = $cluster;
         $record->autoenrol = !empty($autoenrol) ? 1 : 0;
         $record->curriculumid = $curriculum;
         $record->save();
 
-        /* Assign all users in the cluster with curriculum.  Don't assign users
-         * if already assigned */
+        /**
+         * Assign all users in the cluster with curriculum.  Don't assign users
+         * if already assigned
+         */
         /**
          * @todo we may need to change this if associating a user with a
          * curriculum does anything more complicated
          */
 
-        //assign cluster members as students in the newly-associated curriculum if the
-        //association has autoenrol set and the users are not already in the curriculum
-        if(!empty($autoenrol)) {
+        // assign cluster members as students in the newly-associated curriculum if the
+        // association has autoenrol set and the users are not already in the curriculum
+        if (!empty($autoenrol)) {
             $timenow = time();
             $sql = 'INSERT INTO {' . curriculumstudent::TABLE . '} '
                 . '(userid, curriculumid, timecreated, timemodified) '
@@ -358,35 +363,33 @@ class clustercurriculum extends elis_data_object {
      *
      * @return  object                   The updated record
      */
-	public static function update_autoenrol($association_id, $autoenrol) {
-	    global $DB;
+    public static function update_autoenrol($association_id, $autoenrol) {
+        global $DB;
+
+        // ELIS-7582
+        @set_time_limit(0);
 
         $old_autoenrol = $DB->get_field(self::TABLE, 'autoenrol', array('id'=> $association_id));
 
-        //update the flag on the association record
-	    $update_record = new stdClass;
-	    $update_record->id = $association_id;
-	    $update_record->autoenrol = $autoenrol;
-	    $result = $DB->update_record(self::TABLE, $update_record);
+        // update the flag on the association record
+        $update_record = new stdClass;
+        $update_record->id = $association_id;
+        $update_record->autoenrol = $autoenrol;
+        $result = $DB->update_record(self::TABLE, $update_record);
 
-	    //assign cluster members as students in the relevant curriculum if the
-        //association has autoenrol set and the users are not already in the curriculum
-	    if(!empty($autoenrol) and
-	       empty($old_autoenrol) and
-	        $curriculum = $DB->get_field(self::TABLE, 'curriculumid', array('id'=> $association_id)) and
-	        $cluster = $DB->get_field(self::TABLE, 'clusterid', array('id'=> $association_id))) {
+        // assign cluster members as students in the relevant curriculum if the
+        // association has autoenrol set and the users are not already in the curriculum
+        if (!empty($autoenrol) && empty($old_autoenrol) && ($curriculum = $DB->get_field(self::TABLE, 'curriculumid',
+            array('id' => $association_id))) && ($cluster = $DB->get_field(self::TABLE, 'clusterid', array('id' => $association_id)))) {
             $timenow = time();
-            $sql = 'INSERT INTO {' . curriculumstudent::TABLE . '} '
-                . '(userid, curriculumid, timecreated, timemodified) '
-                . 'SELECT DISTINCT u.id, ' . $curriculum . ', ' . $timenow . ', ' . $timenow. ' '
-                . 'FROM {' . clusterassignment::TABLE . '} clu '
-                . 'INNER JOIN {' . user::TABLE . '} u ON u.id = clu.userid '
-                . 'LEFT OUTER JOIN {' . curriculumstudent::TABLE . '} ca ON ca.userid = u.id AND ca.curriculumid = \'' . $curriculum . '\' '
-                . 'WHERE clu.clusterid = ? AND ca.curriculumid IS NULL';
+            $sql = 'INSERT INTO {'.curriculumstudent::TABLE.'} (userid, curriculumid, timecreated, timemodified) SELECT DISTINCT u.id, '
+                .$curriculum.', '.$timenow.', '.$timenow.' FROM {'.clusterassignment::TABLE.'} clu INNER JOIN {'.user::TABLE
+                .'} u ON u.id = clu.userid LEFT OUTER JOIN {'.curriculumstudent::TABLE.'} ca ON ca.userid = u.id AND ca.curriculumid = \''
+                .$curriculum.'\' WHERE clu.clusterid = ? AND ca.curriculumid IS NULL';
             $params = array($cluster);
             $DB->execute($sql,$params);
-	    }
+        }
 
-	    return $result;
-	}
+        return $result;
+    }
 }

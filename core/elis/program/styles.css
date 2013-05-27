@@ -76,7 +76,7 @@ span.curr_cluster_instance,
 td.ygtvcell,
 td.ygtvtp,
 td.ygtvcontent {
-    background-color: white; /* TBD */
+    background-color: transparent;
 }
 
 /* Set default handling of white space because the grader report pages

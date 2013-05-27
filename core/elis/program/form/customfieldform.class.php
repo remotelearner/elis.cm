@@ -623,6 +623,10 @@ class customfieldform extends cmform {
             array_walk($menu_options, array($this, 'trim_crlf'));
             $select_options = array();
             foreach ($menu_options as $menu_option) {
+                // ELIS-8066: Disallow blank/empty menu options
+                if (empty($menu_option)) {
+                    $err['manual_field_options'] = get_string('no_blank_menuoption', 'elis_program');
+                }
                 $select_options[] = array('text' => $menu_option,
                                           'attr' => array('value' => $menu_option));
             }

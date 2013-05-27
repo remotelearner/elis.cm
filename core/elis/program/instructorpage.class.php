@@ -221,12 +221,12 @@ class instructorpage extends associationpage {
                     $startyear  = $user['startyear'];
                     $startmonth = $user['startmonth'];
                     $startday   = $user['startday'];
-                    $insrecord['assigntime'] = mktime(0, 0, 0, $startmonth, $startday, $startyear);
+                    $insrecord['assigntime'] = pm_timestamp(0, 0, 0, $startmonth, $startday, $startyear);
 
                     $endyear  = $user['endyear'];
                     $endmonth = $user['endmonth'];
                     $endday   = $user['endday'];
-                    $insrecord['completetime'] = mktime(0, 0, 0, $endmonth, $endday, $endyear);
+                    $insrecord['completetime'] = pm_timestamp(0, 0, 0, $endmonth, $endday, $endyear);
 
                     $newins = new instructor($insrecord);
                     $status = $newins->save();
@@ -255,12 +255,12 @@ class instructorpage extends associationpage {
         $startyear  = $user['startyear'];
         $startmonth = $user['startmonth'];
         $startday   = $user['startday'];
-        $insrecord['assigntime'] = mktime(0, 0, 0, $startmonth, $startday, $startyear);
+        $insrecord['assigntime'] = pm_timestamp(0, 0, 0, $startmonth, $startday, $startyear);
 
         $endyear  = $user['endyear'];
         $endmonth = $user['endmonth'];
         $endday   = $user['endday'];
-        $insrecord['completetime'] = mktime(0, 0, 0, $endmonth, $endday, $endyear);
+        $insrecord['completetime'] = pm_timestamp(0, 0, 0, $endmonth, $endday, $endyear);
 
         $ins = new instructor($insrecord);
         $status = $ins->save(); // WAS: $ins->data_update_record()

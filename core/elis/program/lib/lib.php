@@ -516,7 +516,7 @@ function get_date_item_display($column, $item) {
     } else {
         $timestamp = $item->$column;
         return is_numeric($timestamp)
-               ? date(get_string('pm_date_format', 'elis_program'), $timestamp)
+               ? userdate($timestamp, get_string('pm_date_format', 'elis_program'))
                : '';
     }
 }
@@ -2407,5 +2407,79 @@ function pm_fix_orphaned_fields() {
         }
         $rs->close();
     }
+}
+
+/**
+ * Function to convert time in user's timezone to GMT
+ * Note: Moodle function usertime() doesn't include DST offset
+ * @param int $usertime timestamp in user's timezone
+ * @param float|int|string $timezone optional timezone to use, defaults to user's
+ * @return int  timestamp in GMT
+ */
+function pm_gmt_from_usertime($usertime, $timezone = 99) {
+    $tz = get_user_timezone_offset($timezone);
+    if (abs($tz) > 13) {
+        return $usertime;
+    }
+    $usertime -= (int)($tz * HOURSECS);
+    if ($timezone == 99 || !is_numeric($timezone)) {
+        $usertime -= dst_offset_on($usertime, $timezone);
+    }
+    return $usertime;
+}
+
+/**
+ * Given date/time components return the equivalent GMT timestamp for specified
+ * date/time in user's timezone.
+ *
+ * @param int $hour            the hour in specified or user's timezone (0-23)
+ * @param int $minute          the minute in specified or user's timezone (0-59)
+ * @param int $second          the second in specified or user's timezone (0-59)
+ * @param int $month           the month in specified or user's timezone (1-12)
+ * @param int $day             the day in specified or user's timezone (0-31)
+ * @param int $year            the year in specified or user's timezone
+ * @param int|string $timezone the timezone the specified time is relative to.
+ * @return int the GMT timestamp in specified or user's timezone
+ */
+function pm_timestamp($hour = null, $minute = null, $second = null, $month = null, $day = null, $year = null, $timezone = 99) {
+    if ($hour === null) {
+        $hour = gmdate('H');
+    }
+    if ($minute === null) {
+        $minute = gmdate('i');
+    }
+    if ($second === null) {
+        $second = gmdate('s');
+    }
+    if ($month === null) {
+        $month = gmdate('n');
+    }
+    if ($day === null) {
+        $day = gmdate('j');
+    }
+    if ($year === null) {
+        $year = gmdate('Y');
+    }
+    return make_timestamp($year, $month, $day, $hour, $minute, $second, $timezone);
+}
+
+/**
+ * Function for selecting roles in PM admin settings
+ *
+ * @param  array $roles  Output role array of roleids mapped to role names
+ * @params array $contextlevels Optional assignable context-levels, i.e. array(CONTEXT_COURSE), leave null for all (default)
+ * @uses $DB
+ */
+function pm_get_select_roles_for_contexts(&$roles, array $contextlevels = null) {
+    global $DB;
+    $sql = 'SELECT r.* FROM {role} r';
+    if (!empty($contextlevels)) {
+        $sql .= ' JOIN {role_context_levels} rcl ON r.id = rcl.roleid WHERE rcl.contextlevel IN ('.implode(',', $contextlevels).')';
+    }
+    $rolers = $DB->get_recordset_sql($sql);
+    foreach ($rolers AS $id => $role) {
+        $roles[$id] = strip_tags(format_string(!empty($role->name) ? $role->name : $role->shortname, true));
+    }
+    unset($rolers);
 }
 

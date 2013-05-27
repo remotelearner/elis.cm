@@ -683,6 +683,9 @@ class trackassignment extends elis_data_object {
 
         if ($this->autoenrol && $this->is_autoenrollable()) {
             // autoenrol all users in the track
+            // ELIS-7582
+            @set_time_limit(0);
+
             $users = usertrack::get_users($this->trackid);
             foreach ($users as $user) {
                 // ELIS-3460: Must check pre-requisites ...
@@ -791,6 +794,8 @@ class trackassignment extends elis_data_object {
         $users = $this->_db->get_records_select(usertrack::TABLE, $sql, $params, 'userid');
 
         if ($users) {
+            // ELIS-7582
+            @set_time_limit(0);
             $timenow = time();
             $count = 0;
             $waitlisted = 0;
