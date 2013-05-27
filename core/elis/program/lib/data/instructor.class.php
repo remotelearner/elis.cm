@@ -275,8 +275,8 @@ class instructor extends elis_data_object {
 
                 $selection = json_decode(retrieve_session_selection($user->id, 'add'));
                 if ($selection) {
-                    $assigntime = mktime(0, 0, 0, $selection->enrolment_date->month, $selection->enrolment_date->day, $selection->enrolment_date->year);
-                    $completetime = mktime(0, 0, 0, $selection->completion_date->month, $selection->completion_date->day, $selection->completion_date->year);
+                    $assigntime = pm_timestamp(0, 0, 0, $selection->enrolment_date->month, $selection->enrolment_date->day, $selection->enrolment_date->year);
+                    $completetime = pm_timestamp(0, 0, 0, $selection->completion_date->month, $selection->completion_date->day, $selection->completion_date->year);
                 }
               /* **** debug code
                 ob_start();

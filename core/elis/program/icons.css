@@ -1,0 +1,222 @@
+@font-face {
+    font-family: 'icomoon';
+    src:url('fonts/icomoon.eot');
+    src:url('fonts/icomoon.eot?#iefix') format('embedded-opentype'),
+            url('fonts/icomoon.woff') format('woff'),
+            url('fonts/icomoon.ttf') format('truetype'),
+            url('fonts/icomoon.svg#icomoon') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+[class*="elisicon-"]:before {
+    font-family: 'icomoon';
+    speak: none;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+}
+i[class*="elisicon-"] {
+    font-style: normal;
+}
+
+/* Main Entities */
+.elisicon-program:before {
+    content: "\e000";
+}
+.elisicon-track:before {
+    content: "\e001";
+}
+.elisicon-course:before {
+    content: "\e002";
+}
+.elisicon-class:before {
+    content: "\e003";
+}
+.elisicon-user:before {
+    content: "\e004";
+}
+.elisicon-userset:before {
+    content: "\e005";
+}
+
+/* Specific functions/pages */
+.elisicon-instructor:before {
+    content: "\e006";
+}
+.elisicon-waitlist:before {
+    content: "\e007";
+}
+.elisicon-prereq:before {
+    content: "\e008";
+}
+.elisicon-coreq:before {
+    content: "\e009";
+}
+.elisicon-report:before {
+    content: "\e00a";
+}
+.elisicon-resultsengine:before {
+    content: "\e00b";
+}
+.elisicon-learningobjective:before {
+    content: "\e00c";
+}
+.elisicon-schedule:before {
+    content: "\e00d";
+}
+.elisicon-certificate:before {
+    content: "\e00e";
+}
+
+/*  PM menu */
+.elisicon-dashboard:before {
+    content: "\e00f";
+}
+.elisicon-notifications:before {
+    content: "\e010";
+}
+.elisicon-configuration:before {
+    content: "\e011";
+}
+.elisicon-bulkuseractions:before {
+    content: "\e012";
+}
+.elisicon-customfields:before {
+    content: "\e013";
+}
+.elisicon-defaultsettings:before {
+    content: "\e014";
+}
+
+/* General UI Elements */
+.elisicon-edit:before {
+    content: "\e015";
+}
+.elisicon-remove:before,
+.elisicon-cancel:before {
+    content: "\e016";
+}
+.elisicon-confirm:before {
+    content: "\e017";
+}
+.elisicon-assoc:before {
+    content: "\e018";
+}
+.elisicon-unassoc:before {
+    content: "\e019";
+}
+.elisicon-sortable:before {
+    content: "\e01a";
+}
+.elisicon-sortasc:before {
+    content: "\e01b";
+}
+.elisicon-sortdesc:before {
+    content: "\e01c";
+}
+.elisicon-more:before {
+    content: "\e01d";
+}
+
+/* Colors */
+.elisicon-remove.elisiconcolored {
+    color: #a00;
+}
+
+[class*="elisicon-"]:hover {
+    text-decoration: none;
+}
+.elisicon-program:hover {
+    color: #333;
+}
+.elisicon-track:hover {
+    color: #E67E22;
+}
+.elisicon-course:hover {
+    color: #2980B9;
+}
+.elisicon-class:hover {
+    color: #16A085;
+}
+.elisicon-user:hover {
+    color: #F39C12;
+}
+.elisicon-userset:hover {
+    color: #27AE60;
+}
+/* Specific functions/pages */
+.elisicon-instructor:hover {
+    color: #D35400;
+}
+.elisicon-waitlist:hover {
+    color: #8E44AD;
+}
+.elisicon-prereq:hover {
+    color: #F1C40F;
+}
+.elisicon-coreq:hover {
+    color: #2ECC71;
+}
+.elisicon-report:hover {
+    color: #27AE60;
+}
+.elisicon-resultsengine:hover {
+    color: #3498DB;
+}
+.elisicon-learningobjective:hover {
+    color: #3498DB;
+}
+.elisicon-schedule:hover {
+    color: #9B59B6;
+}
+.elisicon-certificate:hover {
+    color: #1ABC9C;
+}
+/*  PM menu */
+.elisicon-dashboard:hover {
+    color: #F39C12;
+}
+.elisicon-notifications:hover {
+    color: #E67E22;
+}
+.elisicon-configuration:hover {
+    color: #2C3E50;
+}
+.elisicon-bulkuseractions:hover {
+    color: #27AE60;
+}
+.elisicon-customfields:hover {
+    color: #2C3E50;
+}
+.elisicon-defaultsettings:hover {
+    color: #34495E;
+}
+
+.elisicon-edit:hover {
+    color: #ba1;
+}
+.elisicon-remove:hover {
+    color: #a00;
+}
+
+.elisicon {
+    color: inherit;
+    font-size: 16px;
+    opacity: 0.45;
+    margin: 0 2px;
+    vertical-align: middle;
+    display: inline-block;
+    /* IE8 */
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=45)";
+    filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=45);
+}
+
+.elisicon:hover {
+    opacity: 1;
+    /* IE8 */
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=100)";
+    filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=100);
+}

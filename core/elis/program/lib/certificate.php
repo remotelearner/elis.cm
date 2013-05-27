@@ -63,19 +63,23 @@ function certificate_output_completion($person_fullname, $entity_name, $certific
     //create pdf
     $pdf = new pdf('L', 'in', 'Letter');
 
-    //prevent the pdf from printing black bars
+    // Prevent the pdf from printing black bars.
     $pdf->setPrintHeader(false);
     $pdf->setPrintFooter(false);
+    $pdf->SetAutoPageBreak(false);
+    $pdf->SetMargins(0, 0, 0, false);
 
     $pdf->AddPage();
 
-    //draw the border
+    // Draw the border.
+    $pagewidth = $pdf->getPageWidth();
+    $pageheight = $pdf->getPageHeight();
     cm_certificate_check_data_path('borders');
     if (!empty($border)) {
-        if (file_exists($CFG->dirroot .'/elis/program/pix/certificate/borders/'. $border)) {
-            $pdf->Image($CFG->dirroot .'/elis/program/pix/certificate/borders/'. $border, 0, 0, 10.25, 7.75);
-        } else if (file_exists($CFG->dataroot .'/elis/program/pix/certificate/borders/'. $border)) {
-            $pdf->Image($CFG->dataroot .'/elis/program/pix/certificate/borders/'. $border, 0, 0, 10.25, 7.75);
+        if (file_exists($CFG->dirroot.'/elis/program/pix/certificate/borders/'.$border)) {
+            $pdf->Image($CFG->dirroot.'/elis/program/pix/certificate/borders/'.$border, 0, 0, $pagewidth, $pageheight);
+        } else if (file_exists($CFG->dataroot.'/elis/program/pix/certificate/borders/'.$border)) {
+            $pdf->Image($CFG->dataroot.'/elis/program/pix/certificate/borders/'.$border, 0, 0, $pagewidth, $pageheight);
         }
     }
 

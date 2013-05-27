@@ -507,31 +507,6 @@ $capabilities = array(
 
 // Reports:
 
-    'elis/program:viewreports' => array(
-
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'clonepermissionsfrom' => 'block/curr_admin:viewreports',
-        'archetypes' => array(
-            //'teacher' => CAP_ALLOW,
-            //'editingteacher' => CAP_ALLOW,
-            //'coursecreator' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        )
-     ),
-
-    'elis/program:viewgroupreports' => array(
-
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'clonepermissionsfrom' => 'block/curr_admin:viewgroupreports',
-        'archetypes' => array(
-            'manager' => CAP_ALLOW
-        )
-     ),
-
     'elis/program:viewownreports' => array(
 
         'captype' => 'read',

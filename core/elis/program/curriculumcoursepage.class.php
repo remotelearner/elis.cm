@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,196 +16,175 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
-defined('MOODLE_INTERNAL') || die();
+defined('MOODLE_INTERNAL') or die();
 
-require_once elispm::lib('associationpage.class.php');
-require_once elispm::lib('data/curriculumcourse.class.php');
-require_once elispm::lib('data/curriculumstudent.class.php');
-require_once elispm::lib('contexts.php');
-require_once elispm::file('curriculumpage.class.php');
-require_once elispm::file('coursepage.class.php');
-require_once elispm::file('form/curriculumcourseform.class.php');
+require_once(elispm::lib('associationpage.class.php'));
+require_once(elispm::lib('data/curriculumcourse.class.php'));
+require_once(elispm::lib('data/curriculumstudent.class.php'));
+require_once(elispm::lib('contexts.php'));
+require_once(elispm::file('curriculumpage.class.php'));
+require_once(elispm::file('coursepage.class.php'));
+require_once(elispm::file('form/curriculumcourseform.class.php'));
 
-class curriculumcoursebasepage extends associationpage {
-    var $data_class = 'curriculumcourse';
+/**
+ * Deepsight assignment page for program - course associations.
+ */
+class curriculumcoursepage extends deepsightpage {
+    /**
+     * @var string A unique name for the page.
+     */
+    public $pagename = 'currcrs';
 
-    function __construct(array $params=null) {
+    /**
+     * @var string The section of the page.
+     */
+    public $section = 'curr';
+
+    /**
+     * @var string The page to get tabs from.
+     */
+    public $tab_page = 'curriculumpage';
+
+    /**
+     * @var string The main data class.
+     */
+    public $data_class = 'curriculumcourse';
+
+    /**
+     * @var string The page's parent.
+     */
+    public $parent_page;
+
+    /**
+     * @var string The page's context.
+     */
+    public $context;
+
+    /**
+     * Constructor.
+     * @param array $params An array of parameters for the page.
+     */
+    public function __construct(array $params = null) {
+        $this->context = parent::_get_page_context();
         parent::__construct($params);
-
-        $this->tabs = array(
-        array('tab_id' => 'currcourse_edit', 'page' => get_class($this), 'params' => array('action' => 'edit'), 'name' => get_string('edit','elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'edit'),
-
-        array('tab_id' => 'prerequisites', 'page' => get_class($this), 'params' => array('action' => 'prereqedit'), 'name' => get_string('prerequisites','elis_program'), 'showbutton' => true, 'image' => 'prereq'),
-        array('tab_id' => 'corequisites', 'page' => get_class($this), 'params' => array('action' => 'coreqedit'), 'name' => get_string('corequisites','elis_program'), 'showbutton' => true, 'image' => 'coreq'),
-
-        array('tab_id' => 'delete', 'page' => get_class($this), 'params' => array('action' => 'delete'), 'name' => get_string('delete','elis_program'), 'showbutton' => true, 'image' => 'delete'),
-        );
     }
 
-    function create_table_object($items, $columns) {
-        return new curriculumcourse_page_table($items, $columns, $this);
-    }
-
-    function can_do_add() {
-        $curriculumid = $this->optional_param('curriculumid', 0, PARAM_INT);
-        $courseid = $this->optional_param('courseid', 0, PARAM_INT);
-
-        if ($curriculumid == 0 && $courseid == 0) {
-            //just showing the page, so let the child page handle permissions
-            return $this->can_do('default');
+    /**
+     * Get the context of the current program.
+     * @return context_elis_program The current program context object.
+     */
+    protected function get_context() {
+        if (!isset($this->context)) {
+            $id = required_param('id', PARAM_INT);
+            $this->context = context_elis_program::instance($id);
         }
-
-        // the user must have 'block/curr_admin:associate' permissions on both ends
-        // TODO: Ugly, this needs to be overhauled
-        $curpage = new curriculumpage();
-        $crspage = new coursepage();
-        return $curpage->_has_capability('elis/program:associate', $curriculumid)
-            && $crspage->_has_capability('elis/program:associate', $courseid);
+        return $this->context;
     }
 
-    function can_do_edit() {
-        // the user must have 'elis/program:associate' permissions on both
-        // ends
-        $association_id = $this->required_param('association_id', PARAM_INT);
-        $record = new curriculumcourse($association_id);
-        $curriculumid = $record->curriculumid;
-        $courseid = $record->courseid;
-
-        // TODO: Ugly, this needs to be overhauled
-        $curpage = new curriculumpage();
-        $crspage = new coursepage();
-        return $curpage->_has_capability('elis/program:associate', $curriculumid)
-            && $crspage->_has_capability('elis/program:associate', $courseid);
+    /**
+     * Construct the assigned datatable.
+     * @param string $uniqid A unique ID to assign to the datatable object.
+     * @return deepsight_datatable The datatable object.
+     */
+    protected function construct_assigned_table($uniqid = null) {
+        global $DB;
+        $programid = $this->required_param('id', PARAM_INT);
+        $endpoint = qualified_me().'&action=deepsight_response&tabletype=assigned&id='.$programid;
+        $table = new deepsight_datatable_programcourse_assigned($DB, 'assigned', $endpoint, $uniqid);
+        $table->set_programid($programid);
+        return $table;
     }
 
-    function can_do_delete() {
-        return $this->can_do_edit();
+    /**
+     * Construct the unassigned datatable.
+     * @param string $uniqid A unique ID to assign to the datatable object.
+     * @return deepsight_datatable The datatable object.
+     */
+    protected function construct_unassigned_table($uniqid = null) {
+        global $DB;
+        $programid = $this->required_param('id', PARAM_INT);
+        $endpoint = qualified_me().'&action=deepsight_response&tabletype=unassigned&id='.$programid;
+        $table = new deepsight_datatable_programcourse_available($DB, 'unassigned', $endpoint, $uniqid);
+        $table->set_programid($programid);
+        return $table;
     }
 
-    function has_associate_and_manage_capability() {
-        if (has_capability('elis/program:associate', $this->_get_page_context()) ||
-            //manage is deprecated but kept for consistency
-            has_capability('elis/program:manage', $this->_get_page_context())) {
-            return true;
-        }
-        return false;
+    /**
+     * Assignment permission is handled at the action-object level.
+     * @return bool true
+     */
+    public function can_do_action_programcourse_assign() {
+        return true;
     }
 
-}
-
-class curriculumcoursepage extends curriculumcoursebasepage {
-    var $pagename = 'currcrs';
-    var $tab_page = 'curriculumpage';
-    //var $default_tab = 'curriculumcoursepage';
-
-    var $form_class = 'curriculumcourseform';
-
-    var $section = 'curr';
-
-    var $parent_data_class = 'curriculum';
-
-    public function _get_page_params() {
-        return array('id' => $this->optional_param('id', 0, PARAM_INT)) + parent::_get_page_params();
+    /**
+     * Edit permission is handled at the action-object level.
+     * @return bool true
+     */
+    public function can_do_action_programcourse_edit() {
+        return true;
     }
 
-    function has_program_view_capability() {
-        return has_capability('elis/program:program_view', $this->_get_page_context());
+    /**
+     * Unassignment permission is handled at the action-object level.
+     * @return bool true
+     */
+    public function can_do_action_programcourse_unassign() {
+        return true;
     }
 
-    function can_do_default() {
+    /**
+     * Whether the user has access to see the main page (assigned list)
+     * @return bool Whether the user has access.
+     */
+    public function can_do_default() {
+        global $USER;
         $id = $this->required_param('id', PARAM_INT);
-        // TODO: Ugly, this needs to be overhauled
-        $cpage = new curriculumpage();
-        if ($cpage->_has_capability('elis/program:program_view', $id)) {
-            //allow viewing but not managing associations
-        	return true;
+        $requiredperms = array('elis/program:program_view', 'elis/program:associate');
+        foreach ($requiredperms as $perm) {
+            $ctx = pm_context_set::for_user_with_capability('curriculum', $perm, $USER->id);
+            if ($ctx->context_allowed($id, 'curriculum') !== true) {
+                return false;
+            }
         }
+        return true;
+    }
 
-        return $cpage->_has_capability('elis/program:associate', $id);
+    /**
+     * Determine whether the current user can assign tracks to the viewed userset.
+     * @return bool Whether the user can assign tracks to this userset.
+     */
+    public function can_do_add() {
+        return $this->can_do_default();
     }
 
     /**
      * Specifies whether the current user can edit prerequisites
-     *
-     * @return  boolean  true if allowed, otherwise false
+     * @return bool true if allowed, otherwise false
      */
-    function can_do_prereqedit() {
-    	$id = $this->required_param('id', PARAM_INT);
-
-        // TODO: Ugly, this needs to be overhauled
-        $cpage = new curriculumpage();
-        return $cpage->_has_capability('elis/program:associate', $id);
+    public function can_do_prereqedit() {
+        return $this->can_do_default();
     }
 
     /**
      * Specifies whether the current user can edit corequisites
-     *
-     * @return  boolean  true if allowed, otherwise false
+     * @return bool true if allowed, otherwise false
      */
-    function can_do_coreqedit() {
-    	$id = $this->required_param('id', PARAM_INT);
-
-        // TODO: Ugly, this needs to be overhauled
-        $cpage = new curriculumpage();
-        return $cpage->_has_capability('elis/program:associate', $id);
+    public function can_do_coreqedit() {
+        return $this->can_do_default();
     }
 
-    function display_default() {
-        $id = $this->required_param('id', PARAM_INT);
-
-        $sort         = optional_param('sort', 'position', PARAM_ALPHA);
-        $dir          = optional_param('dir', 'ASC', PARAM_ALPHA);
-
-        $page         = optional_param('page', 0, PARAM_INT);
-        $perpage      = optional_param('perpage', 30, PARAM_INT);        // how many per page
-
-        $namesearch   = trim(optional_param('search', '', PARAM_TEXT));
-        $alpha        = optional_param('alpha', '', PARAM_ALPHA);
-
-        $columns = array(
-            'coursename' => array('header' => get_string('course_name','elis_program'),
-                                  'decorator' => array(new record_link_decorator('coursepage',
-                                                                                 array('action'=>'view'),
-                                                                                 'courseid'),
-                                                       'decorate')),
-            'required'   => array('header' => get_string('required','elis_program')),
-            'frequency'  => array('header' => get_string('frequency','elis_program')),
-            'timeperiod' => array('header' => get_string('time_period','elis_program')),
-            'position'   => array('header' => get_string('position','elis_program')),
-            'buttons'    => array('header' => ''),
-        );
-
-        if ($dir !== 'DESC') {
-            $dir = 'ASC';
-        }
-        if (isset($columns[$sort])) {
-            $columns[$sort]['sortable'] = $dir;
-        }
-
-        $items = curriculumcourse_get_listing($id, $sort, $dir, 0, 0, $namesearch, $alpha);
-        $numitems = curriculumcourse_count_records($id, $namesearch, $alpha);
-
-        $this->print_num_items($numitems, $numitems);
-        $this->print_alpha();
-        $this->print_search();
-
-        $this->print_list_view($items, $columns, 'courses');
-        unset($items);
-
-        if (parent::has_associate_and_manage_capability()) {
-            $this->print_add_button(array('id' => $id), get_string('curriculumcourse_assigncourse','elis_program'));
-        }
-    }
-
-    function display_prereqedit() {
+    /**
+     * Display form to manage prerequisites.
+     */
+    public function display_prereqedit() {
         $curid = $this->required_param('id', PARAM_INT);
         $curcrsid = $this->required_param('association_id', PARAM_INT);
 
@@ -217,15 +196,15 @@ class curriculumcoursepage extends curriculumcoursebasepage {
             $this->display_default();
             return;
         } else if ($prereqform->is_submitted() && $prereqform->is_validated()) {
-            $form_data = $prereqform->get_data();
+            $formdata = $prereqform->get_data();
             $output = '';
 
             $added  = 0;
             $deleted = 0;
 
-            /// Process requested prerequisite deletions.
-            if(!empty($form_data->remove) && isset($form_data->sprereqs)) {
-                $sprereqs = $form_data->sprereqs;
+            // Process requested prerequisite deletions.
+            if (!empty($formdata->remove) && isset($formdata->sprereqs)) {
+                $sprereqs = $formdata->sprereqs;
             } else {
                 $sprereqs = array();
             }
@@ -236,30 +215,29 @@ class curriculumcoursepage extends curriculumcoursebasepage {
                 }
             }
 
-            /// Process requested prerequisite additions.
-            if(!empty($form_data->add) && isset($form_data->prereqs)) {
-                $prereqs = $form_data->prereqs;
+            // Process requested prerequisite additions.
+            if (!empty($formdata->add) && isset($formdata->prereqs)) {
+                $prereqs = $formdata->prereqs;
             } else {
                 $prereqs = array();
             }
 
-            // TODO: Ugly, this needs to be overhauled
+            // TODO: Ugly, this needs to be overhauled.
             $cpage = new coursepage();
-
             foreach ($prereqs as $prereq) {
                 if ($cpage->_has_capability('elis/program:course_view', $prereq)
-                    && $curcrs->add_prerequisite($prereq, !empty($form_data->add_to_curriculum))) {
+                        && $curcrs->add_prerequisite($prereq, !empty($formdata->add_to_curriculum))) {
                     $added++;
                 }
             }
 
             if ($deleted > 0) {
-                $delString = ($deleted > 1)? 'deleted_prerequisites': 'deleted_prerequisite';
-                $output .= get_string($delString, 'elis_program', $deleted);
+                $delstring = ($deleted > 1) ? 'deleted_prerequisites' : 'deleted_prerequisite';
+                $output .= get_string($delstring, 'elis_program', $deleted);
             }
             if ($added > 0) {
-                $addString = ($added > 1)? 'added_prerequisites': 'added_prerequisite';
-                $output .= (($deleted > 0) ? ' / ' : '') . get_string($addString, 'elis_program', $added);
+                $addstring = ($added > 1) ? 'added_prerequisites' : 'added_prerequisite';
+                $output .= (($deleted > 0) ? ' / ' : '').get_string($addstring, 'elis_program', $added);
             }
             if ($deleted > 0 || $added > 0) {
                 $output .= "\n";
@@ -273,14 +251,17 @@ class curriculumcoursepage extends curriculumcoursebasepage {
             }
 
             echo $output;
-            // recreate the form, to reflect changes in the lists
+            // Recreate the form, to reflect changes in the lists.
             $prereqform = $curcrs->create_prerequisite_form();
         }
 
         $prereqform->display();
     }
 
-    function display_coreqedit() {
+    /**
+     * Display form to manage corequisites.
+     */
+    public function display_coreqedit() {
         $id = $this->required_param('id', PARAM_INT);
         $curcrsid = $this->required_param('association_id', PARAM_INT);
 
@@ -292,39 +273,39 @@ class curriculumcoursepage extends curriculumcoursebasepage {
             $this->display_default();
             return;
         } else if ($coreqform->is_submitted() && $coreqform->is_validated()) {
-            $form_data = $coreqform->get_data();
+            $formdata = $coreqform->get_data();
             $output = '';
 
             $added  = 0;
             $deleted = 0;
 
-            /// Process requested corequisite deletions.
-            $scoreqs = isset($form_data->scoreqs)? $form_data->scoreqs: array();
+            // Process requested corequisite deletions.
+            $scoreqs = (isset($formdata->scoreqs)) ? $formdata->scoreqs : array();
             foreach ($scoreqs as $scoreq) {
                 if ($curcrs->del_corequisite($scoreq)) {
                     $deleted++;
                 }
             }
 
-            /// Process requested corequisite additions.
-            $coreqs = isset($form_data->coreqs)? $form_data->coreqs: array();
+            // Process requested corequisite additions.
+            $coreqs = (isset($formdata->coreqs)) ? $formdata->coreqs : array();
 
-            // TODO: Ugly, this needs to be overhauled
+            // TODO: Ugly, this needs to be overhauled.
             $cpage = new coursepage();
             foreach ($coreqs as $coreq) {
                 if ($cpage->_has_capability('elis/program:course_view', $coreq)
-                    && $curcrs->add_corequisite($coreq, !empty($form_data->add_to_curriculum))) {
+                        && $curcrs->add_corequisite($coreq, !empty($formdata->add_to_curriculum))) {
                     $added++;
                 }
             }
 
             if ($deleted > 0) {
-                $delString = ($deleted > 1)? 'deleted_corequisites': 'deleted_corequisite';
-                $output .= get_string($delString, 'elis_program', $deleted);
+                $delstring = ($deleted > 1) ? 'deleted_corequisites' : 'deleted_corequisite';
+                $output .= get_string($delstring, 'elis_program', $deleted);
             }
             if ($added > 0) {
-                $addString = ($added > 1)? 'added_corequisites': 'added_corequisite';
-                $output .= (($deleted > 0) ? ' / ' : '') . get_string($addString, 'elis_program', $added);
+                $addstring = ($added > 1) ? 'added_corequisites' : 'added_corequisite';
+                $output .= (($deleted > 0) ? ' / ' : '').get_string($addstring, 'elis_program', $added);
             }
             if ($deleted > 0 || $added > 0) {
                 $output .= "\n";
@@ -338,7 +319,7 @@ class curriculumcoursepage extends curriculumcoursebasepage {
             }
 
             echo $output;
-            // recreate the form, to reflect changes in the lists
+            // Recreate the form, to reflect changes in the lists.
             $coreqform = $curcrs->create_corequisite_form();
         }
 
@@ -346,104 +327,153 @@ class curriculumcoursepage extends curriculumcoursebasepage {
     }
 }
 
-class coursecurriculumpage extends curriculumcoursebasepage {
-    var $pagename = 'crscurr';
-    var $tab_page = 'coursepage';
-    //var $default_tab = 'coursecurriculumpage';
+/**
+ * Deepsight assignment page for course - program associations.
+ */
+class coursecurriculumpage extends deepsightpage {
+    /**
+     * @var string A unique name for the page.
+     */
+    public $pagename = 'crscurr';
 
-    var $form_class = 'coursecurriculumform';
+    /**
+     * @var string The section of the page.
+     */
+    public $section = 'curr';
 
-    var $section = 'curr';
+    /**
+     * @var string The page to get tabs from.
+     */
+    public $tab_page = 'coursepage';
 
-    var $parent_data_class = 'course';
+    /**
+     * @var string The main data class.
+     */
+    public $data_class = 'curriculumcourse';
 
-    public function _get_page_params() {
-        return array('id' => $this->optional_param('id', 0, PARAM_INT)) + parent::_get_page_params();
+    /**
+     * @var string The page's parent.
+     */
+    public $parent_page;
+
+    /**
+     * @var string The page's context.
+     */
+    public $context;
+
+    /**
+     * Constructor.
+     * @param array $params An array of parameters for the page.
+     */
+    public function __construct(array $params = null) {
+        $this->context = parent::_get_page_context();
+        parent::__construct($params);
     }
 
-    function can_do_default() {
-        $id = $this->required_param('id', PARAM_INT);
-        // TODO: Ugly, this needs to be overhauled
-        $cpage = new coursepage();
-        if ($cpage->_has_capability('elis/program:program_view', $id)) {
-            //allow viewing but not managing associations
-        	return true;
+    /**
+     * Get the context of the current course.
+     * @return context_elis_course The current course context object.
+     */
+    protected function get_context() {
+        if (!isset($this->context)) {
+            $id = required_param('id', PARAM_INT);
+            $this->context = context_elis_course::instance($id);
         }
-
-        return $cpage->_has_capability('elis/program:associate', $id);
+        return $this->context;
     }
 
-    function display_default() {
+    /**
+     * Construct the assigned datatable.
+     * @param string $uniqid A unique ID to assign to the datatable object.
+     * @return deepsight_datatable The datatable object.
+     */
+    protected function construct_assigned_table($uniqid = null) {
+        global $DB;
+        $courseid = $this->required_param('id', PARAM_INT);
+        $endpoint = qualified_me().'&action=deepsight_response&tabletype=assigned&id='.$courseid;
+        $table = new deepsight_datatable_courseprogram_assigned($DB, 'assigned', $endpoint, $uniqid);
+        $table->set_courseid($courseid);
+        return $table;
+    }
+
+    /**
+     * Construct the unassigned datatable.
+     * @param string $uniqid A unique ID to assign to the datatable object.
+     * @return deepsight_datatable The datatable object.
+     */
+    protected function construct_unassigned_table($uniqid = null) {
+        global $DB;
+        $courseid = $this->required_param('id', PARAM_INT);
+        $endpoint = qualified_me().'&action=deepsight_response&tabletype=unassigned&id='.$courseid;
+        $table = new deepsight_datatable_courseprogram_available($DB, 'unassigned', $endpoint, $uniqid);
+        $table->set_courseid($courseid);
+        return $table;
+    }
+
+    /**
+     * Assignment permission is handled at the action-object level.
+     * @return bool true
+     */
+    public function can_do_action_courseprogram_assign() {
+        return true;
+    }
+
+    /**
+     * Edit permission is handled at the action-object level.
+     * @return bool true
+     */
+    public function can_do_action_courseprogram_edit() {
+        return true;
+    }
+
+    /**
+     * Unassignment permission is handled at the action-object level.
+     * @return bool true
+     */
+    public function can_do_action_courseprogram_unassign() {
+        return true;
+    }
+
+    /**
+     * Whether the user has access to see the main page (assigned list)
+     * @return bool Whether the user has access.
+     */
+    public function can_do_default() {
+        global $USER;
+        $id = $this->required_param('id', PARAM_INT);
+        $requiredperms = array('elis/program:course_view', 'elis/program:associate');
+        foreach ($requiredperms as $perm) {
+            $ctx = pm_context_set::for_user_with_capability('course', $perm, $USER->id);
+            if ($ctx->context_allowed($id, 'course') !== true) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Determine whether the current user can assign tracks to the viewed userset.
+     * @return bool Whether the user can assign tracks to this userset.
+     */
+    public function can_do_add() {
+        return $this->can_do_default();
+    }
+
+    /**
+     * Display assigned table.
+     */
+    public function display_default() {
         global $OUTPUT;
 
-        $id = $this->required_param('id', PARAM_INT);
-
-        $sort         = optional_param('sort', 'name', PARAM_ALPHA);
-        $dir          = optional_param('dir', 'ASC', PARAM_ALPHA);
-
-        $page         = optional_param('page', 0, PARAM_INT);
-        $perpage      = optional_param('perpage', 30, PARAM_INT);        // how many per page
-
-        $namesearch   = trim(optional_param('search', '', PARAM_TEXT));
-        $alpha        = optional_param('alpha', '', PARAM_ALPHA);
-
-        $columns = array(
-            'curriculumname'    => array('header' => get_string('curriculum_name','elis_program'),
-                                         'decorator' => array(new record_link_decorator('curriculumpage',
-                                                                                        array('action'=>'view'),
-                                                                                        'curriculumid'),
-                                                              'decorate')),
-            'required'          => array('header' => get_string('required','elis_program')),
-            'frequency'         => array('header' => get_string('frequency','elis_program')),
-            'timeperiod'        => array('header' => get_string('time_period','elis_program')),
-            'position'          => array('header' => get_string('position','elis_program')),
-            'buttons'           => array('header' => ''),
-        );
-
-        $items = curriculumcourse_get_curriculum_listing($id, $sort, $dir, 0, 0, $namesearch, $alpha);
-        $numitems = curriculumcourse_count_curriculum_records($id, $namesearch, $alpha);
-
-        $this->print_num_items($numitems, $numitems);
-        $this->print_alpha();
-        $this->print_search();
-
-        $this->print_list_view($items, $columns, 'curricula');
-        unset($items);
-
-        if (parent::has_associate_and_manage_capability()) {
-            $this->print_add_button(array('id' => $id), get_string('course_assigncurriculum', 'elis_program'));
-        }
-
-        if ($this->has_program_create_capability()) {
+        if (false && has_capability('elis/program:program_create', $this->_get_page_context())) {
             echo '<div align="center">';
             $options = array_merge(array('s' => 'cfc', 'id' => $id, 'cfccourseid' => $id));
-            $button = new single_button(new moodle_url('index.php', $options), get_string('makecurcourse','elis_program'), 'get', array('disabled'=>false, 'title'=>get_string('makecurcourse','elis_program'), 'id'=>''));
+            $button = new single_button(new moodle_url('index.php', $options), get_string('makecurcourse', 'elis_program'), 'get',
+                    array('disabled'=>false, 'title'=>get_string('makecurcourse', 'elis_program'), 'id'=>''));
             echo $OUTPUT->render($button);
             echo '</div>';
         }
-    }
 
-
-    function has_program_create_capability() {
-        return has_capability('elis/program:program_create', $this->_get_page_context());
-    }
-
-    // disable prereq/coreq editing from the course page
-    function can_do_prereqedit() {
-        return false;
-    }
-
-    function can_do_coreqedit() {
-        return false;
-    }
-}
-
-class curriculumcourse_page_table extends association_page_table {
-    function get_item_display_required($column, $item) {
-        return $this->display_yesno_item($column, $item);
-    }
-
-    function get_default_sort_column() {
-        return 'position';
+        parent::display_default();
     }
 }

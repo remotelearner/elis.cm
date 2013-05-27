@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,237 +16,175 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage curriculummanagement
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
-defined('MOODLE_INTERNAL') || die();
+defined('MOODLE_INTERNAL') or die();
 
-require_once elispm::lib('data/pmclass.class.php');
-require_once elispm::lib('data/track.class.php');
-require_once elispm::lib('page.class.php');
-require_once elispm::lib('associationpage.class.php');
-require_once elispm::file('trackpage.class.php');
-require_once elispm::file('pmclasspage.class.php');
-require_once elispm::file('form/trackassignmentform.class.php');
+require_once(elispm::lib('data/pmclass.class.php'));
+require_once(elispm::lib('data/track.class.php'));
+require_once(elispm::lib('page.class.php'));
+require_once(elispm::lib('deepsightpage.class.php'));
+require_once(elispm::lib('associationpage.class.php'));
+require_once(elispm::file('trackpage.class.php'));
+require_once(elispm::file('pmclasspage.class.php'));
+require_once(elispm::file('form/trackassignmentform.class.php'));
 
-class trackassignmentpage extends associationpage {
-    var $data_class = 'trackassignment';
-    var $form_class = 'trackassignmentform';
-    var $parent_data_class = 'track';
+/**
+ * Deepsight assignment page for track - class associations.
+ */
+class trackassignmentpage extends deepsightpage {
 
-    var $pagename = 'trkcls';
-    var $tab_page = 'trackpage';
-    //var $default_tab = 'trackassignmentpage';
+    /**
+     * @var string A unique name for the page.
+     */
+    public $pagename = 'trkcls';
 
-    var $section = 'curr';
+    /**
+     * @var string The section of the page.
+     */
+    public $section = 'curr';
 
-    function __construct(array $params=null) {
+    /**
+     * @var string The page to get tabs from.
+     */
+    public $tab_page = 'trackpage';
+
+    /**
+     * @var string The main data class.
+     */
+    public $data_class = 'trackassignment';
+
+    /**
+     * @var string The page's parent.
+     */
+    public $parent_page;
+
+    /**
+     * @var string The page's context.
+     */
+    public $context;
+
+    /**
+     * Constructor
+     * @param array $params An array of parameters for the page.
+     */
+    public function __construct(array $params = null) {
+        $this->context = parent::_get_page_context();
         parent::__construct($params);
-
-        $this->tabs = array(
-            array('tab_id' => 'view', 'page' => 'trackassignmentpage', 'params' => array('action' => 'edit'), 'name' => get_string('edit','elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'edit'),
-            array('tab_id' => 'edit', 'page' => 'trackassignmentpage', 'params' => array('action' => 'delete'), 'name' => get_string('delete','elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'delete'),
-
-        );
     }
 
-    public static function get_contexts($capability) {
-        if (!isset(trackassignmentpage::$contexts[$capability])) {
-            global $USER;
-            trackassignmentpage::$contexts[$capability] = get_contexts_by_capability_for_user('track', $capability, $USER->id);
+    /**
+     * Get the context of the current track.
+     * @return context_elis_track The current track context object.
+     */
+    protected function get_context() {
+        if (!isset($this->context)) {
+            $id = required_param('id', PARAM_INT);
+            $this->context = context_elis_track::instance($id);
         }
-        return trackassignmentpage::$contexts[$capability];
+        return $this->context;
     }
 
-    function can_do_default() {
+    /**
+     * Construct the assigned datatable.
+     *
+     * @param string $uniqid A unique ID to assign to the datatable object.
+     * @return deepsight_datatable The datatable object.
+     */
+    protected function construct_assigned_table($uniqid = null) {
+        global $DB;
+        $trackid = $this->required_param('id', PARAM_INT);
+        $endpoint = qualified_me().'&action=deepsight_response&tabletype=assigned&id='.$trackid;
+        $table = new deepsight_datatable_trackclass_assigned($DB, 'assigned', $endpoint, $uniqid);
+        $table->set_trackid($trackid);
+        return $table;
+    }
+
+    /**
+     * Construct the unassigned datatable.
+     *
+     * @param string $uniqid A unique ID to assign to the datatable object.
+     * @return deepsight_datatable The datatable object.
+     */
+    protected function construct_unassigned_table($uniqid = null) {
+        global $DB;
+        $trackid = $this->required_param('id', PARAM_INT);
+        $endpoint = qualified_me().'&action=deepsight_response&tabletype=unassigned&id='.$trackid;
+        $table = new deepsight_datatable_trackclass_available($DB, 'unassigned', $endpoint, $uniqid);
+        $table->set_trackid($trackid);
+        return $table;
+    }
+
+    /**
+     * Assignment permission is handled at the action-object level.
+     * @return bool true
+     */
+    public function can_do_action_trackclassassign() {
+        return true;
+    }
+
+    /**
+     * Edit permission is handled at the action-object level.
+     * @return bool true
+     */
+    public function can_do_action_trackclassedit() {
+        return true;
+    }
+
+    /**
+     * Unassignment permission is handled at the action-object level.
+     * @return bool true
+     */
+    public function can_do_action_trackclassunassign() {
+        return true;
+    }
+
+    /**
+     * Whether the user has access to see the main page (assigned list)
+     * @return bool Whether the user has access.
+     */
+    public function can_do_default() {
+        global $USER;
         $id = $this->required_param('id', PARAM_INT);
-
-        // TODO: Ugly, this needs to be overhauled
-        $tpage = new trackpage();
-
-        if ($tpage->_has_capability('elis/program:track_view', $id)) {
-            //allow viewing but not managing associations
-        	return true;
-        }
-
-        return $tpage->_has_capability('elis/program:associate', $id);
+        $viewctx = pm_context_set::for_user_with_capability('track', 'elis/program:track_view', $USER->id);
+        return ($viewctx->context_allowed($id, 'track') === true) ? true : false;
     }
 
-    function can_do_savenew() {
-        // the user must have 'elis/program:associate' permissions on both ends
-        $trackid = $this->required_param('trackid', PARAM_INT);
-        $classid = $this->required_param('classid', PARAM_INT);
-
-        // TODO: Ugly, this needs to be overhauled
-        $tpage = new trackpage();
-        $cpage = new pmclasspage();
-
-        return $tpage->_has_capability('elis/program:associate', $trackid)
-            && $cpage->_has_capability('elis/program:associate', $classid);
+    /**
+     * Determine whether the current user can assign classes to the viewed track.
+     * @return bool Whether the user can assign classes to this track.
+     */
+    public function can_do_add() {
+        global $USER;
+        $id = $this->required_param('id', PARAM_INT);
+        $canview = $this->can_do_default();
+        $associatectx = pm_context_set::for_user_with_capability('track', 'elis/program:associate', $USER->id);
+        return ($canview === true && $associatectx->context_allowed($id, 'track') === true) ? true : false;
     }
 
-    function can_do_edit() {
-        // the user must have 'elis/program:associate' permissions on both
-        // ends
-        $association_id = $this->required_param('association_id', PARAM_INT);
-        $record = new trackassignment($association_id);
-        $trackid = $record->trackid;
-        $classid = $record->classid;
-
-        // TODO: Ugly, this needs to be overhauled
-        $tpage = new trackpage();
-        $cpage = new pmclasspage();
-
-        return $tpage->_has_capability('elis/program:associate', $trackid)
-            && $cpage->_has_capability('elis/program:associate', $classid);
-    }
-
-    function can_do_delete() {
-        return $this->can_do_edit();
-    }
-
-    function display_add() {
-        // TODO: update
-        $trackid = required_param('trackid', PARAM_INT);
-        $clsid = required_param('clsid', PARAM_INT);
-        $id = required_param('id', PARAM_INT);
-
-        $target = $this->get_new_page(array('action' => 'add', 'id' => $id, 'trackid' => $trackid, 'clsid' => $clsid));
-
-        $form = new $this->form_class($target->url, array('trackid' => $trackid, 'classid' => $clsid));
-
-        $form->set_data(array('trackid' => $trackid, 'classid' => $clsid, 'id' => $id));
-
-        $form->display();
-    }
-
-    function display_default() {
-        global $DB, $OUTPUT;
-
-        $id = required_param('id', PARAM_INT);
-
-        $sort         = optional_param('sort', 'clsname', PARAM_ALPHA);
-        $dir          = optional_param('dir', 'ASC', PARAM_ALPHA);
-
-        $page         = optional_param('page', 0, PARAM_INT);
-        $perpage      = optional_param('perpage', 30, PARAM_INT);        // how many per page
-
-        $namesearch   = trim($this->optional_param('search', '', PARAM_ALPHA));
-        $alpha        = $this->optional_param('alpha', '', PARAM_ALPHA);
-
-        $columns = array(
-            'clsname'   => array('header'=> get_string('class_idnumber', 'elis_program'),
-                                 'decorator' => array(new record_link_decorator('pmclasspage',
-                                                                                array('action'=>'view'),
-                                                                                'clsid'),
-                                                      'decorate')),
-            'autoenrol' => array('header'=> get_string('track_auto_enrol', 'elis_program')),
-            'enrolments' => array('header'=> get_string('enrolments', 'elis_program')),
-            'buttons' => array('header'=> ''),
-        );
-
-        // TBD
-        if ($dir !== 'DESC') {
-            $dir = 'ASC';
-        }
-        if (isset($columns[$sort])) {
-            $columns[$sort]['sortable'] = $dir;
-        } else {
-            $sort = 'clsname';
-            $columns[$sort]['sortable'] = $dir;
-        }
-
-        $totalitems = track_assignment_get_listing($id);
-        $items = track_assignment_get_listing($id, $sort, $dir, $page*$perpage, $perpage, $namesearch, $alpha);
-        $items_is_empty = ($items->valid() === true) ? false : true;
-        $numitems = track_assignment_count_records($id, $namesearch, $alpha);
-
-        $this->print_alpha();
-        $this->print_search();
-
-        if ($numitems > $perpage) {
-            $pagingbar = new paging_bar($numitems, $page, $perpage,
-                             "index.php?s=trkcls&amp;id={$id}&amp;sort={$sort}&amp;dir={$dir}&amp;perpage={$perpage}&amp;alpha={$alpha}&amp;search="
-                             . urlencode($namesearch)); // .'&amp;'
-            echo $OUTPUT->render($pagingbar), '<br/>'; // TBD
-        }
-        $this->print_num_items($numitems, $numitems);
-        $this->print_list_view($items, $columns, 'track_classes');
-        unset($items);
-
-        if ($items_is_empty === true && empty($namesearch) && empty($alpha)) {
-            echo '<div align="center">';
-            $tmppage = new trackassignmentpage(array('action'=>'autocreate', 'id'=>$id));
-            //print_single_button(null, $tmppage->get_moodle_url()->params, get_string('track_autocreate_button', 'elis_program'));
-            $button = new single_button($tmppage->url, get_string('track_autocreate_button','elis_program'), 'get');
-            echo $OUTPUT->render($button);
-            echo '</div>';
-        }
-
-        $contexts = pmclasspage::get_contexts('elis/program:associate');
-        $filter_object = $contexts->get_filter('cls.id', 'class');
-        $filter_sql = $filter_object->get_sql(false, 'cls');
-        // find the classes that are part of a course that is part of a
-        // curriculum that the track belongs to
-        $sql = "SELECT cls.*
-                  FROM {".track::TABLE."} trk
-                  JOIN {".curriculum::TABLE."} cur ON cur.id = trk.curid
-                  JOIN {".curriculumcourse::TABLE."} curcrs ON curcrs.curriculumid = cur.id
-                  JOIN {".pmclass::TABLE."} cls ON cls.courseid = curcrs.courseid
-                 WHERE trk.id = ?";
-        $params = array($id);
-        if (isset($filter_sql['where'])) {
-            $sql .= " AND ".$filter_sql['where'];
-            $params += $filter_sql['where_parameters'];
-        }
-
-        $classes = $DB->get_recordset_sql($sql, $params);
-        if ($classes->valid() !== true) {
-            $sql = "SELECT COUNT(*)
-                      FROM {".track::TABLE."} trk
-                      JOIN {".curriculum::TABLE."} cur ON cur.id = trk.curid
-                      JOIN {".curriculumcourse::TABLE."} curcrs ON curcrs.curriculumid = cur.id
-                      JOIN {".pmclass::TABLE."} cls ON cls.courseid = curcrs.courseid
-                     WHERE trk.id = ?";
-            $params = array($id);
-            $num_classes = $DB->count_records_sql($sql, $params);
-            if (!empty($num_classes)) {
-                // some classes exist, but don't have associate capability on
-                // any of them
-                echo '<div align="center"><br />';
-                print_string('no_associate_caps_class', 'elis_program');
-                echo '</div>';
-            } else {
-                // no curricula at all
-                echo '<div align="center"><br />';
-                print_string('all_items_assigned', 'elis_program');
-                echo '</div>';
-            }
-        } else {
-            $this->print_dropdown($classes, $totalitems, 'trackid', 'clsid', 'add', 'idnumber');
-        }
-    }
-
-    function create_table_object($items, $columns) {
-        return new trackassignment_page_table($items, $columns, $this);
-    }
-
-    function do_autocreate() { // TBD: display_autocreate() for error messages?
+    /**
+     * Do autocreate classes action.
+     */
+    public function do_autocreate() {
+        // TBD: display_autocreate() for error messages?
         $id = required_param('id', PARAM_INT);
 
         $track = new track($id);
         $track->track_auto_create();
 
         $tmppage = new trackassignmentpage(array('id' => $id));
-        redirect($tmppage->url, get_string('track_success_autocreate','elis_program'));
+        redirect($tmppage->url, get_string('track_success_autocreate', 'elis_program'));
     }
 
-    function display_enrolall() {
+    /**
+     * Display enrol all action.
+     */
+    public function display_enrolall() {
         // ELIS-3761: changed from do_enrolall()
         // since enrol_all_track_users_in_class() outputs message(s)!
         $id = required_param('id', PARAM_INT);
@@ -258,25 +196,18 @@ class trackassignmentpage extends associationpage {
         $tmppage = new trackassignmentpage(array('id' => $id));
         redirect($tmppage->url, '', 15);
     }
-}
 
-class trackassignment_page_table extends association_page_table {
-    function __construct(&$items, $columns, $page) {
+    /**
+     * Display the default action (assigned page)
+     */
+    public function display_default() {
+        global $OUTPUT;
         $id = required_param('id', PARAM_INT);
-        $users = usertrack::get_users($id);
-        $this->numusers = empty($users) ? 0 : count($users);
-
-        parent::__construct($items, $columns, $page);
-    }
-
-    function get_item_display_autoenrol($column, $item) {
-        return $this->display_yesno_item($column, $item);
-    }
-
-    function get_item_display_enrolments($column, $item) {
-        if (empty($item->enrolments)) {
-            $item->enrolments = 0;
-        }
-        return "{$item->enrolments} / {$this->numusers}";
+        echo '<div align="center">';
+        $tmppage = new trackassignmentpage(array('action'=>'autocreate', 'id'=>$id));
+        $button = new single_button($tmppage->url, get_string('track_autocreate_button', 'elis_program'), 'get');
+        echo $OUTPUT->render($button);
+        echo '</div>';
+        parent::display_default();
     }
 }

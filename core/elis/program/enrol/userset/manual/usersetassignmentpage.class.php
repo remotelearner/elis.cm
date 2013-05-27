@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2012 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,17 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
-defined('MOODLE_INTERNAL') || die();
+defined('MOODLE_INTERNAL') or die();
 
 require_once(elispm::lib('lib.php'));
+require_once(elispm::lib('deepsightpage.class.php'));
 require_once(elispm::lib('associationpage.class.php'));
 require_once(elispm::lib('data/user.class.php'));
 require_once(elispm::lib('data/userset.class.php'));
@@ -37,48 +37,49 @@ require_once(elis::plugin_file('usersetenrol_manual', 'lib.php'));
 require_once(elis::plugin_file('usersetenrol_manual', 'usersetassignment_form.php'));
 require_once(elis::plugin_file('usersetenrol_manual', 'selectpage.class.php'));
 
-class userclusterbasepage extends associationpage {
-    var $data_class = 'clusterassignment';
-    var $form_class = 'assignpage_form';
+/**
+ * A base user-userset association implementation for code shared between userclusterpage and clusteruserpage.
+ */
+abstract class userclusterbase extends deepsightpage {
+    public $section = 'users';
+    public $data_class = 'clusterassignment';
+    public $parent_page;
+    public $context;
 
-    var $section = 'users';
-
-    function can_do_add() {
-        return false;
-    }
-
-    public function do_add() {
-        error('This shouldn\'t happen');
-    }
-
-    public static function can_manage_assoc($userid, $clustid) {
+    /**
+     * Determine whether the current can manage the association between a given user and userset.
+     * @param int $userid The ID of a user.
+     * @param int $clustid The ID of a userset.
+     * @return bool Success status.
+     */
+    public static function can_manage_assoc($userid, $usersetid) {
         global $USER;
 
-        $allowed_clusters = array();
+        $allowedusersets = array();
 
-        // TODO: Ugly, this needs to be overhauled
+        // TODO: Ugly, this needs to be overhauled.
         $upage = new usersetpage();
 
-        if (!usersetpage::can_enrol_into_cluster($clustid)) {
-            //the users who satisfty this condition are a superset of those who can manage associations
+        if (!usersetpage::can_enrol_into_cluster($usersetid)) {
+            // The users who satisfty this condition are a superset of those who can manage associations.
             return false;
-        } else if ($upage->_has_capability('elis/program:userset_enrol', $clustid)) {
-            //current user has the direct capability
+        } else if ($upage->_has_capability('elis/program:userset_enrol', $usersetid)) {
+            // Current user has the direct capability.
             return true;
         }
 
-        $allowed_clusters = userset::get_allowed_clusters($clustid);
+        $allowedusersets = userset::get_allowed_clusters($usersetid);
 
         $filter = array(new field_filter('userid', $userid));
 
-        //query to get users associated to at least one enabling cluster
-        if (empty($allowed_clusters)) {
+        // Query to get users associated to at least one enabling userset.
+        if (empty($allowedusersets)) {
             $filter[] = new select_filter('FALSE');
         } else {
-            $filter[] = new in_list_filter('clusterid', $allowed_clusters);
+            $filter[] = new in_list_filter('clusterid', $allowedusersets);
         }
 
-        //user just needs to be in one of the possible clusters
+        // User just needs to be in one of the possible usersets.
         if (clusterassignment::exists($filter)) {
             return true;
         }
@@ -87,354 +88,201 @@ class userclusterbasepage extends associationpage {
     }
 }
 
-class userclusterpage extends userclusterbasepage {
-    var $pagename = 'usrclst';
-    var $tab_page = 'userpage';
-    //var $default_tab = 'userclusterpage';
+/**
+ * A deepsight page for managing user - userset associations (one user, multiple usersets)
+ */
+class userclusterpage extends userclusterbase {
+    public $pagename = 'usrclst';
+    public $tab_page = 'userpage';
 
-    var $parent_data_class = 'user';
-
-    function can_do_default() {
-        $id = $this->required_param('id', PARAM_INT);
-        // TODO: Ugly, this needs to be overhauled
-        $upage = new userpage();
-        return $upage->_has_capability('elis/program:user_view', $id);
+    /**
+     * Constructor
+     * @param array $params An array of parameters for the page.
+     */
+    public function __construct(array $params = null) {
+        $this->context = parent::_get_page_context();
+        parent::__construct($params);
     }
 
-    function can_do_add() {
-        $userid = $this->required_param('userid');
-        $clustid = $this->required_param('clusterid');
-        return self::can_manage_assoc($userid, $clustid);
-    }
-
-    function can_do_delete() {
-        return $this->can_do_edit();
-    }
-
-    function can_do_edit() {
-        $aid = $this->required_param('association_id');
-        $clustass = new clusterassignment($aid);
-        return self::can_manage_assoc($clustass->userid, $clustass->clusterid);
-    }
-
-    function display_default() {
-        $id = $this->required_param('id', PARAM_INT);
-
-        $this->print_autoassigned_table();
-        echo '<br/>';
-        $this->print_manuallyassigned_table();
-    }
-
-    // Overridden to use save immediately, instead of prompting
-    public function do_add() {
-        require_sesskey();
-
-        $id = $this->required_param('id', PARAM_INT);
-        $userid = $this->required_param('userid', PARAM_INT);
-        $clusterid = $this->required_param('clusterid', PARAM_INT);
-
-        cluster_manual_assign_user($clusterid, $userid);
-        $target = $this->get_new_page(array('id' => $id), true);
-        redirect($target->url, ucwords($this->data_class) .
-                 ' '.  get_string('saved','elis_program') .'.');
-    }
-
-    function print_autoassigned_table() {
-        global $OUTPUT;
-
-        $id = $this->required_param('id', PARAM_INT);
-        $sort = optional_param('sort', 'name', PARAM_ALPHA);
-        $dir  = optional_param('dir', 'ASC', PARAM_ALPHA);
-        $page  = $this->optional_param('aapage', 0, PARAM_INT);
-        $perpage  = $this->optional_param('aaperpage', 20, PARAM_INT);
-        $mapage  = $this->optional_param('mapage', 0, PARAM_INT);
-        $maperpage  = $this->optional_param('maperpage', 20, PARAM_INT);
-
-        $columns = array(
-            'name'        => array('header' => get_string('name', 'elis_program'),
-                                   'decorator' => array(new record_link_decorator('usersetpage',
-                                                                                  array('action'=>'view'),
-                                                                                  'id'),
-                                                        'decorate')),
-            'display'     => array('header' => get_string('description', 'elis_program')),
-        );
-
-        if ($dir !== 'DESC') {
-            $dir = 'ASC';
+    /**
+     * Get the context of the current user.
+     *
+     * @return context_elis_user The current user context object.
+     */
+    protected function get_context() {
+        if (!isset($this->context)) {
+            $id = required_param('id', PARAM_INT);
+            $this->context = context_elis_user::instance($id);
         }
-        if (isset($columns[$sort])) {
-            $columns[$sort]['sortable'] = $dir;
-        }
-
-        $filter = new join_filter('id', clusterassignment::TABLE, 'clusterid',
-                                  new AND_filter(array(new field_filter('plugin', 'manual', field_filter::NEQ),
-                                                       new field_filter('userid', $id))),
-                                  false, false);
-        $items = userset::find($filter, array($sort => $dir), $page * $perpage,
-                               $perpage);
-        $count = userset::count($filter);
-
-        echo html_writer::tag('h2', get_string('auto_assigned_usersets', 'usersetenrol_manual'));
-
-        $full_url = "/elis/program/index.php?s={$this->pagename}&amp;section={$this->section}&amp;id={$id}&amp;sort={$sort}&amp;dir={$dir}&amp;mapage={$mapage}&amp;maperpage={$maperpage}&amp;aaperpage={$perpage}";
-        $pagingbar = new paging_bar($count, $page, $perpage, $full_url, 'aapage');
-        echo $OUTPUT->render($pagingbar);
-
-        $this->print_list_view($items, $columns, 'clusters');
+        return $this->context;
     }
 
-    function print_manuallyassigned_table() {
-        global $DB, $OUTPUT;
+    /**
+     * Construct the assigned datatable.
+     *
+     * @param string $uniqid A unique ID to assign to the datatable object.
+     * @return deepsight_datatable The datatable object.
+     */
+    protected function construct_assigned_table($uniqid = null) {
+        global $DB;
+        $userid = $this->required_param('id', PARAM_INT);
+        $endpoint = qualified_me().'&action=deepsight_response&tabletype=assigned&id='.$userid;
+        $table = new deepsight_datatable_useruserset_assigned($DB, 'assigned', $endpoint, $uniqid);
+        $table->set_userid($userid);
+        return $table;
+    }
 
+    /**
+     * Construct the unassigned datatable.
+     *
+     * @param string $uniqid A unique ID to assign to the datatable object.
+     * @return deepsight_datatable The datatable object.
+     */
+    protected function construct_unassigned_table($uniqid = null) {
+        global $DB;
+        $userid = $this->required_param('id', PARAM_INT);
+        $endpoint = qualified_me().'&action=deepsight_response&tabletype=unassigned&id='.$userid;
+        $table = new deepsight_datatable_useruserset_available($DB, 'unassigned', $endpoint, $uniqid);
+        $table->set_userid($userid);
+        return $table;
+    }
+
+    /**
+     * Assignment permission is handled at the action-object level.
+     *
+     * @return bool true
+     */
+    public function can_do_action_userusersetassign() {
+        return true;
+    }
+
+    /**
+     * Unassignment permission is handled at the action-object level.
+     *
+     * @return bool true
+     */
+    public function can_do_action_userusersetunassign() {
+        return true;
+    }
+
+    /**
+     * Whether the user has access to see the main page (assigned list)
+     *
+     * @return bool Whether the user has access.
+     */
+    public function can_do_default() {
+        global $USER;
         $id = $this->required_param('id', PARAM_INT);
-        $sort = $this->optional_param('sort', 'name', PARAM_ALPHA);
-        $dir = $this->optional_param('dir', 'ASC', PARAM_ALPHA);
-        $page  = $this->optional_param('mapage', 0, PARAM_INT);
-        $perpage  = $this->optional_param('maperpage', 20, PARAM_INT);
-        $aapage  = $this->optional_param('aapage', 0, PARAM_INT);
-        $aaperpage  = $this->optional_param('aaperpage', 20, PARAM_INT);
+        $userviewctx = pm_context_set::for_user_with_capability('user', 'elis/program:user_view', $USER->id);
+        return ($userviewctx->context_allowed($id, 'user') === true) ? true : false;
+    }
 
-        $columns = array(
-            'name'        => array('header' => get_string('name', 'elis_program'),
-                                   'decorator' => array(new record_link_decorator('usersetpage',
-                                                                                  array('action'=>'view'),
-                                                                                  'clusterid'),
-                                                        'decorate')),
-            'display'     => array('header' => get_string('description', 'elis_program')),
-            'manage'      => array('header' => ''),
-        );
-
-        if ($dir !== 'DESC') {
-            $dir = 'ASC';
-        }
-        if (isset($columns[$sort])) {
-            $columns[$sort]['sortable'] = $dir;
-        }
-
-        $filter = new join_filter('id', clusterassignment::TABLE, 'clusterid',
-                                  new AND_filter(array(new field_filter('plugin', 'manual'),
-                                                       new field_filter('userid', $id))));
-
-        $filter = new AND_filter(array(new field_filter('plugin', 'manual'),
-                                       new field_filter('userid', $id)));
-
-        $filtersql = $filter->get_sql(false, 'ca');
-        $sql = 'SELECT ca.id, u.id AS clusterid, u.name, u.display
-                FROM {' . clusterassignment::TABLE . '} ca
-                JOIN {' . userset::TABLE . "} u ON ca.clusterid = u.id
-                WHERE {$filtersql['where']}
-                ORDER BY {$sort} {$dir}";
-        $totalitems = $DB->get_records_sql($sql, $filtersql['where_parameters']);
-        $items = $DB->get_recordset_sql($sql, $filtersql['where_parameters'],
-                       $page * $perpage, $perpage);
-
-        echo html_writer::tag('h2', get_string('manually_assigned_usersets', 'usersetenrol_manual'));
-
-        $full_url = "/elis/program/index.php?s={$this->pagename}&amp;section={$this->section}&amp;id={$id}&amp;sort={$sort}&amp;dir={$dir}&amp;aapage={$aapage}&amp;aaperpage={$aaperpage}&amp;maperpage={$perpage}";
-        $pagingbar = new paging_bar(count($totalitems), $page, $perpage, $full_url, 'mapage');
-        echo $OUTPUT->render($pagingbar);
-
-        $this->print_list_view($items, $columns, 'clusters');
-
-        $this->print_dropdown(cluster_get_listing('name', 'ASC', 0, 0, '', '', array(), $id), $totalitems, 'userid', 'clusterid', 'add');
+    /**
+     * Determine whether the current user can assign usersets to this user.
+     *
+     * @return bool Whether the user can assign.
+     */
+    public function can_do_add() {
+        return true;
     }
 }
 
-class clusteruserpage extends userclusterbasepage {
-    var $pagename = 'clstusr';
-    var $tab_page = 'usersetpage';
-    //var $default_tab = 'clusteruserpage';
+/**
+ * A deepsight page for managing userset - user associations (one userset, multiple users)
+ */
+class clusteruserpage extends userclusterbase {
+    public $pagename = 'clstusr';
+    public $tab_page = 'usersetpage';
 
-    var $parent_data_class = 'userset';
+    /**
+     * Constructor
+     * @param array $params An array of parameters for the page.
+     */
+    public function __construct(array $params = null) {
+        $this->context = parent::_get_page_context();
+        parent::__construct($params);
+    }
 
-    function can_do_default() {
+    /**
+     * Get the context of the current userset.
+     *
+     * @return context_elis_userset The current userset context object.
+     */
+    protected function get_context() {
+        if (!isset($this->context)) {
+            $id = required_param('id', PARAM_INT);
+            $this->context = context_elis_userset::instance($id);
+        }
+        return $this->context;
+    }
+
+    /**
+     * Construct the assigned datatable.
+     *
+     * @param string $uniqid A unique ID to assign to the datatable object.
+     * @return deepsight_datatable The datatable object.
+     */
+    protected function construct_assigned_table($uniqid = null) {
+        global $DB;
+        $usersetid = $this->required_param('id', PARAM_INT);
+        $endpoint = qualified_me().'&action=deepsight_response&tabletype=assigned&id='.$usersetid;
+        $table = new deepsight_datatable_usersetuser_assigned($DB, 'assigned', $endpoint, $uniqid);
+        $table->set_usersetid($usersetid);
+        return $table;
+    }
+
+    /**
+     * Construct the unassigned datatable.
+     *
+     * @param string $uniqid A unique ID to assign to the datatable object.
+     * @return deepsight_datatable The datatable object.
+     */
+    protected function construct_unassigned_table($uniqid = null) {
+        global $DB;
+        $usersetid = $this->required_param('id', PARAM_INT);
+        $endpoint = qualified_me().'&action=deepsight_response&tabletype=unassigned&id='.$usersetid;
+        $table = new deepsight_datatable_usersetuser_available($DB, 'unassigned', $endpoint, $uniqid);
+        $table->set_usersetid($usersetid);
+        return $table;
+    }
+
+    /**
+     * Userset assignment permission is handled at the action-object level.
+     *
+     * @return bool true
+     */
+    public function can_do_action_usersetuserassign() {
+        return true;
+    }
+
+    /**
+     * Userset unassignment permission is handled at the action-object level.
+     *
+     * @return bool true
+     */
+    public function can_do_action_usersetuserunassign() {
+        return true;
+    }
+
+    /**
+     * Whether the user has access to see the main page (assigned list)
+     *
+     * @return bool Whether the user has access.
+     */
+    public function can_do_default() {
+        global $USER;
         $id = $this->required_param('id', PARAM_INT);
-        // TODO: Ugly, this needs to be overhauled
-        $uspage = new usersetpage();
-        return $uspage->_has_capability('elis/program:userset_view', $id);
+        $usersetviewctx = pm_context_set::for_user_with_capability('cluster', 'elis/program:userset_view', $USER->id);
+        return ($usersetviewctx->context_allowed($id, 'cluster') === true) ? true : false;
     }
 
-    function can_do_add() {
-        $userid = $this->required_param('userid');
-        $clustid = $this->required_param('clusterid');
-        return self::can_manage_assoc($userid, $clustid);
-    }
-
-    function can_do_delete() {
-        $aid = $this->optional_param('association_id', '', PARAM_INT);
-
-        $clustass = new clusterassignment($aid);
-        return self::can_manage_assoc($clustass->userid, $clustass->clusterid);
-    }
-
-    function can_do_edit() {
-        return $this->can_do_delete();
-    }
-
-    function display_default() {
+    /**
+     * Determine whether the current user can assign users to this userset.
+     *
+     * @return bool Whether the user can assign users to this userset or not.
+     */
+    public function can_do_add() {
         $id = $this->required_param('id', PARAM_INT);
-
-        $this->print_autoassigned_table();
-        echo '<br/>';
-        $this->print_manuallyassigned_table();
-    }
-
-    function print_autoassigned_table() {
-        global $OUTPUT;
-
-        $id    = $this->required_param('id', PARAM_INT);
-        $sort  = $this->optional_param('sort', 'lastname', PARAM_ALPHA);
-        $dir   = $this->optional_param('dir', 'ASC', PARAM_ALPHA);
-        $page  = $this->optional_param('aapage', 0, PARAM_INT);
-        $perpage  = $this->optional_param('aaperpage', 20, PARAM_INT);
-        $mapage  = $this->optional_param('mapage', 0, PARAM_INT);
-        $maperpage  = $this->optional_param('maperpage', 20, PARAM_INT);
-
-        $decorator = new record_link_decorator('userpage', array('action'=>'view'), 'id');
-        $columns = array(
-            'idnumber'    => array('header' => get_string('idnumber', 'elis_program'),
-                                   'decorator'   => array($decorator, 'decorate')),
-            'name'        => array('header' => array('firstname' => array('header' => get_string('firstname')),
-                                                      'lastname' => array('header' => get_string('lastname'))),
-                                   'decorator'   => array($decorator, 'decorate'),
-                                   'display_function' => array('display_table', 'display_user_fullname_item')),
-            'email'       => array('header' => get_string('email'))
-        );
-
-        // set sorting
-        if ($dir !== 'DESC') {
-            $dir = 'ASC';
-        }
-        if (isset($columns[$sort])) {
-            $columns[$sort]['sortable'] = $dir;
-        } elseif (isset($columns['name']['header'][$sort])) {
-            $columns['name']['header'][$sort]['sortable'] = $dir;
-        } else {
-            $sort = 'lastname';
-            $columns['name']['header']['lastname']['sortable'] = $dir;
-        }
-
-        $AND_filter_array = array(new field_filter('plugin', 'manual', field_filter::NEQ),
-                                  new field_filter('clusterid', $id));
-
-
-        $filter = new join_filter('id', clusterassignment::TABLE, 'userid',
-                                  new AND_filter($AND_filter_array),
-                                  false, false);
-
-        if (empty(elis::$config->elis_program->legacy_show_inactive_users)) {
-            $filter = new AND_filter(array($filter, new field_filter('inactive', 0)));
-        }
-
-        $items = user::find($filter, array($sort => $dir), $page * $perpage,
-                            $perpage);
-        $count = user::count($filter);
-
-        echo html_writer::tag('h2', get_string('auto_assigned_users', 'usersetenrol_manual'));
-
-        $full_url = "/elis/program/index.php?s={$this->pagename}&amp;section={$this->section}&amp;id={$id}&amp;sort={$sort}&amp;dir={$dir}&amp;mapage={$mapage}&amp;maperpage={$maperpage}&amp;aaperpage={$perpage}";
-        $pagingbar = new paging_bar($count, $page, $perpage, $full_url, 'aapage');
-        echo $OUTPUT->render($pagingbar);
-
-        $a = new stdClass;
-        $a->num = $count;
-        echo html_writer::tag('div', get_string('items_found', 'elis_program', $a), array('style' => 'text-align:right'));
-
-        $this->print_list_view($items, $columns, 'users');
-    }
-
-    function print_manuallyassigned_table() {
-        global $DB, $OUTPUT;
-
-        $id    = $this->required_param('id', PARAM_INT);
-        $sort  = $this->optional_param('sort', 'lastname', PARAM_ALPHA);
-        $dir   = $this->optional_param('dir', 'ASC', PARAM_ALPHA);
-        $page  = $this->optional_param('mapage', 0, PARAM_INT);
-        $perpage  = $this->optional_param('maperpage', 20, PARAM_INT);
-        $aapage  = $this->optional_param('aapage', 0, PARAM_INT);
-        $aaperpage  = $this->optional_param('aaperpage', 20, PARAM_INT);
-
-        $decorator = new record_link_decorator('userpage', array('action'=>'view'), 'userid');
-        $columns = array(
-            'idnumber'    => array('header' => get_string('idnumber', 'elis_program'),
-                                   'decorator'   => array($decorator, 'decorate')),
-            'name'        => array('header' => array('firstname' => array('header' => get_string('firstname')),
-                                                      'lastname' => array('header' => get_string('lastname'))),
-                                   'decorator'   => array($decorator, 'decorate'),
-                                   'display_function' => array('display_table', 'display_user_fullname_item')),
-            'email'       => array('header' => get_string('email')),
-            'manage'      => array('header' => ''),
-        );
-
-        // set sorting
-        if ($dir !== 'DESC') {
-            $dir = 'ASC';
-        }
-        if (isset($columns[$sort])) {
-            $columns[$sort]['sortable'] = $dir;
-        } elseif (isset($columns['name']['header'][$sort])) {
-            $columns['name']['header'][$sort]['sortable'] = $dir;
-        } else {
-            $sort = 'lastname';
-            $columns['name']['header']['lastname']['sortable'] = $dir;
-        }
-
-        $AND_filter_array = array(new field_filter('plugin', 'manual'),
-                                  new field_filter('clusterid', $id));
-
-        $filter = new AND_filter($AND_filter_array);
-        $filtersql = $filter->get_sql(false, 'ca');
-        if (empty(elis::$config->elis_program->legacy_show_inactive_users)) {
-            if (!empty($filtersql['where'])) { // TBD: should be an 'else'!!!
-                $filtersql['where'] .= ' AND u.inactive = 0 ';
-            }
-        }
-
-        //todo: find a more elegant way to implement this - currently have to use
-        //queries instead of find and count methods because we don't have a good way to
-        //select specific fields across two tables
-
-        //NOTE: can't just user user::find and user::count here because we need the assignment
-        //id for permissions checking
-        $sql = 'SELECT ca.id, u.id AS userid, u.idnumber, u.firstname, u.lastname, u.email
-                  FROM {' . clusterassignment::TABLE . '} ca
-                  JOIN {' . user::TABLE . "} u ON ca.userid = u.id
-                 WHERE {$filtersql['where']}
-              ORDER BY u.{$sort} {$dir}";
-        $items = $DB->get_recordset_sql($sql, $filtersql['where_parameters'],
-                         $page * $perpage, $perpage);
-
-        $sql = 'SELECT COUNT(*)
-                  FROM {' . clusterassignment::TABLE . '} ca
-                  JOIN {' . user::TABLE . "} u ON ca.userid = u.id
-                 WHERE {$filtersql['where']}";
-        $count = $DB->count_records_sql($sql, $filtersql['where_parameters']);
-
-        echo html_writer::tag('h2', get_string('manually_assigned_users', 'usersetenrol_manual'));
-
-        $full_url = "/elis/program/index.php?s={$this->pagename}&amp;section={$this->section}&amp;id={$id}&amp;sort={$sort}&amp;dir={$dir}&amp;aapage={$aapage}&amp;aaperpage={$aaperpage}&amp;maperpage={$perpage}";
-        $pagingbar = new paging_bar($count, $page, $perpage, $full_url, 'mapage');
-        echo $OUTPUT->render($pagingbar);
-
-        $a = new stdClass;
-        $a->num = $count;
-        echo html_writer::tag('div', get_string('items_found', 'elis_program', $a), array('style' => 'text-align:right'));
-
-        $this->print_list_view($items, $columns, 'users');
-
-        $this->print_assign_link();
-    }
-
-    function print_assign_link() {
-        global $OUTPUT;
-        $id = $this->required_param('id', PARAM_INT);
-
-        $target = new clusteruserselectpage(array('id' => $id));
-        if ($target->can_do()) {
-            echo html_writer::empty_tag('br');
-            $button = new single_button($target->url, get_string('assign_users', 'usersetenrol_manual'), 'get');
-            //echo html_writer::tag('div', html_writer::link($target->url, get_string('assign_users', 'usersetenrol_manual')), array('align' => 'center'));
-            echo html_writer::tag('div', $OUTPUT->render($button), array('align' => 'center'));
-        }
+        return usersetpage::can_enrol_into_cluster($id);
     }
 }

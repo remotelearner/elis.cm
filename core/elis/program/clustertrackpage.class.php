@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,407 +16,240 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage curriculummanagement
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
-defined('MOODLE_INTERNAL') || die();
+defined('MOODLE_INTERNAL') or die();
 
-require_once elispm::lib('associationpage.class.php');
-require_once elispm::lib('data/clustercurriculum.class.php');
-require_once elispm::lib('data/clustertrack.class.php');
-require_once elispm::file('usersetpage.class.php');
-require_once elispm::file('trackpage.class.php');
-require_once elispm::file('form/clustertrackform.class.php');
-require_once elispm::file('form/clustertrackeditform.class.php');
+require_once(elispm::lib('associationpage.class.php'));
+require_once(elispm::lib('data/clustercurriculum.class.php'));
+require_once(elispm::lib('data/clustertrack.class.php'));
+require_once(elispm::file('usersetpage.class.php'));
+require_once(elispm::file('trackpage.class.php'));
+require_once(elispm::file('form/clustertrackform.class.php'));
+require_once(elispm::file('form/clustertrackeditform.class.php'));
 
-class clustertrackbasepage extends associationpage {
+/**
+ * Deepsight assignment page for userset - track associations.
+ */
+class clustertrackpage extends deepsightpage {
+    public $pagename = 'clsttrk';
+    public $section = 'users';
+    public $tab_page = 'usersetpage';
+    public $data_class = 'clustertrack';
+    public $parent_page;
+    public $context;
 
-    var $data_class = 'clustertrack';
-    var $form_class = 'clustertrackform';
-    var $edit_form_class = 'clustertrackeditform';
-//    var $tabs;
-
-    function __construct(array $params=null) {
-        $this->tabs = array(
-            array('tab_id' => 'edit',
-                  'page' => get_class($this),
-                  'params' => array('action' => 'edit'),
-                  'name' => get_string('edit', 'elis_program'),
-                  'showtab' => true,
-                  'showbutton' => true,
-                  'image' => 'edit'),
-            array('tab_id' => 'delete',
-                  'page' => get_class($this),
-                  'params' => array('action' => 'delete'),
-                  'name' => get_string('delete_label', 'elis_program'),
-                  'showbutton' => true,
-                  'image' => 'delete'),
-        );
-
+    /**
+     * Constructor.
+     * @param array $params An array of parameters for the page.
+     */
+    public function __construct(array $params = null) {
+        $this->context = parent::_get_page_context();
         parent::__construct($params);
     }
 
-    function can_do_add() {
-        // the user must have 'elis/program:associate' permissions on both ends
-        $clusterid = $this->required_param('clusterid', PARAM_INT);
-        $trackid = $this->required_param('trackid', PARAM_INT);
-
-        // TODO: Ugly, this needs to be overhauled
-        $uspage = new usersetpage();
-        $tpage  = new trackpage();
-        return $uspage->_has_capability('elis/program:associate', $clusterid)
-            && $tpage->_has_capability('elis/program:associate', $trackid);
-    }
-
-    function do_add() {
-        $id = $this->required_param('id', PARAM_INT);
-        $autounenrol = $this->optional_param('autounenrol', 1, PARAM_INT);
-        $clusterid = $this->required_param('clusterid', PARAM_INT);
-        $trackid = $this->required_param('trackid', PARAM_INT);
-
-
-        $target = $this->get_new_page(array('action'       => 'add',
-                                            'id'           => $id,
-                                            'clusterid'    => $clusterid,
-                                            'trackid'      => $trackid));
-
-        $form = new $this->form_class($target->url, array('id'        => $id,
-                                                           'clusterid' => $clusterid,
-                                                           'trackid'   => $trackid));
-
-        $form->set_data(array('clusterid' => $clusterid,
-                              'trackid' => $trackid));
-
-        if ($form->is_cancelled()) {
-            $target = $this->get_new_page(array('action' => 'default', 'id' => $id), true);
-            redirect($target->url);
-        } else if($data = $form->get_data()) {
-            clustertrack::associate($clusterid, $trackid, $autounenrol, $data->autoenrol);
-            $target = $this->get_new_page(array('action' => 'default', 'id' => $id), true);
-            redirect($target->url);
-        } else {
-            $this->display('add');
+    /**
+     * Get the context of the current userset.
+     * @return context_elis_userset The current userset context object.
+     */
+    protected function get_context() {
+        if (!isset($this->context)) {
+            $id = required_param('id', PARAM_INT);
+            $this->context = context_elis_userset::instance($id);
         }
-
+        return $this->context;
     }
 
     /**
-     * Prints the add form.
-     * @param $parent_obj is the basic data object we are forming an association with.
+     * Construct the assigned datatable.
+     * @param string $uniqid A unique ID to assign to the datatable object.
+     * @return deepsight_datatable The datatable object.
      */
-    function print_add_form($parent_obj) {
-        $id = required_param('id', PARAM_INT);
-        $clusterid = $this->required_param('clusterid', PARAM_INT);
-        $trackid = $this->required_param('trackid', PARAM_INT);
-
-        require_once elispm::file('plugins/userset_classification/usersetclassification.class.php');
-
-        $target = $this->get_new_page(array('action'       => 'add',
-                                            'id'           => $id));
-        $form = new $this->form_class($target->url, array('id'        => $id));
-        $form->set_data(array('id' => $id,
-                              'clusterid' => $clusterid,
-                              'trackid' => $trackid));
-        $userset_classification = usersetclassification::get_for_cluster($clusterid);
-        if (!empty($userset_classification->param_autoenrol_tracks)) {
-            $form->set_data(array('autoenrol' => 1));
-        } else {
-            $form->set_data(array('autoenrol' => 0));
-        }
-
-        $form->display();
-    }
-
-    function can_do_edit() {
-        // the user must have 'elis/program:associate' permissions on both
-        // ends
-        $association_id = $this->required_param('association_id', PARAM_INT);
-        $record = new clustertrack($association_id);
-        $clusterid = $record->clusterid;
-        $trackid = $record->trackid;
-
-        // TODO: Ugly, this needs to be overhauled
-        $uspage = new usersetpage();
-        $tpage  = new trackpage();
-        return $uspage->_has_capability('elis/program:associate', $clusterid)
-            && $tpage->_has_capability('elis/program:associate', $trackid);
-    }
-
-    function can_do_delete() {
-        return $this->can_do_edit();
+    protected function construct_assigned_table($uniqid = null) {
+        global $DB;
+        $usersetid = $this->required_param('id', PARAM_INT);
+        $endpoint = qualified_me().'&action=deepsight_response&tabletype=assigned&id='.$usersetid;
+        $table = new deepsight_datatable_usersettrack_assigned($DB, 'assigned', $endpoint, $uniqid);
+        $table->set_usersetid($usersetid);
+        return $table;
     }
 
     /**
-     * handler for the edit action.  Prints the edit form.
+     * Construct the unassigned datatable.
+     * @param string $uniqid A unique ID to assign to the datatable object.
+     * @return deepsight_datatable The datatable object.
      */
-    function display_edit() { // do_edit()
-        $association_id = required_param('association_id', PARAM_INT);
-        $id             = required_param('id', PARAM_INT);
-        $obj            = new $this->data_class($association_id);
-        $parent_obj     = new $this->parent_data_class($id);
-
-        /*if(!$obj->get_dbloaded()) { // TBD
-            $sparam = new stdClass;
-            $sparam->id = $id;
-            print_error('invalid_objectid', 'elis_program', '', $sparam);
-        }*/
-       // $this->get_tab_page()->print_tabs('edit', array('id' => $id)); // TBD
-        $this->print_edit_form($obj, $parent_obj);
-    }
-
-    function do_edit() {
-        $id = $this->required_param('id', PARAM_INT);
-        $association_id = $this->required_param('association_id', PARAM_INT);
-
-        $target = $this->get_new_page(array('action'         => 'edit',
-                                            'id'             => $id,
-                                            'association_id' => $association_id));
-
-        $form = new $this->edit_form_class($target->url, array('id' => $id,
-                                                               'association_id' => $association_id));
-
-        $form->set_data(array('id' => $id,
-                              'association_id' => $association_id));
-
-        if ($form->is_cancelled()) {
-            $target = $this->get_new_page(array('action' => 'default', 'id' => $id), true);
-            redirect($target->url);
-        } else if($data = $form->get_data()) {
-            clustertrack::update_autoenrol($association_id, $data->autoenrol);
-            $target = $this->get_new_page(array('action' => 'default', 'id' => $id), true);
-            redirect($target->url);
-        } else {
-            $this->display('edit');
-        }
+    protected function construct_unassigned_table($uniqid = null) {
+        global $DB;
+        $usersetid = $this->required_param('id', PARAM_INT);
+        $endpoint = qualified_me().'&action=deepsight_response&tabletype=unassigned&id='.$usersetid;
+        $table = new deepsight_datatable_usersettrack_available($DB, 'unassigned', $endpoint, $uniqid);
+        $table->set_usersetid($usersetid);
+        return $table;
     }
 
     /**
-     * Prints the edit form.
-     * @param $obj The association object being edited.
-     * @param $parent_obj The basic data object being associated with.
+     * Assignment permission is handled at the action-object level.
+     * @return bool true
      */
-    function print_edit_form($obj, $parent_obj, $sort, $dir) {
-        $parent_id = required_param('id', PARAM_INT);
-//        $association_id = required_param('association_id', PARAM_INT);
-
-        $target = $this->get_new_page(array('action' => 'edit', 'id' => $parent_id));
-
-        $form = new $this->edit_form_class($target->url);
-        $form->set_data(array('id' => $parent_obj->id,
-                              'association_id' => $obj->id));
-        $form->display();
+    public function can_do_action_usersettrackassign() {
+        return true;
     }
 
-    function create_table_object($items, $columns) {
-        return new clustertrack_page_table($items, $columns, $this);
+    /**
+     * Edit permission is handled at the action-object level.
+     * @return bool true
+     */
+    public function can_do_action_usersettrackedit() {
+        return true;
     }
 
-}
+    /**
+     * Unassignment permission is handled at the action-object level.
+     * @return bool true
+     */
+    public function can_do_action_usersettrackunassign() {
+        return true;
+    }
 
-class clustertrackpage extends clustertrackbasepage {
-    var $pagename = 'clsttrk';
-    var $tab_page = 'usersetpage';
-    var $default_tab = 'clustertrackpage';
-
-    var $section = 'users';
-
-    var $parent_data_class = 'userset';
-
-    function can_do_default() {
+    /**
+     * Whether the user has access to see the main page (assigned list)
+     * @return bool Whether the user has access.
+     */
+    public function can_do_default() {
+        global $USER;
         $id = $this->required_param('id', PARAM_INT);
-
-        // TODO: Ugly, this needs to be overhauled
-        $uspage = new usersetpage();
-
-        if ($uspage->_has_capability('elis/program:userset_view', $id)) {
-            //allow viewing but not managing associations
-        	return true;
-        }
-
-        return $uspage->_has_capability('elis/program:associate', $id);
-    }
-
-    function display_default() {
-        $id           = $this->required_param('id', PARAM_INT);
-        $sort         = $this->optional_param('sort', 'idnumber', PARAM_ALPHANUM);
-        $dir          = $this->optional_param('dir', 'ASC', PARAM_ALPHA);
-        $page         = $this->optional_param('page', 0, PARAM_INT);
-        $perpage      = $this->optional_param('perpage', 30, PARAM_INT); // how many per page
-
-        $columns = array(
-            'idnumber'    => array('header' => get_string('track_idnumber','elis_program'),
-                                   'decorator' => array(new record_link_decorator('trackpage',
-                                                                                  array('action'=>'view'),
-                                                                                  'trackid'),
-                                                        'decorate')),
-            'name'        => array('header' => get_string('track_name','elis_program'),
-                                   'decorator' => array(new record_link_decorator('trackpage',
-                                                                                  array('action'=>'view'),
-                                                                                  'trackid'),
-                                                        'decorate')),
-            'description' => array('header' => get_string('track_description','elis_program')),
-            'autoenrol'   => array('header' => get_string('usersettrack_autoenrol', 'elis_program')),
-             //buttons triggers the use of "tabs" as buttons for editing and deleting
-            'buttons'     => array('header' => ''),
-        );
-
-        // TBD
-        if ($dir !== 'DESC') {
-            $dir = 'ASC';
-        }
-        if (isset($columns[$sort])) {
-            $columns[$sort]['sortable'] = $dir;
-        } else {
-            $sort = 'idnumber';
-            $columns[$sort]['sortable'] = $dir;
-        }
-
-        $items = clustertrack::get_tracks($id, $sort, $dir);
-
-        $this->print_list_view($items, $columns, 'tracks');
-
-        // find the tracks that the user can associate with this cluster
-        $contexts = trackpage::get_contexts('elis/program:associate');
-        $tracks = track_get_listing('name', 'ASC', 0, 0, '', '', 0, 0, $contexts);
-        if (empty($tracks)) {
-            $num_tracks = track_count_records();
-            if (!empty($num_tracks)) {
-                // some tracks exist, but don't have associate capability on
-                // any of them
-                echo '<div align="center"><br />';
-                print_string('no_associate_caps_track', 'elis_program');
-                echo '</div>';
-            } else {
-                // no tracks at all
-                echo '<div align="center"><br />';
-                print_string('all_items_assigned', 'elis_program');
-                echo '</div>';
+        $requiredperms = array('elis/program:userset_view', 'elis/program:associate');
+        foreach ($requiredperms as $perm) {
+            $ctx = pm_context_set::for_user_with_capability('cluster', $perm, $USER->id);
+            if ($ctx->context_allowed($id, 'cluster') !== true) {
+                return false;
             }
-        } else {
-            $this->print_dropdown($tracks, $items, 'clusterid', 'trackid');
         }
-    }
-}
-
-class trackclusterpage extends clustertrackbasepage {
-    var $pagename = 'trkclst';
-    var $tab_page = 'trackpage';
-    var $default_tab = 'trackclusterpage';
-
-    var $section = 'curr';
-    var $parent_data_class = 'track';
-
-    function can_do_default() {
-        $id = $this->required_param('id', PARAM_INT);
-
-        // TODO: Ugly, this needs to be overhauled
-        $tpage = new trackpage();
-        if ($tpage->_has_capability('elis/program:track_view', $id)) {
-            //allow viewing but not managing associations
-        	return true;
-        }
-
-        return $tpage->_has_capability('elis/program:associate', $id);
-    }
-
-    function display_default() {
-        $id = $this->required_param('id', PARAM_INT);
-
-        $parent_clusterid = $this->optional_param('parent_clusterid', 0, PARAM_INT);
-        $sort = $this->optional_param('sort', 'name', PARAM_CLEAN);
-        $dir = $this->optional_param('dir', 'ASC', PARAM_CLEAN);
-
-        $columns = array(
-            'name'        => array('header' => get_string('userset_name','elis_program'),
-                                   'decorator' => array(new record_link_decorator('usersetpage',
-                                                                                  array('action'=>'view'),
-                                                                                  'clusterid'),
-                                                        'decorate')),
-            'display'     => array('header' => get_string('userset_description','elis_program')),
-            'autoenrol'   => array('header' => get_string('trackuserset_auto_enrol', 'elis_program')),
-             //buttons triggers the use of "tabs" as buttons for editing and deleting
-            'buttons'     => array('header' => ''),
-        );
-
-        // TBD
-        if ($dir !== 'DESC') {
-            $dir = 'ASC';
-        }
-        if (isset($columns[$sort])) {
-            $columns[$sort]['sortable'] = $dir;
-        } else {
-            $sort = 'name';
-            $columns[$sort]['sortable'] = $dir;
-        }
-
-        $items = clustertrack::get_clusters($id, $parent_clusterid, $sort, $dir);
-
-        $this->print_list_view($items, $columns, 'clusters');
-
-        // find the tracks that the user can associate with this cluster
-        $contexts = usersetpage::get_contexts('elis/program:associate');
-        $clusters = cluster_get_listing('name', 'ASC', 0, 0, '', '', array('contexts' =>$contexts));
-        if (empty($clusters)) {
-            $num_clusters = cluster_count_records();
-            if (!empty($num_clusters)) {
-                // some clusters exist, but don't have associate capability on
-                // any of them
-                echo '<div align="center"><br />';
-                print_string('no_associate_caps_clusters', 'elis_program');
-                echo '</div>';
-            } else {
-                // no clusters at all
-                echo '<div align="center"><br />';
-                print_string('all_items_assigned', 'elis_program');
-                echo '</div>';
-            }
-        } else {
-            $this->print_dropdown($clusters, $items, 'trackid', 'clusterid');
-        }
+        return true;
     }
 
     /**
-     * Creates a new table object with specified $items and $columns.
-     * @param array $items
-     * @param array $columns
+     * Determine whether the current user can assign tracks to the viewed userset.
+     * @return bool Whether the user can assign tracks to this userset.
      */
-    function create_table_object($items, $columns) {
-
-        $parent_clusterid = $this->optional_param('parent_clusterid', 0, PARAM_INT);
-
-        $extra_params = array();
-        if(!empty($parent_clusterid)) {
-            $extra_params['parent_clusterid'] = $parent_clusterid;
-        }
-
-        $page_object = $this->get_new_page($extra_params);
-
-        return new clustertrack_page_table($items, $columns, $page_object);
+    public function can_do_add() {
+        return $this->can_do_default();
     }
 }
 
 /**
- * This class is set up for displaying a cluster-track association, and performs
- * special formatting on the yes/no autoenrol flag
+ * Deepsight assignment page for track - userset associations.
  */
-class clustertrack_page_table extends association_page_table {
+class trackclusterpage extends deepsightpage {
+    public $pagename = 'trkclst';
+    public $section = 'curr';
+    public $tab_page = 'trackpage';
+    public $data_class = 'clustertrack';
+    public $parent_page;
+    public $context;
 
     /**
-     * Converts a 0 or 1 to a Yes or No display string for the autoenrol field
-     *
-     * @param   string  $column  The field name we are checking
-     * @param   object  $item    The object containing the field in question
-     *
-     * @return  string           The converted text - Yes or No
-     *
+     * Constructor.
+     * @param array $params An array of parameters for the page.
      */
-    function get_item_display_autoenrol($column, $item) {
-        return $this->display_yesno_item($column, $item);
+    public function __construct(array $params = null) {
+        $this->context = parent::_get_page_context();
+        parent::__construct($params);
+    }
+
+    /**
+     * Get the context of the current track.
+     * @return context_elis_track The current track context object.
+     */
+    protected function get_context() {
+        if (!isset($this->context)) {
+            $id = required_param('id', PARAM_INT);
+            $this->context = context_elis_track::instance($id);
+        }
+        return $this->context;
+    }
+
+    /**
+     * Construct the assigned datatable.
+     * @param string $uniqid A unique ID to assign to the datatable object.
+     * @return deepsight_datatable The datatable object.
+     */
+    protected function construct_assigned_table($uniqid = null) {
+        global $DB;
+        $trackid = $this->required_param('id', PARAM_INT);
+        $endpoint = qualified_me().'&action=deepsight_response&tabletype=assigned&id='.$trackid;
+        $table = new deepsight_datatable_trackuserset_assigned($DB, 'assigned', $endpoint, $uniqid);
+        $table->set_trackid($trackid);
+        return $table;
+    }
+
+    /**
+     * Construct the unassigned datatable.
+     * @param string $uniqid A unique ID to assign to the datatable object.
+     * @return deepsight_datatable The datatable object.
+     */
+    protected function construct_unassigned_table($uniqid = null) {
+        global $DB;
+        $trackid = $this->required_param('id', PARAM_INT);
+        $endpoint = qualified_me().'&action=deepsight_response&tabletype=unassigned&id='.$trackid;
+        $table = new deepsight_datatable_trackuserset_available($DB, 'unassigned', $endpoint, $uniqid);
+        $table->set_trackid($trackid);
+        return $table;
+    }
+
+    /**
+     * Assignment permission is handled at the action-object level.
+     * @return bool true
+     */
+    public function can_do_action_trackusersetassign() {
+        return true;
+    }
+
+    /**
+     * Edit permission is handled at the action-object level.
+     * @return bool true
+     */
+    public function can_do_action_trackusersetedit() {
+        return true;
+    }
+
+
+    /**
+     * Unassignment permission is handled at the action-object level.
+     * @return bool true
+     */
+    public function can_do_action_trackusersetunassign() {
+        return true;
+    }
+
+    /**
+     * Whether the user has access to see the main page (assigned list)
+     * @return bool Whether the user has access.
+     */
+    public function can_do_default() {
+        global $USER;
+        $id = $this->required_param('id', PARAM_INT);
+        $requiredperms = array('elis/program:track_view', 'elis/program:associate');
+        foreach ($requiredperms as $perm) {
+            $ctx = pm_context_set::for_user_with_capability('track', $perm, $USER->id);
+            if ($ctx->context_allowed($id, 'track') !== true) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Determine whether the current user can assign usersets to the viewed track.
+     * @return bool Whether the user can assign usersets to this track.
+     */
+    public function can_do_add() {
+        return $this->can_do_default();
     }
 }
-

@@ -287,18 +287,22 @@ class coursepage extends managementpage {
 
             $newarr = array();
 
+            $editstr = get_string('edit');
+            $editiconattrs = array('class' => 'elisicon-edit elisicon', 'alt' => $editstr, 'title' => $editstr);
+            $delstr = get_string('delete');
+            $deliconattrs = array('class' => 'elisicon-remove elisicon', 'alt' => $delstr, 'title' => $delstr);
+
             foreach ($elements as $element) {
-                $delstr = get_string('delete');
-                $deletebutton = '<a href="index.php?s=crs&amp;section=curr&amp;action=delem&amp;id='.$crs->id.'&amp;elemid='.$element->id.'">'.
-                                '<img src="pix/delete.gif" alt="'.$delstr.'" title="'.$delstr.'" /></a>';
-                $editstr = get_string('edit');
-                $editbutton   = '<a href="index.php?s=crs&amp;section=curr&amp;action=eelem&amp;id='.$crs->id.'&amp;elemid='.$element->id.'">'.
-                                '<img src="pix/edit.gif" alt="'.$editstr.'" title="'.$editstr.'" /></a>';
+                $editurl = 'index.php?s=crs&amp;section=curr&amp;action=eelem&amp;id='.$crs->id.'&amp;elemid='.$element->id;
+                $editbutton = html_writer::link($editurl, '', $editiconattrs);
+                $delurl = 'index.php?s=crs&amp;section=curr&amp;action=delem&amp;id='.$crs->id.'&amp;elemid='.$element->id;
+                $deletebutton = html_writer::link($delurl, '', $deliconattrs);
+
                 $newobj = new stdClass;
-                foreach ($columns as $column=>$cdesc) {
+                foreach ($columns as $column => $cdesc) {
                     if ($column == 'required') {
                         $newobj->required = empty($element->required) ? get_string('no') : get_string('yes');
-                    } elseif ($column == 'actions') {
+                    } else if ($column == 'actions') {
                         $newobj->actions = $editbutton.' '.$deletebutton;
                     } else {
                         $newobj->$column = $element->$column;

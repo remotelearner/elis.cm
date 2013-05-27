@@ -27,12 +27,149 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once(elispm::file('clustertrackpage.class.php'));
+require_once(elispm::lib('deepsightpage.class.php'));
 require_once(elispm::lib('managementpage.class.php'));
 require_once(elispm::lib('data/clustercurriculum.class.php'));
 require_once(elispm::lib('data/userset.class.php'));
 require_once(elispm::lib('contexts.php'));
 require_once(elispm::file('form/usersetform.class.php'));
 require_once(elis::plugin_file('usersetenrol_manual', 'usersetassignmentpage.class.php'));
+
+/**
+ * Page to manage user subsets.
+ */
+class usersetsubusersetpage extends deepsightpage {
+    /**
+     * @var string A unique name for the page.
+     */
+    public $pagename = 'clstsub';
+
+    /**
+     * @var string The section of the page.
+     */
+    public $section = 'users';
+
+    /**
+     * @var string The page to get tabs from.
+     */
+    public $tab_page = 'usersetpage';
+
+    /**
+     * @var string The main data class.
+     */
+    public $data_class = 'userset';
+
+    /**
+     * @var string The page's parent.
+     */
+    public $parent_page;
+
+    /**
+     * @var string The page's context.
+     */
+    public $context;
+
+    /**
+     * Constructor.
+     * @param array $params An array of parameters for the page.
+     */
+    public function __construct(array $params = null) {
+        $this->context = parent::_get_page_context();
+        parent::__construct($params);
+    }
+
+    /**
+     * Get the context of the current userset.
+     * @return context_elis_userset The current userset context object.
+     */
+    protected function get_context() {
+        if (!isset($this->context)) {
+            $id = required_param('id', PARAM_INT);
+            $this->context = context_elis_userset::instance($id);
+        }
+        return $this->context;
+    }
+
+    /**
+     * Construct the assigned datatable.
+     * @param string $uniqid A unique ID to assign to the datatable object.
+     * @return deepsight_datatable The datatable object.
+     */
+    protected function construct_assigned_table($uniqid = null) {
+        global $DB;
+        $usersetid = $this->required_param('id', PARAM_INT);
+        $endpoint = qualified_me().'&action=deepsight_response&tabletype=assigned&id='.$usersetid;
+        $table = new deepsight_datatable_usersetsubuserset_assigned($DB, 'assigned', $endpoint, $uniqid);
+        $table->set_usersetid($usersetid);
+        return $table;
+    }
+
+    /**
+     * Construct the unassigned datatable.
+     * @param string $uniqid A unique ID to assign to the datatable object.
+     * @return deepsight_datatable The datatable object.
+     */
+    protected function construct_unassigned_table($uniqid = null) {
+        global $DB;
+        $usersetid = $this->required_param('id', PARAM_INT);
+        $endpoint = qualified_me().'&action=deepsight_response&tabletype=unassigned&id='.$usersetid;
+        $table = new deepsight_datatable_usersetsubuserset_available($DB, 'unassigned', $endpoint, $uniqid);
+        $table->set_usersetid($usersetid);
+        return $table;
+    }
+
+    /**
+     * Whether the user can view subsets.
+     * @return bool Whether the user has permission.
+     */
+    public function can_do_default() {
+        $id = $this->required_param('id', PARAM_INT);
+        $requiredperms = array('elis/program:userset_view');
+        return $this->has_perms_for_element($requiredperms, 'cluster', $id);
+    }
+
+    /**
+     * Whether the user can move existing usersets to a subset of the current userset.
+     * @return bool Whether user has permission.
+     */
+    public function can_do_add() {
+        $id = $this->required_param('id', PARAM_INT);
+        $requiredperms = array('elis/program:userset_edit');
+        return $this->has_perms_for_element($requiredperms, 'cluster', $id);
+    }
+
+    /**
+     * Permission for this action is handled at the action-object level.
+     * @return bool true
+     */
+    public function can_do_action_usersetsubuserset_makesubset() {
+        return true;
+    }
+
+    /**
+     * Display user subsets
+     */
+    public function display_default() {
+        $this->print_add_button();
+        parent::display_default();
+    }
+
+    /**
+     * Prints the single-button form used to request the add action for a record type.
+     */
+    public function print_add_button() {
+        global $OUTPUT;
+
+        $id = required_param('id', PARAM_INT);
+        $targetpage = new usersetpage(array('action' => 'add', 'parent' => $id));
+        if (!$targetpage->can_do('add')) {
+            return;
+        }
+
+        $addbutton = $OUTPUT->single_button($targetpage->url, get_string("add_{$this->data_class}", 'elis_program'), 'get');
+        echo html_writer::tag('div', $addbutton, array('style' => 'text-align: center'));
+    }
+}
 
 class usersetpage extends managementpage {
     var $data_class = 'userset';
@@ -112,17 +249,77 @@ class usersetpage extends managementpage {
         return has_capability($capability, $context);
     }
 
+    /**
+     * Constructor
+     * @param array $params An array of parameters for the page.
+     */
     public function __construct(array $params=null) {
         $this->tabs = array(
-        array('tab_id' => 'view', 'page' => 'usersetpage', 'params' => array('action' => 'view'), 'name' => get_string('detail','elis_program'), 'showtab' => true),
-        array('tab_id' => 'edit', 'page' => 'usersetpage', 'params' => array('action' => 'edit'), 'name' => get_string('edit','elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'edit'),
-        array('tab_id' => 'subclusters', 'page' => 'usersetpage', 'params' => array(), 'name' => get_string('usersubsets','elis_program'), 'showtab' => true),
-        array('tab_id' => 'clustertrackpage', 'page' => 'clustertrackpage', 'name' => get_string('tracks','elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'track'),
-        array('tab_id' => 'clusteruserpage', 'page' => 'clusteruserpage', 'name' => get_string('users','elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'user'),
-        array('tab_id' => 'clustercurriculumpage', 'page' => 'clustercurriculumpage', 'name' => get_string('curricula','elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'curriculum'),
-        array('tab_id' => 'cluster_rolepage', 'page' => 'cluster_rolepage', 'name' => get_string('roles', 'role'), 'showtab' => true, 'showbutton' => false, 'image' => 'tag'),
-
-        array('tab_id' => 'delete', 'page' => 'usersetpage', 'params' => array('action' => 'delete'), 'name' => get_string('delete_label','elis_program') , 'showbutton' => true, 'image' => 'delete'),
+                array(
+                    'tab_id' => 'view',
+                    'page' => 'usersetpage',
+                    'params' => array('action' => 'view'),
+                    'name' => get_string('detail', 'elis_program'),
+                    'showtab' => true
+                ),
+                array(
+                    'tab_id' => 'edit',
+                    'page' => 'usersetpage',
+                    'params' => array('action' => 'edit'),
+                    'name' => get_string('edit', 'elis_program'),
+                    'showtab' => true,
+                    'showbutton' => true,
+                    'image' => 'edit'
+                ),
+                array(
+                    'tab_id' => 'usersetsubusersetpage',
+                    'page' => 'usersetsubusersetpage',
+                    'params' => array(),
+                    'name' => get_string('usersubsets', 'elis_program'),
+                    'showtab' => true,
+                    'showbutton' => true,
+                    'image' => 'cluster'
+                ),
+                array(
+                    'tab_id' => 'clustertrackpage',
+                    'page' => 'clustertrackpage',
+                    'name' => get_string('tracks', 'elis_program'),
+                    'showtab' => true,
+                    'showbutton' => true,
+                    'image' => 'track'
+                ),
+                array(
+                    'tab_id' => 'clusteruserpage',
+                    'page' => 'clusteruserpage',
+                    'name' => get_string('users', 'elis_program'),
+                    'showtab' => true,
+                    'showbutton' => true,
+                    'image' => 'user'
+                ),
+                array(
+                    'tab_id' => 'clustercurriculumpage',
+                    'page' => 'clustercurriculumpage',
+                    'name' => get_string('curricula', 'elis_program'),
+                    'showtab' => true,
+                    'showbutton' => true,
+                    'image' => 'curriculum'
+                ),
+                array(
+                    'tab_id' => 'cluster_rolepage',
+                    'page' => 'cluster_rolepage',
+                    'name' => get_string('roles', 'role'),
+                    'showtab' => true,
+                    'showbutton' => false,
+                    'image' => 'tag'
+                ),
+                array(
+                    'tab_id' => 'delete',
+                    'page' => 'usersetpage',
+                    'params' => array('action' => 'delete'),
+                    'name' => get_string('delete_label', 'elis_program'),
+                    'showbutton' => true,
+                    'image' => 'delete'
+                ),
         );
 
         parent::__construct($params);
@@ -544,4 +741,3 @@ class usersetpage extends managementpage {
         return NULL;
     }
 }
-?>

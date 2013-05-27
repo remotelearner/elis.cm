@@ -1,27 +1,26 @@
 <?php
 /**
- *  ELIS(TM): Enterprise Learning Intelligence Suite
+ * ELIS(TM): Enterprise Learning Intelligence Suite
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
- *  Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * @package    elis_program
+ * @author     Remote-Learner.net Inc
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
  *
- *  @package    elis
- *  @subpackage programmanagement
- *  @author     Remote-Learner.net Inc
- *  @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- *  @copyright  (C) 2008-2011 Remote Learner.net Inc http://www.remote-learner.net
  */
 
 defined('MOODLE_INTERNAL') || die();
@@ -317,28 +316,6 @@ class cmEngineForm extends cmform {
         $actiontype = ACTION_TYPE_TRACK;
         if (!empty($data['result_type_id'])) {
             $actiontype = $data['result_type_id'];
-        }
-
-        if(!empty($data['timetocomplete'])) {
-            $datedelta = new datedelta($data['timetocomplete']);
-
-            if(!$datedelta->getDateString()) {
-                $errors['timetocomplete'] = get_string('results_error_not_timeformat', 'elis_program');
-            }
-        }
-
-        if(!empty($data['frequency'])) {
-            $datedelta = new datedelta($data['frequency']);
-
-            if(!$datedelta->getDateString()) {
-                $errors['frequency'] = get_string('results_error_not_durrationformat', 'elis_program');
-            }
-        }
-
-        if (!empty($data['idnumber'])) {
-            if (!$this->check_unique(curriculum::TABLE, 'idnumber', $data['idnumber'], $data['id'])) {
-                $errors['idnumber'] = get_string('results_badidnumber', 'elis_program');
-            }
         }
 
         $errors = array_merge($errors, $this->validate_fold($actiontype, $data));
@@ -659,16 +636,14 @@ class cmEngineForm extends cmform {
             $attributes['value'] = $data->max;
             $group[] = $mform->createElement('text', "{$prefix}{$i}_max", '', $attributes);
 
-            // Add image element
-            $attributes = array('title' => $deletescoretype,
-                                'alt' => $deletescoretype,
-                                'src' => $OUTPUT->pix_url('delete', 'elis_program'));
-
-            $image  = html_writer::empty_tag('img', $attributes);
-
-            // Add link and image field (Delete link)
-            $attributes     = array('onclick' => $this->prefixes[$type] .'_object.deleteRow(this); return false;');
-            $group[] = $mform->createElement('link', 'delete', '', "#", $image, $attributes);
+            // Add link and icon (Delete link).
+            $attributes = array(
+                'title' => $deletescoretype,
+                'alt' => $deletescoretype,
+                'class' => 'elisicon-remove elisiconcolored',
+                'onclick' => $this->prefixes[$type].'_object.deleteRow(this); return false;'
+            );
+            $group[] = $mform->createElement('link', 'delete', '', "#", '', $attributes);
 
             // Add minimum, maximum and delete to field group
             $mform->addGroup($group, "{$prefix}{$i}_score", '', '', false);

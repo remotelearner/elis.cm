@@ -450,29 +450,57 @@ abstract class managementpage extends pm_page {
     }
 
     /**
-     * Generates the HTML for the management buttons (such as edit and delete)
-     * for a record's row in the table.
-     *
-     * @param array $params extra parameters to pass through the buttons, such
-     * as a record id
+     * Generates the HTML for the management buttons (such as edit and delete) for a record's row in the table.
+     * @param array $params extra parameters to pass through the buttons, such as a record id
+     * @return string Button HTML
      */
-    function get_buttons($params) {
+    public function get_buttons($params) {
         global $OUTPUT;
 
         $buttons = array();
 
-        foreach($this->tabs as $tab) {
+        $iconmap = array(
+            'curriculum' => 'elisicon-program',
+            'cluster' => 'elisicon-userset',
+            'track' => 'elisicon-track',
+            'course' => 'elisicon-course',
+            'class' => 'elisicon-class',
+            'user' => 'elisicon-user',
+            'waiting' => 'elisicon-waitlist',
+            'instructor' => 'elisicon-instructor',
+            'grades' => 'elisicon-learningobjective',
+            'calculator' => 'elisicon-resultsengine',
+            'report' => 'elisicon-report',
+            'edit' => 'elisicon-edit',
+            'delete' => 'elisicon-remove'
+        );
+        foreach ($this->tabs as $tab) {
             $tab = $this->add_defaults_to_tab($tab);
-            if($tab['showbutton'] === true) {
+            if ($tab['showbutton'] === true) {
                 $target = new $tab['page'](array_merge($tab['params'], $params));
                 if (!$target->can_do()) {
                     continue;
                 }
 
-                $buttons[] = html_writer::link($target->url, html_writer::empty_tag('img', array('title' => $tab['name'], 'alt' => $tab['name'], 'src' => $OUTPUT->pix_url($tab['image'], 'elis_program'))));
+                if (isset($iconmap[$tab['image']])) {
+                    $iconattrs = array(
+                        'title' => $tab['name'],
+                        'alt' => $tab['name'],
+                        'class' => $iconmap[$tab['image']].' managementicon elisicon'
+                    );
+                    $buttons[] = html_writer::link($target->url, '', $iconattrs);
+                } else {
+                    $iconattrs = array(
+                        'title' => $tab['name'],
+                        'alt' => $tab['name'],
+                        'src' => $OUTPUT->pix_url($tab['image'], 'elis_program')
+                    );
+                    $icon = html_writer::empty_tag('img', $iconattrs);
+                    $buttons[] = html_writer::link($target->url, $icon, array('class' => 'managementicon'));
+                }
+
             }
         }
-
         return implode('', $buttons);
     }
 
@@ -614,7 +642,7 @@ class management_page_table extends display_table {
         }
 
         $this->page = $page;
-        $this->display_date_item = new display_date_item();
+        $this->display_date_item = new display_date_item(get_string('pm_date_format', 'elis_program'));
 
         $target = $page->get_new_page($params, true);
         parent::__construct($items, $columns + array('_buttons' => array('sortable' => false, 'wrapped' => false, 'align' => 'center')),

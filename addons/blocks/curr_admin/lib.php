@@ -548,31 +548,63 @@ function block_curr_admin_load_menu_children_course($id, $parent_cluster_id, $pa
  * @return  string              The full CSS class attribute string
  */
 function block_curr_admin_get_item_css_class($class, $category = false) {
-    $category_css = empty($category) ? '' : ' category';
+    $categorycss = empty($category) ? '' : ' category';
 
-    //handle empty class
+    // Handle empty class.
     $class = trim($class);
     if (empty($class)) {
-        return "$category_css tree_icon";
+        return "$categorycss tree_icon";
     }
 
-    //split up the class string
-    $class_strings = explode(' ', $class);
-    $valid_classes = array();
+    // Split up the class string.
+    $classstrings = explode(' ', $class);
+    $validclasses = array();
 
-    //prefix each token
-    foreach ($class_strings as $class_string) {
-        $trimmed = trim($class_string);
+    $iconmap = array(
+        'dashboard' => 'elisicon-dashboard',
+        'bulkuser' => 'elisicon-bulkuseractions',
+        'resultsconfig' => 'elisicon-resultsengine',
+        'reportslist' => 'elisicon-report',
+        'customfields' => 'elisicon-customfields',
+        'clusterclassification' => 'elisicon-userset',
+        'configuration' => 'elisicon-configuration',
+        'notifications' => 'elisicon-notifications',
+        'defaultcls' => 'elisicon-defaultsettings',
+        'defaultcrs' => 'elisicon-defaultsettings',
+        'manageusers' => 'elisicon-user',
+        'manageclusters' => 'elisicon-userset',
+        'certificatelist' => 'elisicon-certificate',
+        'managecurricula' => 'elisicon-program',
+        'managecourses' => 'elisicon-course',
+        'manageclasses' => 'elisicon-class',
+        'managetracks' => 'elisicon-track',
+        'currentcourses' => 'elisicon-course',
+        'availablecourses' => 'elisicon-program',
+        'waitlist' => 'elisicon-waitlist',
+        'schedulereports' => 'elisicon-schedule',
+        'reportinstance' => 'elisicon-report',
+        'cluster_instance' => 'elisicon-userset',
+        'curriculum_instance' => 'elisicon-program',
+        'course_instance' => 'elisicon-course',
+        'track_instance' => 'elisicon-track',
+        'class_instance' => 'elisicon-class',
+    );
+
+    // Prefix each token.
+    foreach ($classstrings as $classstring) {
+        $trimmed = trim($classstring);
 
         if (!empty($trimmed)) {
-            $valid_classes[] = 'curr_' . $trimmed;
+            $validclasses[] = 'curr_'.$trimmed;
+
+            if (isset($iconmap[$trimmed])) {
+                $validclasses[] = $iconmap[$trimmed];
+            }
         }
     }
 
-    //add necessary classes
-    return implode(' ', $valid_classes) . " $category_css tree_icon";
-
-    return '';
+    // Add necessary classes.
+    return implode(' ', $validclasses)." $categorycss tree_icon";
 }
 
 /**
