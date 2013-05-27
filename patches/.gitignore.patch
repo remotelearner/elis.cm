@@ -1,9 +1,0 @@
-diff --git a/.gitignore b/.gitignore
-index ccb59bb..e27bed20 100644
---- a/.gitignore
-+++ b/.gitignore
-@@ -30,4 +30,3 @@ phpunit.xml
- composer.phar
- composer.lock
- /vendor/
--/local/defaults.php
