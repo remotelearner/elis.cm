@@ -30,6 +30,7 @@ require_once($CFG->dirroot . '/elis/program/lib/setup.php');
 require_once(elis::lib('testlib.php'));
 require_once('PHPUnit/Extensions/Database/DataSet/CsvDataSet.php');
 require_once(elispm::lib('data/pmclass.class.php'));
+require_once(elispm::lib('data/student.class.php'));
 require_once(elispm::lib('data/waitlist.class.php'));
 require_once(elispm::file('coursecatalogpage.class.php'));
 
@@ -45,20 +46,29 @@ class coursecatalogpage_nodisplay extends coursecatalogpage {
     }
 }
 
+/**
+ * Test waitlist functions.
+ */
 class waitlistTest extends elis_database_test {
     protected $backupGlobalsBlacklist = array('DB');
 
-	protected static function get_overlay_tables() {
-	    require_once(elispm::lib('data/course.class.php'));
-	    require_once(elispm::lib('data/user.class.php'));
-	    require_once(elispm::lib('data/usermoodle.class.php'));
+    /**
+     * Get list of overlay tables
+     * @return array Array of overlay tables.
+     */
+    protected static function get_overlay_tables() {
+        require_once(elispm::lib('data/course.class.php'));
+        require_once(elispm::lib('data/user.class.php'));
+        require_once(elispm::lib('data/usermoodle.class.php'));
 
         return array(
             'config' => 'moodle',
             'message_read' => 'moodle',
             'user' => 'moodle',
+            'user_info_data' => 'moodle',
             course::TABLE => 'elis_program',
             pmclass::TABLE => 'elis_program',
+            student::TABLE => 'elis_program',
             user::TABLE => 'elis_program',
             usermoodle::TABLE => 'elis_program',
             waitlist::TABLE => 'elis_program',
@@ -67,7 +77,7 @@ class waitlistTest extends elis_database_test {
             'elis_field_data_num' => 'elis_core',
             'elis_field_data_text' => 'elis_core'
         );
-	}
+    }
 
     /**
      * Return the list of tables that should be ignored for writes.
@@ -238,5 +248,31 @@ class waitlistTest extends elis_database_test {
 
         //validate state of the waitlist db record
         $this->assert_waitlist_record_valid(100, $user->id, $mintime, $maxtime);
+    }
+
+    /**
+     * Test the autoenrol after course completion function.
+     */
+    public function test_check_autoenrol_after_course_completion() {
+        $dataset = new PHPUnit_Extensions_Database_DataSet_CsvDataSet();
+        $dataset->addTable(course::TABLE, elis::component_file('program', 'phpunit/pmcourse.csv'));
+        $dataset->addTable(pmclass::TABLE, elis::component_file('program', 'phpunit/pmclass.csv'));
+        $dataset->addTable(user::TABLE, elis::component_file('program', 'phpunit/pmuser.csv'));
+        $dataset->addTable(student::TABLE, elis::component_file('program', 'phpunit/student.csv'));
+        $dataset->addTable(waitlist::TABLE, elis::component_file('program', 'phpunit/waitlist2.csv'));
+        load_phpunit_data_set($dataset, true, self::$overlaydb);
+
+        $class = new pmclass(100);
+        $class->load();
+        $class->maxstudents = 2;
+        $class->enrol_from_waitlist = 1;
+        $class->save();
+
+        $student = new student(array('userid' => 103, 'classid' => 100));
+        $student->completestatusid = STUSTATUS_PASSED;
+        $student->save();
+
+        $return = waitlist::check_autoenrol_after_course_completion($student);
+        $this->assertTrue($return);
     }
 }

@@ -58,14 +58,21 @@ class studentTest extends elis_database_test {
             'groups' => 'moodle',
             'groups_members' => 'moodle',
             'message' => 'moodle',
+            'message_working' => 'moodle',
             'user' => 'moodle',
             'user_enrolments' => 'moodle',
+            'user_info_data' => 'moodle',
             'user_lastaccess' => 'moodle',
             classmoodlecourse::TABLE => 'elis_program',
             course::TABLE => 'elis_program',
+            'elis_field_data_char' => 'elis_core',
+            'elis_field_data_int' => 'elis_core',
+            'elis_field_data_num' => 'elis_core',
+            'elis_field_data_text' => 'elis_core',
             GRDTABLE => 'elis_program',
             pmclass::TABLE => 'elis_program',
             student::TABLE => 'elis_program',
+            student_grade::TABLE => 'elis_program',
             user::TABLE => 'elis_program',
             usermoodle::TABLE => 'elis_program',
             waitlist::TABLE => 'elis_program',
@@ -127,6 +134,7 @@ class studentTest extends elis_database_test {
         $dataset->addTable(pmclass::TABLE, elis::component_file('program', 'phpunit/pmclass.csv'));
         $dataset->addTable(user::TABLE, elis::component_file('program', 'phpunit/pmuser.csv'));
         $dataset->addTable(student::TABLE, elis::component_file('program', 'phpunit/student.csv'));
+        $dataset->addTable(waitlist::TABLE, elis::component_file('program', 'phpunit/waitlist2.csv'));
         load_phpunit_data_set($dataset, true, self::$overlaydb);
     }
 
@@ -263,6 +271,26 @@ class studentTest extends elis_database_test {
         $this->assertEmpty($enrol);
     }
 
+    public function test_delete_enrols_waitlist() {
+        global $DB;
+        $this->load_csv_data();
+
+        $student = new student(array('userid' => 104, 'classid' => 100));
+        $student->load();
+        $student->save();
+
+        $class = new pmclass(100);
+        $class->load();
+        $class->maxstudents = 1;
+        $class->save();
+
+        try {
+            $student->delete();
+        } catch (Exception $e) {
+            $this->assertEquals(get_string('message_nodestinationuser', 'elis_program'), $e->getMessage());
+        }
+    }
+
     public function test_get_students() {
         //fixture
         $dataset = new PHPUnit_Extensions_Database_DataSet_CsvDataSet();
@@ -309,5 +337,36 @@ class studentTest extends elis_database_test {
             }
         }
         $this->assertTrue($found);
+    }
+
+    /**
+     * Validate the $student->validate_class_enrolment_limit function.
+     */
+    public function test_validate_class_enrolment_limit() {
+        $this->load_csv_data();
+        $student = new student(array('userid' => 104, 'classid' => 101));
+        $student->load();
+        $student->save();
+
+        try {
+            $result = $student->validate_class_enrolment_limit();
+            $this->assertTrue($result);
+        } catch (Exception $e) {
+            // Should not reach here.
+            $this->assertFalse(true);
+        }
+
+        $class = new pmclass(101);
+        $class->load();
+        $class->maxstudents = 1;
+        $class->save();
+
+        $student = new student(array('userid' => 103, 'classid' => 101));
+
+        try {
+            $result = $student->validate_class_enrolment_limit();
+        } catch (Exception $e) {
+            $this->assertTrue($e instanceof pmclass_enrolment_limit_validation_exception);
+        }
     }
 }

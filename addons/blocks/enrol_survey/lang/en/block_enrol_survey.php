@@ -5,6 +5,7 @@ $string['config_cron_time'] = 'Force Survey every';
 $string['config_title'] = 'Survey\'s Title';
 $string['delete'] = 'Delete';
 $string['editpage'] = 'Edit Survey';
+$string['enrol_survey:addinstance'] = 'Add a new Survey block';
 $string['enrol_survey:edit'] = 'Edit survey';
 $string['enrol_survey:take'] = 'Take survey';
 $string['existing_profile_fileds'] = 'Existing profile fields';

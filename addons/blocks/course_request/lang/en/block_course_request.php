@@ -45,21 +45,22 @@ $string['configuse_class_fields'] = 'Allow class field information to be added t
                                      administrators to define which class fields can be specified in this manner.';
 $string['configuse_course_fields'] = 'Allow course field information to be added to requests. This setting also allows
                                       administrators to define which course fields can be specified in this manner.';
-$string['courserequestpages'] = 'Class Request Page';
 $string['configuse_template_by_default'] = 'If enabled, requests will default to enabling the option of associating CM classes with Moodle courses (effective only for requesting users with the appropriate approval capability set).';
 $string['configcreate_class_with_course'] = 'If enabled, requests for a new course will also create a new class.  Otherwise, a course will be created without a class.';
 $string['course'] = 'Course Description';
-$string['custom_field'] = 'Custom Fields';
+$string['course_request:addinstance'] = 'Add a new Class Request block';
 $string['course_request:approve'] = 'Approve class requests';
 $string['course_request:config'] = 'Configure class request form';
 $string['course_request:request'] = 'Request creation of new classes';
 $string['course_role'] = 'Course Description Role';
+$string['courserequestpages'] = 'Class Request Page';
 $string['create_class_with_course'] = 'Create a class when creating a new course description';
 $string['createclassheader'] = 'Class Instance Information';
 $string['createcourseheader'] = 'Course Description Information';
 $string['createuserheader'] = 'User Information';
 $string['current'] = 'Current';
 $string['current_classes'] = 'Current Class Instances';
+$string['custom_field'] = 'Custom Fields';
 $string['delete'] = 'Delete';
 $string['denialconfirm'] = 'You may enter an optional note for the user who made this request in addition to ' .
                            'denying this course request.';

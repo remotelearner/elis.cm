@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,37 +20,41 @@
  * @subpackage enrol_survey
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
 defined('MOODLE_INTERNAL') || die();
 
 $capabilities = array(
+    'block/enrol_survey:edit' => array(
+        'riskbitmask'  => RISK_PERSONAL | RISK_DATALOSS,
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'legacy'       => array(
+            'manager' => CAP_ALLOW
+        )
+    ),
 
-        'block/enrol_survey:edit' => array(
+    'block/enrol_survey:take' => array(
+        'riskbitmask'  => RISK_DATALOSS,
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'legacy'       => array(
+            'user'           => CAP_ALLOW,
+            'student'        => CAP_ALLOW,
+            'teacher'        => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'manager'        => CAP_ALLOW
+        )
+    ),
 
-            'riskbitmask'  => RISK_PERSONAL | RISK_DATALOSS,
-            'captype'      => 'write',
-            'contextlevel' => CONTEXT_SYSTEM,
-            'legacy'       => array(
-                'manager' => CAP_ALLOW
-            )
+    'block/enrol_survey:addinstance' => array(
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_BLOCK,
+        'archetypes' => array(
+            'manager' => CAP_ALLOW
         ),
-
-        'block/enrol_survey:take' => array(
-
-            'riskbitmask'  => RISK_DATALOSS,
-            'captype'      => 'write',
-            'contextlevel' => CONTEXT_SYSTEM,
-            'legacy'       => array(
-                'user'           => CAP_ALLOW,
-                'student'        => CAP_ALLOW,
-                'teacher'        => CAP_ALLOW,
-                'editingteacher' => CAP_ALLOW,
-                'manager'        => CAP_ALLOW
-            )
-        ),
-
-    );
+    ),
+);
 

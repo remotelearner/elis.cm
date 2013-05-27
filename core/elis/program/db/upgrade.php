@@ -599,5 +599,73 @@ function xmldb_elis_program_upgrade($oldversion=0) {
         upgrade_plugin_savepoint($result, 2012062901, 'elis', 'program');
     }
 
+    if ($result && $oldversion < 2013031400) {
+        // ELIS-8066: remove blank/empty menu options from custom field menu/checkbox and defaults using them
+        $customfields = $DB->get_recordset('elis_field', null, '', 'id');
+        foreach ($customfields as $id => $unused) {
+            $field = new field($id);
+            $field->load();
+            if (isset($field->owners['manual'])) {
+                $manual = new field_owner($field->owners['manual']);
+                $control = $manual->param_control;
+                $options = $manual->param_options;
+                if (!empty($options) && empty($manual->param_options_source) && ($control == 'menu' || $control == 'checkbox')) {
+                    $options = str_replace("\r", '', $options); // strip CRs
+                    $options = preg_replace("/\n+/", "\n", $options);
+                    $manual->param_options = rtrim($options, "\n");
+                    $manual->save();
+                    // Remove any empty defaults
+                    $DB->delete_records_select($field->data_table(), "contextid IS NULL AND fieldid = ? AND data = ''", array($id));
+                }
+            }
+        }
+        upgrade_plugin_savepoint($result, 2013031400, 'elis', 'program');
+    }
+
+    // ELIS-7780: remove deprecated capabilites
+    if ($result && $oldversion < 2013041900) {
+        $capstodelete = array('elis/program:viewgroupreports', 'elis/program:viewreports');
+        list($inorequal, $params) = $DB->get_in_or_equal($capstodelete);
+        $where = "capability $inorequal";
+        $DB->delete_records_select('role_capabilities', $where, $params);
+        $where = "name $inorequal";
+        $DB->delete_records_select('capabilities', $where, $params);
+        upgrade_plugin_savepoint($result, 2013041900, 'elis', 'program');
+    }
+
+    if ($result && $oldversion < 2013042900) {
+        // Add indexes to {crlm_user_track} table
+        $table = new xmldb_table('crlm_user_track');
+        if ($dbman->table_exists($table)) {
+            // array of indexes to drop
+            $dropindexes = array(
+                new xmldb_index('any_userid_ix', XMLDB_INDEX_UNIQUE, array('userid')),
+                new xmldb_index('any_trackid_ix', XMLDB_INDEX_UNIQUE, array('trackid')),
+                new xmldb_index('any_userid_trackid_ix', XMLDB_INDEX_NOTUNIQUE, array('userid', 'trackid'))
+            );
+            foreach ($dropindexes as $index) {
+                // Drop unwanted indexes if they exist
+                if ($dbman->index_exists($table, $index)) {
+                    $dbman->drop_index($table, $index);
+                }
+            }
+
+            // array of indexes to create
+            $createindexes = array(
+                new xmldb_index('userid_ix', XMLDB_INDEX_NOTUNIQUE, array('userid')),
+                new xmldb_index('trackid_ix', XMLDB_INDEX_NOTUNIQUE, array('trackid')),
+                new xmldb_index('userid_trackid_ix', XMLDB_INDEX_UNIQUE, array('userid', 'trackid'))
+            );
+
+            foreach ($createindexes as $index) {
+                // Create desired indexes as required
+                if (!$dbman->index_exists($table, $index)) {
+                    $dbman->add_index($table, $index);
+                }
+            }
+        }
+        upgrade_plugin_savepoint($result, 2013042900, 'elis', 'program');
+    }
+
     return $result;
 }

@@ -1,0 +1,873 @@
+/* General Dropdown */
+.deepsight_dropdown {
+    padding: 10px;
+    width: 240px;
+    background-color: #fff;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid #ccc;
+    border-radius: 0 0 5px 5px;
+    box-shadow: 1px 2px 5px rgba(0, 0, 0, 0.2);
+}
+.deepsight_dropdown_activator:active,
+.deepsight_dropdown_activator.active {
+    border-bottom: 1px solid #fff !important;
+    z-index: 1000;
+    position: relative;
+}
+.deepsight_dropdown.emphasis {
+    border-color: #d80;
+}
+.deepsight_dropdown ul {
+    list-style: none;
+    margin: 0;
+}
+.deepsight_dropdown ul li {
+    cursor: pointer;
+    padding: 7px;
+    border-bottom: 1px solid #ddd;
+}
+/* Filter Buttons */
+[class*='deepsight_filter-'],
+.genbutt {
+    background: transparent url('./img/grad_subtle.png') repeat-x 0 -5px;
+    border: 1px solid #CCC;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: #333;
+    font-weight: bold;
+    font-size: 11px;
+    text-align: center;
+    height: 26px;
+    line-height: 24px;
+    display: inline-block;
+    padding: 0 5px 0 7px;
+    margin: 2px;
+    margin-right: 0;
+    cursor: pointer;
+    vertical-align: middle;
+}
+[class*='deepsight_filter-'] {
+    border-bottom-color: #aaa;
+    border-bottom-color: rgba(0, 0, 0, 0.15);
+}
+[class*='deepsight_filter-']:hover {
+    text-decoration: none;
+    background-color: #fff;
+    background-color: rgba(255, 255, 255, 0.5);
+}
+[class*='deepsight_filter-']:active,
+[class^='deepsight_filter-'].active {
+    background: transparent url('./img/grad_subtle_rev.png') repeat-x 0 -23px;
+}
+[class*='deepsight_filter-'] * {
+    vertical-align: top;
+}
+[class*="deepsight_filter-"].emphasis {
+    border-color: #d80;
+}
+.deepsight_filter-switch {
+    margin-right: 3px;
+}
+.deepsight_filter-remove {
+    border-left: 0;
+    margin-left: 0;
+    padding: 0 5px;
+    margin-right: 3px;
+}
+.deepsight_filter-textsearch input[type="text"] {
+    display: none;
+    background-color: #fff;
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 1px solid #ddd;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    vertical-align: top;
+    line-height: 20px;
+    margin-top: 1px;
+}
+.deepsight_filter-textsearch.active span.selection {
+    display: none;
+}
+.deepsight_filter-textsearch.active input[type="text"] {
+    outline: 0;
+    display: inline-block;
+}
+/* Filter Bar */
+.filterlabel {
+    float: left;
+    height: 30px;
+    line-height: 30px;
+    font-size: 0.9em;
+    display: inline-block;
+}
+.deepsight_filterbar {
+    position: relative;
+    margin-bottom: 5px;
+    margin-left: 45px;
+}
+.deepsight_filterbar * {
+    text-decoration: none;
+}
+.deepsight_filterbar > * {
+
+}
+/* Filter Generator */
+.deepsight_filter_generator {
+    margin: 2px;
+    display: inline-block;
+    padding: 0 10px;
+    height: 26px;
+    line-height: 24px;
+    display: inline-block;
+    vertical-align: middle;
+    font-weight: bold;
+    font-size: 12px;
+    border: 1px solid #ccc;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    text-align: center;
+    cursor: pointer;
+    background: transparent;
+}
+.deepsight_filter_generator:before {
+    font-size: 12px;
+    margin-right: 5px;
+    color: #aaa;
+}
+.deepsight_filter_generator:hover {
+    border: 1px solid #ccc;
+}
+.deepsight_filter_generator:last-child {
+    border-radius: 0 4px 4px 0;
+}
+.deepsight_filter_generator:active,
+.deepsight_filter_generator.active {
+    border: 1px solid #ccc;
+}
+.deepsight_filter_generator:active:last-child,
+.deepsight_filter_generator.active:last-child {
+    border-radius: 4px 4px 0 0;
+}
+.deepsight_dropdown.deepsight_filter_generator_dropdown {
+    padding: 1px;
+}
+.deepsight_filter_generator_choice {
+    cursor: pointer;
+    padding: 7px;
+    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+.deepsight_filter_generator_choice:last-child {
+    border-bottom: 0;
+}
+.deepsight_filter_generator_choice:hover {
+    background-color: #def;
+}
+/* Filter Dropdowns */
+.deepsight_dropdown ul {
+    list-style: none;
+}
+.deepsight_dropdown ul li {
+    cursor: pointer;
+    padding: 7px;
+    border-bottom: 1px solid #ddd;
+}
+.deepsight_dropdown ul li:hover {
+    background-color: #def;
+}
+.deepsight_dropdown.deepsight_filter_dropdown {
+    padding: 15px 10px 10px 10px;
+}
+.deepsight_dropdown.deepsight_filter_dropdown input[type="text"] {
+    width: 150px;
+    border: 1px solid #ddd;
+}
+.deepsight_dropdown.deepsight_filter_dropdown .filter_search {
+    margin-bottom: 10px;
+}
+.deepsight_dropdown.deepsight_filter_dropdown .selections .selected_title {
+    display: block;
+    font-size: 0.8em;
+    font-style: italic;
+}
+.deepsight_dropdown.deepsight_filter_dropdown .choicelist {
+    border-top: 1px solid #eee;
+    padding: 5px 0;
+}
+.deepsight_dropdown.deepsight_filter_dropdown .choicelist input[type="checkbox"] {
+    float: left;
+    position: relative;
+    top: 4px;
+    left: 3px;
+}
+.deepsight_dropdown.deepsight_filter_dropdown .choicelist label {
+    display: block;
+    padding: 3px 0 3px 21px;
+}
+.deepsight_dropdown.deepsight_filter_dropdown .choicelist label:hover {
+    background-color: #def;
+}
+/* Datatable */
+.deepsight_datatable_wrapper {
+    position: relative;
+    margin-bottom: 20px;
+}
+.deepsight_datatable {
+    user-select: none;
+    width: 100%;
+}
+.deepsight_datatable.focused {
+    outline: 1px solid #666;
+    outline: 1px solid rgba(0, 0, 0, 0.2);
+}
+.deepsight_datatable tr:first-child:hover {
+    background: transparent;
+}
+.deepsight_datatable tr th {
+    text-align: left;
+    padding: 2px;
+    line-height: 1.6em;
+    font-size: 1em;
+    border-left: 1px solid #eee;
+    border-right: 1px solid #f5f5f5;
+    border-right: 1px solid rgba(0, 0, 0, 0.04);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+.deepsight_datatable tr th:hover {
+    cursor: pointer;
+}
+.deepsight_datatable tr th.sorting {
+    background-color: #efe;
+}
+.deepsight_datatable tr th .elisicon-sortable,
+.deepsight_datatable tr th .elisicon-sortasc,
+.deepsight_datatable tr th .elisicon-sortdesc {
+    opacity: 0.3;
+    font-size: 1.25em;
+    float: left;
+    position: relative;
+    top: 3px;
+    margin: 0px 4px 0 2px;
+}
+.deepsight_datatable tr:hover {
+    background-color: #def;
+}
+.deepsight_datatable td {
+    padding: 6px;
+    vertical-align: middle;
+}
+.deepsight_datatable td.movehandle {
+    width: 20px;
+    overflow: hidden;
+    font-weight: bold;
+    font-size: 16px;
+    opacity: 0.3;
+    cursor: move;
+    padding: 0;
+    margin: 0;
+    text-align: center;
+}
+.deepsight_datatable td.actions {
+    width: 60px;
+    padding: 3px;
+}
+.deepsight_datatable td.actions [class*="elisicon-"] {
+    font-size: 16px;
+    margin-right: 7px;
+    cursor: pointer;
+}
+.deepsight_datatable tr.selected {
+    background-color: #cde;
+}
+.deepsight_datatable tr.active {
+    background-color: rgba(0, 0, 0, 0.25);
+    font-weight: bold;
+}
+.deepsight_datatable tr.active td {
+    border-bottom: 1px solid #110;
+}
+.deepsight_datatable tr.dragactive {
+    opacity: 0.2;
+}
+.deepsight_datatable tr.dragactive td {
+    border: 0;
+}
+.deepsight_datatable tr td.sorting {
+    background-color: #efe;
+    background-color: rgba(100, 175, 50, 0.1);
+}
+.deepsight_datatable tr.confirmed {
+    background-color: #aca;
+}
+.deepsight_datatable tr.disabled {
+    opacity: 0.4;
+    background-color: #eee;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+.deepsight_datatable tr.loading {
+    opacity: 0.4;
+    background: transparent url('./img/rl_rotate_small.gif') no-repeat center center;
+}
+.deepsight_datatable tr td.no_results {
+    text-align: center;
+    opacity: 0.4;
+    padding: 6px 0;
+}
+.deepsight_datatable tr td.no_results strong {
+    display: block;
+    font-size: 1.25em;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+.deepsight_datatable.disabled {
+    opacity: 0.5;
+}
+.deepsight_datatable.loading {
+    opacity: 0.5;
+    background: transparent url('./img/rlrotate_big_transwhite.gif') no-repeat center center;
+}
+.deepsight_datatable.loading tr {
+    background: transparent;
+}
+.ds_pagelinks {
+    display: inline-block;
+    width: 100%;
+    margin: 5px 0;
+    text-align: right;
+    font-size: 0.8em;
+}
+.ds_pagelinks span {
+    display: inline-block;
+    margin-left: 10px;
+}
+.ds_pagelinks a,
+.ds_pagelinks strong {
+    display: inline-block;
+    padding: 2px 7px;
+    font-size: 1.1em;
+}
+.ds_pagelinks .pagearrow {
+    display: inline-block;
+    line-height: 13px;
+    width: 24px;
+    font-size: 13px;
+    margin: 0;
+}
+.deepsight_datatable_draghelper:before {
+    content: "";
+    position: absolute;
+    top: 6px;
+    right: 100%;
+    border-right: #000;
+    border-right: 12px solid rgba(0, 0, 0, 0.8);
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+}
+.deepsight_datatable_draghelper {
+    cursor: move;
+    background-color: #000;
+    background-color: rgba(0, 0, 0, 0.8);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    border: 1px solid #fff;
+    border-radius: 3px;
+    font-weight: bold;
+    color: #fff;
+    margin-left: 35px;
+    padding: 5px 10px;
+}
+/* Actions */
+.deepsight_actionpanel {
+    text-align: right;
+    padding: 7px 5px;
+    background-color: #000;
+    background-color: rgba(0, 0, 0, 0.75);
+    box-shadow: inset 0 5px 10px #222;
+    color: #fff;
+}
+.deepsight_actionpanel_inner {
+    display: table;
+    width: 100%;
+}
+.deepsight_actionpanel.loading {
+    background-image: url('./img/rlrotate_big_transblack.gif');
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+.deepsight_actionpanel.loading h1 {
+    text-align: center;
+    padding: 22px 0;
+    background: rgba(0, 0, 0, 0.3);
+    margin: 10px;
+    font-size: 1.7em;
+}
+.deepsight_actionpanel_tr td {
+    border-top: 0 !important;
+}
+.deepsight_actionpanel h3 {
+    margin: 0;
+    padding: 0;
+    border-bottom: 1px solid #666;
+    padding-bottom: 2px;
+    margin-bottom: 5px;
+    font-size: 1.1em;
+    font-weight: bold;
+}
+.deepsight_actionpanel .data_wrpr {
+    display: table;
+    float: right;
+}
+.deepsight_actionpanel .data_wrpr > div {
+    display: table-row;
+}
+.deepsight_actionpanel .data_wrpr > div > span {
+    text-align: left;
+    padding: 2px 5px;
+    display: table-cell;
+}
+.deepsight_actionpanel .data_wrpr > div:first-child > span {
+    text-align: center;
+}
+.deepsight_actionpanel div.actions {
+    padding: 5px;
+    display: table-cell;
+    width: 70px;
+    vertical-align: middle;
+}
+.deepsight_actionpanel div.actions [class*="elisicon-"] {
+    cursor: pointer;
+    padding: 5px;
+    display: inline-block;
+}
+.deepsight_actionpanel div.actions .elisicon-confirm {
+    color: #5f5;
+    font-size: 22px !important;
+}
+.deepsight_actionpanel div.actions .elisicon-cancel {
+    color: #f55;
+    font-size: 18px !important;
+}
+.deepsight_actionpanel div.actions .elisicon-confirm:hover {
+    background-color: #050;
+    color: #fff;
+}
+.deepsight_actionpanel div.actions .elisicon-cancel:hover {
+    background-color: #500;
+    color: #fff;
+}
+.deepsight_actionpanel div.body {
+    font-size: 14px;
+    display: table-cell;
+    padding: 5px;
+    vertical-align: middle;
+}
+.deepsight_actionpanel input[type="checkbox"].buttonset {
+    display: none;
+}
+.deepsight_actionpanel label.buttonset {
+    cursor: pointer;
+    padding: 2px 15px;
+    color: #222;
+    font-weight: bold;
+    font-size: 13px;
+    background: #f5f5f5 url('./img/grad_subtle.png') repeat-x 0 -5px;
+    border: 1px solid #ccc;
+    display: inline-block;
+}
+.deepsight_actionpanel label.buttonset.on {
+    background-color: #fc5;
+    border-color: #c92;
+}
+.deepsight_actionpanel ul.changes {
+    float: right;
+    margin: 5px 0 15px 0;
+    padding: 0;
+    text-align: left;
+}
+
+/* IE 8 does not allow label-clicking if the target element is hidden */
+body.ie8 .deepsight_actionpanel input[type="checkbox"].buttonset {
+    display: inline;
+}
+body.ie8 .deepsight_actionpanel label.buttonset {
+    padding: 0 0 0 10px;
+    color: #fff;
+    font-weight: normal;
+    background: none;
+    border: 0px;
+}
+body.ie8 .deepsight_actionpanel label.buttonset.on {
+    background: none;
+}
+
+.deepsight_actionpanel.deepsight_action_usersettrack_assignedit form,
+.deepsight_actionpanel.deepsight_action_usersetprogram_assignedit form {
+    margin-top: 10px;
+    display: block;
+}
+.deepsight_actionpanel.deepsight_action_usersettrack_assignedit form input[type="checkbox"],
+.deepsight_actionpanel.deepsight_action_usersetprogram_assignedit form input[type="checkbox"] {
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+/* Panels */
+.deepsight_panel {
+    display: inline-block;
+    width: 100%;
+}
+.deepsight_panel.detached {
+    position: fixed;
+    bottom: 0;
+    right: 15px;
+    width: auto;
+}
+.deepsight_panel.attached {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    width: 100%;
+}
+.deepsight_panel * {
+    vertical-align: middle
+}
+.deepsight_panel > .actions {
+    display: none;
+    float: left;
+}
+.deepsight_panel > .actions * {
+    margin: 0 15px 0 0;
+    vertical-align: middle;
+}
+.deepsight_panel .contents {
+    display: inline-block;
+    width: 100%;
+    margin: 5px 0;
+}
+.deepsight_panel .deepsight_actionpanel {
+    display: inline-block;
+    width: 100%;
+    margin: 5px 0;
+}
+.deepsight_panel.detached .contents {
+    max-height: 200px;
+    overflow-y: scroll !important;
+}
+.deepsight_panel.attached .contents {
+    display: inline-block;
+    width: 100%;
+}
+.deepsight_panel.detached .contents {
+    display: none;
+}
+.deepsight_panel .contents .ds_pagelinks {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+.deepsight_panel .contents ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+.deepsight_panel .contents li {
+    cursor: pointer;
+    padding: 2px;
+    border-bottom: 1px solid #ddd;
+}
+.deepsight_panel .contents li i {
+    visibility: hidden;
+    font-size: 0.8em;
+    margin-right: 5px;
+    color: #a00;
+}
+.deepsight_panel .contents li:hover i {
+    visibility: visible;
+}
+.deepsight_panel .title,
+.deepsight_panel .statustext,
+.deepsight_panel .actions {
+    margin: 0;
+    line-height: 25px;
+}
+.deepsight_panel .title {
+    float: left;
+}
+.deepsight_panel .actions {
+    margin-left: 10px;
+}
+.deepsight_panel .actions [class*="elisicon-"] {
+    vertical-align: middle;
+    margin-right: 7px;
+    cursor: pointer;
+}
+.deepsight_panel .actions [class*="elisicon-"]:before {
+    margin-right: 3px;
+    cursor: pointer;
+}
+.deepsight_panel .statustext {
+    float: left;
+    color: #666;
+    margin: 0 5px;
+    line-height: 25px;
+}
+.deepsight_panel .statustext:hover {
+    text-decoration: underline;
+    cursor: pointer;
+}
+.deepsight_panel .addallsearch,
+.deepsight_panel .addallselected,
+.deepsight_panel .clearall {
+    float: right;
+}
+.deepsight_panel.loading {
+    background-image: url('./img/rl_rotate_small.gif');
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+/** DROP PANEL **/
+.deepsight_panel {
+    box-sizing: border-box;
+    background-color: #fff;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 7px;
+    border: 1px solid #ddd;
+}
+.deepsight_panel.detached {
+    border-bottom: 0;
+    box-shadow: 0 0 7px rgba(0, 0, 0, 0.3);
+}
+.deepsight_panel.detached.dragactive {
+    padding-top: 30px;
+    padding-bottom: 30px;
+}
+.deepsight_panel.attached.dragactive {
+    outline: 6px solid #F7E2C8;
+}
+.deepsight_panel.attached.dragactive.drophover {
+    outline: 6px solid #afa;
+}
+.deepsight_panel.dropped {
+    background-color: #cfc;
+}
+/**
+ * Icons
+ */
+.elisicon-assoc {
+    color: #0a0;
+}
+.elisicon-edit {
+    color: #ba1;
+}
+.elisicon-unassoc {
+    color: #a00;
+}
+.elisicon-prereq {
+    color: #ea0;
+}
+.elisicon-coreq {
+    color: #0a0;
+}
+[class*='elisicon-'].loading:before {
+    content: '';
+}
+[class*='elisicon-'].loading {
+    width: 16px;
+    height: 20px;
+    vertical-align: top;
+    display: inline-block;
+    background: transparent url('./img/rlrotate_small_transwhite.gif') no-repeat center center;
+}
+.deepsight_modal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: #000;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 100;
+    color: #fff;
+    width: 74%;
+    padding: 20px;
+    margin-left: -37%;
+    margin-top: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 10px;
+    box-shadow: 0 0 10px #666;
+}
+.deepsight_modal .submit {
+    text-align: center;
+    padding: 15px 0 5px;
+}
+.deepsight_modal .closebutton {
+    cursor: pointer;
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: #555;
+    border-radius: 0 6px 0 0;
+    padding: 5px 15px;
+    font-weight: bold;
+    border: 1px solid #666;
+    border-width: 0 0 1px 1px;
+}
+.deepsight_modal .closebutton:hover {
+    background-color: #888;
+    border-color: #888;
+}
+.deepsight_modal .buttonset {
+    margin-left: 10px;
+}
+.deepsight_modal .buttonset input[type="radio"] {
+    display: none;
+}
+.deepsight_modal .buttonset input[type="radio"] + label:nth-child(2) {
+    border-radius: 5px 0 0 5px;
+}
+.deepsight_modal .buttonset input[type="radio"] + label:last-child {
+    border-radius: 0 5px 5px 0;
+}
+.deepsight_modal .buttonset input[type="radio"] + label {
+    cursor: pointer;
+    border: 1px solid #666;
+    padding: 2px 5px;
+    display: inline-block;
+}
+.deepsight_modal .buttonset input[type="radio"].checked + label {
+    background: #666 url('./img/grad_subtle_rev.png') repeat-x 0 -5px;
+}
+
+/* IE8 doesn't like label-clicking for hidden inputs */
+body.ie8 .deepsight_modal .buttonset input[type="radio"] {
+    display: inline;
+}
+body.ie8 .deepsight_modal .buttonset label {
+    border-radius: 0;
+    border: 0;
+    padding: 0;
+    margin: 0 10px 0 5px;
+    background: none;
+}
+body.ie8 .deepsight_modal .buttonset input.checked + label {
+    background: none;
+}
+
+.deepsight_modal .errormessage strong {
+    display: block;
+    font-size: 1.25em;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+.deepsight_modal.waitlist h1 {
+    margin: 0px;
+    font-size: 2em;
+    line-height: 2.2em;
+}
+.deepsight_modal.waitlist h3 {
+    border-bottom: 1px solid #888;
+    padding-top: 0px;
+    padding-bottom: 5px;
+}
+.deepsight_modal.waitlist ul {
+    list-style: none;
+    margin: 0;
+}
+.deepsight_modal.waitlist ul li {
+    margin: 2px 0;
+}
+.deepsight_modal.waitlist ul li:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+.deepsight_modal.waitlist ul li span.studentname {
+    width: 200px;
+    display: inline-block;
+}
+.deepsight_modal.loading {
+    background-image: url('./img/rlrotate_big_transblack.gif');
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+.deepsight_modal.loading h1 {
+    text-align: center;
+    padding: 10px 0;
+    background-color: rgba(0, 0, 0, 0.3);
+}
+/* JS Fancy Tooltip */
+.fancy_tooltip {
+    background-color: #000;
+    background-color: rgba(0, 0, 0, 0.8);
+    font-size: 1em;
+    font-weight: bold;
+    padding: 5px;
+    border-radius: 3px;
+    display: inline-block;
+    border: 1px solid #fff;
+    color: #fff;
+}
+.fancy_tooltip:before {
+    content: '';
+    position: absolute;
+}
+.fancy_tooltip.bottom:before,
+.fancy_tooltip.top:before {
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    left: 50%;
+    margin-left: -5px;
+}
+.fancy_tooltip.bottom:before {
+    border-bottom: 10px solid #000;
+    border-bottom: 10px solid rgba(0, 0, 0, 0.8);
+    bottom: 100%;
+}
+.fancy_tooltip.top:before {
+    border-top: 10px solid #000;
+    border-top: 10px solid rgba(0, 0, 0, 0.8);
+    top: 100%;
+}
+.deepsight_calendar {
+    text-align: center;
+}
+.deepsight_calendar table {
+    width: 100%;
+    border-collapse: separate;
+}
+.deepsight_calendar .prevmonth,
+.deepsight_calendar .nextmonth,
+.deepsight_calendar .monthyear {
+    padding: 0;
+}
+.deepsight_calendar .monthyear input[type="text"] {
+    outline: 0;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    width: 40px;
+}
+.deepsight_calendar td:hover {
+    cursor: pointer;
+    font-weight: bold;
+    background-color: #eee;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+.deepsight_calendar .prevmonth button,
+.deepsight_calendar .nextmonth button {
+    cursor: pointer;
+    border: 0;
+    background: transparent;
+    margin: 0;
+    padding: 0.5em;
+    opacity: 0.5;
+}
+.deepsight_calendar .prevmonth:hover button,
+.deepsight_calendar .nextmonth:hover button {
+    opacity: 1;
+}
+.deepsight_calendar td {
+    border: 1px solid transparent;
+}
+.deepsight_calendar td.selected {
+    font-weight: bold;
+    background-color: #eee;
+    background-color: rgba(0, 0, 0, 0.1);
+    border: 1px solid #ddd;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}

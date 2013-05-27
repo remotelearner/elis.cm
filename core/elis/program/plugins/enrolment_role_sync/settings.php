@@ -5,27 +5,13 @@ defined('MOODLE_INTERNAL') || die;
 require_once(dirname(__FILE__).'/../../../../config.php');
 global $CFG;
 require_once($CFG->dirroot.'/elis/program/lib/setup.php');
+require_once(elispm::lib('lib.php'));
 require_once(elispm::file('plugins/enrolment_role_sync/lib.php'));
 
 if ($ADMIN->fulltree) {
 
-    //try to get all the non-guest roles
-    $guestrole = get_guest_role();
-
-    if ($roles = get_all_roles()) {
-        if (isset($guestrole->id)) {
-            unset($roles[$guestrole->id]);
-        }
-    } else {
-        //this should never happen
-        $roles = array();
-    }
-
-    // combine the default option with the list of roles
     $options = array(0 => get_string('no_default_role', 'elis_program'));
-    foreach ($roles as $id => $role) {
-        $options[$id] = !empty($role->name) ? $role->name : $role->shortname;
-    }
+    pm_get_select_roles_for_contexts($options, array(CONTEXT_ELIS_CLASS));
 
     //setting header
     $settings->add(new admin_setting_heading('pmplugins_enrolment_role_sync/settings',

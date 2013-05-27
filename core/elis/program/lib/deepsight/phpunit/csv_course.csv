@@ -1,0 +1,4 @@
+id,name,code,idnumber,syllabus,documents,lengthdescription,length,credits,environmentid,cost,version
+100,Test Course100,testcourse100,testcourse100,Test Syllabus,Test Documents,"Length Description",5,1,1,100,1
+101,Test Course101,testcourse101,testcourse101,Test Syllabus,Test Documents,"Length Description",5,1,1,100,1
+102,Test Course102,testcourse102,testcourse102,Test Syllabus,Test Documents,"Length Description",5,1,1,100,1

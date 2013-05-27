@@ -131,9 +131,12 @@ class clusterassignment extends elis_data_object {
     static function update_enrolments($userid = 0, $clusterid = 0) {
         global $DB;
         require_once(elispm::lib('data/usermoodle.class.php'));
-        //error_log("/elis/program/lib/data/clusterassignment.class.php::update_enrolments({$userid}, {$clusterid})");
+        // error_log("/elis/program/lib/data/clusterassignment.class.php::update_enrolments({$userid}, {$clusterid})");
 
-        //convert provided parameters to SQL conditions
+        // ELIS-7582
+        @set_time_limit(0);
+
+        // convert provided parameters to SQL conditions
         $extraconditions = array();
         $extraparams = array();
 

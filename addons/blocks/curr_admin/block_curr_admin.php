@@ -123,6 +123,9 @@ class block_curr_admin extends block_base {
         // include our custom code that handles the YUI Treeview menu
         $PAGE->requires->js('/elis/program/js/menuitem.js');
 
+        // Include Icon CSS.
+        $PAGE->requires->css('/elis/program/icons.css');
+
         //CM entities for placement at the top of the menu
         $cm_entity_pages = array();
         $cm_entity_pages[] = new menuitem('root');

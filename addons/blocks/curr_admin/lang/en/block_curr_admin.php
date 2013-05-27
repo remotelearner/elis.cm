@@ -1,6 +1,7 @@
 <?php
 
 $string['blockname'] = 'Program Management';
+$string['curr_admin:addinstance'] = 'Add a new ELIS Program Management block';
 $string['pluginname'] = 'Program Management';
 
 // "More" links in curr admin menu
