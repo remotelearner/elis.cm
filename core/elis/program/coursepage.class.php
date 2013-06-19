@@ -293,9 +293,9 @@ class coursepage extends managementpage {
             $deliconattrs = array('class' => 'elisicon-remove elisicon', 'alt' => $delstr, 'title' => $delstr);
 
             foreach ($elements as $element) {
-                $editurl = 'index.php?s=crs&amp;section=curr&amp;action=eelem&amp;id='.$crs->id.'&amp;elemid='.$element->id;
+                $editurl = 'index.php?s=crs&section=curr&action=eelem&id='.$crs->id.'&elemid='.$element->id;
                 $editbutton = html_writer::link($editurl, '', $editiconattrs);
-                $delurl = 'index.php?s=crs&amp;section=curr&amp;action=delem&amp;id='.$crs->id.'&amp;elemid='.$element->id;
+                $delurl = 'index.php?s=crs&section=curr&action=delem&id='.$crs->id.'&elemid='.$element->id;
                 $deletebutton = html_writer::link($delurl, '', $deliconattrs);
 
                 $newobj = new stdClass;

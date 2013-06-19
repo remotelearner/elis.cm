@@ -99,9 +99,9 @@ class customfieldpage extends pm_page {
             $editlink = $categorypage->out();
 
             if (isset($category_names[$categoryid])) {
-                echo "<h2>{$category_names[$categoryid]} <a href=\"$editlink\">";
-                echo "<img src=\"".$OUTPUT->pix_url('edit','elis_program')."\" alt=\"$edittxt\" title=\"$edittxt\" /></a>";
-                echo "<a href=\"$deletelink\"><img src=\"".$OUTPUT->pix_url('delete','elis_program')."\" alt=\"$deletetxt\" title=\"$deletetxt\" /></a>";
+                echo "<h2>{$category_names[$categoryid]} ";
+                echo "<a href=\"$editlink\" class=\"elisicon elisicon-edit\" alt=\"$edittxt\" title=\"$edittxt\"></a>";
+                echo "<a href=\"$deletelink\" class=\"elisicon elisicon-remove\" alt=\"$deletetxt\" title=\"$deletetxt\"></a>";
                 echo "</h2>\n";
             }
 
@@ -578,8 +578,8 @@ class customfieldtable extends display_table {
         $editlink = $tmppage->out();
         $deletetxt = get_string('delete');
         $edittxt = get_string('edit');
-        return "<a href=\"{$editlink}\"><img src=\"".$OUTPUT->pix_url('edit','elis_program')."\" alt=\"{$edittxt}\" title=\"{$edittxt}\" /></a> " .
-               "<a href=\"{$deletelink}\"><img src=\"".$OUTPUT->pix_url('delete','elis_program')."\" alt=\"{$deletetxt}\" title=\"{$deletetxt}\" /></a>";
+        return "<a href=\"{$editlink}\" class=\"elisicon elisicon-edit\" alt=\"{$edittxt}\" title=\"{$edittxt}\" /></a> ".
+                "<a href=\"{$deletelink}\" class=\"elisicon elisicon-remove\" alt=\"{$deletetxt}\" title=\"{$deletetxt}\" /></a>";
     }
 }
 
