@@ -45,13 +45,16 @@ class studentpage extends deepsightpage {
     public $default_tab = 'studentpage';
     public $section = 'curr';
     public $parent_data_class = 'pmclass';
-    public $context;
+
+    /**
+     * @var string The context level of the parent association.
+     */
+    protected $contextlevel = 'class';
 
     /**
      * Constructor.
      */
     public function __construct(array $params = null) {
-        $this->context = $this->get_context();
         $this->tabs = array( // TBD: 'currcourse_edit' -> 'edit'.
             array(
                 'tab_id' => 'currcourse_edit',
@@ -71,23 +74,7 @@ class studentpage extends deepsightpage {
                 'image' => 'delete'
             ),
         );
-
         parent::__construct($params);
-    }
-
-    /**
-     * Get the context for the current class.
-     *
-     * @return context_elis_class The context object.
-     */
-    protected function get_context() {
-        if (!isset($this->context)) {
-            $id = optional_param('id', null, PARAM_INT);
-            if (!empty($id)) {
-                $this->context = context_elis_class::instance($id);
-            }
-        }
-        return $this->context;
     }
 
     /**

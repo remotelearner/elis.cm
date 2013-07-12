@@ -251,7 +251,7 @@ abstract class selectionpage extends pm_page { // TBD
 
             echo "<script>var basepage='$baseurl';</script>";
             // ***TBD***
-            //$PAGE->requires->yui2_lib(array('yahoo', 'dom', 'event', 'connection'));
+            $PAGE->requires->yui2_lib(array('yahoo', 'dom', 'event', 'connection', 'json'));
             $PAGE->requires->js('/elis/core/js/associate.class.js');
             $PAGE->requires->js('/elis/program/js/checkbox_selection.js');
             echo '<div class="mform" style="width: 100%"><fieldset><legend>'.

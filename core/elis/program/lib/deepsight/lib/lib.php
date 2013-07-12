@@ -115,10 +115,18 @@ function ds_process_js_date_data(array $alldata, $prefix = '') {
 /**
  * Format a timestamp as a date for display.
  * @param int $time A UNIX timestamp.
+ * @param bool $showtime Whether to include the time in the returned string (true), or just the date (false)
  * @return string The formatted date or a "-" to indicate an empty date.
  */
-function ds_process_displaytime($time) {
-    return (!empty($time)) ? userdate($time, get_string('pm_date_format', 'elis_program')) : '-';
+function ds_process_displaytime($time, $showtime = false) {
+    if (empty($time)) {
+        return '-';
+    }
+    $format = ($showtime === true)
+            ? get_string('pm_datetime_format', 'elis_program')
+            : get_string('pm_date_format', 'elis_program');
+
+    return userdate($time, $format);
 }
 
 /**

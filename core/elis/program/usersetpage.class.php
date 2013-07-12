@@ -65,30 +65,9 @@ class usersetsubusersetpage extends deepsightpage {
     public $parent_page;
 
     /**
-     * @var string The page's context.
+     * @var string The context level of the parent association.
      */
-    public $context;
-
-    /**
-     * Constructor.
-     * @param array $params An array of parameters for the page.
-     */
-    public function __construct(array $params = null) {
-        $this->context = parent::_get_page_context();
-        parent::__construct($params);
-    }
-
-    /**
-     * Get the context of the current userset.
-     * @return context_elis_userset The current userset context object.
-     */
-    protected function get_context() {
-        if (!isset($this->context)) {
-            $id = required_param('id', PARAM_INT);
-            $this->context = context_elis_userset::instance($id);
-        }
-        return $this->context;
-    }
+    protected $contextlevel = 'userset';
 
     /**
      * Construct the assigned datatable.

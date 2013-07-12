@@ -41,34 +41,17 @@ class clustercurriculumpage extends deepsightpage {
     public $tab_page = 'usersetpage';
     public $data_class = 'clustercurriculum';
     public $parent_page;
-    public $context;
+
+    /**
+     * @var string The context level of the parent association.
+     */
+    protected $contextlevel = 'userset';
 
     const CPY_CURR_PREFIX = 'add_curr_';
     const CPY_CURR_TRK_PREFIX = 'add_trk_curr_';
     const CPY_CURR_CRS_PREFIX = 'add_crs_curr_';
     const CPY_CURR_CLS_PREFIX = 'add_cls_curr_';
     const CPY_CURR_MDLCRS_PREFIX = 'add_mdlcrs_curr_';
-
-    /**
-     * Constructor.
-     * @param array $params An array of parameters for the page.
-     */
-    public function __construct(array $params = null) {
-        $this->context = parent::_get_page_context();
-        parent::__construct($params);
-    }
-
-    /**
-     * Get the context of the current userset.
-     * @return context_elis_userset The current userset context object.
-     */
-    protected function get_context() {
-        if (!isset($this->context)) {
-            $id = required_param('id', PARAM_INT);
-            $this->context = context_elis_userset::instance($id);
-        }
-        return $this->context;
-    }
 
     /**
      * Construct the assigned datatable.
@@ -442,28 +425,11 @@ class curriculumclusterpage extends deepsightpage {
     public $tab_page = 'curriculumpage';
     public $data_class = 'clustercurriculum';
     public $parent_page;
-    public $context;
 
     /**
-     * Constructor.
-     * @param array $params An array of parameters for the page.
+     * @var string The context level of the parent association.
      */
-    public function __construct(array $params = null) {
-        $this->context = parent::_get_page_context();
-        parent::__construct($params);
-    }
-
-    /**
-     * Get the context of the current program.
-     * @return context_elis_program The current program context object.
-     */
-    protected function get_context() {
-        if (!isset($this->context)) {
-            $id = required_param('id', PARAM_INT);
-            $this->context = context_elis_program::instance($id);
-        }
-        return $this->context;
-    }
+    protected $contextlevel = 'program';
 
     /**
      * Construct the assigned datatable.

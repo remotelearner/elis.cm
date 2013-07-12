@@ -63,30 +63,9 @@ class curriculumcoursepage extends deepsightpage {
     public $parent_page;
 
     /**
-     * @var string The page's context.
+     * @var string The context level of the parent association.
      */
-    public $context;
-
-    /**
-     * Constructor.
-     * @param array $params An array of parameters for the page.
-     */
-    public function __construct(array $params = null) {
-        $this->context = parent::_get_page_context();
-        parent::__construct($params);
-    }
-
-    /**
-     * Get the context of the current program.
-     * @return context_elis_program The current program context object.
-     */
-    protected function get_context() {
-        if (!isset($this->context)) {
-            $id = required_param('id', PARAM_INT);
-            $this->context = context_elis_program::instance($id);
-        }
-        return $this->context;
-    }
+    protected $contextlevel = 'program';
 
     /**
      * Construct the assigned datatable.
@@ -357,30 +336,9 @@ class coursecurriculumpage extends deepsightpage {
     public $parent_page;
 
     /**
-     * @var string The page's context.
+     * @var string The context level of the parent association.
      */
-    public $context;
-
-    /**
-     * Constructor.
-     * @param array $params An array of parameters for the page.
-     */
-    public function __construct(array $params = null) {
-        $this->context = parent::_get_page_context();
-        parent::__construct($params);
-    }
-
-    /**
-     * Get the context of the current course.
-     * @return context_elis_course The current course context object.
-     */
-    protected function get_context() {
-        if (!isset($this->context)) {
-            $id = required_param('id', PARAM_INT);
-            $this->context = context_elis_course::instance($id);
-        }
-        return $this->context;
-    }
+    protected $contextlevel = 'course';
 
     /**
      * Construct the assigned datatable.

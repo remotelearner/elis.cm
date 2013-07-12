@@ -94,9 +94,9 @@ class resultsconfigform extends moodleform {
         $textgroup[]=&$mform->createElement('static','grouplabel','','Range '.($i+1).':');
         $textgroup[]=&$mform->createElement('hidden','rowid','Id',array('size'=>5));
         $textgroup[]=&$mform->createElement('static','minlabel','','Min');
-        $textgroup[]=&$mform->createElement('text','mininput','Min',array('size'=>5));
+        $textgroup[] = &$mform->createElement('text', 'mininput', 'Min', array('size' => 8));
         $textgroup[]=&$mform->createElement('static','maxlabel','','Max');
-        $textgroup[]=&$mform->createElement('text','maxinput','Max',array('size'=>5));
+        $textgroup[] = &$mform->createElement('text', 'maxinput', 'Max', array('size' => 8));
         $textgroup[]=&$mform->createElement('static','namelabel','','Name');
         $textgroup[]=&$mform->createElement('text','nameinput','Name');
         $textgroup[]=&$mform->createElement('static','deleteLink','','<img src="'.$OUTPUT->pix_url('delete','elis_program').'" onclick="delete_row('.$i.',$(this))" alt="Delete" style="cursor:pointer" title="Delete" /></a>');

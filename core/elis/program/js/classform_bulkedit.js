@@ -352,7 +352,6 @@ function select_item(id) {
             if (numselected > 0) {
                 new_numselected = numselected - 1;
             }
-            selectionstatus.splice(id, 1);
         }
     } else {
         proxy_select(id);

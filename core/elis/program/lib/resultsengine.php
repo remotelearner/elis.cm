@@ -354,7 +354,7 @@ function results_engine_process($class) {
 
         foreach ($actions as $action) {
 
-            if (($student->grade >= $action->minimum) && ($student->grade <= $action->maximum)) {
+            if (elis_float_comp($student->grade, $action->minimum, '>=') && elis_float_comp($student->grade, $action->maximum, '<=')) {
                 $do = $action;
                 break;
             }

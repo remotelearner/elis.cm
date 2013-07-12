@@ -2558,3 +2558,126 @@ function pm_get_select_roles_for_contexts(&$roles, array $contextlevels = null) 
     unset($rolers);
 }
 
+/**
+ * Floating point comparison method that will try to use bcmath lib if present
+ *
+ * @throws coding_exception If input numbers aren't numbers, or comparison operator isn't valid.
+ * @param string|int|float $num1 The first number
+ * @param string|int|float $num2 The second number
+ * @param string $op The math operation to perform, i.e. $num1 $op $num2 where $op maybe '<', '>', '=='('='), '>=', '<=', '!='
+ * @param bool $nobcmath Optional param if true, forces function not to use bcmath (for testing), defaults to false
+ * @return bool The outcome of the float comparison: true or false
+ */
+function elis_float_comp($num1, $num2, $op, $nobcmath = false) {
+    // Valid comparison operations, and their associated bcmath returns.
+    static $validopsmap = array(
+        '<' => array(-1),
+        '>' => array(1),
+        '==' => array(0),
+        '<=' => array(-1, 0),
+        '>=' => array(1, 0),
+        '!=' => array(-1, 1)
+    );
+
+    if ($op == '=') {
+        $op = '==';
+    }
+
+    // Check for valid inputs.
+    if (!is_numeric($num1) || !is_numeric($num2) || !isset($validopsmap[$op])) {
+        throw new coding_exception('elis_float_comp() invalid input(s) coding error encountered - please fix code!');
+    }
+
+    // Determine number of decimal places in $num1.
+    $deci1 = 0;
+    if (($point = strpos((string)$num1, '.')) !== false) {
+        $deci1 = strlen((string)$num1) - $point - 1;
+    }
+
+    // Determine number of decimal places in $num2.
+    $deci2 = 0;
+    if (($point = strpos((string)$num2, '.')) !== false) {
+        $deci2 = strlen((string)$num2) - $point - 1;
+    }
+
+    // Scale is the largest number of decimals between $num1 and $num2.
+    $scale = max($deci1, $deci2, 1);
+
+    if (!$nobcmath && extension_loaded('bcmath') && function_exists('bccomp')) {
+        $result = bccomp($num1, $num2, $scale);
+        return in_array($result, $validopsmap[$op], true);
+    } else {
+        // Epsilon is the precision we use to determine if two floats are equal. If their difference is less that this amount,
+        // they are considered equal. We use $scale to generate a float that is one order of magnitude more precise that the
+        // max. precision of the two numbers.
+        $epsilon = (float)('0.'.str_repeat(0, $scale).'1');
+
+        // Convert $num1 to desired precision.
+        if ($deci1 < $scale) {
+            $num1 = sprintf("%.{$scale}F", (float)$num1);
+        }
+
+        // Convert $num2 to desired precision.
+        if ($deci2 < $scale) {
+            $num2 = sprintf("%.{$scale}F", (float)$num2);
+        }
+
+        // Ensure we're dealing with floats.
+        $num1 = (float)$num1;
+        $num2 = (float)$num2;
+
+        // Compare numbers using the first part of the comparison operator.
+        // This handles the "less-than", "greater-than", "not-equals", and "equals" cases, without worrying about "or-equals" yet.
+        switch ($op{0}) {
+            // Check if $num1 is less than $num2 without being equal.
+            case '<':
+                if ($num1 < $num2 && !(abs($num1 - $num2) < $epsilon)) {
+                    return true;
+                }
+                break;
+
+            // Check if $num1 is greater than $num2 without being equal.
+            case '>':
+                if ($num1 > $num2 && !(abs($num1 - $num2) < $epsilon)) {
+                    return true;
+                }
+                break;
+
+            // Check if $num1 is not equal to $num2, within given precision.
+            case '!':
+                if (!(abs($num1 - $num2) < $epsilon)) {
+                    return true;
+                }
+                break;
+
+            // Check if $num1 is equal to $num2, within given precision.
+            case '=':
+                if (abs($num1 - $num2) < $epsilon) {
+                    return true;
+                }
+                break;
+        }
+
+        // If we are dealing with a less-than-or-equals or a greater-than-or-equals case, handle the "or-equals" portion.
+        if (strlen($op) == 2 && ($op{0} === '>' || $op{0} === '<') && $op{1} === '=' && abs($num1 - $num2) < $epsilon) {
+            return true;
+        }
+
+        return false;
+    }
+}
+
+/**
+ * Return an error message formatted the way the application wants it.
+ *
+ * @param string $message The text to display.
+ * @return string The formatted message.
+ */
+function cm_error($message) {
+    global $OUTPUT, $USER;
+    if (empty($USER) || !isloggedin() || isguestuser()) {
+        // ELIS-8458: cannot call notify() without valid user object set
+        return $OUTPUT->box($message, 'errorbox');
+    }
+    return $OUTPUT->notification($message, 'notifyproblem');
+}

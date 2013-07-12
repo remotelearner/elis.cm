@@ -52,6 +52,11 @@ abstract class deepsightpage extends pm_page {
     protected $assign_table_class = '';
 
     /**
+     * @var string The context level of the parent association.
+     */
+    protected $contextlevel = 'system';
+
+    /**
      * Construct the assigned datatable.
      *
      * @param string $uniqid A unique ID to assign to the datatable object.
@@ -66,6 +71,29 @@ abstract class deepsightpage extends pm_page {
      * @return deepsight_datatable The datatable object.
      */
     abstract protected function construct_unassigned_table($uniqid = null);
+
+    /**
+     * Return the context that the page is related to.  Used by the constructor
+     * for calling $this->set_context().
+     */
+    protected function _get_page_context() {
+        $context = $this->get_context();
+        return (!empty($context)) ? $context : context_system::instance();
+    }
+
+    /**
+     * Get the context of the current track.
+     * @return context_elis_track The current track context object.
+     */
+    protected function get_context() {
+        $contextclass = 'context_elis_'.$this->contextlevel;
+        if ($this->contextlevel !== 'system' && class_exists($contextclass)) {
+            $id = $this->required_param('id', PARAM_INT);
+            return $contextclass::instance($id);
+        } else {
+            return context_system::instance();
+        }
+    }
 
     /**
      * Determine whether the current user has certain permissions for a given ID and context level.
@@ -216,16 +244,12 @@ abstract class deepsightpage extends pm_page {
         return array_merge($defaults, $tab);
     }
 
-    protected function get_context() {
-    }
-
     /**
      * Routes ajax requests to the applicable object and displays response.
      */
     public function do_deepsight_response() {
         global $DB;
 
-        $context = $this->get_context();
         $mode = $this->required_param('m');
 
         $classid = $this->required_param('id', PARAM_INT);
