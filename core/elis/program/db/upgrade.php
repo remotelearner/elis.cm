@@ -656,15 +656,27 @@ function xmldb_elis_program_upgrade($oldversion=0) {
         upgrade_plugin_savepoint($result, 2012062903, 'elis', 'program');
     }
 
-    // ELIS-7780: remove deprecated capabilites
     if ($result && $oldversion < 2012062904) {
+        // Change results engine action min/max fields from integer to float
+        $table = new xmldb_table('crlm_results_action');
+        if ($dbman->table_exists($table)) {
+            $field = new xmldb_field('minimum', XMLDB_TYPE_NUMBER, '10,5', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null, 'actiontype');
+            $dbman->change_field_type($table, $field);
+            $field = new xmldb_field('maximum', XMLDB_TYPE_NUMBER, '10,5', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null, 'minimum');
+            $dbman->change_field_type($table, $field);
+        }
+        upgrade_plugin_savepoint($result, 2012062904, 'elis', 'program');
+    }
+
+    // ELIS-7780: remove deprecated capabilites
+    if ($result && $oldversion < 2012062905) {
         $capstodelete = array('elis/program:viewgroupreports', 'elis/program:viewreports');
         list($inorequal, $params) = $DB->get_in_or_equal($capstodelete);
         $where = "capability $inorequal";
         $DB->delete_records_select('role_capabilities', $where, $params);
         $where = "name $inorequal";
         $DB->delete_records_select('capabilities', $where, $params);
-        upgrade_plugin_savepoint($result, 2012062904, 'elis', 'program');
+        upgrade_plugin_savepoint($result, 2012062905, 'elis', 'program');
     }
 
     return $result;

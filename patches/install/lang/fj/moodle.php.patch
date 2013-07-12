@@ -1,0 +1,9 @@
+diff --git a/install/lang/fj/moodle.php b/install/lang/fj/moodle.php
+index 1100c27..aec6393 100644
+--- a/install/lang/fj/moodle.php
++++ b/install/lang/fj/moodle.php
+@@ -33,4 +33,3 @@ defined('MOODLE_INTERNAL') || die();
+ $string['language'] = 'Vosa';
+ $string['next'] = 'Tabana tarava';
+ $string['previous'] = 'eliu';
+-$string['reload'] = 'ucuna tale';

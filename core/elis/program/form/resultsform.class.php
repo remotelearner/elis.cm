@@ -387,7 +387,7 @@ class cmEngineForm extends cmform {
                            !$this->valid_score($data, $keymax)) {
                     $error = get_string('results_error_incomplete_score_range', self::LANG_FILE);
 
-                } else if ((int)$data[$keymin] > (int)$data[$keymax]) {
+                } else if (elis_float_comp($data[$keymin], $data[$keymax], '>')) {
                     $error = get_string('results_error_min_larger_than_max', self::LANG_FILE);
 
                 } else if (empty($data[$keyselect])) {
@@ -398,13 +398,13 @@ class cmEngineForm extends cmform {
                 // Only check the ranges if no other error has been found yet.
                 if (!$skip_empty && empty($error)) {
                     foreach ($ranges as $range) {
-                        if (($range['min'] <= $data[$keymin]) && ($data[$keymin] <= $range['max'])) {
+                        if (elis_float_comp($range['min'], $data[$keymin], '<=') && elis_float_comp($data[$keymin], $range['max'], '<=')) {
                             $error = get_string('results_error_range_overlap_min', self::LANG_FILE);
 
-                        } else if (($range['min'] <= $data[$keymax]) && ($data[$keymax] <= $range['max'])) {
+                        } else if (elis_float_comp($range['min'], $data[$keymax], '<=') && elis_float_comp($data[$keymax], $range['max'], '<=')) {
                             $error = get_string('results_error_range_overlap_max', self::LANG_FILE);
 
-                        } else if (($data[$keymin] <= $range['min']) && ($range['max'] <= $data[$keymax])) {
+                        } else if (elis_float_comp($data[$keymin], $range['min'], '<=') && elis_float_comp($range['max'], $data[$keymax], '<=')) {
                             $error = get_string('results_error_range_envelop', self::LANG_FILE);
                         }
                     }
@@ -626,7 +626,7 @@ class cmEngineForm extends cmform {
             $group = array();
 
             // Add minimum field
-            $attributes = array('size' => 5, 'maxlength' => 5, 'value' => $data->min);
+            $attributes = array('size' => 8, 'maxlength' => 8, 'value' => $data->min);
             if (! (array_key_exists('active', $this->_customdata) && $this->_customdata['active'])) {
                 $attributes['disabled'] = 'disabled';
             }

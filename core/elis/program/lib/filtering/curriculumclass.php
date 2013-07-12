@@ -400,9 +400,11 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
      * @return array The options array with customized settings
      * @uses $CFG
      * @uses $DB
+     * @uses $PAGE
      */
     function make_filter_options_custom($options, $group, $name) {
-        global $CFG, $DB;
+        global $CFG, $DB, $PAGE;
+        $jsinitcodes = array();
 
         switch ($group) {
             case 'curriculum':
@@ -421,7 +423,9 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
                         $options['numeric'] = 1;
                         $options['talias'] = $this->tables[$group]['crlm_curriculum'];
                         $options['dbfield'] = 'id';
-                        $options['onchange'] = "dependentselect_updateoptions('$id','$child','$path')";
+                        $onchange = "dependentselect_updateoptions('$id','$child','$path')";
+                        $jsinitcodes[] = $onchange;
+                        $options['onchange'] = $onchange;
                         $options['multiple'] = 'multiple';
                         break;
 
@@ -461,7 +465,9 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
                         $options['numeric'] = 1;
                         $options['talias'] = $this->tables['class']['crlm_class'];
                         $options['dbfield'] = 'courseid';
-                        $options['onchange'] = "dependentselect_updateoptions('$id','$child','$path')";
+                        $onchange = "dependentselect_updateoptions('$id','$child','$path')";
+                        $jsinitcodes[] = $onchange;
+                        $options['onchange'] = $onchange;
                         $options['multiple'] = 'multiple';
                         break;
 
@@ -531,6 +537,9 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
         $options['innerfield'] = $this->_innerfield[$group];
         $options['wrapper']   .= $this->_wrapper[$group];
 
+        foreach ($jsinitcodes as $jsinitcode) {
+            $PAGE->requires->js_init_code($jsinitcode, true);
+        }
         return $options;
     }
 }

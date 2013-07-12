@@ -1,0 +1,10 @@
+diff --git a/install/lang/ja_kids/langconfig.php b/install/lang/ja_kids/langconfig.php
+index 56798d4..70617c2 100644
+--- a/install/lang/ja_kids/langconfig.php
++++ b/install/lang/ja_kids/langconfig.php
+@@ -31,5 +31,4 @@
+ defined('MOODLE_INTERNAL') || die();
+ 
+ $string['parentlanguage'] = 'ja';
+-$string['thisdirection'] = 'ltr';
+ $string['thislanguage'] = 'Japanese - kids';

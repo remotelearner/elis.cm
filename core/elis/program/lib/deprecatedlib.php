@@ -97,19 +97,6 @@ function cm_get_param($param, $default = false) {
 }
 
 /**
- * Return an error message formatted the way the application wants it.
- *
- * @param string $message The text to display.
- * @return string The formatted message.
- */
-function cm_error($message) {
-    //global $OUTPUT;
-    /// Using Moodle...
-    return notify($message, 'notifyproblem', 'center', true);
-    //return $OUTPUT->box($message, 'errorbox');
-}
-
-/**
  * Returns a delete form formatted for the application.
  *
  * @param string $url The page to call.

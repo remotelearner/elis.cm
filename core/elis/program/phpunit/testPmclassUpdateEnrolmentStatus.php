@@ -41,14 +41,18 @@ class pmclassUpdateEnrolmentStatusTest extends elis_database_test {
      * @return array The mapping of overlay tables to components
      */
     static protected function get_overlay_tables() {
-        return array('elis_field_data_num'   => 'elis_core', //TBD:customfields
-                     course::TABLE           => 'elis_program',
-                     coursecompletion::TABLE => 'elis_program',
-                     pmclass::TABLE          => 'elis_program',
-                     student::TABLE          => 'elis_program',
-                     student_grade::TABLE    => 'elis_program',
-                     user::TABLE             => 'elis_program'
-               );
+        return array(
+            'elis_field_data_char'  => 'elis_core',
+            'elis_field_data_int'   => 'elis_core',
+            'elis_field_data_num'   => 'elis_core',
+            'elis_field_data_text'  => 'elis_core',
+            course::TABLE           => 'elis_program',
+            coursecompletion::TABLE => 'elis_program',
+            pmclass::TABLE          => 'elis_program',
+            student::TABLE          => 'elis_program',
+            student_grade::TABLE    => 'elis_program',
+            user::TABLE             => 'elis_program'
+        );
     }
 
     /**

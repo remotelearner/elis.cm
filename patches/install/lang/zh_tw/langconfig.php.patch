@@ -1,0 +1,11 @@
+diff --git a/install/lang/zh_tw/langconfig.php b/install/lang/zh_tw/langconfig.php
+index dc44dd2..4771cc5 100644
+--- a/install/lang/zh_tw/langconfig.php
++++ b/install/lang/zh_tw/langconfig.php
+@@ -30,6 +30,5 @@
+ 
+ defined('MOODLE_INTERNAL') || die();
+ 
+-$string['parentlanguage'] = '';
+ $string['thisdirection'] = 'ltr';
+ $string['thislanguage'] = '正體中文';

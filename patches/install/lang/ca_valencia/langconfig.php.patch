@@ -1,0 +1,10 @@
+diff --git a/install/lang/ca_valencia/langconfig.php b/install/lang/ca_valencia/langconfig.php
+index 34187e3..a8b433a 100644
+--- a/install/lang/ca_valencia/langconfig.php
++++ b/install/lang/ca_valencia/langconfig.php
+@@ -32,4 +32,4 @@ defined('MOODLE_INTERNAL') || die();
+ 
+ $string['parentlanguage'] = 'ca';
+ $string['thisdirection'] = 'ltr';
+-$string['thislanguage'] = 'Català (Valencià)';
++$string['thislanguage'] = 'Valencià (Català meridional)';
