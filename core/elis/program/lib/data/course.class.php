@@ -95,6 +95,36 @@ class course extends data_object_with_custom_fields {
 
     static $delete_is_complex = true;
 
+    /**
+     * Construct an ELIS course data object.
+     * @param mixed $src record source.  It can be
+     * - false: an empty object is created
+     * - an integer: loads the record that has record id equal to $src
+     * - an object: creates an object with field data taken from the members
+     *   of $src
+     * - an array: creates an object with the field data taken from the
+     *   elements of $src
+     * @param mixed $field_map mapping for field names from $src.  If it is a
+     * string, then it will be treated as a prefix for field names.  If it is
+     * an array, then it is a mapping of destination field names to source
+     * field names.
+     * @param array $associations pre-fetched associated objects (to avoid
+     * needing to re-fetch)
+     * @param boolean $from_db whether or not the record source object/array
+     * comes from the database
+     * @param array $extradatafields extra data from the $src object/array
+     * associated with the record that should be kept in the data object (such
+     * as counts of related records)
+     * @param moodle_database $database database object to use (null for the
+     * default database)
+     */
+    public function __construct($src = false, $field_map = null, array $associations = array(),
+                                $from_db = false, array $extradatafields = array(),
+                                moodle_database $database = null) {
+        $extradatafields = array_merge($extradatafields, array('curriculum'));
+        parent::__construct($src, $field_map, $associations, $from_db, $extradatafields, $database);
+    }
+
     protected function get_field_context_level() {
         return CONTEXT_ELIS_COURSE;
     }

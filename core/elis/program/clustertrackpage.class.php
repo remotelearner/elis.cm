@@ -42,28 +42,11 @@ class clustertrackpage extends deepsightpage {
     public $tab_page = 'usersetpage';
     public $data_class = 'clustertrack';
     public $parent_page;
-    public $context;
 
     /**
-     * Constructor.
-     * @param array $params An array of parameters for the page.
+     * @var string The context level of the parent association.
      */
-    public function __construct(array $params = null) {
-        $this->context = parent::_get_page_context();
-        parent::__construct($params);
-    }
-
-    /**
-     * Get the context of the current userset.
-     * @return context_elis_userset The current userset context object.
-     */
-    protected function get_context() {
-        if (!isset($this->context)) {
-            $id = required_param('id', PARAM_INT);
-            $this->context = context_elis_userset::instance($id);
-        }
-        return $this->context;
-    }
+    protected $contextlevel = 'userset';
 
     /**
      * Construct the assigned datatable.
@@ -152,28 +135,11 @@ class trackclusterpage extends deepsightpage {
     public $tab_page = 'trackpage';
     public $data_class = 'clustertrack';
     public $parent_page;
-    public $context;
 
     /**
-     * Constructor.
-     * @param array $params An array of parameters for the page.
+     * @var string The context level of the parent association.
      */
-    public function __construct(array $params = null) {
-        $this->context = parent::_get_page_context();
-        parent::__construct($params);
-    }
-
-    /**
-     * Get the context of the current track.
-     * @return context_elis_track The current track context object.
-     */
-    protected function get_context() {
-        if (!isset($this->context)) {
-            $id = required_param('id', PARAM_INT);
-            $this->context = context_elis_track::instance($id);
-        }
-        return $this->context;
-    }
+    protected $contextlevel = 'track';
 
     /**
      * Construct the assigned datatable.

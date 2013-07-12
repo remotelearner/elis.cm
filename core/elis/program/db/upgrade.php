@@ -667,5 +667,17 @@ function xmldb_elis_program_upgrade($oldversion=0) {
         upgrade_plugin_savepoint($result, 2013042900, 'elis', 'program');
     }
 
+    if ($result && $oldversion < 2013051500) {
+        // Change results engine action min/max fields from integer to float
+        $table = new xmldb_table('crlm_results_action');
+        if ($dbman->table_exists($table)) {
+            $field = new xmldb_field('minimum', XMLDB_TYPE_NUMBER, '10,5', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null, 'actiontype');
+            $dbman->change_field_type($table, $field);
+            $field = new xmldb_field('maximum', XMLDB_TYPE_NUMBER, '10,5', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, null, 'minimum');
+            $dbman->change_field_type($table, $field);
+        }
+        upgrade_plugin_savepoint($result, 2013051500, 'elis', 'program');
+    }
+
     return $result;
 }

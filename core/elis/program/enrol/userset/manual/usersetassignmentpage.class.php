@@ -44,7 +44,6 @@ abstract class userclusterbase extends deepsightpage {
     public $section = 'users';
     public $data_class = 'clusterassignment';
     public $parent_page;
-    public $context;
 
     /**
      * Determine whether the current can manage the association between a given user and userset.
@@ -96,26 +95,9 @@ class userclusterpage extends userclusterbase {
     public $tab_page = 'userpage';
 
     /**
-     * Constructor
-     * @param array $params An array of parameters for the page.
+     * @var string The context level of the parent association.
      */
-    public function __construct(array $params = null) {
-        $this->context = parent::_get_page_context();
-        parent::__construct($params);
-    }
-
-    /**
-     * Get the context of the current user.
-     *
-     * @return context_elis_user The current user context object.
-     */
-    protected function get_context() {
-        if (!isset($this->context)) {
-            $id = required_param('id', PARAM_INT);
-            $this->context = context_elis_user::instance($id);
-        }
-        return $this->context;
-    }
+    protected $contextlevel = 'user';
 
     /**
      * Construct the assigned datatable.
@@ -195,26 +177,9 @@ class clusteruserpage extends userclusterbase {
     public $tab_page = 'usersetpage';
 
     /**
-     * Constructor
-     * @param array $params An array of parameters for the page.
+     * @var string The context level of the parent association.
      */
-    public function __construct(array $params = null) {
-        $this->context = parent::_get_page_context();
-        parent::__construct($params);
-    }
-
-    /**
-     * Get the context of the current userset.
-     *
-     * @return context_elis_userset The current userset context object.
-     */
-    protected function get_context() {
-        if (!isset($this->context)) {
-            $id = required_param('id', PARAM_INT);
-            $this->context = context_elis_userset::instance($id);
-        }
-        return $this->context;
-    }
+    protected $contextlevel = 'userset';
 
     /**
      * Construct the assigned datatable.

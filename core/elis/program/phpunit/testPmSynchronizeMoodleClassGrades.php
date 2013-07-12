@@ -50,6 +50,7 @@ class pmSynchronizeMoodleClassGradesTest extends elis_database_test {
             'context' => 'moodle',
             'course' => 'moodle',
             'course_categories' => 'moodle',
+            'course_modules' => 'moodle',
             'enrol' => 'moodle',
             //prevent events magic from happening
             'events_handlers' => 'moodle',
@@ -2173,5 +2174,60 @@ class pmSynchronizeMoodleClassGradesTest extends elis_database_test {
         $params['completestatusid'] = STUSTATUS_NOTCOMPLETE;
         $params['grade']            = 0.00000;
         $this->assertTrue($DB->record_exists(student::TABLE, $params));
+    }
+
+    /**
+     * Test the grade synchronisation when there are duplicate course_module.idnumber values present.
+     */
+    public function test_sync_with_duplicate_course_module_idnumbers() {
+        global $CFG, $DB;
+
+        $this->load_csv_data();
+
+        $olddebug        = null;
+        $olddebugdisplay = null;
+
+        // Developer debugging must be enabled and displayed for this test to work.
+        if ($CFG->debug < DEBUG_DEVELOPER) {
+            $olddebug = $CFG->debug;
+            $CFG->debug = DEBUG_DEVELOPER;
+        }
+        if ($CFG->debugdisplay == false) {
+            $olddebugdisplay = false;
+            $CFG->debugdisplay = true;
+        }
+
+        // Set up grade item and completion item
+        $itemid = $this->create_grade_item('duplicateidnumber');
+        $this->create_grade_grade($itemid, 100, 75);
+        $completionid = $this->create_course_completion('duplicateidnumber');
+
+        // Insert a couple duplicate course_module 'idnumber' balues but for different course ID values.
+        $cmobj = new stdClass;
+        $cmobj->course   = 1000;
+        $cmobj->module   = 20;
+        $cmobj->instance = 100;
+        $cmobj->section  = 1;
+        $cmobj->idnumber = 'duplicateidnumber';
+        $DB->insert_record('course_modules', $cmobj);
+
+        $cmobj->course = 2000;
+        $DB->insert_record('course_modules', $cmobj);
+
+        // We're using an output buffer here because the following function will throw a debugging error if more than one record is found.
+        ob_start();
+        pm_synchronize_moodle_class_grades();
+        $buffer = ob_get_contents();
+        ob_end_clean();
+
+        $this->assertEquals('', $buffer);
+
+        // Restore old values if we modified them in this test.
+        if ($olddebug != null) {
+            $CFG->debug = $olddebug;
+        }
+        if ($olddebugdisplay != null) {
+            $CFG->debugdisplay = $olddebugdisplay;
+        }
     }
 }

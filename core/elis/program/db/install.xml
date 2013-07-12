@@ -564,8 +564,8 @@
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="resultsid"/>
         <FIELD NAME="resultsid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="id" NEXT="actiontype"/>
         <FIELD NAME="actiontype" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="resultsid" NEXT="minimum"/>
-        <FIELD NAME="minimum" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="false" SEQUENCE="false" PREVIOUS="actiontype" NEXT="maximum"/>
-        <FIELD NAME="maximum" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="false" SEQUENCE="false" PREVIOUS="minimum" NEXT="trackid"/>
+        <FIELD NAME="minimum" TYPE="float" LENGTH="10" NOTNULL="true" DECIMALS="5" UNSIGNED="true" SEQUENCE="false" PREVIOUS="actiontype" NEXT="maximum"/>
+        <FIELD NAME="maximum" TYPE="float" LENGTH="10" NOTNULL="true" DECIMALS="5" UNSIGNED="true" SEQUENCE="false" PREVIOUS="minimum" NEXT="trackid"/>
         <FIELD NAME="trackid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="maximum" NEXT="classid"/>
         <FIELD NAME="classid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="trackid" NEXT="fieldid"/>
         <FIELD NAME="fieldid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="classid" NEXT="fielddata"/>

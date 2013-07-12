@@ -29,6 +29,7 @@ require_once(dirname(__FILE__).'/../../../../config.php');
 global $CFG;
 require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 require_once elis::lib('data/data_object.class.php');
+require_once elispm::lib('lib.php');
 require_once elispm::lib('data/userset.class.php');
 
 class clusterassignment extends elis_data_object {

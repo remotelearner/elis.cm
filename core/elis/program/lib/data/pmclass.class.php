@@ -753,8 +753,8 @@ class pmclass extends data_object_with_custom_fields {
 
         // Check for course id one more time
         if (!empty($this->courseid) or 0 !== intval($this->courseid)) {
-            $this->startdate = !isset($this->startdate) ? time() : $this->startdate;
-            $this->enddate = !isset($this->enddate) ? time() : $this->enddate;
+            $this->startdate = !isset($this->startdate) ? 0 : $this->startdate;
+            $this->enddate = !isset($this->enddate) ? 0 : $this->enddate;
 
             $this->save();
         }

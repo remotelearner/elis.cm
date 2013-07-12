@@ -891,6 +891,7 @@ $string['passed'] = 'Passed';
 $string['phone2'] = 'Phone 2';
 $string['pluginname'] = 'ELIS Program';
 $string['pm_date_format'] = '%b %d, %Y';
+$string['pm_datetime_format'] = '%b %d, %Y %r';
 $string['pm_duplicate_idnumber_changed'] = 'Generated new idnumber for user with username {$a->username} as shown here: {$a->url}.
 ';
 $string['pm_duplicate_idnumber_fail'] = 'Could not change the idnumber of one or more duplicate Program Management users with idnumber of {$a}.';

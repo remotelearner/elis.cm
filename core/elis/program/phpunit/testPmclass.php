@@ -1,8 +1,7 @@
 <?php
-
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2012 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,10 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @package    elis
- * @subpackage core
+ * @subpackage programmanagement
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
@@ -92,5 +91,133 @@ class accesslibTest extends elis_database_test {
         );
 
         $this->assertEquals($expected,$listing);
+    }
+
+    /**
+     * Data provider for test method test_pmclass_auto_create_class()
+     * for ELIS-6854
+     * @return array  parameters for test method
+     *                format: array(
+     *                    array(pmclassdata),
+     *                    array(autocreateparams),
+     *                    expected auto_create_class() return: false => false, true => !false
+     *                    newclass startdate (if applicable)
+     *                    newclass enddate (if applicable)
+     *                )
+     */
+    public function pmclass_auto_create_dataprovider() {
+        return array(
+            array( // no courseid => acc returns false
+                array(
+                    'idnumber' => 'ci-elis-6854a',
+                    'maxstudents' => 12
+                ),
+                array(
+                ),
+                false, // accreturn
+                null,
+                null
+            ),
+            array( // no courseid => acc returns false
+                array(
+                    'idnumber' => 'ci-elis-6854b',
+                    'maxstudents' => 12,
+                    'startdate' => 1234567,
+                    'enddate' => 2345678,
+                ),
+                array(
+                ),
+                false, // accreturn
+                null,
+                null
+            ),
+            array( // no courseid => acc returns false
+                array(
+                    'idnumber' => 'ci-elis-6854c',
+                    'maxstudents' => 12
+                ),
+                array(
+                    'startdate' => 1234567,
+                    'enddate' => 2345678,
+                ),
+                false, // accreturn
+                null,
+                null
+            ),
+            array( // courseid => acc returns id
+                array(
+                    'idnumber' => 'ci-elis-6854d',
+                    'courseid' => 2,
+                    'maxstudents' => 12
+                ),
+                array(
+                ),
+                true,
+                0,
+                0
+            ),
+            array( // courseid in extra params => acc returns id
+                array(
+                    'idnumber' => 'ci-elis-6854e',
+                    'maxstudents' => 12
+                ),
+                array(
+                    'courseid' => 2
+                ),
+                true,
+                0,
+                0
+            ),
+            array( // courseid => acc returns id
+                array(
+                    'idnumber' => 'ci-elis-6854f',
+                    'courseid' => 2,
+                    'maxstudents' => 12,
+                    'startdate' => 1234567,
+                    'enddate' => 2345678,
+                ),
+                array(
+                ),
+                true,
+                1234567,
+                2345678
+            ),
+            array( // courseid => acc returns id
+                array(
+                    'idnumber' => 'ci-elis-6854g',
+                    'courseid' => 2,
+                    'maxstudents' => 12
+                ),
+                array(
+                    'startdate' => 1234567,
+                    'enddate' => 2345678,
+                ),
+                true,
+                1234567,
+                2345678
+            ),
+        );
+    }
+
+    /**
+     * Method to test pmclass:auto_create_class()
+     * for ELIS-6854
+     * @dataProvider pmclass_auto_create_dataprovider
+     * @param array  $pmclassdata       data to pass to pmclass contructor
+     * @param array  $autocreateparams  data to pass to pmclass::auto_create_class
+     * @param bool   $accreturn         false if pmclass::auto_create_class should return false, true otherwise
+     * @param int    $startdate         expected new class startdate
+     * @param int    $enddate           expected new class enddate
+     */
+    public function test_pmclass_auto_create_class($pmclassdata, $autocreateparams, $accreturn, $startdate, $enddate) {
+        $pmclass = new pmclass((object)$pmclassdata);
+        $realaccret = $pmclass->auto_create_class($autocreateparams);
+        if ($accreturn) {
+            $this->assertTrue(!empty($realaccret));
+            $this->assertEquals($startdate, $pmclass->startdate);
+            $this->assertEquals($enddate, $pmclass->enddate);
+        } else {
+            $this->assertFalse($realaccret);
+        }
     }
 }

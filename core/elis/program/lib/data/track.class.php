@@ -128,6 +128,15 @@ class track extends data_object_with_custom_fields {
 
         $curcourse = $this->_db->get_recordset_sql($sql, $params);
 
+        $classparams = array();
+        // ELIS-6854: TBD - should new classes use track's start/end dates?
+        if (!empty($this->startdate)) {
+            $classparams['startdate'] = $this->startdate;
+        }
+        if (!empty($this->enddate)) {
+            $classparams['enddate'] = $this->enddate;
+        }
+
         // For every course of the curricula determine which ones need -
         // to have their auto enrol flag set
         foreach ($curcourse as $recid => $curcourec) {
@@ -170,7 +179,8 @@ class track extends data_object_with_custom_fields {
             }
 
             // Create class
-            if (!($classid = $classojb->auto_create_class(array('courseid' => $curcourec->courseid)))) {
+            $classparams['courseid'] = $curcourec->courseid;
+            if (!($classid = $classojb->auto_create_class($classparams))) {
                 cm_error(get_string('error_creating_class', 'elis_program', $curcourec->name));
                 continue;
             }
@@ -180,9 +190,11 @@ class track extends data_object_with_custom_fields {
                 moodle_attach_class($classid, 0, '', false, false, true);
             }
 
-            $trackclassobj = new trackassignment(array('courseid' => $curcourec->courseid,
-                                                       'trackid'  => $this->id,
-                                                       'classid'  => $classojb->id));
+            $trackclassobj = new trackassignment(array(
+                'courseid' => $curcourec->courseid,
+                'trackid'  => $this->id,
+                'classid'  => $classojb->id
+            ));
 
             // Set auto-enrol flag
             if ($autoenrol) {
@@ -197,9 +209,11 @@ class track extends data_object_with_custom_fields {
             if (!empty(elis::$config->elis_program->userdefinedtrack)) {
                 $trkid = $this->create_default_track();
 
-                $trackclassobj = new trackassignment(array('courseid' => $curcourec->courseid,
-                                                           'trackid'  => $trkid,
-                                                           'classid'  => $classojb->id));
+                $trackclassobj = new trackassignment(array(
+                    'courseid' => $curcourec->courseid,
+                    'trackid'  => $trkid,
+                    'classid'  => $classojb->id
+                ));
 
                 // Set auto-enrol flag
                 if ($autoenrol) {
