@@ -1,9 +1,0 @@
-diff --git a/install/lang/so/admin.php b/install/lang/so/admin.php
-index cfbc7a4..046abc0 100644
---- a/install/lang/so/admin.php
-+++ b/install/lang/so/admin.php
-@@ -33,4 +33,3 @@ defined('MOODLE_INTERNAL') || die();
- $string['clianswerno'] = 'n';
- $string['cliansweryes'] = 'y';
- $string['cliincorrectvalueretry'] = 'Qiime khalad ah, fadla mar kale isky day';
--$string['clitypevalue'] = 'nooc qiime';

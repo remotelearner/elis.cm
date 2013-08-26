@@ -679,5 +679,12 @@ function xmldb_elis_program_upgrade($oldversion=0) {
         upgrade_plugin_savepoint($result, 2012062905, 'elis', 'program');
     }
 
+    // ELIS-8528: remove orphaned LOs
+    if ($result && $oldversion < 2012062906) {
+        $where = 'NOT EXISTS (SELECT \'x\' FROM {crlm_course} cc WHERE cc.id = {crlm_course_completion}.courseid)';
+        $DB->delete_records_select('crlm_course_completion', $where);
+        upgrade_plugin_savepoint($result, 2012062906, 'elis', 'program');
+    }
+
     return $result;
 }

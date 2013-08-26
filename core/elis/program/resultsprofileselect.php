@@ -47,7 +47,7 @@ $params = $DB->get_field(field_owner::TABLE, 'params', $criteria);
 $config = unserialize($params);
 
 if ($config['control'] == 'menu') {
-    $choices = explode("\r\n", $config['options']);
+    $choices = explode("\n", $config['options']);
     $options = array_combine($choices, $choices);
     asort($options);
     $field = html_writer::select($options, $name);

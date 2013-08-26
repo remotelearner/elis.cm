@@ -514,8 +514,9 @@ class user extends data_object_with_custom_fields {
      */
     static function get_current_classes_in_curriculum($userid, $curid) {
         global $DB;
+        // ELIS-8525: added cls.* as tables require startdate, enddate ...
         $sql = 'SELECT DISTINCT CONCAT(curcrs.id, ".", cls.id),
-                       curcrs.*, crs.name AS coursename, cls.id AS classid
+                       curcrs.*, crs.name AS coursename, cls.id AS classid, cls.*
                   FROM {'.curriculumcourse::TABLE.'} curcrs
                   JOIN {'.course::TABLE.'} crs ON curcrs.courseid = crs.id
                        -- Next two are to limit to currently enrolled courses

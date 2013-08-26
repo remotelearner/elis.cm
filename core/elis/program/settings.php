@@ -139,10 +139,13 @@ if ($ADMIN->fulltree) {
     $crsroles[NO_ROLE_ID] = get_string('noroleselected', 'elis_program');
     // Get roles assignable at Moodle Course context ...
     pm_get_select_roles_for_contexts($crsroles, array(CONTEXT_COURSE));
-    $crscontacts = explode(',', $CFG->coursecontact);
-    foreach ($crsroles as $id => $unused) {
-        if ($id != NO_ROLE_ID && !in_array($id, $crscontacts)) { // TBD: limit to Course Contacts since only these are unassigned ?
-            unset($crsroles[$id]);
+    if (!empty($CFG->coursecontact)) {
+        $crscontacts = explode(',', $CFG->coursecontact);
+        foreach ($crsroles as $id => $unused) {
+            // TBD: limit to Course Contacts since only these are unassigned ?
+            if ($id != NO_ROLE_ID && !in_array($id, $crscontacts)) {
+                unset($crsroles[$id]);
+            }
         }
     }
     $settings->add(new admin_setting_configselect('elis_program/default_instructor_role',

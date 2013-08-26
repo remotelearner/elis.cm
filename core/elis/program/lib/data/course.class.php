@@ -653,7 +653,8 @@ class course extends data_object_with_custom_fields {
         //clean up associated records
         curriculumcourse::delete_records($filter, $this->_db);
         coursetemplate::delete_records($filter, $this->_db);
-
+        // ELIS-8528: Remove LOs/completion elements.
+        coursecompletion::delete_records($filter, $this->_db);
         parent::delete();
 
         $context = context_elis_course::instance($this->id);
