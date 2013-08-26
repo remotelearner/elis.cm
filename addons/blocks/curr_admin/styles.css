@@ -1,0 +1,69 @@
+/*
+  Curriculum Admin Menu
+*/
+
+/* The spacer link seems to jump to the top of the page */
+/* Changed display: none; (broken in IE8) to outline: 0;
+.block_curr_admin .ygtvspacer {
+    outline: 0;
+}
+
+/* General display settings */
+.block_curr_admin .tree_icon {
+    display: inline-block;
+    margin-left: 3px;
+}
+
+.block_curr_admin .tree_icon a {
+
+}
+
+.block_curr_admin .block_curr_admin_nonjs .categorytext {
+    margin-left: 22px;
+}
+
+.block_curr_admin .block_curr_admin_nonjs {
+    padding-left: 0px;
+    margin-left: 0px;
+    margin: 0px;
+}
+
+.block_curr_admin .block_curr_admin_nonjs ul {
+    padding-left: 20px;
+}
+
+/* Category image */
+.block_curr_admin .block_curr_admin_nonjs .category {
+    background: transparent url([[pix:block_curr_admin|folder]]) no-repeat;
+    display: block;
+}
+
+.block_curr_admin .curr_integrationpoint {
+    background: transparent url([[pix:elis_program|integrationpoint]]) no-repeat;
+}
+
+.block_curr_admin .curr_managetags {
+    background: transparent url([[pix:elis_program|tag]]) no-repeat;
+}
+
+.block_curr_admin .curr_manageenvironments {
+    background: transparent url([[pix:elis_program|environment]]) no-repeat;
+}
+
+
+.block_curr_admin [class*='elisicon-']:before {
+    font-size: 16px;
+    opacity: 0.45;
+    margin-right: 3px;
+    vertical-align: middle;
+    /* IE8 */
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=45)";
+    filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=45);
+}
+
+.block_curr_admin [class*='elisicon-']:hover:before {
+    opacity: 1;
+    /* IE8 */
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=100)";
+    filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=100);
+}

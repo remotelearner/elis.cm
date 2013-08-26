@@ -1,0 +1,7 @@
+id,entity_id,entity_type,cert_border,cert_seal,cert_template,disable,timecreated,timemodified
+1,1,COURSE,Fancy1-black.jpg,Fancy.png,default.php,0,1358986564,1358986564
+2,2,COURSE,Fancy1-blue.jpg,Ugly.png,default2.php,1,1359005605,1359130780
+3,3,COURSE,Fancy1-green.jpg,Quality.png,default3.php,0,1359049739,1359069712
+4,4,COURSE,Fancy1-red.jpg,horrid.png,default4.php,0,1359049739,1359069712
+5,5,COURSE,Fancy1-black.jpg,Amazing.png,default5.php,0,1359049739,1359069712
+6,100,COURSE,Fancy1-blue.jpg,nice.png,default6.php,0,1358049739,1358869712

@@ -1,0 +1,5 @@
+id,curid,idnumber,name,description,startdate,enddate,defaulttrack,timecreated,timemodified
+100,5,TRK100,Test Track 100,A test track for phpunit,100,200,0,300,400
+101,5,TRK101,Test Track 101,A test track for phpunit,110,210,0,310,410
+102,6,TRK102,Test Track 102,A test track for phpunit,120,220,0,320,420
+103,6,TRK103,Test Track 103,A test track for phpunit,130,230,0,330,430

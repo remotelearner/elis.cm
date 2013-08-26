@@ -1,0 +1,3 @@
+id,name,code,idnumber,syllabus,documents,lengthdescription,length,credits,environmentid,cost,version
+3,Test Course 0,__test_course_code_0__,__test__course__0__,Syllabus0,Documents0,"Length Description"0,5,1,1,100,1
+100,Test Course,__test_course_code__,__test__course__,Syllabus,Documents,"Length Description",5,1,1,100,1

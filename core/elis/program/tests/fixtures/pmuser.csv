@@ -1,0 +1,3 @@
+id,username,password,idnumber,firstname,lastname,email,email2,phone,phone2,city,state,country,language
+103,__phpunit_test1__,12345678,__idnumber__phpunit_test1__,User,Test1,test1@phpunit.example.com,,123-4567,,Somewhere,Something,CA,EN
+104,__phpunit_test2__,12345678,__idnumber__phpunit_test2__,User,Test2,test2@phpunit.example.com,,123-4567,,Somewhere,Something,CA,EN

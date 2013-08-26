@@ -1,0 +1,11 @@
+id,shortname,name,datatype,categoryid,sortorder,multivalued,forceunique,params
+101,sometext,Some text entry,char,1,1,0,0,a:0:{}
+102,somecheckbox,Some checkbox,int,1,2,0,0,a:0:{}
+103,somedatetime,Some datetime,int,1,3,0,0,a:0:{}
+104,somemenu,Some menu,char,1,4,0,0,a:0:{}
+105,sometextarea,Some text area,text,1,5,0,0,a:0:{}
+106,sometextfrompm,Some text entry from PM,char,1,6,0,0,a:0:{}
+107,somecheckboxfrompm,Some checkbox from PM,int,1,7,0,0,a:0:{}
+108,somedatetimefrompm,Some datetime from PM,int,1,8,0,0,a:0:{}
+109,somemenufrompm,Some menu from PM,char,1,9,0,0,a:0:{}
+110,sometextareafrompm,Some text area from PM,text,1,10,0,0,a:0:{}
