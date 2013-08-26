@@ -558,10 +558,6 @@ class generalized_filter_clustertree extends generalized_filter_type {
          */
         $mform->addElement('html', '<style>@import url("'.$CFG->wwwroot.'/lib/yui/2.9.0/build/treeview/assets/skins/sam/treeview-skin.css");</style>'.$js);
 
-        //include our custom code that handles the YUI Treeview menu
-        //$PAGE->requires->js('/elis/program/js/clustertree.js');
-        echo "<script type=\"text/javascript\" src=\"{$CFG->wwwroot}/elis/program/js/clustertree.js\"></script>";
-
         /**
          * Get set up necessary CSS classes
          */
@@ -674,19 +670,7 @@ class generalized_filter_clustertree extends generalized_filter_type {
             $mform->setDefault($this->_uniqueid .'_usingdropdown', 1);
         }
 
-        $module = array(
-            'name'     => 'clustertree',
-            'fullpath' => '/elis/program/js/clustertree_module.js',
-            'requires' => array(
-                'yui2-connection',
-                'yui2-dom',
-                'yui2-event',
-                'yui2-json',
-                'yui2-treeview'
-            )
-        );
-        $PAGE->requires->js_module($module);
-        $initcallopts = array(
+        $initclustertreeopts = array(
             $CFG->httpswwwroot,
             $tree->instanceid,
             $this->_uniqueid,
@@ -696,7 +680,7 @@ class generalized_filter_clustertree extends generalized_filter_type {
             $this->options['dropdown_button_text'],
             $this->options['tree_button_text']
         );
-        $PAGE->requires->js_init_call('M.clustertree.init_tree', $initcallopts, true, $module);
+        $PAGE->requires->yui_module('moodle-elis_program-clustertree', 'M.elis_program.init_clustertree', $initclustertreeopts, null, true);
 
         // cluster tree
         $clustertreehtml = '<div class="fitem"><div class="fitemtitle"></div>'.
@@ -712,19 +696,7 @@ class generalized_filter_clustertree extends generalized_filter_type {
         //list of explicitly unselected elements
         $mform->addElement('hidden', $this->_uniqueid .'_clrunexpanded');
 
-        /**
-         * Work needed to initialize the state of necessary components
-         */
-        //parameters needed
-        $params = array($this->options['report_id'],
-                        $this->_uniqueid,
-                        $this->options['dropdown_button_text'],
-                        $this->options['tree_button_text']);
-        $param_string = implode('", "', $params);
-
-        $mform->addElement('button', $this->_uniqueid .'_toggle', '',
-                           array('onclick' =>
-                                 'clustertree_toggle_tree("'. $param_string .'")'));
+        $mform->addElement('button', $this->_uniqueid.'_toggle', '');
 
         // close hacked nested fieldset
         if ($this->options['fieldset']) {

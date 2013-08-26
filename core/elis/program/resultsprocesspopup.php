@@ -1,9 +1,7 @@
 <?php
 /**
- * General class for displaying pages in the curriculum management system.
- *
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2010 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,12 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage curriculummanagement
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2010 Remote Learner.net Inc http://www.remote-learner.net
- *
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
  */
 
 require_once dirname(__FILE__) . '/lib/setup.php';
@@ -58,9 +54,15 @@ if (! has_capability($capability, $context)) {
 $object = $DB->get_record($table, array('id' => $context->instanceid), $fields);
 $source = $CFG->wwwroot .'/elis/program/resultsmanualprocess.php';
 
-$PAGE->requires->string_for_js('results_done', RESULTS_ENGINE_LANG_FILE);
-$PAGE->requires->yui_module('yui-min', 'M.results_engine.process', array($source, $id));
-$PAGE->requires->js('/elis/program/js/results_engine/manual.js');
+$PAGE->requires->yui_module('moodle-elis_program-resultsengine', 'M.elis_program.init_processmanual',
+        array(
+                array(
+                    'source' => $source,
+                    'id' => $id,
+                    'message' => get_string('results_done', RESULTS_ENGINE_LANG_FILE)
+                )
+            )
+);
 $PAGE->set_context($context);
 $PAGE->set_url($_SERVER['PHP_SELF']);
 $PAGE->set_pagelayout('popup');

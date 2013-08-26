@@ -472,7 +472,8 @@ abstract class managementpage extends pm_page {
             'calculator' => 'elisicon-resultsengine',
             'report' => 'elisicon-report',
             'edit' => 'elisicon-edit',
-            'delete' => 'elisicon-remove'
+            'delete' => 'elisicon-remove',
+            'certificate' => 'elisicon-certificate',
         );
         foreach ($this->tabs as $tab) {
             $tab = $this->add_defaults_to_tab($tab);

@@ -42,7 +42,7 @@ If this setting is unset, ELIS will only unenroll users who were originally enro
 $string['force_unenrol_in_moodle_setting'] = 'Force unenrollment in Moodle course';
 $string['health_duplicate'] = 'Duplicate enrollment records';
 $string['health_duplicatedesc'] = 'There were {$a} duplicate enrollments records in the ELIS enrollments table.';
-$string['health_duplicatesoln'] = 'The duplicate enrollments need to be removed directly from the database. <b>DO NOT</b> try to remove them via the UI.<br/><br/> Recommended to escalate to development for solution.';
+$string['health_duplicatesoln'] = '<p>Run the script fix_duplicate_enrolments.php to remove all duplicate enrollment records.</p>';
 $string['moodleenrol_subj'] = 'Ready to enroll in {$a->idnumber}.';
 $string['notice_usertrack_deleted'] = 'Unenrolled the user from track: {$a->trackid}';
 $string['notifyclassenrolmessage'] = 'Message template for class instance enrollment';

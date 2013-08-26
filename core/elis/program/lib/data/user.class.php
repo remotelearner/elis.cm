@@ -514,8 +514,9 @@ class user extends data_object_with_custom_fields {
      */
     static function get_current_classes_in_curriculum($userid, $curid) {
         global $DB;
+        // ELIS-8525: added cls.* as tables require startdate, enddate ...
         $sql = 'SELECT DISTINCT CONCAT(curcrs.id, ".", cls.id),
-                       curcrs.*, crs.name AS coursename, cls.id AS classid
+                       curcrs.*, crs.name AS coursename, cls.id AS classid, cls.*
                   FROM {'.curriculumcourse::TABLE.'} curcrs
                   JOIN {'.course::TABLE.'} crs ON curcrs.courseid = crs.id
                        -- Next two are to limit to currently enrolled courses
@@ -1049,8 +1050,7 @@ class user extends data_object_with_custom_fields {
                 //the link
                 $show_all_text = get_string('dashboard_show_all_link', 'elis_program');
                 $parameter = $programid == false ? 'false' : $programid;
-                $attributes = array('href' => '#',
-                                    'onclick' => 'toggleCompletedCoursesViaLink('.$parameter.');return false;');
+                $attributes = array('href' => '#', 'name' => 'curriculum-'.$parameter);
                 $output .= html_writer::tag('a', $show_all_text, $attributes);
             }
 
@@ -1075,9 +1075,6 @@ class user extends data_object_with_custom_fields {
         global $CFG, $OUTPUT, $DB, $PAGE;
 
         require_once elispm::lib('data/curriculumstudent.class.php');
-
-        $PAGE->requires->js('/elis/program/js/util.js');
-        $PAGE->requires->js('/elis/program/js/dashboard.js');
 
         $content         = '';
         $archive_var     = '_elis_program_archive';
@@ -1161,14 +1158,23 @@ class user extends data_object_with_custom_fields {
                     //grey out toggle button if there are not hidden courses
                     $enabled = $completecoursesmap[$curricula['id']] > 0 ? 'true' : 'false';
 
-                    //javascript code for toggling display of completed courses
-                    $jscode = 'toggleCompletedInit("curriculum'.$curricula['id'].'script", '
-                            . '"curriculum'.$curricula['id'].'completedbutton", "'
-                            . get_string('showcompletedcourses', 'elis_program').'", "'
-                            . get_string('hidecompletedcourses', 'elis_program').'", "'
-                            . get_string('showcompletedcourses', 'elis_program').'", "curriculum-'.$curricula['id'].'", '
-                            . $displayed.', '.$enabled.');';
-                    $PAGE->requires->js_init_code($jscode, true);
+                    // Javascript code for toggling display of completed courses
+                    $PAGE->requires->yui_module('moodle-elis_program-dashboard', 'M.elis_program.init_togglecomplete',
+                            array(
+                                    array(
+                                        'addbefore' => 'curriculum'.$curricula['id'].'script',
+                                        'divid' => 'curriculum'.$curricula['id'].'completedbutton',
+                                        'buttonlabel' => get_string('showcompletedcourses', 'elis_program'),
+                                        'hidetext' => get_string('hidecompletedcourses', 'elis_program'),
+                                        'showtext' => get_string('showcompletedcourses', 'elis_program'),
+                                        'element' => 'curriculum-'.$curricula['id'],
+                                        'displayed' => $displayed,
+                                        'enabled' => $enabled,
+                                        'wwwroot' => $CFG->wwwroot,
+                                        'currid' => $curricula['id']
+                                    )
+                            )
+                    );
                 }
 
                 if (in_array($curricula['id'],$collapsed_array)) {
@@ -1179,11 +1185,19 @@ class user extends data_object_with_custom_fields {
                     $extra_class = '';
                 }
 
-                $jscode = 'toggleVisibleInitWithState("curriculum'.$curricula['id'].'script", '
-                        . '"curriculum'.$curricula['id'].'button", "'
-                        . $button_label.'", "'.get_string('hidecourses','elis_program').'", "'
-                        . get_string('showcourses','elis_program').'", "curriculum-'.$curricula['id'].'");';
-                $PAGE->requires->js_init_code($jscode, true);
+                $PAGE->requires->yui_module('moodle-elis_program-dashboard', 'M.elis_program.init_togglevisibleinitstate',
+                        array(
+                                array(
+                                    'addbefore' => 'curriculum'.$curricula['id'].'script',
+                                    'nameattr' => 'curriculum'.$curricula['id'].'button',
+                                    'buttonlabel' => $button_label,
+                                    'hidetext' => get_string('hidecourses', 'elis_program'),
+                                    'showtext' => get_string('showcourses', 'elis_program'),
+                                    'element' => 'curriculum-'.$curricula['id'],
+                                    'wwwroot' => $CFG->wwwroot
+                                )
+                        )
+                );
 
                 $heading = '<div class="clearfix"></div>'
                          . '<div style="'.$float_style.'"><div id="curriculum'.$curricula['id'].'script"></div></div>'
@@ -1231,13 +1245,23 @@ class user extends data_object_with_custom_fields {
                     //grey out toggle button if no non-program courses are hidden
                     $enabled = $completecourses > 0 ? 'true' : 'false';
 
-                    //javascript code for toggling display of completed courses
-                    $js = 'toggleCompletedInit("noncurriculascript", "noncurriculacompletedbutton", "'
-                           .get_string('showcompletedcourses', 'elis_program').'", "'
-                           .get_string('hidecompletedcourses', 'elis_program').'", "'
-                           .get_string('showcompletedcourses', 'elis_program').'", "curriculum-na", '
-                           .$displayed.', '.$enabled.');';
-                    $PAGE->requires->js_init_code($js, true);
+                    // Javascript code for toggling display of completed courses
+                    $PAGE->requires->yui_module('moodle-elis_program-dashboard', 'M.elis_program.init_togglecomplete',
+                            array(
+                                    array(
+                                        'addbefore' => 'noncurriculascript',
+                                        'nameattr' => 'noncurriculacompletedbutton',
+                                        'buttonlabel' => get_string('showcompletedcourses', 'elis_program'),
+                                        'hidetext' => get_string('hidecompletedcourses', 'elis_program'),
+                                        'showtext' => get_string('showcompletedcourses', 'elis_program'),
+                                        'element' => 'curriculum-na',
+                                        'displayed' => $displayed,
+                                        'enabled' => $enabled,
+                                        'wwwroot' => $CFG->wwwroot,
+                                        'currid' => 'na'
+                                    )
+                            )
+                    );
                 }
 
                 if (in_array('na',$collapsed_array)) {
@@ -1248,10 +1272,20 @@ class user extends data_object_with_custom_fields {
                     $extra_class = '';
                 }
 
-                $jscode = 'toggleVisibleInitWithState("noncurriculascript", "noncurriculabutton", "'
-                                 . $button_label . '", "' . get_string('hidecourses','elis_program') . '", "'
-                                 . get_string('showcourses','elis_program') . '", "curriculum-na");';
-                $PAGE->requires->js_init_code($jscode, true);
+                // Javascript code for toggling display of completed courses
+                $PAGE->requires->yui_module('moodle-elis_program-dashboard', 'M.elis_program.init_togglevisibleinitstate',
+                        array(
+                                array(
+                                    'addbefore' => 'noncurriculascript',
+                                    'nameattr' => 'noncurriculabutton',
+                                    'buttonlabel' => $button_label,
+                                    'hidetext' => get_string('hidecourses', 'elis_program'),
+                                    'showtext' => get_string('showcourses', 'elis_program'),
+                                    'element' => 'curriculum-na',
+                                    'wwwroot' => $CFG->wwwroot
+                                )
+                        )
+                );
 
                 $heading = '<div class="clearfix"></div>'
                          . '<div style="'.$float_style.'"><div id="noncurriculascript"></div></div>'

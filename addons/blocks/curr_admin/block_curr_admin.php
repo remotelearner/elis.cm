@@ -120,9 +120,6 @@ class block_curr_admin extends block_base {
             unset($USER->currentitypath);
         }
 
-        // include our custom code that handles the YUI Treeview menu
-        $PAGE->requires->js('/elis/program/js/menuitem.js');
-
         // Include Icon CSS.
         $PAGE->requires->css('/elis/program/icons.css');
 
@@ -328,27 +325,7 @@ class block_curr_admin extends block_base {
         $this->content->text = $tree->convert_to_markup();
         $this->content->footer = '';
 
-        $module = array(
-            'name'     => 'block_curr_admin',
-            'fullpath' => '/blocks/curr_admin/menumodule.js',
-            'requires' => array(
-                'yui2-json',
-                'yui2-dom',
-                'yui2-event',
-                'yui2-treeview',
-                'yui2-connection'
-        ));
-        $PAGE->requires->js_module($module);
-        $PAGE->requires->js_init_call(
-                'M.block_curr_admin.init_tree',
-                array(
-                    $tree->get_js_object(),
-                    $CFG->httpswwwroot
-                ),
-                true,
-                $module
-        );
-
+        $PAGE->requires->yui_module('moodle-elis_program-menuitem', 'M.elis_program.init_menuitem', array($tree->get_js_object(), $CFG->httpswwwroot), null, true);
         return $this->content;
     }
 

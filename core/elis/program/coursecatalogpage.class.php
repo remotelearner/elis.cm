@@ -108,27 +108,27 @@ class coursecatalogpage extends pm_page {
     public function build_navbar_add() { // get_navigation_add()
         $crsid = cm_get_param('crsid', 0);
         $crs   = new course($crsid);
-
-        //$action = optional_param('action', 'default', PARAM_CLEAN);
-        $page = $this->get_new_page(); //new coursecatalogpage(array());
-        $fullurl = $page->url;
-        $page->url->remove_params('crsid');
-        $this->navbar->add(get_string('currentcourses', 'elis_program'),
-                           $page->url);
-        //$page = $this->get_new_page(array('action' => $action, 'crsid' => $crsid), true); //new coursecatalogpage(array());
-        $this->navbar->add(get_string('choose_class_course', 'elis_program', $crs->name),
-                           $fullurl);
-
+        $page = new coursecatalogpage(array('action' => 'available'));
+        $this->navbar->add(get_string('availablecourses', 'elis_program'), $page->url);
+        $this->navbar->add(get_string('choose_class_course', 'elis_program', $crs->name), $this->get_new_page()->url);
     }
 
     function display_add() { // action_add
         global $OUTPUT;
         $crsid = cm_get_param('crsid', 0);
+        $sort = $this->optional_param('sort', 'startdate', PARAM_ALPHA);
+        $dir = $this->optional_param('dir', 'ASC', PARAM_ALPHA);
+        if ($sort == 'timeofday') {
+            $sort = 'starttimehour';
+        }
 
-        $classes = pmclass_get_listing('startdate', 'ASC', 0, 0, '', '', $crsid, true);
+        $this->include_js();
+
+        $classes = pmclass_get_listing($sort, $dir, 0, 0, '', '', $crsid, true);
         if ($classes->valid() === true) {
-            $table = new addclasstable($classes);
-            $table->print_table();
+            echo html_writer::tag('div', '', array('id' => 'chooseclass', 'style' => 'overflow: auto'));
+            $table = new addclasstable($classes, new moodle_url(htmlspecialchars_decode($this->url)));
+            $table->print_yui_table('chooseclass');
         } else {
             echo $OUTPUT->heading(get_string('no_classes_available', 'elis_program'));
         }
@@ -165,7 +165,7 @@ class coursecatalogpage extends pm_page {
                     echo "<div id=\"$usercur->curid\"></div>";
 
                     $table = new waitlisttable($courses);
-                    $table->print_yui_table($usercur->curid);
+                    $table->print_yui_table('curriculum'.$usercur->curid);
                 } else {
                     echo '<p>' . get_string('nocoursesinthiscurriculum', 'elis_program') . '</p>';
                 }
@@ -341,24 +341,14 @@ class coursecatalogpage extends pm_page {
     function include_js() {
         global $CFG, $PAGE;
 
-        echo '<style>@import url("' . $CFG->wwwroot . '/lib/yui/datatable/assets/skins/sam/datatable.css");</style>';
+        echo html_writer::tag('style', '@import url("'.$CFG->wwwroot.'/lib/yuilib/2in3/2.9.0/build/assets/skins/sam/datatable.css");');
 
         // $PAGE->requires->yui2_lib(array('dom', 'event', 'dragdrop', 'element', 'datasource', 'datatable')); // TBD
 
         // Monkey patch - not required with YUI 2.6.0 apparently
         // require_js('js/yui_2527707_patch.js');
 
-      /* *** TBD: this is the prefered way, but not working!?!
-        $PAGE->requires->js('/elis/program/js/util.js');
-        $PAGE->requires->js_init_call('toggleVisibleInit',
-                             array(), // will require args to be passed to fcn
-                             true,
-                             array('name'     => 'toggleHideShow',
-                                   'fullpath' => '/elis/program/js/util.js',
-                                   'requires' => array())
-                         ); // args?
-      *** */
-      echo "<script type=\"text/javascript\" src=\"{$CFG->wwwroot}/elis/program/js/util.js\"></script>";
+        echo html_writer::tag('script', '', array('type' => 'text/javascript', 'src' => "{$CFG->wwwroot}/elis/program/js/util.js"));
     }
 
     /**
@@ -418,7 +408,7 @@ class coursecatalogpage extends pm_page {
                     echo '<div id="curriculum' . $usercur->curid ."\" {$this->div_attrs} class=\"yui-skin-sam" . $extraclass . '">';
                     $table = new currentclasstable($classes, $this->url);
                     echo "<div id=\"$usercur->id\"></div>";
-                    $table->print_yui_table($usercur->id);
+                    $table->print_yui_table('curriculum'.$usercur->curid);
                 } else {
                     $buttonLabel2 = ($usercur->curid == $showcurid) ? get_string('hide') : get_string('show');
                     $extraclass2 = ($usercur->curid == $showcurid) ? '' : ' hide';
@@ -511,7 +501,7 @@ class coursecatalogpage extends pm_page {
                     echo "<div id=\"$usercur->id\"></div>";
 
                     $table = new availablecoursetable($courses);
-                    $table->print_yui_table($usercur->id);
+                    $table->print_yui_table('curriculum'.$usercur->curid);
                 } else {
                     echo '<p>' . get_string('nocoursesinthiscurriculum', 'elis_program') . '</p>';
                 }
@@ -557,6 +547,67 @@ class yui_table extends display_table {
         $this->display_date = new display_date_item(get_string('pm_date_format', 'elis_program'));
     }
 
+    /**
+     * Converts a 24-hour-mode hour number to a combination of a
+     * 12-hour-mode hour and either 'am' or 'pm'
+     *
+     * @param   int    $hour  An hour number from 0-23
+     * @return  array         An array where the first element is the 12-hour-mode
+     *                        hour and the second is either 'am' or 'pm'
+     */
+    protected function format_hour($hour) {
+        // determine if am or pm
+        $ampm = $hour >= 12 ? 'pm' : 'am';
+
+        // convert hour number
+        if ($hour > 12) {
+            $hour -= 12;
+        } else if ($hour == 0) {
+            $hour = 12;
+        }
+
+        // return both pieces of data
+        return array($hour, $ampm);
+    }
+
+    /**
+     * Method to return timeofday data
+     * @param object $classdata the ELIS Class Instance object data
+     * @return string|array the timeofday parameter array or string '-'
+     */
+    protected function get_timeofday_data($classdata) {
+        // determine if at least one of the start time hour or minute is set to a valid value
+        $showstarttime = isset($classdata->starttimehour) && $classdata->starttimehour < 25 &&
+                isset($classdata->starttimeminute) && $classdata->starttimeminute < 61;
+        // determine if at least one of the end time hour or minute is set to a valid value
+        $showendtime = isset($classdata->endtimehour) && $classdata->endtimehour < 25 &&
+                isset($classdata->endtimeminute) && $classdata->endtimeminute < 61;
+
+        if ($showstarttime && $showendtime) {
+            // have valid times for both start and end time
+            $starthour = $classdata->starttimehour;
+            $startampm = '';
+            $endhour = $classdata->endtimehour;
+            $endampm = '';
+
+            // perform the 24 to 12-hour conversion if necessary
+            if (elis::$config->elis_program->time_format_12h) {
+                // calculate start hour and am/pm in 12-hour format
+                list($starthour, $startampm) = $this->format_hour($starthour);
+
+                // calculate end hour and am/pm in 12-hour format
+                list($endhour, $endampm) = $this->format_hour($endhour);
+            }
+
+            // return all the necessary data, which is:
+            // start hour, start minute, start am/pm (or empty string if in 24-hour format),
+            // end hour, end minute, end am/pm (or empty string if in 24-hour format)
+            return array($starthour, $classdata->starttimeminute, $startampm,
+                    $endhour, $classdata->endtimeminute, $endampm);
+        }
+        return html_writer::tag('center', '-');
+    }
+
     public function get_date_item_display($column, $item) {
         return $this->display_date->display($column, $item);
     }
@@ -566,17 +617,34 @@ class yui_table extends display_table {
      * @return string
      */
     function get_json() {
-        $arr = array();
-        foreach($this->table->data as $row) {
-            $arr_row = array();
+        $init = 0;
+        $json = "[";
+        foreach ($this->table->data as $row) {
             $i = 0;
-            foreach(array_keys($this->columns) as $key) {
-                $arr_row[$key] = $row[$i++];
+            if ($init++) {
+                $json .= ",\n";
             }
-            $arr[] = $arr_row;
+            $json .= '{';
+            foreach (array_keys($this->columns) as $key) {
+                if ($i) {
+                    $json .= ', ';
+                }
+                $json .= "{$key}: ";
+                $val = $row[$i];
+                if (is_array($val)) {
+                    $json .= json_encode($val);
+                } else if (strpos($key, 'date') !== false) {
+                    $json .= '"'.($val ? '<!-- '.$val.' -->'.userdate($val, get_string('pm_date_format', 'elis_program')) : '<!-- 0 -->-').'"';
+                } else {
+                    $str = str_replace("\n", '', $val);
+                    $json .= '"'.addslashes($str).'"';
+                }
+                $i++;
+            }
+            $json .= "}";
         }
-        return json_encode($arr);
-        // TBD: or just return json_encode($this->table->data); ???
+        $json .= "\n]";
+        return $json; // OLD: return json_encode($this->table->data);
     }
 
     /**
@@ -585,19 +653,20 @@ class yui_table extends display_table {
      * @return string
      */
     function get_json_schema() {
-        $arr = array();
-
+        $json = '[';
+        $init = 0;
         foreach(array_keys($this->columns) as $key) {
-            $field = array('key' => $key);
-            if(!empty($this->yui_parsers[$key])) {
-                $field['parser'] = $this->yui_parsers[$key];
+            if ($init++) {
+                $json .= ',';
             }
-            if(!empty($this->yui_sorters[$key])) {
-                $field['sortOptions'] = array('sortFunction' => $this->yui_sorters[$key]);
+            $json .= "{key:\"{$key}\"";
+            if (!empty($this->yui_parsers[$key])) {
+                $json .= ',parser:"'.$this->yui_parsers[$key].'"';
             }
-            $arr[] = $field;
+            $json .= '}';
         }
-        return json_encode(array('fields' => $arr));
+        $json .= ']';
+        return $json;
     }
 
     /**
@@ -608,9 +677,13 @@ class yui_table extends display_table {
         $s = '[';
         foreach($this->columns as $column_id => $val) {
             $column_label = $val['header'];
-            $s .= "{key:\"$column_id\", sortable:true, label:\"$column_label\", resizeable:true";
+            $s .= "{key:\"$column_id\", sortable:".((!isset($val['sortable']) || !empty($val['sortable'])) ? 'true' : 'false').
+                    ", label:\"$column_label\", allowHTML:true, resizeable:true";
             if(!empty($this->yui_formatters[$column_id])) {
                 $s .= ', formatter:' . $this->yui_formatters[$column_id];
+            }
+            if (!empty($this->yui_sorters[$column_id])) {
+                $s .= ', sortFn: '.$this->yui_sorters[$column_id];
             }
             $s .= "},\n";
         }
@@ -623,36 +696,30 @@ class yui_table extends display_table {
 
     /**
      * Prints the code for a YUI DataTable containing this table's data.
-     * @return unknown_type
+     * @param string $elementid The ID of the element to print the table to.
      */
-    function print_yui_table($tablename) {
+    function print_yui_table($elementid) {
         $this->build_table();
 ?>
-
 <script type="text/javascript">
-YUI().use("yui2-datasource", "yui2-datatable", "yui2-dom", "yui2-element", "yui2-event", "yui2-utilities", function(Y) {
-    var YAHOO = Y.YUI2;
-    YAHOO.util.Event.addListener(window, "load", function() {
-        YAHOO.example.Basic = function() {
-            var myColumnDefs = <?php echo $this->get_yui_columns(); ?>;
-            var myData = <?php echo $this->get_json(); ?>;
-            var myDataSource = new YAHOO.util.DataSource(myData);
-            myDataSource.responseType = YAHOO.util.DataSource.TYPE_JSARRAY;
-            myDataSource.responseSchema = <?php echo $this->get_json_schema(); ?>;
-            var myDataTable = new YAHOO.widget.DataTable("<?php echo $tablename; ?>", myColumnDefs, myDataSource);
+YUI().use("datasource", "datatable-sort", "dom", "event", function(Y) {
 
-            return {
-                oDS: myDataSource,
-                oDT: myDataTable
-            };
-        }();
-    });
-});
-</script>
+    var loadtables = function() {
 
-<?php
+        var myColumnDefs = <?php echo $this->get_yui_columns(); ?>;
+        var myData = <?php echo $this->get_json(); ?>;
+        var table = new Y.DataTable({
+            columns: myColumnDefs,
+            data: myData
+        });
+        table.render("#<?php echo $elementid; ?>");
     }
 
+    Y.on('domready', loadtables);
+});
+</script>
+<?php
+    }
 }
 
 if (!defined('ENVTABLE')) {
@@ -675,23 +742,23 @@ class waitlisttable extends yui_table {
             // 'environment' => array('header' => get_string('environment',     'elis_program')),
             'position'    => array('header' => get_string('position',        'elis_program')),
             'maxstudents' => array('header' => get_string('class_limit',     'elis_program')),
-            'management'  => array('header' => '')
+            'management'  => array('header' => ' ', 'sortable' => false)
         );
 
         $this->yui_formatters = array(
-//            'timeofday' => 'cmFormatTimeRange',
+            // 'timeofday' => 'cmFormatTimeRange',
             'startdate' => 'cmFormatDate',
             'enddate' => 'cmFormatDate',
         );
 
         $this->yui_parsers = array(
-            'startdate' => 'date',
-            'enddate' => 'date',
+            // 'startdate' => 'date',
+            // 'enddate' => 'date',
         );
 
-//        $this->yui_sorters = array(
-//            'timeofday' => 'cmSortTimeRange',
-//        );
+        $this->yui_sorters = array(
+            // 'timeofday' => 'cmSortTimeRange',
+        );
 
         $pageurl = new moodle_url($CFG->wwwroot .'/elis/program/index.php', array('s' => 'crscat'));
         parent::__construct($items, $columns, $pageurl);
@@ -723,34 +790,13 @@ class waitlisttable extends yui_table {
         return $retval;
     }
 
-    // This method is NOT being used, and doesn't add dates - see formatters above
+    /**
+     * Method to return timeofday data
+     * @param object $item the ELIS Class Instance object data
+     * @return string|array the timeofday parameter array or string '-'
+     */
     function get_item_display_timeofday($column, $item) {
-        $show_starttime = isset($item->starttimehour) && $item->starttimehour < 25 &&
-                          isset($item->starttimeminute) && $item->starttimeminute < 61;
-        $show_endtime = isset($item->endtimehour) && $item->endtimehour < 25 &&
-                        isset($item->endtimeminute) && $item->endtimeminute < 61;
-        if (!$show_starttime && !$show_endtime) {
-            return get_string('course_catalog_time_na', 'elis_program');
-        }
-
-        $times = array();
-        if ($show_starttime) {
-            $times[] = $item->starttimehour;
-            $times[] = $item->starttimeminute;
-        } else {
-            $times[] = 0;
-            $times[] = 0;
-        }
-
-        if ($show_endtime) {
-            $times[] = $item->endtimehour;
-            $times[] = $item->endtimeminute;
-        } else {
-            $times[] = 0;
-            $times[] = 0;
-        }
-
-        return $times;
+        return $this->get_timeofday_data($item);
     }
 
     function get_item_display_instructor($column, $item) {
@@ -802,8 +848,8 @@ class currentclasstable extends yui_table {
         );
 
         $this->yui_parsers = array(
-            'startdate' => 'date',
-            'enddate' => 'date',
+            // 'startdate' => 'date',
+            // 'enddate' => 'date',
         );
 
         $this->yui_sorters = array(
@@ -851,71 +897,16 @@ class currentclasstable extends yui_table {
         return $classid;
     }
 
-    function get_item_display_startdate($column, $item) {
-        return $this->get_date_item_display('startdate',$this->current_class);
-    }
-
-    function get_item_display_enddate($column, $item) {
-        return $this->get_date_item_display('enddate',$this->current_class);
-    }
-
     /**
-     * Converts a 24-hour-mode hour number to a combination of a
-     * 12-hour-mode hour and either 'am' or 'pm'
-     *
-     * @param   int    $hour  An hour number from 0-23
-     * @return  array         An array where the first element is the 12-hour-mode
-     *                        hour and the second is either 'am' or 'pm'
+     * Method to return timeofday data
+     * @param object $item the ELIS Class Instance object id
+     * @return string|array the timeofday parameter array or string '-'
      */
-    private function format_hour($hour) {
-        //determine if am or pm
-        $ampm = $hour >= 12 ? 'pm' : 'am';
-
-        //convert hour number
-        if ($hour > 12) {
-            $hour -= 12;
-        } else if ($hour == 0) {
-            $hour = 12;
-        }
-
-        //return both pieces of data
-        return array($hour, $ampm);
-    }
-
     function get_item_display_timeofday($column, $item) {
         if (($classdata = $this->get_class($item))) {
-            //determine if at least one of the start time hour or minute is set to a valid value
-            $show_starttime = isset($classdata->starttimehour) && $classdata->starttimehour < 25 &&
-                              isset($classdata->starttimeminute) && $classdata->starttimeminute < 61;
-            //determine if at least one of the end time hour or minute is set to a valid value
-            $show_endtime =  isset($classdata->endtimehour) && $classdata->endtimehour < 25 &&
-                             isset($classdata->endtimeminute) && $classdata->endtimeminute < 61;
-
-            if ($show_starttime && $show_endtime) {
-                //have valid times for both start and end time
-                $starthour = $classdata->starttimehour;
-                $startampm = '';
-                $endhour = $classdata->endtimehour;
-                $endampm = '';
-
-                //perform the 24 to 12-hour conversion if necessary
-                if (elis::$config->elis_program->time_format_12h) {
-                    //calculate start hour and am/pm in 12-hour format
-                    list($starthour, $startampm) = $this->format_hour($starthour);
-
-                    //calculate end hour and am/pm in 12-hour format
-                    list($endhour, $endampm) = $this->format_hour($endhour);
-                }
-
-                //return all the necessary data, which is:
-                //start hour, start minute, start am/pm (or empty string if in 24-hour format),
-                //end hour, end minute, end am/pm (or empty string if in 24-hour format)
-                return array($starthour, $classdata->starttimeminute, $startampm,
-                             $endhour, $classdata->endtimeminute, $endampm);
-            }
+            return $this->get_timeofday_data($classdata);
         }
-        //default n/a string
-        return get_string('course_catalog_time_na', 'elis_program');
+        return html_writer::tag('center', '-');
     }
 
     function get_item_display_instructor($column, $item) {
@@ -963,7 +954,7 @@ class availablecoursetable extends yui_table {
         $columns = array(
             'coursename'  => array('header' => get_string('course_name', 'elis_program')),
             'courseid'    => array('header' => get_string('course_idnumber', 'elis_program')),
-            'classname'   => array('header' => '') // action/status info
+            'classname'   => array('header' => ' ') // action/status info
         );
         parent::__construct($items, $columns);
         //$this->table->width = '80%';
@@ -1007,20 +998,35 @@ class availablecoursetable extends yui_table {
 }
 
 class addclasstable extends yui_table {
-    function __construct(&$items) {
+    function __construct(&$items, $url) {
         $columns = array(
-            'options'      => array('header' => ''),
-            'idnumber'     => array('header' => get_string('class_idnumber',  'elis_program')),
-            'startdate'    => array('header' => get_string('class_startdate', 'elis_program')),
-            'enddate'      => array('header' => get_string('class_enddate',   'elis_program')),
-            'timeofday'    => array('header' => get_string('timeofday',       'elis_program')),
-            'instructor'   => array('header' => get_string('instructor',      'elis_program')),
-            // 'environment'  => array('header' => get_string('environment',     'elis_program')),
-            'waitlistsize' => array('header' => get_string('waitlist_size',   'elis_program')),
-            'classsize'    => array('header' => get_string('class_size',      'elis_program'))
+            'options'      => array('header' => ' ', 'sortable' => false),
+            'idnumber'     => array('header' => get_string('class_idnumber', 'elis_program'), 'sortable' => true),
+            'startdate'    => array('header' => get_string('class_startdate', 'elis_program'), 'sortable' => true),
+            'enddate'      => array('header' => get_string('class_enddate', 'elis_program'), 'sortable' => true),
+            'timeofday'    => array('header' => get_string('timeofday', 'elis_program'), 'sortable' => true),
+            'instructor'   => array('header' => get_string('instructor', 'elis_program'), 'sortable' => true),
+            // 'environment'  => array('header' => get_string('environment', 'elis_program'), 'sortable' => false),
+            'waitlistsize' => array('header' => get_string('waitlist_size', 'elis_program'), 'sortable' => true),
+            'classsize'    => array('header' => get_string('class_size', 'elis_program'), 'sortable' => true)
         );
 
-        parent::__construct($items, $columns);
+        $this->yui_formatters = array(
+            'timeofday' => 'cmFormatTimeRange',
+            'startdate' => 'cmFormatDate',
+            'enddate' => 'cmFormatDate',
+        );
+
+        $this->yui_parsers = array(
+            // 'startdate' => 'date',
+            // 'enddate' => 'date',
+        );
+
+        $this->yui_sorters = array(
+            'timeofday' => 'cmSortTimeRange',
+        );
+
+        parent::__construct($items, $columns, $url);
         //unset($this->table->width);
     }
 
@@ -1067,52 +1073,13 @@ class addclasstable extends yui_table {
            "{$class->id}&amp;action={$action}\">". get_string('choose') .'</a>';
     }
 
-    function get_item_display_startdate($column, $class) {
-        return $this->get_date_item_display($column, $class);
-    }
-
-    function get_item_display_enddate($column, $class) {
-        return $this->get_date_item_display($column, $class);
-    }
-
-    // TODO: fix time-of-day display
+    /**
+     * Method to return timeofday data
+     * @param object $class the ELIS Class Instance object data
+     * @return string|array the timeofday parameter array or string '-'
+     */
     function get_item_display_timeofday($column, $class) {
-        //determine if at least one of the start time hour or minute is set to a valid value
-        $show_starttime = isset($class->starttimehour) && $class->starttimehour < 25 &&
-                          isset($class->starttimeminute) && $class->starttimeminute < 61;
-        //determine if at least one of the end time hour or minute is set to a valid value
-        $show_endtime =  isset($class->endtimehour) && $class->endtimehour < 25 &&
-                         isset($class->endtimeminute) && $class->endtimeminute < 61;
-
-        //for now, we are only showing the entry if both a start time and end time are
-        //enabled
-        if ($show_starttime && $show_endtime) {
-
-            if (elis::$config->elis_program->time_format_12h) {
-                $starthour = $class->starttimehour;
-                $startampm = $starthour >= 12 ? 'pm' : 'am';
-                if ($starthour > 12) {
-                    $starthour -= 12;
-                } else if ($starthour == 0) {
-                    $starthour = 12;
-                }
-                $endhour = $class->endtimehour;
-                $endampm = $endhour >= 12 ? 'pm' : 'am';
-                if ($endhour > 12) {
-                    $endhour -= 12;
-                } else if ($endhour == 0) {
-                    $endhour = 12;
-                }
-                return sprintf("%d:%02d %s - %d:%02d %s",
-                               $starthour, $class->starttimeminute, $startampm,
-                               $endhour, $class->endtimeminute, $endampm);
-            } else {
-                return sprintf("%d:%02d - %d:%02d",
-                               $class->starttimehour, $class->starttimeminute,
-                               $class->endtimehour, $class->endtimeminute);
-            }
-        }
-        return get_string('course_catalog_time_na', 'elis_program');
+        return $this->get_timeofday_data($class);
     }
 
     function get_item_display_instructor($column, $class) {

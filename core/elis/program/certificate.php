@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,14 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
-
 /**
  * Generates a PDF certificate corresponding to a particular curriculum assignment.
  */
@@ -34,7 +32,7 @@ require_once(elispm::lib('data/curriculumstudent.class.php'));
 require_once(elispm::lib('certificate.php'));
 require_once(elispm::lib('deprecatedlib.php')); // cm_get_crlmuserid()
 
-// Retrieve curriculum assignment
+// Retrieve curriculum assignment.
 $id = required_param('id', PARAM_INT);
 
 
@@ -62,17 +60,18 @@ if (!isset($curass->user) || !isset($curass->curriculum)) {
         $dateexpired  =  date("F j, Y", $curass->timeexpired);
     }
 
-    $border_image = (isset(elis::$config->elis_program->certificate_border_image))
-                    ? elis::$config->elis_program->certificate_border_image
-                    : 'Fancy1-blue.jpg';
+    $borderimage = (isset(elis::$config->elis_program->certificate_border_image))
+            ? elis::$config->elis_program->certificate_border_image
+            : 'Fancy1-blue.jpg';
 
-    $seal_image = (isset(elis::$config->elis_program->certificate_seal_image))
-                  ? elis::$config->elis_program->certificate_seal_image
-                  : 'none';
+    $sealimage = (isset(elis::$config->elis_program->certificate_seal_image))
+            ? elis::$config->elis_program->certificate_seal_image
+            : 'none';
 
-    $templates = (isset(elis::$config->elis_program->certificate_template_file)) ?
-                  elis::$config->elis_program->certificate_template_file : 'default.php';
+    $templates = (isset(elis::$config->elis_program->certificate_template_file))
+            ? elis::$config->elis_program->certificate_template_file
+            : 'default.php';
 
     certificate_output_completion($curass->user->__toString(), $curass->curriculum->__toString(), $curass->certificatecode,
-                                  $datecomplete, $dateexpired, $curass->curriculum->frequency, $border_image, $seal_image, $templates);
+            $datecomplete, $dateexpired, $curass->curriculum->frequency, $borderimage, $sealimage, $templates);
 }
