@@ -25,12 +25,10 @@
  */
 
 defined('MOODLE_INTERNAL') || die();
-
 require_once($CFG->dirroot.'/elis/program/lib/setup.php');
 require_once($CFG->libdir .'/gradelib.php');
 
 class elis_graded_users_iterator {
-
     /**
      * The couse whose users we are interested in
      */
@@ -334,7 +332,6 @@ class elis_graded_users_iterator {
     private function _push($grade) {
         array_push($this->gradestack, $grade);
     }
-
 
     /**
      * Remove a grade_grade instance from the grade stack
@@ -1257,7 +1254,9 @@ function pm_update_student_progress($muserid = 0) {
 
 /// Start with the Moodle classes...
     if ($muserid == 0) {
-        mtrace("Synchronizing Moodle class grades<br />\n");
+        if (in_cron()) {
+            mtrace("Synchronizing Moodle class grades<br />\n");
+        }
     }
     pm_synchronize_moodle_class_grades($muserid);
 
@@ -1267,7 +1266,9 @@ function pm_update_student_progress($muserid = 0) {
 /// other than Moodle.
     if ($muserid == 0) {
         //running for all users
-        mtrace("Updating all class grade completions.<br />\n");
+        if (in_cron()) {
+            mtrace("Updating all class grade completions.<br />\n");
+        }
         pm_update_enrolment_status();
     } else {
         //attempting to run for a particular user
@@ -1357,6 +1358,7 @@ function pm_cron() {
 
     $status = pm_migrate_moodle_users(false, time() - (7*24*60*60)) && $status;
     $status = pm_update_student_progress() && $status;
+    $status = pm_issue_certificates() && $status;
     $status = pm_check_for_nags() && $status;
     $status = pm_update_student_enrolment() && $status;
 
@@ -2665,6 +2667,133 @@ function elis_float_comp($num1, $num2, $op, $nobcmath = false) {
 
         return false;
     }
+}
+
+/**
+ * This function starts the process to determine which entity types use certificates
+ * @return bool This function will always return true as to not interfere with the rest of the cron process.
+ */
+function pm_issue_certificates() {
+    $status          = true;
+    $enablecrsentity = false;
+
+    // Check if we should process course description certificates.
+    if (isset(elis::$config->elis_program->disablecoursecertificates) &&
+            !empty(elis::$config->elis_program->disablecoursecertificates)) {
+        $enablecrsentity = false;
+    } else {
+        $enablecrsentity = true;
+    }
+
+    // If course entity global config is set to 0 then proceed to process certs.
+    if (!empty($enablecrsentity)) {
+        $status = pm_issue_course_certificates();
+    }
+    // NOTE: this is where other entity types would have their certificate functions called.
+
+    return $status;
+}
+
+/**
+ * This function looks for course descriptions that issue certificates and students who have met the criteria to receive a
+ * certificate
+ * @return bool This function will always return true as to not interfere with the rest of the cron process.
+ */
+function pm_issue_course_certificates() {
+    require_once(elispm::lib('certificate.php'));
+    require_once(elispm::lib('data/certificateissued.class.php'));
+
+    global $DB;
+
+    $status     = true;
+    $certuser  = null;
+    $certusers = array();
+
+    // Find all courses having certificate settings and are enabled.
+    $params = array('entity_type' => CERTIFICATE_ENTITY_TYPE_COURSE, 'disable' => 0);
+    $certcourses = $DB->get_recordset('crlm_certificate_settings', $params, '', 'id, entity_id');
+
+    if (empty($certcourses)) {
+        return $status;
+    }
+
+    foreach ($certcourses as $certcoursesetting) {
+        /* Find all users who completed classes and have not already recieved
+         * certificates for those classes
+         */
+        $subselect = "SELECT * ";
+        $subfrom   = "FROM {crlm_certificate_issued} certissued ";
+        $subwhere  = "WHERE certissued.cert_setting_id = :certsettingid AND ".
+                      "certissued.cm_userid = clsenrol.userid AND clsenrol.completetime = certissued.timeissued ";
+
+        $params = array(
+            'completestatus' => STUSTATUS_PASSED,
+            'locked' => 1,
+            'courseid' => $certcoursesetting->entity_id,
+            'certsettingid' => $certcoursesetting->id
+        );
+        $select = "SELECT clsenrol.userid, clsenrol.completetime ";
+        $from   = "FROM {crlm_class} cmclass ".
+                  "INNER JOIN {crlm_class_enrolment} clsenrol ON clsenrol.classid = cmclass.id ";
+        $where  = "WHERE clsenrol.completestatusid = :completestatus AND clsenrol.locked = :locked AND ".
+                  "cmclass.courseid = :courseid AND ".
+                  "NOT EXISTS ($subselect $subfrom $subwhere) ORDER BY clsenrol.userid ";
+
+        $certusers = $DB->get_recordset_sql($select.$from.$where, $params);
+        $certissueddata = new certificateissued(0);
+        $result = pm_issue_user_certificate($certcoursesetting->id, $certusers, $certissueddata);
+        $certusers->close();
+    }
+
+    return $status;
+}
+
+/**
+ * Generate certificate codes for each applicable user and insert a record in in the certificate_issued table
+ * @param int $certsettingid Certificate setting id (foreign key)
+ * @param recordset $users A record set of users eligible to recevie certificates
+ * @param object $dataclass crlm_certificate_issued data ojbect
+ * @return bool True if the record was inserted or false is something went wrong
+ */
+function pm_issue_user_certificate($certsettingid, $users, $dataclass) {
+    $data   = new stdClass();
+    $time   = time();
+
+    if (empty($certsettingid)) {
+
+        if (debugging('', DEBUG_ALL)) {
+            error_log('elis/program/lib/lib.php::pm_issue_user_certificate() - certificate setting is empty ');
+        }
+
+        return false;
+    }
+
+    if (!$dataclass instanceof certificateissued) {
+
+        if (debugging('', DEBUG_ALL)) {
+            error_log('elis/program/lib/lib.php::pm_issue_user_certificate() - data_class is not an instance of certificateissued');
+        }
+
+        return false;
+    }
+
+    foreach($users as $user) {
+        /* Initalize the data for the data class */
+        $code = cm_certificate_get_code();
+        $data->cm_userid        = $user->userid;
+        $data->cert_setting_id  = $certsettingid;
+        $data->cert_code        = $code;
+        $data->timeissued       = $user->completetime;
+        $data->timecreated      = $time;
+
+        $dataclass->set_from_data($data);
+        $dataclass->save();
+
+        /* Unset the id field to force an insert operation */
+        unset($dataclass->id);
+    }
+
+    return true;
 }
 
 /**

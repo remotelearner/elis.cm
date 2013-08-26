@@ -1,7 +1,6 @@
 <?php
 
 defined('MOODLE_INTERNAL') || die;
-
 require_once dirname(__FILE__) .'/lib/setup.php';
 require_once elispm::lib('data/curriculumstudent.class.php'); // defines
 require_once elispm::lib('certificate.php'); // TBD: cm_certificate_get__()
@@ -76,6 +75,10 @@ if ($ADMIN->fulltree) {
     // ***Certificates
     $settings->add(new admin_setting_heading('certificates', get_string('certificates', 'elis_program'), '' /* get_string('certificate_info', 'elis_program') */));
     // Disable Certificates
+    $settings->add(new admin_setting_configcheckbox('elis_program/disablecoursecertificates',
+                                                    get_string('disable_crs_cert', 'elis_program'),
+                                                    get_string('disable_crs_cert_desc', 'elis_program'), 0));
+
     $settings->add(new admin_setting_configcheckbox('elis_program/disablecertificates',
                            get_string('disable_cert_setting', 'elis_program'),
                            '' /* get_string('disable_cert_help', 'elis_program') */, 1));
@@ -139,10 +142,13 @@ if ($ADMIN->fulltree) {
     $crsroles[NO_ROLE_ID] = get_string('noroleselected', 'elis_program');
     // Get roles assignable at Moodle Course context ...
     pm_get_select_roles_for_contexts($crsroles, array(CONTEXT_COURSE));
-    $crscontacts = explode(',', $CFG->coursecontact);
-    foreach ($crsroles as $id => $unused) {
-        if ($id != NO_ROLE_ID && !in_array($id, $crscontacts)) { // TBD: limit to Course Contacts since only these are unassigned ?
-            unset($crsroles[$id]);
+    if (!empty($CFG->coursecontact)) {
+        $crscontacts = explode(',', $CFG->coursecontact);
+        foreach ($crsroles as $id => $unused) {
+            // TBD: limit to Course Contacts since only these are unassigned ?
+            if ($id != NO_ROLE_ID && !in_array($id, $crscontacts)) {
+                unset($crsroles[$id]);
+            }
         }
     }
     $settings->add(new admin_setting_configselect('elis_program/default_instructor_role',

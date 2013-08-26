@@ -20,7 +20,6 @@
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
- *
  */
 
 defined('MOODLE_INTERNAL') || die();
@@ -76,14 +75,17 @@ class cmEngineForm extends cmform {
      */
     public function definition() {
 
-        global $PAGE;
+        global $PAGE, $CFG;
 
         $configData = array('title');
 
         $PAGE->requires->css('/elis/program/js/results_engine/jquery-ui-1.8.16.custom.css', true);
         $PAGE->requires->js('/elis/program/js/results_engine/jquery-1.6.2.min.js', true);
         $PAGE->requires->js('/elis/program/js/results_engine/jquery-ui-1.8.16.custom.js', true);
-        $PAGE->requires->js('/elis/program/js/results_engine/results_selection.js', true);
+        $PAGE->requires->yui_module('moodle-elis_program-resultsengine', 'M.elis_program.init_resultsengineform',
+                array(array('wwwroot' => $CFG->wwwroot))
+        );
+
         $PAGE->requires->js('/elis/program/js/dhtmltable.js', true);
 
         $formid   = $this->_form->_attributes['id'];
@@ -105,6 +107,9 @@ class cmEngineForm extends cmform {
 
         $submitlabel = get_string('savechanges');
         $mform =& $this->_form;
+
+        // Create a div container needed by the YUI panel modal
+        $mform->addElement('html', '<div id="selectorpanelmodal"></div>');
 
         $buttonarray[] = &$mform->createElement('submit', 'submitbutton', $submitlabel);
         $buttonarray[] = &$mform->createElement('cancel');
@@ -687,12 +692,11 @@ class cmEngineForm extends cmform {
                 $output    .= html_writer::empty_tag('input', $attributes);
 
                 $url        = "{$typename}selector.php?id=id_{$prefix}{$i}_&callback=add_selection";
-                $attributes = array('onclick' => 'show_panel("'.$url.'"); return false;');
+                $attributes = array('name' => 'typeselector');
                 $output    .= html_writer::link('#', $selecttype, $attributes);
                 $output    .= html_writer::end_tag('td');
                 $output    .= html_writer::start_tag('td');
                 $mform->addElement('html', $output);
-
 
             } else if ($this->rowtypes[$type] == 'doubleselect') {
                 $options = $this->get_profile_fields();
@@ -733,7 +737,7 @@ class cmEngineForm extends cmform {
                     }
 
                     if ($configs[$selected]['control'] == 'menu') {
-                        $choices = explode("\r\n", $configs[$selected]['options']);
+                        $choices = explode("\n", $configs[$selected]['options']);
                         $options = array_combine($choices, $choices);
                         asort($options);
                         $mform->addElement('select', "{$prefix}{$i}_value", '', $options, $attributes);

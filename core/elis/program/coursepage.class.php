@@ -36,6 +36,7 @@ require_once elispm::file('form/courseform.class.php');
 require_once elispm::file('pmclasspage.class.php');
 require_once elispm::file('rolepage.class.php');
 require_once elispm::file('resultspage.class.php');
+require_once elispm::file('certificatepage.class.php');
 
 class coursepage extends managementpage {
     var $data_class = 'course';
@@ -94,18 +95,30 @@ class coursepage extends managementpage {
     }
 
     public function __construct(array $params=null) {
+        // Check the course certificate global settings value
+        $showcoursecerttab = isset(elis::$config->elis_program->disablecoursecertificates);
+        $showcoursecerttab = $showcoursecerttab &&
+                                 empty(elis::$config->elis_program->disablecoursecertificates);
+
         $this->tabs = array(
         array('tab_id' => 'view', 'page' => get_class($this), 'params' => array('action' => 'view'), 'name' => get_string('detail', 'elis_program'), 'showtab' => true),
         array('tab_id' => 'edit', 'page' => get_class($this), 'params' => array('action' => 'edit'), 'name' => get_string('edit', 'elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'edit'),
 
-        //allow users to view the classes associated with this course
+        // allow users to view the classes associated with this course
         array('tab_id' => 'pmclasspage', 'page' => 'pmclasspage', 'params' => array('action' => 'default'), 'name' => get_string('course_classes', 'elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'class'),
         array('tab_id' => 'elem', 'page' => get_class($this), 'params' => array('action' => 'lelem'), 'name' => get_string('completion_elements', 'elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'grades'),
         array('tab_id' => 'coursecurriculumpage', 'page' => 'coursecurriculumpage', 'name' => get_string('course_curricula', 'elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'curriculum'),
         array('tab_id' => 'course_rolepage', 'page' => 'course_rolepage', 'name' => get_string('roles', 'role'), 'showtab' => true, 'showbutton' => false, 'image' => 'tag'),
         array('tab_id' => 'course_enginepage', 'page' => 'course_enginepage', 'name' => get_string('results_engine', 'elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'calculator'),
         array('tab_id' => 'course_enginestatuspage', 'page' => 'course_enginestatuspage', 'name' => get_string('status_report', 'elis_program'), 'showtab' => false, 'showbutton' => false),
-
+        array(
+            'tab_id' => 'course_certificatepage',
+            'page' => 'course_certificatepage',
+            'name' => get_string('certificate_settings', 'elis_program'),
+            'showtab' => $showcoursecerttab,
+            'showbutton' => true,
+            'image' => 'certificate'
+        ),
         array('tab_id' => 'delete', 'page' => get_class($this), 'params' => array('action' => 'delete'), 'name' => get_string('delete_label', 'elis_program'), 'showbutton' => true, 'image' => 'delete'),
         );
 

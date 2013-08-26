@@ -36,6 +36,11 @@ require_once elispm::lib('data/student.class.php');
 require_once elispm::lib('certificate.php');
 require_once elispm::lib('lib.php');
 
+// This data class is required because it contains the new method for checking for duplciate
+// entity certificate codes.  When the certificate code gets phased out of the curriclum code,
+// This require statement is no longer needed
+require_once elispm::lib('data/certificateissued.class.php');
+
 define('CURR_EXPIRE_ENROL_START',    1);
 define('CURR_EXPIRE_ENROL_COMPLETE', 2);
 

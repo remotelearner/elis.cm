@@ -393,8 +393,8 @@ class usersetpage extends managementpage {
             return false;
         }
 
-        $like_clause = $DB->sql_like('child_context.path', '?');
-        $parent_path = $DB->sql_concat('parent_context.path', "'/%'");
+        $parentpath = $DB->sql_concat('parent_context.path', "?");
+        $likeclause = $DB->sql_like('child_context.path', $parentpath);
 
         list($in_clause, $params) = $DB->get_in_or_equal($viewable_clusters);
 
@@ -403,13 +403,16 @@ class usersetpage extends managementpage {
                 FROM {context} parent_context
                 JOIN {context} child_context
                   ON child_context.instanceid {$in_clause}
-                  AND {$like_clause}
+                  AND {$likeclause}
                   AND parent_context.contextlevel = ".CONTEXT_ELIS_USERSET."
                   AND child_context.contextlevel = ".CONTEXT_ELIS_USERSET."
                   AND parent_context.instanceid = {$id}";
 
-        $params = array_merge($params, array($parent_path, $cluster_context_level, $cluster_context_level, $id));
-
+        if (!isset($params) || !is_array($params)) {
+            $params = array('/%');
+        } else {
+            $params[] = '/%';
+        }
         return $DB->record_exists_sql($sql, $params);
 
         /*

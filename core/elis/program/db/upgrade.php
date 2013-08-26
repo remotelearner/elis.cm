@@ -679,5 +679,65 @@ function xmldb_elis_program_upgrade($oldversion=0) {
         upgrade_plugin_savepoint($result, 2012123104, 'elis', 'program');
     }
 
+    if ($result && $oldversion < 2012123106) {
+        // Define table crlm_certificate_settings to be created
+        // Conditionally launch create table for crlm_certificate_settings.
+        $table = new xmldb_table('crlm_certificate_settings');
+        if (!$dbman->table_exists($table)) {
+
+            // Adding fields to table crlm_certificate_settings.
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('entity_id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('entity_type', XMLDB_TYPE_CHAR, '9', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('cert_border', XMLDB_TYPE_CHAR, '200', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('cert_seal', XMLDB_TYPE_CHAR, '200', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('cert_template', XMLDB_TYPE_CHAR, '200', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('disable', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+            // Adding keys to table crlm_certificate_settings.
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+
+            // Adding indexes to table crlm_certificate_settings.
+            $table->add_index('ent_id_type_ix', XMLDB_INDEX_UNIQUE, array('entity_id', 'entity_type'));
+
+            $dbman->create_table($table);
+        }
+
+        // Define table crlm_certificate_issued to be created.
+        $table = new xmldb_table('crlm_certificate_issued');
+        // Conditionally launch create table for crlm_certificate_issued.
+        if (!$dbman->table_exists($table)) {
+
+            // Adding fields to table crlm_certificate_issued.
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('cm_userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('cert_setting_id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('cert_code', XMLDB_TYPE_CHAR, '40', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('timeissued', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+            // Adding keys to table crlm_certificate_issued.
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+
+            // Adding indexes to table crlm_certificate_issued.
+            $table->add_index('cert_code_ix', XMLDB_INDEX_UNIQUE, array('cert_code'));
+            $table->add_index('cm_userid_ix', XMLDB_INDEX_NOTUNIQUE, array('cm_userid'));
+
+            $dbman->create_table($table);
+        }
+
+        // elis savepoint reached
+        upgrade_plugin_savepoint($result, 2012123106, 'elis', 'program');
+    }
+
+    // ELIS-8528: remove orphaned LOs
+    if ($result && $oldversion < 2012123107) {
+        $where = 'NOT EXISTS (SELECT \'x\' FROM {crlm_course} cc WHERE cc.id = {crlm_course_completion}.courseid)';
+        $DB->delete_records_select('crlm_course_completion', $where);
+        upgrade_plugin_savepoint($result, 2012123107, 'elis', 'program');
+    }
+
     return $result;
 }

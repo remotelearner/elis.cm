@@ -340,17 +340,17 @@ abstract class enginepage extends pm_page {
 
                 $obj->save();
 
-                // Updating existing score ranges
-                $typename = $form->types[$actiontype];
-                $data = (array) $data;
+                if ($data->active) {
+                    // Updating existing score ranges
+                    $typename = $form->types[$actiontype];
+                    $data = (array)$data;
 
+                    // We don't keep the type of action in the parent table so child must be cleared
+                    $this->delete_data();
 
-                // We don't keep the type of action in the parent table so child must be cleared
-                $this->delete_data();
-
-                // Save new score ranges submitted
-                $this->save_data($data, $typename, $actiontype, $obj->id);
-
+                    // Save new score ranges submitted
+                    $this->save_data($data, $typename, $actiontype, $obj->id);
+                }
                 $target = $this->get_new_page(array('action' => 'default',
                                                     'id' => $id), false);
                 redirect($target->url);

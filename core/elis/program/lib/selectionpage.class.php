@@ -249,11 +249,9 @@ abstract class selectionpage extends pm_page { // TBD
                 $title = get_string('select');
             }
 
-            echo "<script>var basepage='$baseurl';</script>";
-            // ***TBD***
-            $PAGE->requires->yui2_lib(array('yahoo', 'dom', 'event', 'connection', 'json'));
-            $PAGE->requires->js('/elis/core/js/associate.class.js');
-            $PAGE->requires->js('/elis/program/js/checkbox_selection.js');
+            $PAGE->requires->yui_module('moodle-elis_program-checkboxselection', 'M.elis_program.init_checkboxselection', array($baseurl, 'list_display'),
+                    null, true);
+
             echo '<div class="mform" style="width: 100%"><fieldset><legend>'.
                  $title .'</legend><div id="list_display">';
         } else {
@@ -314,8 +312,8 @@ abstract class selectionpage extends pm_page { // TBD
 
         if ($count) {
             // select all button
-            echo '<input type="button" onclick="checkbox_select(true)" value="'.get_string('selectall').'" /> ';
-            echo '<input type="button" onclick="checkbox_select(false)" value="'.get_string('deselectall').'" /> ';
+            echo '<input id="id_checkbox_selectall" type="button" value="'.get_string('selectall').'" /> ';
+            echo '<input id="id_checkbox_deselectall" type="button" value="'.get_string('deselectall').'" /> ';
             // table
             echo $table->get_html();
         }
@@ -331,7 +329,7 @@ abstract class selectionpage extends pm_page { // TBD
 
                 echo '<div align="center">'.get_string('numselected', self::LANG_FILE, $sparam1).'<span id="selectedonotherpages" style="display: none"> ('.get_string('num_not_shown', self::LANG_FILE, $sparam2).')</span></div>';
                 echo '<div align="center">';
-                _print_checkbox('selectedonly', '', false, get_string('selectedonly', self::LANG_FILE), '', 'change_selected_display()');
+                _print_checkbox('selectedonly', '', false, get_string('selectedonly', self::LANG_FILE));
                 echo '</div>';
             }
             echo $this->get_table_footer();
@@ -449,7 +447,7 @@ class selection_table extends display_table {
     }
 
     function get_item_display__selection($column, $item) {
-        return html_writer::checkbox('select'.$item->id, '', isset($this->checked[$item->id]), '', array('onclick' => 'select_item("'.$item->id.'")'));
+        return html_writer::checkbox('select'.$item->id, '', isset($this->checked[$item->id]), '');
     }
 }
 

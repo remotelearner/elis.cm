@@ -285,9 +285,6 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
 
         $this->_fields = array();
 
-        $PAGE->requires->yui2_lib(array('yahoo', 'dom', 'event', 'connection', 'json'));
-        $PAGE->requires->js('/elis/core/js/dependentselect.js');
-
         if (empty($options['help'])) {
             $options['help'] = array();
         }
@@ -404,7 +401,6 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
      */
     function make_filter_options_custom($options, $group, $name) {
         global $CFG, $DB, $PAGE;
-        $jsinitcodes = array();
 
         switch ($group) {
             case 'curriculum':
@@ -420,12 +416,10 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
                         $id    = $this->_uniqueid . $group .'-name';
                         $child = $this->_uniqueid .'course-name';
                         $path  = $CFG->wwwroot .'/elis/program/lib/filtering/helpers/courses.php';
+                        $PAGE->requires->yui_module('moodle-elis_core-dependentselect', 'M.elis_core.init_dependentselect', array($id, $child, $path));
                         $options['numeric'] = 1;
                         $options['talias'] = $this->tables[$group]['crlm_curriculum'];
                         $options['dbfield'] = 'id';
-                        $onchange = "dependentselect_updateoptions('$id','$child','$path')";
-                        $jsinitcodes[] = $onchange;
-                        $options['onchange'] = $onchange;
                         $options['multiple'] = 'multiple';
                         break;
 
@@ -461,12 +455,10 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
                         $id    = $this->_uniqueid . $group .'-name';
                         $child = $this->_uniqueid .'class-idnumber';
                         $path  = $CFG->wwwroot .'/elis/program/lib/filtering/helpers/classes.php';
+                        $PAGE->requires->yui_module('moodle-elis_core-dependentselect', 'M.elis_core.init_dependentselect', array($id, $child, $path));
                         $options['numeric'] = 1;
                         $options['talias'] = $this->tables['class']['crlm_class'];
                         $options['dbfield'] = 'courseid';
-                        $onchange = "dependentselect_updateoptions('$id','$child','$path')";
-                        $jsinitcodes[] = $onchange;
-                        $options['onchange'] = $onchange;
                         $options['multiple'] = 'multiple';
                         break;
 
@@ -534,9 +526,6 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
         $options['innerfield'] = $this->_innerfield[$group];
         $options['wrapper']   .= $this->_wrapper[$group];
 
-        foreach ($jsinitcodes as $jsinitcode) {
-            $PAGE->requires->js_init_code($jsinitcode, true);
-        }
         return $options;
     }
 }

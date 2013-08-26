@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,47 +20,62 @@
  * @subpackage programmanagement
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
 defined('MOODLE_INTERNAL') || die();
-
-
+/**
+ * CM_CERTIFICATE_CODE_LENGTH - minimum string length of certificate code
+ */
 define('CM_CERTIFICATE_CODE_LENGTH', 15);
-
+/**
+ * CERTIFICATE_ENTITY_TYPE_PROGRAM - program entity type
+ */
+define('CERTIFICATE_ENTITY_TYPE_PROGRAM',     'PROGRAM');
+/**
+ * CERTIFICATE_ENTITY_TYPE_COURSE - course entity type
+ */
+define('CERTIFICATE_ENTITY_TYPE_COURSE',      'COURSE');
+/**
+ * CERTIFICATE_ENTITY_TYPE_LEARNINGOBJ - learning objective entity type
+ */
+define('CERTIFICATE_ENTITY_TYPE_LEARNINGOBJ', 'LEARNOBJ');
+/**
+ * CERTIFICATE_ENTITY_TYPE_CLASS - class entity type
+ */
+define('CERTIFICATE_ENTITY_TYPE_CLASS',       'CLASS');
 
 /**
  * Outputs a certificate for some sort of completion element
  *
- * @param string $person_fullname      The full name of the certificate recipient
- * @param string $entity_name          The name of the entity that is compelted
- * @param string $certificatecode      The unique certificate code
- * @param string $date_string          Date /time the certification was achieved
- * @param string $expirydate           A string representing the time that the certificate expires (optional).
- * @param string $curriculum_frequency The curriculum frequency
- * @param string $border               A custom border image to use
- * @param string $seal                 A custom seal image to use
- * @param string $template             A custom template to use
+ * @param string $person_fullname:      The full name of the certificate recipient
+ * @param string $entity_name:          The name of the entity that is compelted
+ * @param string $certificatecode:      The unique certificate code
+ * @param string $date_string:          Date /time the certification was achieved
+ * @param string $expirydate:           A string representing the time that the certificate expires (optional).
+ * @param string $curriculum_frequency: The curriculum frequency
+ * @param string $border:               A custom border image to use
+ * @param string $seal:                 A custom seal image to use
+ * @param string $template:             A custom template to use
  */
 function certificate_output_completion($person_fullname, $entity_name, $certificatecode = '', $date_string, $expirydate = '',
                                        $curriculum_frequency = '', $border = '', $seal = '', $template = '') {
-
     global $CFG;
 
-    //use the TCPDF library
+    // use the TCPDF library
     require_once($CFG->libdir.'/pdflib.php');
 
 //     error_log("/elis/program/lib/certificate.php::certificate_output_completion('{$person_fullname}', '{$entity_name}',
 //               '{$certificatecode}', '{$date_string}', '{$expirydate}', '{$curriculum_frequency}', '{$border}', '{$seal}', '{$template}')");
 
-    //global settings
+    // global settings
     $borders = 0;
     $font = 'FreeSerif';
-    $large_font_size = 30;
-    $small_font_size = 16;
+    $largefontsize = 30;
+    $smallfontsize = 16;
 
-    //create pdf
+    // create pdf
     $pdf = new pdf('L', 'in', 'Letter');
 
     // Prevent the pdf from printing black bars.
@@ -83,7 +98,7 @@ function certificate_output_completion($person_fullname, $entity_name, $certific
         }
     }
 
-    //draw the seal
+    // draw the seal
     cm_certificate_check_data_path('seals');
     if (!empty($seal)) {
         if (file_exists($CFG->dirroot .'/elis/program/pix/certificate/seals/'. $seal)) {
@@ -94,6 +109,80 @@ function certificate_output_completion($person_fullname, $entity_name, $certific
     }
 
     // Include the certificate template
+    cm_certificate_check_data_path('templates');
+
+    if (file_exists($CFG->dirroot.'/elis/program/pix/certificate/templates/'.$template)) {
+        include($CFG->dirroot.'/elis/program/pix/certificate/templates/'.$template);
+    } else if (file_exists($CFG->dataroot.'/elis/program/pix/certificate/templates/'.$template)) {
+        include($CFG->dataroot.'/elis/program/pix/certificate/templates/'.$template);
+    }
+
+    $pdf->Output();
+}
+
+/**
+ * Refactored code from @see certificate_output_completion()
+ * an array of parameters is passed and used by the certificate
+ * template file.  It is up to the certificate template file to
+ * use whatever parameters are available
+ *
+ * @param array $params: An array of parameters (example: array('student_name' => 'some value'))
+ * Here are a list of values that can be used
+ * 'student_name', 'course_name', 'class_idnumber', 'class_enrol_time', 'class_enddate', 'class_grade',
+ * 'cert_timeissued', 'cert_code', 'class_instructor_name', 'course_description_name'
+ * (there will most likely be more when other entity types are added)
+ * @param string $border:               A custom border image to use
+ * @param string $seal:                 A custom seal image to use
+ * @param string $template:             A custom template to use
+ * @return string - pdf output
+ */
+function certificate_output_entity_completion($params, $border = '', $seal = '', $template = '') {
+    global $CFG;
+
+    // Use the TCPDF library.
+    require_once($CFG->libdir.'/pdflib.php');
+
+    // Global settings.
+    $borders = 0;
+    $font = 'FreeSerif';
+    $largefontsize = 30;
+    $smallfontsize = 16;
+
+    // Create pdf.
+    $pdf = new pdf('L', 'in', 'Letter');
+
+    // Prevent the pdf from printing black bars.
+    $pdf->setPrintHeader(false);
+    $pdf->setPrintFooter(false);
+    $pdf->SetAutoPageBreak(false);
+    $pdf->SetMargins(0, 0, 0, false);
+
+    $pdf->AddPage();
+
+    $pagewidth = $pdf->getPageWidth();
+    $pageheight = $pdf->getPageHeight();
+
+    // Draw the border.
+    cm_certificate_check_data_path('borders');
+    if (!empty($border)) {
+        if (file_exists($CFG->dirroot.'/elis/program/pix/certificate/borders/'.$border)) {
+            $pdf->Image($CFG->dirroot.'/elis/program/pix/certificate/borders/'.$border, 0, 0, $pagewidth, $pageheight);
+        } else if (file_exists($CFG->dataroot.'/elis/program/pix/certificate/borders/'.$border)) {
+            $pdf->Image($CFG->dataroot.'/elis/program/pix/certificate/borders/'.$border, 0, 0, $pagewidth, $pageheight);
+        }
+    }
+
+    // Draw the seal.
+    cm_certificate_check_data_path('seals');
+    if (!empty($seal)) {
+        if (file_exists($CFG->dirroot.'/elis/program/pix/certificate/seals/'.$seal)) {
+            $pdf->Image($CFG->dirroot.'/elis/program/pix/certificate/seals/'.$seal, 8.0, 5.8);
+        } else if (file_exists($CFG->dataroot.'/elis/program/pix/certificate/seals/'.$seal)) {
+            $pdf->Image($CFG->dataroot.'/elis/program/pix/certificate/seals/'.$seal, 8.0, 5.8);
+        }
+    }
+
+    // Include the certificate template.
     cm_certificate_check_data_path('templates');
 
     if (file_exists($CFG->dirroot.'/elis/program/pix/certificate/templates/'.$template)) {
@@ -249,7 +338,7 @@ function cm_certificate_get_templates() {
  * characters.  Pass a parameter to append more characters to the
  * standard CM_CERTIFICATE_CODE_LENGTH characters
  *
- * @param int $append - The number of characters to append to the standard
+ * @param int $append: The number of characters to append to the standard
  * length of CM_CERTIFICATE_CODE_LENGTH
  */
 function cm_certificate_generate_code($append = 0) {
@@ -331,6 +420,7 @@ function cm_certificate_get_code() {
     do {
         $code   = cm_certificate_generate_code($addchar);
         $exists = curriculum_code_exists($code);
+        $exists = $exists && entity_certificate_code_exists($code);
 
         if (!$exists) {
             return $code;
@@ -356,4 +446,126 @@ function cm_certificate_get_code() {
 
         print_error('certificate_code_error', 'elis_program');
     }
+}
+
+/**
+ * This function determins the entity type and retrieves metadata
+ * pertianing to the entity and returns the metadata as an array.
+ *
+ * @param object $certsettingsrec: a certificatesettings data class object
+ * @param object $certissued: a certificateissued data class object
+ * @param object $student: a user data class object
+ * @return array|bool - an array of metadata or false if something went wrong
+ */
+function certificate_get_entity_metadata($certsetting, $certissued, $student) {
+
+    // Validate the first argument
+    if (empty($certsetting) || !($certsetting instanceof certificatesettings)) {
+        return false;
+    }
+
+    // Validate the first argument
+    if (empty($student) || !($student instanceof user)) {
+        return false;
+    }
+
+    // Validate the first argument
+    if (empty($certissued) || !($certissued instanceof certificateissued)) {
+        return false;
+    }
+
+    switch ($certsetting->entity_type) {
+        case CERTIFICATE_ENTITY_TYPE_PROGRAM:
+            break;
+
+        case CERTIFICATE_ENTITY_TYPE_COURSE:
+            return certificate_get_course_entity_metadata($certsetting, $certissued, $student);
+            break;
+
+        case CERTIFICATE_ENTITY_TYPE_LEARNINGOBJ:
+            break;
+
+        case CERTIFICATE_ENTITY_TYPE_CLASS:
+            break;
+    }
+
+    return false;
+}
+
+/**
+ * This function does the work of retrieving the course entity metadata
+ * @param object $certsetting: a certificatesettings data class object
+ * @param object $certissued: a certificateissued data class object
+ * @param object $student: a user data class object
+ * @return array|bool - array of metadata or false if something went wrong
+ */
+function certificate_get_course_entity_metadata($certsetting, $certissued, $student) {
+    $params = array();
+
+    if (!isset($certsetting->entity_id)) {
+        return false;
+    }
+
+    if (!isset($student->id)) {
+        return false;
+    }
+
+    // Retrieve the course description name
+              /*try {
+                  $coursedescname = new course($certdata->entity_id);
+                  $coursedescname->load();
+                  $name = $coursedescname->name;
+              } catch (dml_missing_record_exception $e) {
+                  debugging($e->getMessage(), DEBUG_DEVELOPER);
+              }
+              */
+    try {
+        $coursedescname = new course($certsetting->entity_id);
+        $coursedescname->load();
+    } catch (dml_missing_record_exception $e) {
+        debugging($e->getMessage(), DEBUG_DEVELOPER);
+        return false;
+    }
+
+    // Retrieve the student's classes
+    $stuclasses = student_get_class_from_course($certsetting->entity_id, $student->id);
+
+    foreach($stuclasses as $stuclass) {
+        // If timeissued property then break out of the loop
+        if (!isset($certissued->timeissued)) {
+            break;
+        }
+
+        // Check if the date issued is the same as the student's completion date
+        if ($stuclass->completetime == $certissued->timeissued) {
+            // Get the instructor information
+            $instructors = new instructor();
+            $instructors = $instructors->get_instructors($stuclass->id);
+
+            // Populate with metadata info
+            $params['student_name']      = $student->firstname . ' ' . $student->lastname;
+            $params['class_idnumber']    = $stuclass->idnumber;
+            $params['class_enrol_time']  = $stuclass->enrolmenttime;
+            $params['class_startdate']   = $stuclass->startdate;
+            $params['class_enddate']     = $stuclass->startdate;
+            $params['class_grade']       = $stuclass->grade;
+            $params['cert_timeissued']   = $certissued->timeissued;
+            $params['cert_code']         = $certissued->cert_code;
+        }
+    }
+
+    if (!empty($instructors)) {
+        // Only get the first instructor name, (MAY NEED TO CHANGE THIS LATER ON)
+        foreach ($instructors as $instructor) {
+            $params['class_instructor_name'] = $instructor->firstname . ' ' . $instructor->lastname;
+            break;
+        }
+    }
+
+    if (!empty($params)) {
+        $params['course_name'] = $coursedescname->name;
+        return $params;
+    }
+
+    return false;
 }

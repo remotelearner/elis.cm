@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@
  * @package    elis
  * @subpackage programmanagement
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2013 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
@@ -48,290 +48,7 @@ class customfieldform extends cmform {
         $form->setType('id', PARAM_INT);
 
         // Include required yui javascript
-        $PAGE->requires->yui2_lib(array('yahoo',
-                                        'dom'));
-        $form->addElement('html', '<script type="text/javascript">
-            function switchDefaultData() {
-                var elem;
-                var elemid;
-                var fcontrol = document.getElementById("id_manual_field_control");
-                var dttext = document.getElementById("datatype_text");
-                var dtcheckbox = document.getElementById("datatype_checkbox");
-                var dtradio = document.getElementById("datatype_radio");
-                var dtdatetime = document.getElementById("datatype_datetime");
-                elemid = "datatype_" + fcontrol.options[fcontrol.selectedIndex].value;
-                //alert("switchDefaultData(): elemid = " + elemid);
-                if (!(elem = document.getElementById(elemid))) {
-                    elemid = "datatype_text";
-                    elem = dttext;
-                }
-                if (elemid == "datatype_checkbox") {
-                    dtradio.className = "accesshide custom_field_default_fieldset";
-                    dtcheckbox.className = "accesshide custom_field_default_fieldset";
-                    dttext.className = "accesshide custom_field_default_fieldset";
-                    dtdatetime.className = "accesshide custom_field_default_fieldset";
-                } else if (elemid == "datatype_menu") {
-                    dtcheckbox.className = "accesshide custom_field_default_fieldset";
-                    dtradio.className = "accesshide custom_field_default_fieldset";
-                    dttext.className = "accesshide custom_field_default_fieldset";
-                    dtdatetime.className = "accesshide custom_field_default_fieldset";
-                } else if (elemid == "datatype_datetime") {
-                    dtdatetime.className = "clearfix custom_field_default_fieldset";
-                    dtcheckbox.className = "accesshide custom_field_default_fieldset";
-                    dtradio.className = "accesshide custom_field_default_fieldset";
-                    dttext.className = "accesshide custom_field_default_fieldset";
-                } else { // default: datatype_text
-                    dttext.className = "clearfix custom_field_default_fieldset";
-                    dtdatetime.className = "accesshide custom_field_default_fieldset";
-                    dtcheckbox.className = "accesshide custom_field_default_fieldset";
-                    dtradio.className = "accesshide custom_field_default_fieldset";
-                }
-                updateMenuOptions();
-            }
-            function disableMenuOptions() {
-                var srcs = document.getElementById("id_manual_field_options_source");
-                var dtmenu = document.getElementById("datatype_menu");
-                var dtradio = document.getElementById("datatype_radio");
-                var dtcheckbox = document.getElementById("datatype_checkbox");
-                var i, elemid;
-                if (dtmenu) {
-                    //alert("disableMenuOptions(): datatype_menu");
-                    dtmenu.className = "accesshide custom_field_default_fieldset";
-                }
-                if (dtradio) {
-                    dtradio.className = "accesshide custom_field_default_fieldset";
-                }
-                if (dtcheckbox) {
-                    dtcheckbox.className = "accesshide custom_field_default_fieldset";
-                }
-                for (i = 1; i < srcs.options.length; ++i) {
-                    if (elemid = document.getElementById("datatype_menu_" +
-                                     srcs.options[i].value)) {
-                        //alert("disableMenuOptions(): datatype_menu_" + srcs.options[i].value);
-                        elemid.className = "accesshide custom_field_default_fieldset";
-                    }
-                    if (elemid = document.getElementById("datatype_radio_" +
-                                     srcs.options[i].value)) {
-                        //alert("disableMenuOptions(): datatype_radio_" + srcs.options[i].value);
-                        elemid.className = "accesshide custom_field_default_fieldset";
-                    }
-                }
-            }
-            function updateMenuOptions() {
-                var srcs = document.getElementById("id_manual_field_options_source");
-                var fcontrol = document.getElementById("id_manual_field_control");
-                disableMenuOptions();
-                if (srcs && fcontrol) {
-                    var mopts, itemend, cur, iecr;
-                    var multivalued = document.getElementById("id_multivalued");
-                    var menu_options = document.getElementById("id_manual_field_options");
-                    if ((menu_options.value.length || srcs.selectedIndex > 0) &&
-                        multivalued.checked &&
-                        fcontrol.options[fcontrol.selectedIndex].value == "checkbox") {
-                        // TBD: just change control type to menu???
-                        for (var j = 0; j < fcontrol.options.length; ++j) {
-                            if (fcontrol.options[j].value == "menu") {
-                                fcontrol.selectedIndex = j;
-                                break;
-                            }
-                        }
-                    }
-                    if (fcontrol.options[fcontrol.selectedIndex].value == "menu") {
-                        var dtmenu;
-                        if (srcs.selectedIndex == 0) {
-                            dtmenu = document.getElementById("datatype_menu");
-                            if (dtmenu) {
-                                dtmenu.className = "clearfix custom_field_default_fieldset";
-                                var defaultdata_menu = document.getElementById("id_defaultdata_menu");
-                                if (defaultdata_menu && multivalued) {
-                                    defaultdata_menu.multiple = multivalued.checked ? "multiple" : "";
-                                }
-                                if (defaultdata_menu && menu_options) {
-                                    var i;
-                                    for (i = defaultdata_menu.options.length - 1;
-                                         i >= 0; --i) {
-                                        defaultdata_menu.options.remove(i);
-                                    }
-                                    mopts = menu_options.value;
-                                    do {
-                                        itemend = mopts.indexOf("\n");
-                                        if (itemend == -1) {
-                                            cur = mopts;
-                                        } else {
-                                            cur = mopts.substr(0, itemend);
-                                            iecr = cur.indexOf("\r"); // IE7
-                                            if (iecr != -1) {
-                                                cur = cur.substr(0, iecr);
-                                            }
-                                            mopts = mopts.substr(itemend + 1);
-                                        }
-                                        //alert("updateMenuOptions(): Adding option: " + cur);
-                                        var elem = new Option(cur, cur);
-                                        defaultdata_menu.options.add(elem);
-                                    } while (itemend != -1);
-                                }
-                            }
-                        } else if ((dtmenu = document.getElementById("datatype_menu_" + srcs.options[srcs.selectedIndex].value))) {
-                            dtmenu.className = "clearfix custom_field_default_fieldset";
-                        }
-                    } else if (fcontrol.options[fcontrol.selectedIndex].value == "checkbox") {
-                        var dtcheckbox = document.getElementById("datatype_checkbox");
-                        if (multivalued.checked) {
-                            dtcheckbox.className = "clearfix custom_field_default_fieldset";
-                            return;
-                        }
-                        dtcheckbox.className = "accesshide custom_field_default_fieldset";
-                        var dtradio = document.getElementById("datatype_radio");
-                        if (dtradio) {
-                            if (dtradio.children) {
-                                //alert("updateMenuOptions(): RADIO: deleteing dtradio children " + dtradio.children.length);
-                                //var dots = ".";
-                                while (dtradio.children.length) {
-                                    //alert("updateMenuOptions(): deleteing radio child node "+ dots);
-                                    dtradio.children[0].parentNode.removeChild(dtradio.children[0]);
-                                    //dots += ".";
-                                }
-                            }
-                            if (srcs.selectedIndex == 0) {
-                                mopts = menu_options.value;
-                                if (!mopts.length) {
-                                    //alert("updateMenuOptions(): RADIO: !mopts.length - returning!");
-                                    dtcheckbox.className = "clearfix custom_field_default_fieldset";
-                                    return;
-                                }
-                                dtradio.className = "clearfix custom_field_default_fieldset";
-                                menu_options = document.getElementById("id_manual_field_options");
-                                var radiolabel = "'. get_string('profiledefaultdata', 'admin') .'";
-                                var checked = "checked";
-                                var count = 0;
-                                do {
-                                    itemend = mopts.indexOf("\n");
-                                    if (itemend == -1) {
-                                        cur = mopts;
-                                    } else {
-                                        cur = mopts.substr(0, itemend);
-                                        iecr = cur.indexOf("\r"); // IE7
-                                        if (iecr != -1) {
-                                            cur = cur.substr(0, iecr);
-                                        }
-                                        mopts = mopts.substr(itemend + 1);
-                                    }
-                                    //alert("updateMenuOptions(): Adding radio option: " + cur);
-                                    // <div id="fitem_id_defaultdata_radio_" class="fitem fitem_fradio">
-                                    //     <div class="fitemtitle">
-                                    //         <label for="id_defaultdata_radio_"> </label>
-                                    //     <div class="felement fradio">
-                                    //         <span>
-                                    //             <input id="id_defaultdata_radio_" type="radio" checked="checked" name="defaultdata_radio">
-                                    //             <label for="id_defaultdata_radio_">Option2</label>
-                                    var topdiv = document.createElement("div");
-                                    topdiv.id = "fitem_id_defaultdata_radio";
-                                    topdiv.className = "fitem fitem_fradio";
-                                    var labeldiv = document.createElement("div");
-                                    labeldiv.className = "fitemtitle";
-                                    var labelel = document.createElement("label");
-                                    //labelel.for = "id_defaultdata_radio";
-                                    labelel.setAttribute("for", "id_defaultdata_radio");
-                                    labelel.innerHTML = radiolabel;
-                                    labeldiv.appendChild(labelel);
-
-                                    var radiodiv = document.createElement("div");
-                                    radiodiv.className = "felement fradio";
-                                    var rspan = document.createElement("span");
-                                    var rinput = document.createElement("input");
-                                    rinput.type = "radio";
-                                    rinput.checked = checked;
-                                    checked = "";
-                                    rinput.id = "id_defaultdata_radio"+count;
-                                    rinput.name = "defaultdata_radio";
-                                    rinput.value = cur;
-                                    var labelrad = document.createElement("label");
-                                    //labelrad.for = "id_defaultdata_radio";
-                                    labelrad.setAttribute("for", "id_defaultdata_radio"+count);
-                                    labelrad.innerHTML = cur;
-                                    rspan.appendChild(rinput);
-                                    rspan.appendChild(labelrad);
-                                    radiodiv.appendChild(rspan);
-                                    topdiv.appendChild(labeldiv);
-                                    topdiv.appendChild(radiodiv);
-                                    dtradio.appendChild(topdiv);
-                                    radiolabel = "&nbsp;";
-                                    count++;
-                                } while (itemend != -1);
-                            } else if ((dtradio = document.getElementById("datatype_radio_" + srcs.options[srcs.selectedIndex].value))) {
-                                dtradio.className = "clearfix custom_field_default_fieldset";
-			    }
-                        }
-                    }
-                }
-            }
-            function updateDefaultYears() {
-                var yrid = document.getElementById("id_defaultdata_datetime_year");
-                var startyr = document.getElementById("id_manual_field_startyear");
-                var stopyr = document.getElementById("id_manual_field_stopyear");
-                if (startyr && stopyr && yrid) {
-                    var i;
-                    for (i = yrid.options.length - 1; i >= 0; --i) {
-                        yrid.options.remove(i);
-                    }
-                    for (i = startyr.options[startyr.selectedIndex].value;
-                         i <= stopyr.options[stopyr.selectedIndex].value; ++i) {
-                        //alert("updateDefaultYears(); Adding yr = " + i);
-                        var elem = new Option(i.toString(), i);
-                        yrid.options.add(elem);
-                    }
-                }
-            }
-            function timeFieldsEnabled(ischecked) {
-                var hrid = document.getElementById("id_defaultdata_datetime_hour");
-                var minid = document.getElementById("id_defaultdata_datetime_minute");
-                if (hrid) {
-                    if (!ischecked) {
-                        hrid.value = 0;
-                        hrid.disabled = "disabled";
-                    } else {
-                        hrid.disabled = "";
-                    }
-                }
-                if (minid) {
-                    if (!ischecked) {
-                        minid.value = 0;
-                        minid.disabled = "disabled";
-                    } else {
-                        minid.disabled = "";
-                    }
-                }
-            }
-            function initCustomFieldDefault() {
-                var inctime = document.getElementById("id_manual_field_inctime");
-                if (inctime) {
-                    timeFieldsEnabled(inctime.checked);
-                }
-                YAHOO.util.Event.addListener(window, "load", switchDefaultData());
-            }
-            function multivaluedChanged(checked) {
-                var fcontrol = document.getElementById("id_manual_field_control");
-                var srcs = document.getElementById("id_manual_field_options_source");
-                var defaultdata_menu;
-                defaultdata_menu = (srcs.selectedIndex != 0)
-                                   ? document.getElementById("id_defaultdata_menu_"+ srcs.options[srcs.selectedIndex].value)
-                                   : document.getElementById("id_defaultdata_menu")
-                if (defaultdata_menu) {
-                    defaultdata_menu.multiple = checked ? "multiple" : "";
-                }
-                if (fcontrol.options[fcontrol.selectedIndex].value == "checkbox") {
-                    updateMenuOptions();
-                }
-            }
-            YAHOO.util.Event.onDOMReady(initCustomFieldDefault);
-        </script>');
-
-        $attrs['manual_field_control'] = array('onchange' => 'switchDefaultData();');
-        $attrs['manual_field_startyear'] = array('onchange' => 'updateDefaultYears();');
-        $attrs['manual_field_stopyear'] = array('onchange' => 'updateDefaultYears();');
-        $attrs['manual_field_inctime'] = array('onclick' => 'timeFieldsEnabled(this.checked);');
-        $attrs['manual_field_options_source'] = array('onchange' => 'updateMenuOptions();');
-        $attrs['manual_field_options'] = array('onchange' => 'updateMenuOptions();');
+        $PAGE->requires->yui_module('moodle-elis_core-customfieldsform', 'M.elis_core.init_customfieldsform', array(get_string('profiledefaultdata', 'admin')), null, true);
 
         $fid = $this->_customdata['id'];
         $from = $this->_customdata['from'];
@@ -371,7 +88,7 @@ class customfieldform extends cmform {
         $form->addElement('advcheckbox', 'forceunique', get_string('profileforceunique', 'admin'));
         $form->setAdvanced('forceunique');
 
-        $form->addElement('advcheckbox', 'multivalued', get_string('field_multivalued', 'elis_program'), '', array('onclick' => 'multivaluedChanged(this.checked);', 'group' => false));
+        $form->addElement('advcheckbox', 'multivalued', get_string('field_multivalued', 'elis_program'), '', array('group' => false));
         $form->setAdvanced('multivalued');
         $form->disabledIf('multivalued', 'datatype', 'eq', 'datetime');
 

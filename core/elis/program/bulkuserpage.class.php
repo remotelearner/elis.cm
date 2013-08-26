@@ -105,10 +105,12 @@ class bulkuserpage extends selectionpage {
     }
 
     function get_records_from_selection($record_ids) {
-        $sort         = $this->optional_param('sort', 'name', PARAM_ALPHA);
-        $dir          = $this->optional_param('dir', 'ASC', PARAM_ALPHA);
+        $sort    = $this->optional_param('sort', 'name', PARAM_ALPHA);
+        $dir     = $this->optional_param('dir', 'ASC', PARAM_ALPHA);
+        $perpage = $this->optional_param('perpage', 30, PARAM_INT);
+        $page    = $this->optional_param('page', 0, PARAM_INT);
 
-        $users = user::find(new in_list_filter('id', $record_ids), array($sort => $dir));
+        $users = user::find(new in_list_filter('id', $record_ids), array($sort => $dir), $page * $perpage, $perpage);
 
         return $users;
     }
@@ -122,7 +124,7 @@ class bulkuserpage extends selectionpage {
         global $DB, $OUTPUT;
 
         if (empty($data->_selection)) {
-            print_error('no_items_selected', 'elis_program');
+            print_error('no_items_selected', 'elis_program', $this->get_basepage()->url);
         } else {
             $usersstring = implode(', ', array_map('fullname', $DB->get_records_select('crlm_user', 'id in ('.implode(',',$data->_selection).')')));
             $buttoncontinue = new single_button(

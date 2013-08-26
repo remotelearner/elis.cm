@@ -118,6 +118,8 @@ $pages = array(
                          'file' => 'resultspage.class.php'),
     'crsenginestatus' => array('class' => 'course_enginestatuspage',
                                'file' => 'resultsstatuspage.class.php'),
+    'crscertificate'  => array('class' => 'course_certificatepage',
+                               'file'  => 'certificatepage.class.php'),
 
     // Manage Classes
     'cls' => array('class' => 'pmclasspage',
