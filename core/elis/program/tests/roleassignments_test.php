@@ -304,23 +304,23 @@ class roleassignments_testcase extends elis_database_test {
 
         $role    = $DB->get_record('role', array('shortname' => 'student'));
         $context = context_elis_class::instance($pmclass->id);
-        $this->assertGreaterThan(0, role_assign($role->id, $testuser->id, $context->id));
+        $sink = $this->redirectMessages();
+        $roleassignresult = role_assign($role->id, $testuser->id, $context->id);
+        $this->assertGreaterThan(0, $roleassignresult);
 
         // Validate that the message was correctly sent.
+        $messages = $sink->get_messages();
+        $this->assertNotEmpty($messages);
         $fullname = fullname($testuser);
-
-        $subjcmp = $DB->sql_compare_text('subject', 255);
-        $smmsgcmp = $DB->sql_compare_text('smallmessage', 255);
-        $select = 'useridfrom = :useridfrom AND useridto = :useridto AND '.$subjcmp.' = :subject AND '.$smmsgcmp.' = :smallmessage';
-
-        $params = array(
-            'useridfrom'   => $testuser->id,
-            'useridto'     => $admin->id,
-            'subject'      => get_string('unreadnewmessage', 'message', $fullname),
-            'smallmessage' => $fullname.' has been enrolled in the class instance '.$pmclass->idnumber.'.'
+        $expected = array(
+            'useridfrom' => $testuser->id,
+            'useridto' => $admin->id,
+            'subject' => get_string('unreadnewmessage', 'message', $fullname),
+            'smallmessage' => $fullname.' has been enrolled in the class instance '.$pmclass->idnumber.'.',
         );
-
-        $this->assertTrue($DB->record_exists_select('message', $select, $params));
+        foreach ($expected as $k => $v) {
+            $this->assertEquals($v, $messages[0]->$k);
+        }
     }
 }
 

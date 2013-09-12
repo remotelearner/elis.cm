@@ -732,9 +732,11 @@ class generalized_filter_clustertree extends generalized_filter_type {
             $unselect_group_condition = "parent_ctxt.instanceid IN (" . implode(',', $data['clrunexpanded_ids']) . ")";
         }
 
-        $ctxtpath_like1 = $DB->sql_like('ctxt.path', $DB->sql_concat('parent_ctxt.path', "'/%'"), false); // TBV: case insensitive
-        $ctxtpath_like2 = $DB->sql_like('ctxt.path', $DB->sql_concat('parent_ctxt.path', "'/%'"), false); // TBV: case insensitive
-        $params = array();
+        $ctxconcat1 = $DB->sql_concat('parent_ctxt.path', ":parentctxpath1");
+        $ctxconcat2 = $DB->sql_concat('parent_ctxt.path', ":parentctxpath2");
+        $ctxtpathlike1 = $DB->sql_like('ctxt.path', $ctxconcat1, false); // TBV: case insensitive
+        $ctxtpathlike2 = $DB->sql_like('ctxt.path', $ctxconcat2, false); // TBV: case insensitive
+        $params = array('parentctxpath1' => '/%', 'parentctxpath2' => '/%');
         //$params['ctxtpath1'] = $DB->sql_concat('parent_ctxt.path', "'/%'");
         //$params['ctxtpath2'] = $DB->sql_concat('parent_ctxt.path', "'/%'");
 
@@ -753,13 +755,13 @@ class generalized_filter_clustertree extends generalized_filter_type {
                     AND NOT EXISTS (
                       SELECT * FROM {context} parent_ctxt
                       WHERE parent_ctxt.contextlevel = :cluster_context_level2
-                      AND (parent_ctxt.path = ctxt.path OR {$ctxtpath_like1})
+                      AND (parent_ctxt.path = ctxt.path OR {$ctxtpathlike1})
                       AND {$unselect_group_condition}
                     )
                     AND NOT EXISTS (
                       SELECT * FROM {context} parent_ctxt
                       WHERE parent_ctxt.contextlevel = :cluster_context_level3
-                      AND {$ctxtpath_like2} AND {$select_group_condition}
+                      AND {$ctxtpathlike2} AND {$select_group_condition}
                     )";
 
             //append results
@@ -784,7 +786,7 @@ class generalized_filter_clustertree extends generalized_filter_type {
                     AND NOT EXISTS (
                       SELECT * FROM {context} parent_ctxt
                       WHERE parent_ctxt.contextlevel = :cluster_context_level2
-                      AND (parent_ctxt.path = ctxt.path OR {$ctxtpath_like1})
+                      AND (parent_ctxt.path = ctxt.path OR {$ctxtpathlike1})
                       AND ({$select_group_condition} OR {$unselect_group_condition})
                     )";
 

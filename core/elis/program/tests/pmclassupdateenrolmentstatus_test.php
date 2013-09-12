@@ -78,6 +78,7 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
         // Enrolments.
         foreach ($enrolments as $enrolment) {
             $student = new student($enrolment);
+            $sink = $this->redirectMessages();
             $student->save();
         }
 
@@ -235,6 +236,7 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
 
         foreach ($classids as $classid) {
             $class = new pmclass($classid);
+            $sink = $this->redirectMessages();
             $class->update_enrolment_status();
         }
 
@@ -258,6 +260,7 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
 
         foreach ($classids as $classid) {
             $class = new pmclass($classid);
+            $sink = $this->redirectMessages();
             $class->update_enrolment_status($pmuserid);
         }
         // Var_dump($expectedenrolments);.
@@ -284,6 +287,7 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
 
         foreach ($classids as $classid) {
             $class = new pmclass($classid);
+            $sink = $this->redirectMessages();
             $class->update_enrolment_status();
         }
 
@@ -309,6 +313,7 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
 
         foreach ($classids as $classid) {
             $class = new pmclass($classid);
+            $sink = $this->redirectMessages();
             $class->update_enrolment_status($pmuserid);
         }
 
@@ -446,6 +451,7 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
         $this->save_enrolments($enrolments, $logrades);
 
         $class = new pmclass($classid);
+        $sink = $this->redirectMessages();
         $class->update_enrolment_status();
 
         $this->validate_expected_enrolments($expectedenrolments);
@@ -470,6 +476,7 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
         $this->save_enrolments($enrolments, $logrades);
 
         $class = new pmclass($classid);
+        $sink = $this->redirectMessages();
         $class->update_enrolment_status($pmuserid);
 
         $expectedenrolments = $this->filter_by_userid($expectedenrolments, $pmuserid);
@@ -561,6 +568,7 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
         // Track our time boundaries.
         $class = new pmclass($classid);
         $mintime = time();
+        $sink = $this->redirectMessages();
         $class->update_enrolment_status();
         $maxtime = time();
 
@@ -603,6 +611,7 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
         // Track our time boundaries.
         $class = new pmclass($classid);
         $mintime = time();
+        $sink = $this->redirectMessages();
         $class->update_enrolment_status($pmuserid);
         $maxtime = time();
 
@@ -699,6 +708,7 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
         $this->save_enrolments($enrolments);
 
         $class = new pmclass($classid);
+        $sink = $this->redirectMessages();
         $class->update_enrolment_status();
 
         $this->validate_expected_enrolments($expectedenrolments);
@@ -721,6 +731,7 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
         $this->save_enrolments($enrolments);
 
         $class = new pmclass($classid);
+        $sink = $this->redirectMessages();
         $class->update_enrolment_status($pmuserid);
 
         $expectedenrolments = $this->filter_by_userid($expectedenrolments, $pmuserid);
@@ -839,6 +850,7 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
 
         foreach ($classids as $classid) {
             $pmclass = new pmclass($classid);
+            $sink = $this->redirectMessages();
             $pmclass->update_enrolment_status();
         }
 
@@ -875,6 +887,7 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
         $pmuserid = 103;
         foreach ($classids as $classid) {
             $pmclass = new pmclass($classid);
+            $sink = $this->redirectMessages();
             $pmclass->update_enrolment_status($pmuserid);
         }
 

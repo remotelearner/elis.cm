@@ -67,10 +67,10 @@ class courseprerequisite_testcase extends elis_database_test {
      * Test that a record can be created in the database.
      */
     public function test_courseprerequisite_cancreaterecord() {
-        $this->markTestIncomplete('In development.');
         // Create a record.
         $src = new courseprerequisite(false, null, array(), false, array());
-        // TBD: setup data.
+        $src->curriculumcourseid = 1;
+        $src->courseid = 2;
         $src->save();
 
         // Read it back.
@@ -87,12 +87,11 @@ class courseprerequisite_testcase extends elis_database_test {
      * Test that a record can be modified.
      */
     public function test_courseprerequisite_canupdaterecord() {
-        $this->markTestIncomplete('In development.');
         $this->load_csv_data();
 
         // Read a record.
         $src = new courseprerequisite(3, null, array(), false, array());
-        // TBD: setup data.
+        $src->courseid = 4;
         $src->save();
 
         // Read it back.

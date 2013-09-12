@@ -52,6 +52,60 @@ class coursecatalogpage extends pm_page {
      */
     var $div_attrs  = 'style="float: center; overflow: auto;"';
 
+    /**
+     * Helper method user_can_unenrol checks if user can unenrol from selected CI
+     * @param object $data the data object from db query, i.e. user::get_user_course_curriculum()
+     * @param int $cuserid optional ELIS/crlm userid
+     * @param object &$studetrec optional param to return student record if found
+     * @param object &$waitlist optional param to return waitlist record if found
+     * @return bool true if user can unenrol, false otherwise
+     * @uses $DB
+     * @uses $USER
+     */
+    static function user_can_unenrol($data, $cuserid = 0, &$studentrec = null, &$waitlist = null) {
+        global $DB, $USER;
+
+        if (!get_config('enrol_elis', 'unenrol_from_course_catalog')) {
+            return false;
+        }
+
+        if ($data->completionid != STUSTATUS_NOTCOMPLETE || !empty($data->prereqcount) || empty($data->classcount)) {
+            return false;
+        }
+
+        if (empty($cuserid) && !($cuserid = pm_get_crlmuserid($USER->id))) {
+            return false;
+        }
+
+        $classes = $DB->get_recordset(pmclass::TABLE, array('courseid' => $data->courseid));
+        if (!$classes->valid()) {
+            unset($classes);
+            return false;
+        }
+        foreach ($classes as $pmclass) {
+            if ($waitrec = $DB->get_record(waitlist::TABLE, array('classid' => $pmclass->id, 'userid' => $cuserid))) {
+                if ($waitlist !== null) {
+                    $waitlist = $waitrec;
+                }
+                break;
+            }
+            if ($sturec = $DB->get_record(student::TABLE, array('classid' => $pmclass->id, 'userid' => $cuserid))) {
+                if ($studentrec !== null) {
+                    $studentrec = $sturec;
+                }
+                // check for any grade data
+                if (($sturec->grade && $sturec->grade > 0.0) || $DB->record_exists(student_grade::TABLE, array('classid' => $pmclass->id, 'userid' => $cuserid))) {
+                    // error_log("user_can_unenrol: already have grade data ({$sturec->grade})  => false");
+                    unset($classes);
+                    return false;
+                }
+                break; // TBD: should only ever be in one class instance (?)
+            }
+        }
+        unset($classes);
+        return true;
+    }
+
     function can_do_default() {
         if (!empty(elis::$config->elis_program->disablecoursecatalog)) {
             return false;
@@ -500,7 +554,7 @@ class coursecatalogpage extends pm_page {
 
                     echo "<div id=\"$usercur->id\"></div>";
 
-                    $table = new availablecoursetable($courses);
+                    $table = new availablecoursetable($courses, $cuserid);
                     $table->print_yui_table('curriculum'.$usercur->curid);
                 } else {
                     echo '<p>' . get_string('nocoursesinthiscurriculum', 'elis_program') . '</p>';
@@ -536,6 +590,61 @@ class coursecatalogpage extends pm_page {
         }
 
         return $r;
+    }
+
+    /**
+     * display_confirmunenrol() new page to allow users to self-unenrol, if enabled
+     * ELIS-8524
+     * @uses $OUTPUT
+     */
+    public function display_confirmunenrol() {
+        global $OUTPUT;
+        $stuid = $this->optional_param('stuid', 0, PARAM_INT);
+        $wlid  = $this->optional_param('wlid', 0, PARAM_INT);
+        $buttoncancel = new single_button(new moodle_url('index.php', array(
+                            's' => $this->pagename,
+                            'action' => 'available'
+                        )), get_string('no'));
+        $prompt = null;
+        if (!empty($stuid) && ($stu = new student($stuid))) {
+            $pmclass = new pmclass($stu->classid);
+            $pmclass->load();
+            $prompt = get_string('unenrol_student', 'elis_program', $pmclass->to_object());
+            $buttoncontinue = new single_button(new moodle_url('index.php', array(
+                                  's' => $this->pagename,
+                                  'action' => 'unenrol',
+                                  'stuid' => $stuid
+                              )), get_string('yes'));
+        } else if (!empty($wlid) && ($waitlist = new waitlist($wlid))) {
+            $pmclass = new pmclass($waitlist->classid);
+            $pmclass->load();
+            $prompt = get_string('unenrol_waitlist', 'elis_program', $pmclass->to_object());
+            $buttoncontinue = new single_button(new moodle_url('index.php', array(
+                                  's' => $this->pagename,
+                                  'action' => 'unenrol',
+                                  'wlid' => $wlid
+                              )), get_string('yes'));
+        }
+        if ($prompt) {
+            echo $OUTPUT->confirm($prompt, $buttoncontinue, $buttoncancel);
+        } else {
+            $this->display('available');
+        }
+    }
+
+    /**
+     * do_unenrol() new method to unenrol user from class instance
+     * ELIS-8524
+     */
+    public function do_unenrol() {
+        $stuid = $this->optional_param('stuid', 0, PARAM_INT);
+        $wlid  = $this->optional_param('wlid', 0, PARAM_INT);
+        if (!empty($stuid) && ($stu = new student($stuid))) {
+            $stu->delete();
+        } else if (!empty($wlid) && ($waitlist = new waitlist($wlid))) {
+            $waitlist->delete();
+        }
+        $this->display('available');
     }
 }
 
@@ -885,14 +994,20 @@ class currentclasstable extends yui_table {
         return $item->coursename;
     }
 
+    /**
+     * Method to return timeofday data
+     * @param string $column Name of the column
+     * @param object $item the ELIS Class Instance object id
+     * @return string Class name possibly containing link at end
+     * @uses $CFG
+     */
     function get_item_display_classname($column, $item) {
         global $CFG;
 
         $this->get_class($item);
         $classid = $this->current_class->idnumber;
         if ($mdlcrs = moodle_get_course($this->current_class->id)) {
-            $classid .= ' - <a href="' . $CFG->wwwroot . '/course/view.php?id=' .
-                $mdlcrs . '">' . get_string('moodlecourse', 'elis_program') . '</a>';
+            $classid .= ' - <a href="'.$CFG->wwwroot.'/course/view.php?id='.$mdlcrs.'">'.get_string('moodlecourse', 'elis_program').'</a>';
         }
         return $classid;
     }
@@ -947,9 +1062,14 @@ class instructortable extends currentclasstable {
 }
 
 class availablecoursetable extends yui_table {
-    function __construct(&$items) {
-        global $USER;
-        $this->cuserid = cm_get_crlmuserid($USER->id);
+
+    /**
+     * availablecoursetable constructor
+     * @param object|array &$items (iterable object) item listing to display in table
+     * @param int $cuserid the ELIS PM/crlm userid
+     */
+    function __construct(&$items, $cuserid) {
+        $this->cuserid = $cuserid;
 
         $columns = array(
             'coursename'  => array('header' => get_string('course_name', 'elis_program')),
@@ -974,20 +1094,30 @@ class availablecoursetable extends yui_table {
     }
 
     function get_item_display_classname($column, $item) {
-        if(isset($item->completionid)) {
-            if($item->completionid == STUSTATUS_NOTCOMPLETE) {
-                return get_string('onenroledlist', 'elis_program');
-            } elseif($item->completionid == STUSTATUS_PASSED) {
+        $sturec = array();
+        $waitrec = array();
+        if (isset($item->completionid)) {
+            if ($item->completionid == STUSTATUS_NOTCOMPLETE) {
+                return get_string('onenroledlist', 'elis_program').(coursecatalogpage::user_can_unenrol($item, $this->cuserid, $sturec, $waitrec)
+                        ? ' - '.html_writer::tag('a', get_string('unenrolfromclass', 'elis_program'), array(
+                            'href' => 'index.php?s=crscat&section=curr&action=confirmunenrol'
+                                    .(!empty($sturec) ? "&stuid={$sturec->id}" : '').(!empty($waitrec) ? "&wlid={$waitrec->id}" : '')))
+                        : '');
+            } else if ($item->completionid == STUSTATUS_PASSED) {
                 return get_string('onpassed', 'elis_program');
-            } elseif($item->completionid == STUSTATUS_FAILED) {
+            } else if ($item->completionid == STUSTATUS_FAILED) {
                 return get_string('onfailed', 'elis_program');
             }
-        } elseif (!empty($item->prereqcount)) {
+        } else if (!empty($item->prereqcount)) {
             return get_string('unsatisfiedprereqs', 'elis_program');
-        } elseif (empty($item->classcount)) {
+        } else if (empty($item->classcount)) {
             return get_string('noclassavail', 'elis_program');
-        } elseif(!empty($item->waiting)) {
-            return get_string('onwaitlist', 'elis_program');
+        } else if (!empty($item->waiting)) {
+            return get_string('onwaitlist', 'elis_program').(coursecatalogpage::user_can_unenrol($item, $this->cuserid, $sturec, $waitrec)
+                    ? ' - '.html_writer::tag('a', get_string('unenrolfromclass', 'elis_program'), array(
+                        'href' => 'index.php?s=crscat&section=curr&action=confirmunenrol'
+                                .(!empty($sturec) ? "&stuid={$sturec->id}" : '').(!empty($waitrec) ? "&wlid={$waitrec->id}" : '')))
+                    : '');
         } else {
             return get_string('noclassyet', 'elis_program') .' - <a href="'.
                 "index.php?s=crscat&amp;section=curr&amp;crsid={$item->courseid}" .

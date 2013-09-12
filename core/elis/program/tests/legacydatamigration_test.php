@@ -93,6 +93,7 @@ class legacydatamigration_testcase extends elis_database_test {
 
         // Initialize the program object.
         $program = new curriculum(1);
+        $program->reset_custom_field_list();
         $program->load();
         $program = $program->to_object();
 
@@ -122,6 +123,7 @@ class legacydatamigration_testcase extends elis_database_test {
 
         // Initialize the course object.
         $course = new course(100);
+        $course->reset_custom_field_list();
         $course->load();
         $course = $course->to_object();
 

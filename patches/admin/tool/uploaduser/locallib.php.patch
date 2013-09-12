@@ -1,5 +1,5 @@
 diff --git a/admin/tool/uploaduser/locallib.php b/admin/tool/uploaduser/locallib.php
-index be7fcbb..c070086 100644
+index 239ad61..b298aeb 100644
 --- a/admin/tool/uploaduser/locallib.php
 +++ b/admin/tool/uploaduser/locallib.php
 @@ -56,7 +56,7 @@ define('UU_PWRESET_ALL', 2);

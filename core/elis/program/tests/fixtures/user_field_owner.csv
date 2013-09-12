@@ -1,9 +1,11 @@
 fieldid,plugin,exclude,params
+101,manual,0,a:10:{s:8:"required";b:0;s:15:"edit_capability";s:0:"";s:15:"view_capability";s:0:"";s:7:"control";s:4:"text";s:7:"columns";i:30;s:4:"rows";i:10;s:9:"maxlength";i:2048;s:9:"startyear";s:4:"1970";s:8:"stopyear";s:4:"2038";s:7:"inctime";s:1:"0";}
 101,moodle_profile,1,a:0:{}
 102,moodle_profile,1,a:0:{}
 103,moodle_profile,1,a:0:{}
 104,moodle_profile,1,a:0:{}
 105,moodle_profile,1,a:0:{}
+106,manual,0,a:10:{s:8:"required";b:0;s:15:"edit_capability";s:0:"";s:15:"view_capability";s:0:"";s:7:"control";s:4:"text";s:7:"columns";i:30;s:4:"rows";i:10;s:9:"maxlength";i:2048;s:9:"startyear";s:4:"1970";s:8:"stopyear";s:4:"2038";s:7:"inctime";s:1:"0";}
 106,moodle_profile,0,a:0:{}
 107,moodle_profile,0,a:0:{}
 108,moodle_profile,0,a:0:{}

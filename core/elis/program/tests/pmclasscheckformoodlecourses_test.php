@@ -47,7 +47,7 @@ class pmclasscheckformoodlecourses_testcase extends elis_database_test {
             course::TABLE => elis::component_file('program', 'tests/fixtures/pmcrs.csv'),
             pmclass::TABLE => elis::component_file('program', 'tests/fixtures/pmclass2.csv'),
             student::TABLE => elis::component_file('program', 'tests/fixtures/student.csv'),
-            user::TABLE => elis::component_file('program', 'tests/fixtures/user.csv'),
+            user::TABLE => elis::component_file('program', 'tests/fixtures/pmuser.csv'),
             usermoodle::TABLE => elis::component_file('program', 'tests/fixtures/usermoodle.csv'),
             'user' => elis::component_file('program', 'tests/fixtures/mdluser.csv'),
         ));
@@ -144,6 +144,8 @@ class pmclasscheckformoodlecourses_testcase extends elis_database_test {
         $this->load_csv_data();
 
         $student = new student(array('userid' => 103, 'classid' => 103));
+
+        $sink = $this->redirectMessages();
         $student->save();
 
         // Track which associations should remain.

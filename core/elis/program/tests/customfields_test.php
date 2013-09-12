@@ -74,6 +74,18 @@ class test_moodleform extends cmform {
 class curriculumcustomfields_testcase extends elis_database_test {
 
     /**
+     * Clear custom field cache lists.
+     */
+    protected function setUp() {
+        parent::setUp();
+        $classes = array('curriculum', 'track', 'course', 'pmclass', 'user', 'userset');
+        foreach ($classes as $class) {
+            $temp = new $class;
+            $temp->reset_custom_field_list();
+        }
+    }
+
+    /**
      * Create a custom field category.
      * @param int $context The context level constant to create the category for (ex. CONTEXT_ELIS_USER)
      * @return field_category The created field category.
@@ -127,6 +139,23 @@ class curriculumcustomfields_testcase extends elis_database_test {
         $fieldcontext->fieldid      = $field->id;
         $fieldcontext->contextlevel = $context;
         $fieldcontext->save();
+
+        $owner = new field_owner();
+        $owner->fieldid = $field->id;
+        $owner->plugin = 'manual';
+        $owner->params = serialize(array(
+            'required' => false,
+            'edit_capability' => '',
+            'view_capability' => '',
+            'control' => 'text',
+            'columns' => 30,
+            'rows' => 10,
+            'maxlength' => 2048,
+            'startyear' => '1970',
+            'stopyear' => '2038',
+            'inctime' => '0'
+        ));
+        $owner->save();
 
         return $field;
     }

@@ -384,7 +384,7 @@ class pmsynchronizemoodleclassgrades_testcase extends elis_database_test {
         // Set up grade item and completion item.
         $itemid = $this->create_grade_item("\'withslashes\'");
         $this->create_grade_grade($itemid, 100, 75);
-        $completionid = $this->create_course_completion("'withslashes'");
+        $completionid = $this->create_course_completion("\'withslashes\'");
 
         // Call and validate.
         pm_synchronize_moodle_class_grades();
@@ -409,7 +409,7 @@ class pmsynchronizemoodleclassgrades_testcase extends elis_database_test {
         $itemid = $this->create_grade_item("\'withslashes\'");
         $this->create_grade_grade($itemid, 100, 75);
         $this->create_grade_grade($itemid, 101, 75);
-        $completionid = $this->create_course_completion("'withslashes'");
+        $completionid = $this->create_course_completion("\'withslashes\'");
 
         // Call and validate.
         pm_synchronize_moodle_class_grades(100);
