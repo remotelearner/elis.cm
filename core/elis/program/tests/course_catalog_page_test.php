@@ -64,7 +64,8 @@ class course_catalog_page_testcase extends elis_database_test {
         $class->maxstudents = 10;
 
         $items = array();
-        $addclasstable = new addclasstable($items);
+        $url = new moodle_url('http://localhost/');
+        $addclasstable = new addclasstable($items, $url);
         $classsize = $addclasstable->get_item_display_classsize('', $class);
         $expected = '1/10';
 
@@ -80,7 +81,8 @@ class course_catalog_page_testcase extends elis_database_test {
         $class->load();
 
         $items = array();
-        $addclasstable = new addclasstable($items);
+        $url = new moodle_url('http://localhost/');
+        $addclasstable = new addclasstable($items, $url);
         $option = $addclasstable->get_item_display_options('', $class);
         $expected = '<a href="index.php?s=crscat&amp;section=curr&amp;clsid=100&amp;action=savenew">Choose</a>';
 

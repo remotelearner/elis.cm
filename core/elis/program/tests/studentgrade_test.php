@@ -67,10 +67,13 @@ class studentgrade_testcase extends elis_database_test {
      * Test that a record can be created in the database.
      */
     public function teststudentgradecancreaterecord() {
-        $this->markTestIncomplete('In development.');
         // Create a record.
         $src = new student_grade(false, null, array(), false, array());
-        // TBD: setup data.
+        $src->classid = 1;
+        $src->userid = 2;
+        $src->completionid = 3;
+        $src->grade = 88;
+        $src->locked = 0;
         $src->save();
 
         // Read it back.
@@ -87,16 +90,15 @@ class studentgrade_testcase extends elis_database_test {
      * Test that a record can be modified.
      */
     public function teststudentgradecanupdaterecord() {
-        $this->markTestIncomplete('In development.');
         $this->load_csv_data();
 
         // Read a record.
-        $src = new student_grade(3, null, array(), false, array());
-        // TBD: setup data.
+        $src = new student_grade(1, null, array(), false, array());
+        $src->grade = 70;
         $src->save();
 
         // Read it back.
-        $retr = new studet_grade(3, null, array(), false, array());
+        $retr = new student_grade(3, null, array(), false, array());
         foreach ($src as $key => $value) {
             if (strpos($key, elis_data_object::FIELD_PREFIX) !== false) {
                 $key = substr($key, strlen(elis_data_object::FIELD_PREFIX));

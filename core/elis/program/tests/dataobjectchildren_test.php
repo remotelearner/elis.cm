@@ -365,7 +365,18 @@ class dataobjectchildren_testcase extends elis_database_test {
 
         // Initialize a new data object and save it to the database.
         $dataclass = new $classname($data);
+
+        // Waitlist attempts to send email, which causes a $CFG->noemailever error in unit tests.
+        if ($classname === 'waitlist') {
+            ob_start();
+        }
+
         $dataclass->save();
+
+        // Waitlist attempts to send email, which causes a $CFG->noemailever error in unit tests.
+        if ($classname === 'waitlist') {
+            ob_end_clean();
+        }
 
         $this->assertGreaterThan(0, $dataclass->id, 'class: '.$classname);
 

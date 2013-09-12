@@ -78,7 +78,10 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
         // Enrolments.
         foreach ($enrolments as $enrolment) {
             $student = new student($enrolment);
+            // Use output buffering to suppress $CFG->noemailever notice.
+            ob_start();
             $student->save();
+            ob_end_clean();
         }
 
         // LO grades.
@@ -235,7 +238,10 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
 
         foreach ($classids as $classid) {
             $class = new pmclass($classid);
+            // Use output buffering to suppress $CFG->noemailever notice.
+            ob_start();
             $class->update_enrolment_status();
+            ob_end_clean();
         }
 
         $this->validate_expected_enrolments($expectedenrolments);
@@ -258,7 +264,10 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
 
         foreach ($classids as $classid) {
             $class = new pmclass($classid);
+            // Use output buffering to suppress $CFG->noemailever notice.
+            ob_start();
             $class->update_enrolment_status($pmuserid);
+            ob_end_clean();
         }
         // Var_dump($expectedenrolments);.
         $expectedenrolments = $this->filter_by_userid($expectedenrolments, $pmuserid);
@@ -284,7 +293,10 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
 
         foreach ($classids as $classid) {
             $class = new pmclass($classid);
+            // Use output buffering to suppress $CFG->noemailever notice.
+            ob_start();
             $class->update_enrolment_status();
+            ob_end_clean();
         }
 
         $this->validate_expected_enrolments($expectedenrolments);
@@ -309,7 +321,10 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
 
         foreach ($classids as $classid) {
             $class = new pmclass($classid);
+            // Use output buffering to suppress $CFG->noemailever notice.
+            ob_start();
             $class->update_enrolment_status($pmuserid);
+            ob_end_clean();
         }
 
         $expectedenrolments = $this->filter_by_userid($expectedenrolments, $pmuserid);
@@ -446,7 +461,10 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
         $this->save_enrolments($enrolments, $logrades);
 
         $class = new pmclass($classid);
+        // Use output buffering to suppress $CFG->noemailever notice.
+        ob_start();
         $class->update_enrolment_status();
+        ob_end_clean();
 
         $this->validate_expected_enrolments($expectedenrolments);
     }
@@ -470,7 +488,10 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
         $this->save_enrolments($enrolments, $logrades);
 
         $class = new pmclass($classid);
+        // Use output buffering to suppress $CFG->noemailever notice.
+        ob_start();
         $class->update_enrolment_status($pmuserid);
+        ob_end_clean();
 
         $expectedenrolments = $this->filter_by_userid($expectedenrolments, $pmuserid);
         $this->validate_expected_enrolments($expectedenrolments, $pmuserid);
@@ -561,7 +582,10 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
         // Track our time boundaries.
         $class = new pmclass($classid);
         $mintime = time();
+        // Use output buffering to suppress $CFG->noemailever notice.
+        ob_start();
         $class->update_enrolment_status();
+        ob_end_clean();
         $maxtime = time();
 
         $count = $DB->count_records(student::TABLE);
@@ -603,7 +627,10 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
         // Track our time boundaries.
         $class = new pmclass($classid);
         $mintime = time();
+        // Use output buffering to suppress $CFG->noemailever notice.
+        ob_start();
         $class->update_enrolment_status($pmuserid);
+        ob_end_clean();
         $maxtime = time();
 
         $expectedenrolments = $this->filter_by_userid($expectedenrolments, $pmuserid);
@@ -699,7 +726,10 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
         $this->save_enrolments($enrolments);
 
         $class = new pmclass($classid);
+        // Use output buffering to suppress $CFG->noemailever notice.
+        ob_start();
         $class->update_enrolment_status();
+        ob_end_clean();
 
         $this->validate_expected_enrolments($expectedenrolments);
     }
@@ -721,7 +751,10 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
         $this->save_enrolments($enrolments);
 
         $class = new pmclass($classid);
+        // Use output buffering to suppress $CFG->noemailever notice.
+        ob_start();
         $class->update_enrolment_status($pmuserid);
+        ob_end_clean();
 
         $expectedenrolments = $this->filter_by_userid($expectedenrolments, $pmuserid);
         $this->validate_expected_enrolments($expectedenrolments, $pmuserid);
@@ -839,7 +872,10 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
 
         foreach ($classids as $classid) {
             $pmclass = new pmclass($classid);
+            // Use output buffering to suppress $CFG->noemailever notice.
+            ob_start();
             $pmclass->update_enrolment_status();
+            ob_end_clean();
         }
 
         $this->validate_expected_enrolments($expectedenrolments);
@@ -875,7 +911,10 @@ class pmclassupdateenrolmentstatus_testcase extends elis_database_test {
         $pmuserid = 103;
         foreach ($classids as $classid) {
             $pmclass = new pmclass($classid);
+            // Use output buffering to suppress $CFG->noemailever notice.
+            ob_start();
             $pmclass->update_enrolment_status($pmuserid);
+            ob_end_clean();
         }
 
         $expectedenrolments = $this->filter_by_userid($expectedenrolments, $pmuserid);

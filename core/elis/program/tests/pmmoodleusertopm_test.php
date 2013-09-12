@@ -103,11 +103,31 @@ class pm_moodle_user_to_pm_testcase extends elis_database_test {
             $cat = $this->set_up_elis_field_category();
         }
 
+        $user = new user;
+        $user->reset_custom_field_list();
+
         $field = new field;
         $field->shortname = $mfield->shortname;
         $field->name = $mfield->name;
         $field->datatype = $mfield->datatype;
         field::ensure_field_exists_for_context_level($field, CONTEXT_ELIS_USER, $cat);
+
+        $owner = new field_owner();
+        $owner->fieldid = $field->id;
+        $owner->plugin = 'manual';
+        $owner->params = serialize(array(
+            'required' => false,
+            'edit_capability' => '',
+            'view_capability' => '',
+            'control' => 'text',
+            'columns' => 30,
+            'rows' => 10,
+            'maxlength' => 2048,
+            'startyear' => '1970',
+            'stopyear' => '2038',
+            'inctime' => '0'
+        ));
+        $owner->save();
 
         $owner = new field_owner();
         $owner->fieldid = $field->id;

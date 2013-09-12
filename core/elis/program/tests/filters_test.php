@@ -151,6 +151,14 @@ class filters_testcase extends elis_database_test {
 
         require_once(elispm::lib('filtering/clustertree.php'));
 
+        $testclusterids = array();
+        for ($i = 0; $i < 5; $i++) {
+            $userset = new userset;
+            $userset->name = 'test_userset_'.$i;
+            $userset->save();
+            $testclusterids[] = $userset->id;
+        }
+
         $uniqueid = 'test_clustertree';
         $alias = 'test_clustertree';
         $name = 'test_clustertree';
@@ -168,10 +176,75 @@ class filters_testcase extends elis_database_test {
         $sqlfilter = $filter->get_sql_filter($data);
         $this->assertNotEmpty($sqlfilter);
 
-        // Test context call in get_label.
+        // Test empty get_label.
         $data = array();
         $label = $filter->get_label($data);
-        $this->assertNotEmpty($label);
+        $expected = 'test_clustertree: N/A<br/>';
+        $this->assertEquals($expected, $label);
+
+        // Test get_label with clusterids.
+        $data = array(
+            'clusterids' => $testclusterids
+        );
+        $label = $filter->get_label($data);
+        $clusternames = array();
+        for ($i = 0; $i < 5; $i++) {
+            $clusternames[] = 'test_userset_'.$i;
+        }
+        $expected = $name.':<br/>'.implode(', ', $clusternames).'<br/>';
+        $this->assertEquals($expected, $label);
+
+        // Test get_label with unexpanded_ids.
+        $data = array(
+            'unexpanded_ids' => $testclusterids
+        );
+        $label = $filter->get_label($data);
+        $clusternames = array();
+        for ($i = 0; $i < 5; $i++) {
+            $clusternames[] = 'test_userset_'.$i.' (and all children)';
+        }
+        $expected = $name.':<br/>'.implode(', ', $clusternames).'<br/>';
+        $this->assertEquals($expected, $label);
+
+        // Create a subuserset for the next two tests.
+        $subuserset = new userset;
+        $subuserset->name = 'test_subuserset_1';
+        $subuserset->parent = $testclusterids[0];
+        $subuserset->save();
+        $testclusterids[] = $subuserset->id;
+
+        // Test get_label with recursively unselected clusters with 'clusterids' param.
+        // Tests that when clrunexpanded_ids contains an ID of a userset with child usersets, the child usersets also
+        // do not show up.
+        $data = array(
+            'clusterids' => $testclusterids,
+            'clrunexpanded_ids' => array($testclusterids[0])
+        );
+        $label = $filter->get_label($data);
+        $clusternames = array();
+        for ($i = 1; $i <= 4; $i++) {
+            $clusternames[] = 'test_userset_'.$i;
+        }
+        $expected = $name.':<br/>'.implode(', ', $clusternames).'<br/>';
+        $this->assertEquals($expected, $label);
+
+        // Test get_label with recursively unselected clusters with 'unexpanded_ids'.
+        // Tests that when a subusetset is listed in 'unexpanded_ids', but it's parent is listed in clrunexpanded_ids,
+        // the subuserset does not show up.
+        $unexpandedids = $testclusterids;
+        unset($unexpandedids[0]);
+        $data = array(
+            'unexpanded_ids' => $unexpandedids,
+            'clrunexpanded_ids' => array($testclusterids[0])
+        );
+        $label = $filter->get_label($data);
+        $clusternames = array();
+        for ($i = 1; $i <= 4; $i++) {
+            $clusternames[] = 'test_userset_'.$i.' (and all children)';
+        }
+        $expected = $name.':<br/>'.implode(', ', $clusternames).'<br/>';
+        $this->assertEquals($expected, $label);
+
     }
 
     /**

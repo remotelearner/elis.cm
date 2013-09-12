@@ -157,7 +157,9 @@ class waitlist_testcase extends elis_database_test {
 
         // Use the page to enrol the test user in the waitlist, recording our time range.
         $mintime = time();
+        ob_start();
         $page->do_savewaitlist();
+        ob_end_clean();
         $maxtime = time();
 
         // Validate state of the waitlist db record.

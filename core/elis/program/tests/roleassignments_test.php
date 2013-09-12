@@ -304,7 +304,10 @@ class roleassignments_testcase extends elis_database_test {
 
         $role    = $DB->get_record('role', array('shortname' => 'student'));
         $context = context_elis_class::instance($pmclass->id);
-        $this->assertGreaterThan(0, role_assign($role->id, $testuser->id, $context->id));
+        ob_start();
+        $roleassignresult = role_assign($role->id, $testuser->id, $context->id);
+        ob_end_clean();
+        $this->assertGreaterThan(0, $roleassignresult);
 
         // Validate that the message was correctly sent.
         $fullname = fullname($testuser);

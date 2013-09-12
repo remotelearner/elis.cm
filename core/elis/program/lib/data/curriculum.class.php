@@ -668,7 +668,7 @@ function curriculum_get_listing($sort = 'name', $dir = 'ASC', $startrec = 0,
         $filter_sql = $filter_object->get_sql(false, 'cur');
         if (isset($filter_sql['where'])) {
             $where[] = $filter_sql['where'];
-            $params += $filter_sql['where_parameters'];
+            $params = array_merge($params, $filter_sql['where_parameters']);
         }
     }
 
@@ -691,7 +691,7 @@ function curriculum_get_listing($sort = 'name', $dir = 'ASC', $startrec = 0,
             if (!empty($curriculum_filter)) {
                 $where[] = $curriculum_filter;
                 if (!empty($curriculum_params)) {
-                    $params += $curriculum_params;
+                    $params = array_merge($params, $curriculum_params);
                 }
             }
         } else {
@@ -710,7 +710,7 @@ function curriculum_get_listing($sort = 'name', $dir = 'ASC', $startrec = 0,
                           {$curriculum_filter}
                         )";
                 if (!empty($curriculum_params)) {
-                    $params += $curriculum_params;
+                    $params = array_merge($params, $curriculum_params);
                 }
             }
             $where[] = $cluster_where;
@@ -781,7 +781,7 @@ function curriculum_get_listing_recordset($sort = 'name', $dir = 'ASC',
         $filter_sql = $filter_object->get_sql(false, 'cur');
         if (isset($filter_sql['where'])) {
             $where[] = $filter_sql['where'];
-            $params += $filter_sql['where_parameters'];
+            $params = array_merge($params, $filter_sql['where_parameters']);
         }
     }
 
@@ -804,7 +804,7 @@ function curriculum_get_listing_recordset($sort = 'name', $dir = 'ASC',
             if (!empty($curriculum_filter)) {
                 $where[] = $curriculum_filter;
                 if (!empty($curriculum_params)) {
-                    $params += $curriculum_params;
+                    $params = array_merge($params, $curriculum_params);
                 }
             }
         } else {
@@ -823,7 +823,7 @@ function curriculum_get_listing_recordset($sort = 'name', $dir = 'ASC',
                           {$curriculum_filter}
                         )";
                 if (!empty($curriculum_params)) {
-                    $params += $curriculum_params;
+                    $params = array_merge($params, $curriculum_params);
                 }
             }
             $where[] = $cluster_where;
@@ -878,7 +878,7 @@ function curriculum_count_records($namesearch = '', $alpha = '', $contexts = nul
         $filter_sql = $filter_object->get_sql();
         if (isset($filter_sql['where'])) {
             $where[] = $filter_sql['where'];
-            $params += $filter_sql['where_parameters'];
+            $params = array_merge($params, $filter_sql['where_parameters']);
         }
     }
 
