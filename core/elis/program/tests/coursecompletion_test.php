@@ -67,9 +67,10 @@ class coursecompletion_testcase extends elis_database_test {
      * Test that a record can be created in the database.
      */
     public function test_coursecompletion_cancreaterecord() {
-        $this->markTestIncomplete('In development.');
         // Create a record.
-        $src = new coursecompletion(false, null, array(), false, array());
+        $src = new coursecompletion;
+        $src->courseid = 1;
+        $src->idnumber = 'testcoursecompletion';
         // TBD: setup data.
         $src->save();
 
@@ -87,16 +88,16 @@ class coursecompletion_testcase extends elis_database_test {
      * Test that a record can be modified.
      */
     public function test_coursecompletion_canupdaterecord() {
-        $this->markTestIncomplete('In development.');
         $this->load_csv_data();
 
         // Read a record.
-        $src = new coursecompletion(3, null, array(), false, array());
-        // TBD: setup data.
+        $src = new coursecompletion(2);
+        $src->load();
+        $src->name = 'testcoursecompletion2';
         $src->save();
 
         // Read it back.
-        $retr = new coursecompletion(3, null, array(), false, array());
+        $retr = new coursecompletion(2, null, array(), false, array());
         foreach ($src as $key => $value) {
             if (strpos($key, elis_data_object::FIELD_PREFIX) !== false) {
                 $key = substr($key, strlen(elis_data_object::FIELD_PREFIX));

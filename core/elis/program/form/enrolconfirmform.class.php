@@ -1,4 +1,4 @@
-<?php 
+<?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
  * Copyright (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
@@ -41,18 +41,19 @@ class enrolconfirmform extends cmform {
      */
     public function definition() {
         parent::definition();
-        
+
         $mform = &$this->_form;
 
         $data = $this->_customdata[0];
 
         $mform->addElement('hidden', 'id');
+        $mform->setType('id', PARAM_INT);
 
         $limit_group[] = $mform->addElement('static', 'lbl_classlimit', get_string('class_limit', 'elis_program') . ':', $data->limit);
 
         $mform->addElement('static', 'lbl_enroled', get_string('enroled', 'elis_program') . ': ', $data->enroled);
         $mform->addElement('static', 'lbl_num_waitlist', get_string('num_waitlist', 'elis_program') . ': ', $data->waitlisted);
-        
+
         $mform->addElement('static', 'lbl_enrol_confirmation', '', get_string('enrol_confirmation', 'elis_program', $data->a));
 
         $this->add_action_buttons(true, get_string('btn_waitlist_add', 'elis_program'));

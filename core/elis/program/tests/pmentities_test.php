@@ -229,6 +229,8 @@ class pmentities_testcase extends elis_database_test {
 
         // Initialize a new class management page and invoke the code that handles default role assignments.
         $page = new pmclasspage();
+
+        $sink = $this->redirectMessages();
         $page->after_cm_entity_add($obj);
 
         $classctx = context_elis_class::instance($obj->id);

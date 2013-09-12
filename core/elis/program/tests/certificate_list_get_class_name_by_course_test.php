@@ -147,7 +147,7 @@ class certificatelist_get_class_name_by_course_testcase extends elis_database_te
     public function test_class_name_helper_with_incorrect_cert_setting_data($certsetting) {
         $certlist = new certificatelistpage();
         $result = $certlist->get_cert_entity_name($certsetting);
-
+        phpunit_util::reset_debugging();
         $this->assertEquals(false, $result);
     }
 

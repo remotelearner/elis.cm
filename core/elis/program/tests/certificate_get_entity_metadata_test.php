@@ -282,7 +282,7 @@ class certificate_get_entity_metadata_testcase extends elis_database_test {
         $this->load_csv_data();
 
         $result = certificate_get_course_entity_metadata($certsetting, $certissued, $student);
-
+        phpunit_util::reset_debugging();
         $this->assertEquals(false, $result);
     }
 }

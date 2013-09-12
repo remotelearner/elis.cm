@@ -363,6 +363,8 @@ class dataobjectchildren_testcase extends elis_database_test {
             $data['timemodified'] = $timenow;
         }
 
+        $sink = $this->redirectMessages();
+
         // Initialize a new data object and save it to the database.
         $dataclass = new $classname($data);
         $dataclass->save();

@@ -40,6 +40,9 @@ if ($ADMIN->fulltree) {
     $settings->add(new admin_setting_configcheckbox('enrol_elis/enrol_from_course_catalog',
         get_string('enrol_from_course_catalog', 'enrol_elis'), get_string('enrol_from_course_catalog_desc', 'enrol_elis'), 1));
 
+    $settings->add(new admin_setting_configcheckbox('enrol_elis/unenrol_from_course_catalog',
+            get_string('unenrol_from_course_catalog', 'enrol_elis'), get_string('unenrol_from_course_catalog_desc', 'enrol_elis'), 0));
+
     if (!during_initial_install()) {
         $options = get_default_enrol_roles(get_context_instance(CONTEXT_SYSTEM));
         $student = get_archetype_roles('student');

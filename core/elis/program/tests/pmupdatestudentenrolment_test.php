@@ -142,7 +142,7 @@ class pmupdatestudentenrolment_testcase extends elis_database_test {
         }
 
         // Fail expired students.
-        pm_update_student_enrolment();
+        $this->quiet_pm_update_student_enrolment();
 
         // Validate count.
         $this->assertEquals(count($expectedassociations), $DB->count_records(student::TABLE));
@@ -188,7 +188,7 @@ class pmupdatestudentenrolment_testcase extends elis_database_test {
         }
 
         // Fail specific expired student.
-        pm_update_student_enrolment(2);
+        $this->quiet_pm_update_student_enrolment(2);
 
         // Validate count.
         $this->assertEquals(count($expectedassociations), $DB->count_records(student::TABLE));
@@ -288,7 +288,7 @@ class pmupdatestudentenrolment_testcase extends elis_database_test {
         }
 
         // Fail expired students.
-        pm_update_student_enrolment();
+        $this->quiet_pm_update_student_enrolment();
 
         // Validate count.
         $this->assertEquals(count($expectedassociations), $DB->count_records(student::TABLE));
@@ -334,7 +334,7 @@ class pmupdatestudentenrolment_testcase extends elis_database_test {
         }
 
         // Fail specific expired student.
-        pm_update_student_enrolment(2);
+        $this->quiet_pm_update_student_enrolment(2);
 
         // Validate count.
         $this->assertEquals(count($expectedassociations), $DB->count_records(student::TABLE));
@@ -397,7 +397,7 @@ class pmupdatestudentenrolment_testcase extends elis_database_test {
         }
 
         // Fail expired students.
-        pm_update_student_enrolment();
+        $this->quiet_pm_update_student_enrolment();
 
         // Validate count.
         $this->assertEquals(count($expectedassociations), $DB->count_records(student::TABLE));
@@ -442,7 +442,7 @@ class pmupdatestudentenrolment_testcase extends elis_database_test {
         }
 
         // Fail specific expired students.
-        pm_update_student_enrolment(1);
+        $this->quiet_pm_update_student_enrolment(1);
 
         // Validate count.
         $this->assertEquals(count($expectedassociations), $DB->count_records(student::TABLE, array('userid' => 1)));
@@ -452,5 +452,14 @@ class pmupdatestudentenrolment_testcase extends elis_database_test {
             $exists = $DB->record_exists(student::TABLE, $expectedassociation);
             $this->assertTrue($exists);
         }
+    }
+
+    /**
+     * Performs pm_update_student_enrolment without producing $CFG->noemailever notices in unit test output.
+     * @param int $pmuserid  optional userid to update, default(0) updates all users
+     */
+    protected function quiet_pm_update_student_enrolment($pmuserid = 0) {
+        $sink = $this->redirectMessages();
+        pm_update_student_enrolment($pmuserid);
     }
 }

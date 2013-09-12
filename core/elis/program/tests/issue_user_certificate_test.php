@@ -103,7 +103,7 @@ class issue_user_certificate_testcase extends elis_database_test {
      * This function tests issuing a user a certificate with an empty certificate setting id
      */
     public function test_issue_user_certificate_empty_cert_setting_fail() {
-        global $DB;
+        global $DB, $CFG;
         $certsettingid = 0;
         $user = array();
         $user[0] = new stdClass();
@@ -111,6 +111,7 @@ class issue_user_certificate_testcase extends elis_database_test {
         $user[0]->completetime = '1357851284';
         $certissued = new certificateissued();
 
+        $CFG->debug = DEBUG_NONE;
         $result = pm_issue_user_certificate($certsettingid, $user, $certissued);
 
         $record = $DB->get_record('crlm_certificate_issued', array('timeissued' => '1357851284'));
@@ -124,7 +125,7 @@ class issue_user_certificate_testcase extends elis_database_test {
      * This function tests issuing a user a certificate with an illegit data class
      */
     public function test_issue_user_certificate_illegit_data_class_fail() {
-        global $DB;
+        global $DB, $CFG;
         $certsettingid = 1;
         $user = array();
         $user[0] = new stdClass();
@@ -132,6 +133,7 @@ class issue_user_certificate_testcase extends elis_database_test {
         $user[0]->completetime = '1357851284';
         $certissued = new stdClass();
 
+        $CFG->debug = DEBUG_NONE;
         $result = pm_issue_user_certificate($certsettingid, $user, $certissued);
 
         $record = $DB->get_record('crlm_certificate_issued', array('timeissued' => '1357851284'));
