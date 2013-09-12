@@ -1,5 +1,5 @@
 diff --git a/elis/core/scripts/preupgrade.php b/elis/core/scripts/preupgrade.php
-index c6f1a21..1e2ecee 100644
+index e139ee5..0f46a32 100644
 --- a/elis/core/scripts/preupgrade.php
 +++ b/elis/core/scripts/preupgrade.php
 @@ -271,6 +271,7 @@ if ($status) {

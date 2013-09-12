@@ -1,5 +1,5 @@
 diff --git a/elis/core/lang/en/elis_core.php b/elis/core/lang/en/elis_core.php
-index ea3660e..f81c647 100644
+index fdd2079..c030acd 100644
 --- a/elis/core/lang/en/elis_core.php
 +++ b/elis/core/lang/en/elis_core.php
 @@ -85,7 +85,6 @@ $string['fld_courserole_help'] = '<h1>Course role filter</h1>

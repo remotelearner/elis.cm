@@ -918,7 +918,7 @@ function track_get_listing($sort='name', $dir='ASC', $startrec=0, $perpage=0, $n
         $filter_sql = $filter_object->get_sql(false, 'trk', SQL_PARAMS_NAMED);
         if (isset($filter_sql['where'])) {
             $where[] = $filter_sql['where'];
-            $params += $filter_sql['where_parameters'];
+            $params = array_merge($params, $filter_sql['where_parameters']);
         }
     }
 
@@ -938,7 +938,7 @@ function track_get_listing($sort='name', $dir='ASC', $startrec=0, $perpage=0, $n
         if (isset($curriculum_filter['where'])) {
             if (count($allowed_clusters)!=0) {
                 $where[] = $curriculum_filter['where'];
-                $params += $curriculum_filter['where_parameters'];
+                $params = array_merge($params, $filter_sql['where_parameters']);
             } else {
                 //this allows both the indirect capability and the direct track filter to work
 
@@ -1025,7 +1025,7 @@ function track_count_records($namesearch = '', $alpha = '', $curriculumid = 0, $
         $filter_sql = $filter_object->get_sql(false, null, SQL_PARAMS_NAMED);
         if (isset($filter_sql['where'])) {
             $where[] = $filter_sql['where'];
-            $params += $filter_sql['where_parameters'];
+            $params = array_merge($params, $filter_sql['where_parameters']);
         }
     }
 
