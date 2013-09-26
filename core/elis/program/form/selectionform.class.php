@@ -37,7 +37,9 @@ class selectionform extends moodleform {
         $mform =& $this->_form;
 
         $mform->addElement('hidden', 's', 'role');
+        $mform->setType('s', PARAM_RAW);
         $mform->addElement('hidden', '_selection', '', array('id' => 'id__selection'));
+        $mform->setType('_selection', PARAM_RAW);
 
         $this->add_action_buttons(false, $this->get_submit_button_name());
     }

@@ -187,6 +187,13 @@ YUI.add('moodle-elis_program-checkboxselection', function(Y) {
         load_form : function(ev) {
             this.debugfcn('load_form');
             var target = ev.target; // TBD: Y.eventTarget.getTargets(ev).item(0);
+            var targetname = target.getAttribute('name');
+            // ELIS-8546: Moodle 2.5 filtering form buttons must be ignored
+            if (targetname == 'addfilter' || targetname == 'removeall' || targetname == 'removeselected') {
+                // console.log('checkboxselection::load_form(): targetname = '+targetname);
+                return;
+            }
+
             // var data = YAHOO.util.Connect.setForm(target);
             var link = target.getAttribute('action');
             var selected = Y.JSON.stringify(this.selections);

@@ -749,5 +749,28 @@ function xmldb_elis_program_upgrade($oldversion=0) {
         upgrade_plugin_savepoint($result, 2013082100, 'elis', 'program');
     }
 
+    if ($result && $oldversion < 2013082101) {
+        require_once(elis::file('core/fields/manual/custom_fields.php'));
+        require_once(elis::file('core/fields/moodle_profile/custom_fields.php'));
+        $fieldcat = field_category::ensure_exists_for_contextlevel(get_string('moodlefields', 'elis_program'), CONTEXT_ELIS_USER);
+
+        $sql = 'SELECT m.id
+                  FROM {user_info_field} m
+                 WHERE NOT EXISTS(
+                           SELECT *
+                             FROM {elis_field} e
+                            WHERE e.shortname = m.shortname
+                       )';
+        $fieldstosync = $DB->get_records_sql($sql);
+        foreach ($fieldstosync as $mfield) {
+            // Create field.
+            $efield = field::make_from_moodle_field($mfield->id, $fieldcat, pm_moodle_profile::sync_from_moodle);
+
+            // Sync profile field information from Moodle into ELIS.
+            sync_profile_field_from_moodle($efield);
+        }
+        upgrade_plugin_savepoint($result, 2013082101, 'elis', 'program');
+    }
+
     return $result;
 }

@@ -54,6 +54,22 @@ class course_catalog_page_testcase extends elis_database_test {
     }
 
     /**
+     * Load data from CSV files for enrolment test.
+     */
+    protected function load_csv_data_for_enrolment_test() {
+        $dataset = $this->createCsvDataSet(array(
+            'course' => elis::component_file('program', 'tests/fixtures/mdlcourse.csv'),
+            'user' => elis::component_file('program', 'tests/fixtures/mdluser.csv'),
+            classmoodlecourse::TABLE => elis::component_file('program', 'tests/fixtures/class_moodle_course.csv'),
+            course::TABLE => elis::component_file('program', 'tests/fixtures/pmcrs.csv'),
+            pmclass::TABLE => elis::component_file('program', 'tests/fixtures/pmclass.csv'),
+            usermoodle::TABLE => elis::component_file('program', 'tests/fixtures/usermoodle.csv'),
+            user::TABLE => elis::component_file('program', 'tests/fixtures/pmuser.csv'),
+        ));
+        $this->loadDataSet($dataset);
+    }
+
+    /**
      * Test addclasstable->get_item_display_classsize()
      */
     public function test_get_item_display_classsize() {
@@ -87,5 +103,42 @@ class course_catalog_page_testcase extends elis_database_test {
         $expected = '<a href="index.php?s=crscat&amp;section=curr&amp;clsid=100&amp;action=savenew">Choose</a>';
 
         $this->assertEquals($expected, $option);
+    }
+
+    /**
+     * Test coursecatalogpage->display_savenew() for setting of class enrolment time (ELIS-8518)
+     * @uses $DB
+     * @uses $USER
+     */
+    public function test_display_savenew_classenrolmenttime() {
+        global $DB, $USER;
+        $this->load_csv_data_for_enrolment_test();
+
+        $USER = $DB->get_record('user', array('id' => 100)); // Set user to the test user.
+        $_GET['clsid'] = 100; // Class GET parameter is expected by coursecatalogpage function.
+
+        $now = time();
+
+        // Set the startdate on the ELIS class to a day in the future.
+        $pmclass = new pmclass(100);
+        $pmclass->startdate = $now + (60 * 60 * 24);
+        $pmclass->save();
+
+        // Set the startdate on the associated Moodle course to a day in the past.
+        $course = new stdClass();
+        $course->id = 100;
+        $course->startdate = $now - (60 * 60 * 24);
+        $DB->update_record('course', $course);
+
+        $coursecatalogpage = new coursecatalogpage();
+        try {
+            $coursecatalogpage->display_savenew();
+        } catch (Exception $e) {
+            // Ignore the redirect error message because we are not testing that here.
+        }
+
+        $enrolmenttime = $DB->get_field('crlm_class_enrolment', 'enrolmenttime', array('classid' => 100, 'userid' => 103));
+        $difference = abs($now - $enrolmenttime);
+        $this->assertLessThanOrEqual(1, $difference); // Allow for 1 second variance, just in case.
     }
 }

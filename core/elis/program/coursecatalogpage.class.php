@@ -316,6 +316,8 @@ class coursecatalogpage extends pm_page {
         $clsid = cm_get_param('clsid', 0);
         $class = new pmclass($clsid);
 
+        $now = time();
+
         if (!$class->is_enrollable()) {
             print_error('notenrollable', 'enrol'); // TBD
         }
@@ -337,7 +339,15 @@ class coursecatalogpage extends pm_page {
         $sturecord                  = array();
         $sturecord['classid']       = $class->id;
         $sturecord['userid']        = $cuserid;
-        $sturecord['enrolmenttime'] = max(time(), $class->startdate);
+        // Set the enrolment time from class startdate if it's in the future or just set
+        // current time if class has an associated Moodle course that has already started
+        $enrolmenttime = $class->startdate;
+        if ($moodlecourseid = moodle_get_course($clsid)) {
+            if ($startdate = $DB->get_field('course', 'startdate', array('id' => $moodlecourseid))) {
+                $enrolmenttime = ($startdate < $now) ? $now : $class->startdate;
+            }
+        }
+        $sturecord['enrolmenttime'] = max($now, $enrolmenttime);
         $sturecord['completetime']  = 0;
         $newstu                     = new student($sturecord);
 

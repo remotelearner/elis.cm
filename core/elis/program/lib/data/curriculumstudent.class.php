@@ -436,20 +436,20 @@ class curriculumstudent extends elis_data_object {
         //get the context for the "indirect" capability
         $context = pm_context_set::for_user_with_capability('cluster', 'elis/program:program_enrol_userset_user', $USER->id);
 
-        $allowed_clusters = array();
+        $allowedclusters = array();
 
         //get the clusters and check the context against them
         $clusters = clustercurriculum::get_clusters($curid);
-        $allowed_clusters = $context->get_allowed_instances($clusters, 'cluster', 'id');
+        $allowedclusters = $context->get_allowed_instances($clusters, 'cluster', 'clusterid');
 
-        //query to get users associated to at least one enabling cluster
-        $cluster_select = '';
-        if(empty($allowed_clusters)) {
-            $cluster_select = '0=1';
+        // Query to get users associated to at least one enabling cluster.
+        $clusterselect = '';
+        if (empty($allowedclusters)) {
+            $clusterselect = '0=1';
         } else {
-            $cluster_select = 'clusterid IN (' . implode(',', $allowed_clusters) . ')';
+            $clusterselect = 'clusterid IN ('.implode(',', $allowedclusters).')';
         }
-        $select = "userid = {$userid} AND {$cluster_select}";
+        $select = "userid = {$userid} AND {$clusterselect}";
 
         //user just needs to be in one of the possible clusters
         if($DB->record_exists_select(clusterassignment::TABLE, $select)) {

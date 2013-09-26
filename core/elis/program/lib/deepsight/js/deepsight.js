@@ -607,13 +607,18 @@ $.fn.deepsight_bulkactionpanel = function(options) {
      *
      * @param int numresults The new number of results to render on the button.
      */
-    this.update_addall_display = function(numresults) {
-        if (numresults <= 0) {
+    this.update_addall_display = function(numresults, usableresults) {
+        if (usableresults <= 0) {
             eleaddallsearch.prop('disabled', true);
         } else {
             eleaddallsearch.prop('disabled', false);
         }
-        eleaddallsearch.html(opts.lang_add_all+' '+numresults+' '+opts.lang_search_results);
+
+        if (numresults != usableresults) {
+            eleaddallsearch.html(opts.lang_add+' '+usableresults+'/'+numresults+' '+opts.lang_search_results);
+        } else {
+            eleaddallsearch.html(opts.lang_add_all+' '+numresults+' '+opts.lang_search_results);
+        }
     }
 
     /**
@@ -724,7 +729,7 @@ $.fn.deepsight_bulkactionpanel = function(options) {
             .bind('datatable_updated', function(e) {
                 e.stopPropagation();
                 ds_debug('[bulkactionpanel] Received "datatable_updated" event. New results:'+opts.datatable.numresults);
-                main.update_addall_display(opts.datatable.numresults);
+                main.update_addall_display(opts.datatable.numresults, opts.datatable.numusableresults);
                 main.panel.refresh_panel_dims();
             })
 
@@ -1008,6 +1013,11 @@ $.fn.deepsight_datatable = function(options) {
     this.numresults = 0;
 
     /**
+     * @var int The number of currently usable (non-disabled) results across all pages.
+     */
+    this.numusableresults = 0;
+
+    /**
      * Does a delayed table update.
      *
      * Will update the table in 500ms unless somethings calls this again, in which case the timer will start over. This is to
@@ -1096,6 +1106,7 @@ $.fn.deepsight_datatable = function(options) {
                         && data.datatable_results.result == 'success') {
                     main.column_labels = data.datatable_results.column_labels;
                     main.numresults = data.datatable_results.total_results;
+                    main.numusableresults = data.datatable_results.usable_results;
                     main.render_headings(main.column_labels);
                     main.render_data(data.datatable_results.results);
                     main.render_sort_display();
