@@ -1456,15 +1456,28 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
 
         // Get results.
         list($pageresults, $totalresults) = $this->get_search_results($filters, $sort, $limitfrom, $limitnum);
+        $disabledresults = $this->get_num_disabled_search_results();
         $response['datatable_results'] = array(
             'result' => 'success',
             'column_labels' => $columnlabels,
             'results' => $pageresults,
-            'total_results' => $totalresults
+            'total_results' => $totalresults,
+            'usable_results' => $totalresults - $disabledresults,
         );
 
         // Respond to js.
         echo safe_json_encode($response);
+    }
+
+    /**
+     * Get the number of disabled search results.
+     *
+     * This should be overridden in child classes and calculated based on the individual needs of the child datatable.
+     *
+     * @return int The number of disabled search results.
+     */
+    protected function get_num_disabled_search_results() {
+        return 0;
     }
 
     /**

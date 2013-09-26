@@ -749,6 +749,7 @@ $string['month_nov'] = 'November';
 $string['month_nov_short'] = 'Nov';
 $string['month_dec'] = 'December';
 $string['month_dec_short'] = 'Dec';
+$string['moodlefields'] = 'Moodle Fields';
 $string['moodle_duplicate_idnumber_changed'] = 'Generated new idnumber for user with username {$a->username} as shown here: {$a->url}.
 ';
 $string['moodle_duplicate_idnumber_fail'] = 'Could not change the idnumber of one or more duplicate Moodle users with idnumber of {$a}.';

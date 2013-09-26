@@ -16,10 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanager
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @copyright  (C) 2013 Remote Learner.net Inc http://www.remote-learner.net
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
  *
@@ -30,6 +29,9 @@
  */
 class deepsight_datatable_enrolments extends deepsight_datatable_user {
     protected $classid;
+
+    /** @var int The number of disabled results for the current search */
+    protected $disabledresults = 0;
 
     /**
      * Constructor.
@@ -204,6 +206,15 @@ class deepsight_datatable_enrolments extends deepsight_datatable_user {
     }
 
     /**
+     * Get the number of disabled search results.
+     *
+     * @return int The number of disabled search results.
+     */
+    protected function get_num_disabled_search_results() {
+        return $this->disabledresults;
+    }
+
+    /**
      * Adds all elements returned from a search with a given set of filters to the bulklist.
      *
      * This is usually used when using the "add all search results" button when performing bulk actions.
@@ -216,4 +227,32 @@ class deepsight_datatable_enrolments extends deepsight_datatable_user {
         $filters['enrolled'] = array('notenrolled');
         return parent::bulklist_add_by_filters($filters);
     }
+
+    /**
+     * Gets search results for the datatable.
+     *
+     * @param array $filters The filter array received from js. It is an array consisting of filtername=>data, and can be
+     *                       passed directly to $this->get_filter_sql() to generate the required WHERE sql.
+     * @param array $sort An array of field=>direction to specify sorting for the results.
+     * @param int $limitfrom The position in the dataset from which to start returning results.
+     * @param int $limitnum The amount of results to return.
+     * @return array An array with the first value being a page of results, and the second value being the total number of results
+     */
+    protected function get_search_results(array $filters, array $sort = array(), $limitfrom=null, $limitnum=null) {
+
+        // Get the number of results in the full dataset.
+        $joinsql = implode(' ', $this->get_join_sql($filters));
+        $filtersfordisabled = $filters;
+        if (!empty($filters['enrolled']) && ($filters['enrolled'][0] === 'all' || $filters['enrolled'][0] === 'enrolled')) {
+            $filtersfordisabled['enrolled'][0] = 'enrolled';
+
+            list($filtersql, $filterparams) = $this->get_filter_sql($filtersfordisabled);
+            $query = 'SELECT count(1) as count FROM {'.$this->main_table.'} element '.$joinsql.' '.$filtersql;
+            $results = $this->DB->get_record_sql($query, $filterparams);
+            $this->disabledresults = (int)$results->count;
+        }
+
+        return parent::get_search_results($filters, $sort, $limitfrom, $limitnum);
+    }
+
 }
