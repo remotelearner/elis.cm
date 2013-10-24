@@ -213,22 +213,13 @@ class notification extends message {
         $topmuserid = false;
         if (get_class($this->userto) == 'user') {
             $topmuserid = $this->userto->id;
-//            if (!($this->userto = cm_get_moodleuser($this->userto->id))) {
             if (!($this->userto = $this->userto->get_moodleuser())) {
-                if (in_cron()) {
-                    mtrace(get_string('nomoodleuser', 'elis_program'));
-                } else {
-                    debugging(get_string('nomoodleuser', 'elis_program'));
-                }
+                // TODO log here.
+                return false;
             }
         }
         if (empty($this->userto)) {
-            // ELIS-3632: prevent DB errors downstream
-            if (in_cron()) {
-                mtrace(get_string('message_nodestinationuser', 'elis_program'));
-            } else {
-                print_error('message_nodestinationuser', 'elis_program');
-            }
+            // TODO log here.
             return false;
         }
 

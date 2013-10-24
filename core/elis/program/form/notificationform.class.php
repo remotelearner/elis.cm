@@ -192,6 +192,17 @@ defined('MOODLE_INTERNAL') || die();
 
             $mform->addElement('static', 'spacer', '', '');
 
+            $notifyusers = array();
+            $notifyusers[] =& $mform->createElement('advcheckbox', 'notify_addedtowaitlist_user', '', get_string('notifications_waitlist_added', 'elis_program'));
+            $notifyusers[] =& $mform->createElement('advcheckbox', 'notify_enroledfromwaitlist_user', '', get_string('notifications_waitlist_enroled', 'elis_program'));
+            $notifyusers[] =& $mform->createElement('advcheckbox', 'notify_incompletecourse_user', '', get_string('notifications_coursenotcomplete', 'elis_program'));
+            $mform->addGroup($notifyusers, 'notifyusers', get_string('notify_users', 'elis_program'), '<br />', false);
+            $mform->setDefault('notify_addedtowaitlist_user', true);
+            $mform->setDefault('notify_enroledfromwaitlist_user', true);
+            $mform->setDefault('notify_incompletecourse_user', true);
+
+            $mform->addElement('static', 'spacer', '', '');
+
             $this->add_action_buttons();
         }
     }

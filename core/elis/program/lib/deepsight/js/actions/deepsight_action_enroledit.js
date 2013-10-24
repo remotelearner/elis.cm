@@ -498,7 +498,7 @@ $.fn.deepsight_action_enroledit = function(options) {
                     try {
                         data = ds_parse_safe_json(data);
                     } catch(err) {
-                        modal.render_error(errormsg);
+                        modal.render_error(err);
                         return false;
                     }
 

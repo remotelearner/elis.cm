@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@
  * @package    elis
  * @subpackage programmanagement
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2013 Remote-Learner.net Inc http://www.remote-learner.net
  *
  */
 
@@ -770,6 +770,33 @@ function xmldb_elis_program_upgrade($oldversion=0) {
             sync_profile_field_from_moodle($efield);
         }
         upgrade_plugin_savepoint($result, 2013082101, 'elis', 'program');
+    }
+
+    if ($result && $oldversion < 2013082103) {
+        // ELIS-8441 & ELIS-8569: Fix Program timetocomplete & frequency defaults of '0y'
+        $table = new xmldb_table('crlm_curriculum');
+        if ($dbman->table_exists($table)) {
+            $field = new xmldb_field('timetocomplete', XMLDB_TYPE_CHAR, '64', null, XMLDB_NOTNULL, null, null, 'timemodified');
+            $dbman->change_field_default($table, $field);
+
+            $field = new xmldb_field('frequency', XMLDB_TYPE_CHAR, '64', null, XMLDB_NOTNULL, null, null, 'timetocomplete');
+            $dbman->change_field_default($table, $field);
+
+            $sql = 'UPDATE {crlm_curriculum} SET timetocomplete = "" WHERE timetocomplete = "0y"';
+            $DB->execute($sql);
+
+            $sql = 'UPDATE {crlm_curriculum} SET frequency = "" WHERE frequency = "0y"';
+            $DB->execute($sql);
+        }
+        upgrade_plugin_savepoint($result, 2013082103, 'elis', 'program');
+    }
+
+    if ($result && $oldversion < 2013082104) {
+        require_once(dirname(__FILE__).'/../lib/lib.php');
+        pm_set_config('notify_addedtowaitlist_user', 1);
+        pm_set_config('notify_enroledfromwaitlist_user', 1);
+        pm_set_config('notify_incompletecourse_user', 1);
+        upgrade_plugin_savepoint($result, 2013082104, 'elis', 'program');
     }
 
     return $result;

@@ -133,6 +133,22 @@ class coursepage extends managementpage {
         return $this->_has_capability('elis/program:course_edit');
     }
 
+    /**
+     * Check if the user has the capability to delete course LOs
+     * @return bool true if user has capability, false otherwise
+     */
+    public function can_do_confirmdelem() {
+        return $this->can_do_edit();
+    }
+
+    /**
+     * Check if the user has the capability to create course LOs
+     * @return bool true if user has capability, false otherwise
+     */
+    public function can_do_selem() {
+        return $this->can_do_edit();
+    }
+
     function can_do_delete() {
         return $this->_has_capability('elis/program:course_delete');
     }
@@ -279,10 +295,11 @@ class coursepage extends managementpage {
                 'description'       => array('header'=>get_string('completion_description','elis_program')),
                 'completion_grade'  => array('header'=>get_string('completion_grade','elis_program')),
                 'required'          => array('header'=>get_string('required','elis_program')),
-                'actions'           => array('header' =>'',
-                                             'display_function' => 'htmltab_display_function',
-                                             'sortable' => false),
                 );
+
+            if ($this->can_do_edit()) {
+                $columns['actions'] = array('header' => '', 'display_function' => 'htmltab_display_function', 'sortable' => false);
+            }
 
             foreach ($columns as $column => $cdesc) {
                 $columndir = "ASC";
@@ -332,17 +349,16 @@ class coursepage extends managementpage {
         unset($elements);
 
         $output .= '<br clear="all" />' . "\n";
-        $output .= '<div align="center">';
-        $options = array('s' => 'crs', 'section' => 'curr', 'action' => 'celem', 'id' => $crs->id);
-        $addelement = get_string('add_element', 'elis_program');
-        $button = new single_button(new moodle_url('index.php', $options), $addelement, 'get', array(
-            'disabled' => false,
-            'title'    => $addelement,
-            'id'       => ''
-        ));
-        echo $OUTPUT->render($button);
-        $output .= '</div>';
-
+        if ($this->can_do_edit()) {
+            $options = array('s' => 'crs', 'section' => 'curr', 'action' => 'celem', 'id' => $crs->id);
+            $addelement = get_string('add_element', 'elis_program');
+            $button = new single_button(new moodle_url('index.php', $options), $addelement, 'get', array(
+                'disabled' => false,
+                'title'    => $addelement,
+                'id'       => ''
+            ));
+            $output .= html_writer::tag('div', $OUTPUT->render($button), array('align' => 'center'));
+        }
         return $output;
     }
 

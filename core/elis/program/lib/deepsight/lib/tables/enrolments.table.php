@@ -171,6 +171,7 @@ class deepsight_datatable_enrolments extends deepsight_datatable_user {
 
         // Permissions limits.
         $cpage = new pmclasspage();
+        $permissionssql = '';
         if (!$cpage->_has_capability('elis/program:class_enrol', $this->classid)) {
             // Perform SQL filtering for the more "conditional" capability.
             $allowedclusters = pmclass::get_allowed_clusters($this->classid);

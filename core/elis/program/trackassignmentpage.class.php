@@ -147,6 +147,23 @@ class trackassignmentpage extends deepsightpage {
     }
 
     /**
+     * Determine if the user can autocreate class instances.
+     *
+     * @return bool Whether the user can autocreate class instances.
+     */
+    public function can_do_autocreate() {
+        global $USER;
+        $id = $this->required_param('id', PARAM_INT);
+
+        // Determine if user has track_create or track_edit permissions.
+        $trackcreatectx = pm_context_set::for_user_with_capability('track', 'elis/program:track_create', $USER->id);
+        $trackeditctx = pm_context_set::for_user_with_capability('track', 'elis/program:track_edit', $USER->id);
+        $trackcreateallowed = ($trackcreatectx->context_allowed($id, 'track') === true) ? true : false;
+        $trackeditallowed = ($trackeditctx->context_allowed($id, 'track') === true) ? true : false;
+        return ($trackcreateallowed === true || $trackeditallowed === true) ? true : false;
+    }
+
+    /**
      * Do autocreate classes action.
      */
     public function do_autocreate() {
@@ -181,12 +198,16 @@ class trackassignmentpage extends deepsightpage {
      */
     public function display_default() {
         global $OUTPUT;
-        $id = required_param('id', PARAM_INT);
-        echo '<div align="center">';
-        $tmppage = new trackassignmentpage(array('action'=>'autocreate', 'id'=>$id));
-        $button = new single_button($tmppage->url, get_string('track_autocreate_button', 'elis_program'), 'get');
-        echo $OUTPUT->render($button);
-        echo '</div>';
+        $id = $this->required_param('id', PARAM_INT);
+
+        if ($this->can_do_autocreate() === true) {
+            echo html_writer::start_tag('div', array('style' => 'text-align:center'));
+            $tmppage = new trackassignmentpage(array('action' => 'autocreate', 'id' => $id));
+            $button = new single_button($tmppage->url, get_string('track_autocreate_button', 'elis_program'), 'get');
+            echo $OUTPUT->render($button);
+            echo html_writer::end_tag('div');
+        }
+
         parent::display_default();
     }
 }

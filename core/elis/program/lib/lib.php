@@ -962,12 +962,16 @@ function pm_update_student_enrolment($pmuserid = 0) {
     $students = $DB->get_recordset_select(student::TABLE, $select, $params);
     if (!empty($students)) {
         foreach ($students as $s) {
-            //send message
-            $a = $DB->get_field(pmclass::TABLE, 'idnumber', array('id' => $s->classid));
-            $message = get_string('incomplete_course_message', 'elis_program', $a);
-            $user = cm_get_moodleuser($s->userid);
-            $from = get_admin();
-            notification::notify($message, $user, $from);
+
+            // Send notification, if enabled.
+            $sendnotification = (!empty(elis::$config->elis_program->notify_incompletecourse_user)) ? true : false;
+            if ($sendnotification === true) {
+                $a = $DB->get_field(pmclass::TABLE, 'idnumber', array('id' => $s->classid));
+                $message = get_string('incomplete_course_message', 'elis_program', $a);
+                $cuser = new user($s->userid);
+                $from = get_admin();
+                notification::notify($message, $cuser, $from);
+            }
 
             //set status to failed
             $s->completetime = time();

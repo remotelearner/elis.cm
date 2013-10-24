@@ -110,11 +110,27 @@ class deepsight_datatable_usersetuser_assigned extends deepsight_datatable_users
      * @return array The transformed result.
      */
     protected function results_row_transform(array $row) {
+        static $canenrolintocluster = null;
+        if ($canenrolintocluster === null) {
+            $canenrolintocluster = usersetpage::can_enrol_into_cluster($this->usersetid);
+        }
+
         $row = parent::results_row_transform($row);
+        $row['canunassign'] = ($canenrolintocluster === true) ? '1' : '0';
+
+        if (clusteruserpage::can_manage_assoc($row['element_id'], $this->usersetid) !== true) {
+            $row['canunassign'] = '0';
+        }
+
         if (isset($row['clstass_plugin'])) {
+            if ($row['clstass_plugin'] !== 'manual') {
+                $row['canunassign'] = '0';
+            }
+
             $row['clstass_plugin'] = ($row['clstass_plugin'] === 'manual') ? 'no' : 'yes';
             $row['clstass_plugin'] = get_string($row['clstass_plugin'], 'moodle');
         }
+
         return $row;
     }
 
@@ -127,7 +143,7 @@ class deepsight_datatable_usersetuser_assigned extends deepsight_datatable_users
         $unassignaction = new deepsight_action_usersetuser_unassign($this->DB, 'usersetuserunassign');
         $unassignaction->endpoint = (strpos($this->endpoint, '?') !== false)
                 ? $this->endpoint.'&m=action' : $this->endpoint.'?m=action';
-        $unassignaction->condition = 'function(rowdata) { return (rowdata.clstass_plugin == \'Yes\') ? false : true; }';
+        $unassignaction->condition = 'function(rowdata) { return (rowdata.canunassign == \'0\') ? false : true; }';
         array_unshift($actions, $unassignaction);
         return $actions;
     }

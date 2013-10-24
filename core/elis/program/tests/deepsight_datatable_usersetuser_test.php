@@ -243,6 +243,12 @@ class deepsight_datatable_usersetuser_testcase extends deepsight_datatable_searc
             $clusterassignment->save();
         }
 
+        foreach ($expectedresults as $expectedresultindex => $expecteddata) {
+            if (!isset($expectedresults[$expectedresultindex]['canunassign'])) {
+                $expectedresults[$expectedresultindex]['canunassign'] = '0';
+            }
+        }
+
         $table = new deepsight_datatable_usersetuser_assigned_mock($DB, 'test', 'http://localhost', 'testuniqid');
         $table->set_usersetid($tableusersetid);
 

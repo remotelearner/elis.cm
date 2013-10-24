@@ -438,7 +438,7 @@ class curriculumstudent extends elis_data_object {
 
         $allowedclusters = array();
 
-        //get the clusters and check the context against them
+        // Get the clusters and check the context against them.
         $clusters = clustercurriculum::get_clusters($curid);
         $allowedclusters = $context->get_allowed_instances($clusters, 'cluster', 'clusterid');
 

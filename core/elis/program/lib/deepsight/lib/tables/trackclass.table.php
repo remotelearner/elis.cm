@@ -106,7 +106,25 @@ class deepsight_datatable_trackclass_assigned extends deepsight_datatable_trackc
      * @return array The transformed result.
      */
     protected function results_row_transform(array $row) {
+        global $USER;
+        static $trackassociateallowed = null;
         $row = parent::results_row_transform($row);
+        $row['canmanage'] = '0';
+        $perm = 'elis/program:associate';
+
+        if ($trackassociateallowed === null) {
+            $trkassocctx = pm_context_set::for_user_with_capability('track', $perm, $USER->id);
+            $trackassociateallowed = ($trkassocctx->context_allowed($this->trackid, 'track') === true) ? true : false;
+        }
+
+        if (isset($row['element_id'])) {
+            $clsassocctx = pm_context_set::for_user_with_capability('class', $perm, $USER->id);
+            $classassociateallowed = ($clsassocctx->context_allowed($row['element_id'], 'class') === true) ? true : false;
+            if ($trackassociateallowed === true && $classassociateallowed === true) {
+                $row['canmanage'] = '1';
+            }
+        }
+
         if (isset($row['trkass_autoenrol'])) {
             // Save original autoenrol value for use by javascript, then convert value to language string.
             $row['autoenrol'] = $row['trkass_autoenrol'];
@@ -124,10 +142,12 @@ class deepsight_datatable_trackclass_assigned extends deepsight_datatable_trackc
         $editaction = new deepsight_action_trackclass_edit($this->DB, 'trackclassedit');
         $editaction->endpoint = (strpos($this->endpoint, '?') !== false)
                 ? $this->endpoint.'&m=action' : $this->endpoint.'?m=action';
+        $editaction->condition = 'function(rowdata) { return (rowdata.canmanage == \'1\') ? true : false; }';
         $actions[] = $editaction;
         $unassignaction = new deepsight_action_trackclass_unassign($this->DB, 'trackclassunassign');
         $unassignaction->endpoint = (strpos($this->endpoint, '?') !== false)
                 ? $this->endpoint.'&m=action' : $this->endpoint.'?m=action';
+        $unassignaction->condition = 'function(rowdata) { return (rowdata.canmanage == \'1\') ? true : false; }';
         $actions[] = $unassignaction;
         return $actions;
     }
