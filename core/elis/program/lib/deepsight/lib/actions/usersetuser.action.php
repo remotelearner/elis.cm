@@ -135,13 +135,14 @@ class deepsight_action_usersetuser_unassign extends deepsight_action_confirm {
     protected function _respond_to_js(array $elements, $bulkaction) {
         global $DB;
         $usersetid = required_param('id', PARAM_INT);
+        $userset = new userset($usersetid);
 
         // Permissions.
-        $uspage = new usersetpage();
-        if ($uspage->_has_capability('elis/program:userset_view', $usersetid) !== true) {
+        if (usersetpage::can_enrol_into_cluster($userset->id) !== true) {
             return array('result' => 'fail', 'msg' => get_string('not_permitted', 'elis_program'));
         }
 
+        $unassignnotpermitted = false;
         foreach ($elements as $userid => $label) {
             if ($this->can_unassign($usersetid, $userid)) {
                 $assignrec = $DB->get_record(clusterassignment::TABLE, array('userid' => $userid, 'clusterid' => $usersetid));
@@ -149,10 +150,16 @@ class deepsight_action_usersetuser_unassign extends deepsight_action_confirm {
                     $curstu = new clusterassignment($assignrec);
                     $curstu->delete();
                 }
+            } else {
+                $unassignnotpermitted = true;
             }
         }
 
-        return array('result' => 'success', 'msg'=>'Success');
+        if ($unassignnotpermitted) {
+            return array('result' => 'fail', 'msg' => get_string('not_permitted', 'elis_program'));
+        } else {
+            return array('result' => 'success', 'msg'=>'Success');
+        }
     }
 
     /**

@@ -246,7 +246,12 @@ class deepsight_datatable_programuser_testcase extends deepsight_datatable_searc
      * @param int $expectedtotal The expected number of total results.
      */
     public function test_assigned_shows_assigned_users($associations, $tableprogramid, $expectedresults, $expectedtotal) {
-        global $DB;
+        global $DB, $USER;
+
+        $USER = $this->setup_permissions_test();
+        $this->give_permission_for_context($USER->id, 'elis/program:user_view', context_system::instance());
+        $this->give_permission_for_context($USER->id, 'elis/program:program_view', context_system::instance());
+        $this->give_permission_for_context($USER->id, 'elis/program:program_enrol', context_system::instance());
 
         foreach ($associations as $association) {
             $curriculumstudent = new curriculumstudent($association);
@@ -255,6 +260,10 @@ class deepsight_datatable_programuser_testcase extends deepsight_datatable_searc
 
         $table = new deepsight_datatable_programuser_assigned_mock($DB, 'test', 'http://localhost', 'testuniqid');
         $table->set_programid($tableprogramid);
+
+        foreach ($expectedresults as &$result) {
+            $result['canunassign'] = '0';
+        }
 
         $actualresults = $table->get_search_results(array(), array(), 0, 20);
         $this->assert_search_results($expectedresults, $expectedtotal, $actualresults);

@@ -140,6 +140,7 @@ function ds_process_displaytime($time, $showtime = false) {
  * @param string $class The class name that's being used.
  */
 function deepsight_autoloader($class) {
+    global $CFG;
     $dsbase = dirname(__FILE__);
     $parts = explode('_', $class);
 
@@ -318,8 +319,14 @@ abstract class deepsight_action_standard implements deepsight_action {
                 echo safe_json_encode($result);
             }
         } catch (Exception $e) {
+            $output = ob_get_contents();
+            ob_end_clean();
+            $msg = $e->getMessage();
+            if (!empty($output)) {
+                $msg .= ' '.$output;
+            }
             // Format exceptions as readable failure responses.
-            echo safe_json_encode(array('result' => 'fail', 'msg' => $e->getMessage()));
+            echo safe_json_encode(array('result' => 'fail', 'msg' => $msg));
         }
     }
 
@@ -1887,6 +1894,65 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
             } else {
                 $additionalfilters[] = 'FALSE';
             }
+        } else {
+            $additionalfilters[] = 'TRUE';
+        }
+
+        return array($additionalfilters, $additionalparams);
+    }
+
+    /**
+     * Get standard permission filters for an element - user enrolled table.
+     *
+     * This takes into account the elis/program:[element]_enrol, and elis:program/[element]_enrol_userset_user permissions.
+     *
+     * @param string $elementtype The type of element we're associating to. I.e. program, track, class, userset.
+     * @param int $elementid The ID of the base element we're associating to.
+     * @param string $elementid2clusterscallable A callable that will get the associated cluster(s) of user.
+     * @return array An array consisting of an array of additional filters as 0, and parameters as 1
+     */
+    protected function get_filter_sql_permissions_elementuser_enrolled($elementtype, $elementid, $elementid2clusterscallable) {
+        global $USER, $DB;
+
+        $elementtype2ctxlevel = array(
+            'program' => 'curriculum',
+            'track' => 'track',
+            'class' => 'class',
+            'userset' => 'cluster'
+        );
+
+        if (!isset($elementtype2ctxlevel[$elementtype])) {
+            throw new Exception('Bad element type specified for get_filter_sql_permissions_userelement_available');
+        }
+
+        $enrolperm = 'elis/program:'.$elementtype.'_enrol';
+        $usersetenrolperm = 'elis/program:'.$elementtype.'_enrol_userset_user';
+        $ctxlevel = $elementtype2ctxlevel[$elementtype];
+
+        $additionalfilters = array();
+        $additionalparams = array();
+
+        // If $USER has $enrolperm permission for this element, we don't have to go any further.
+        $enrolctxs = pm_context_set::for_user_with_capability($ctxlevel, $enrolperm, $USER->id);
+        if ($enrolctxs->context_allowed($elementid, $ctxlevel) !== true) {
+
+            // We now cross-reference the clusters the assigner has the $usersetenrolperm permission with clusters the element is
+            // assigned to. We limit the users returned in the search results to users that are in the resulting clusters.
+            $enrolusersetuserctxs = pm_context_set::for_user_with_capability('class', $usersetenrolperm, $USER->id);
+
+            // Get the clusters and check the context against them.
+            $allowedclusters = call_user_func($elementid2clusterscallable);
+
+            if (!empty($allowedclusters)) {
+                list($clusterfilterwhere, $clusterfilterparams) = $DB->get_in_or_equal($allowedclusters);
+                $useridsfromclusters = 'SELECT userid FROM {'.clusterassignment::TABLE.'} WHERE clusterid '.$clusterfilterwhere;
+                $additionalfilters[] = 'element.id IN ('.$useridsfromclusters.')';
+                $additionalparams = array_merge($additionalparams, $clusterfilterparams);
+            } else {
+                $additionalfilters[] = 'FALSE';
+            }
+        } else {
+            $additionalfilters[] = 'TRUE';
         }
 
         return array($additionalfilters, $additionalparams);

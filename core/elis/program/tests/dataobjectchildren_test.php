@@ -72,6 +72,16 @@ class dataobjectchildren_testcase extends elis_database_test {
     }
 
     /**
+     * Load smaller set of CSV data
+     */
+    protected function load_csv_data_timemodified_timecreated() {
+        $dataset = $this->createCsvDataSet(array(
+                curriculum::TABLE => elis::component_file('program', 'tests/fixtures/curriculum.csv')
+        ));
+        $this->loadDataSet($dataset);
+    }
+
+    /**
      * Define parameters for the single test method that define the class name and the object properties for that class
      * @return array An array of parameters.
      */
@@ -413,5 +423,89 @@ class dataobjectchildren_testcase extends elis_database_test {
             }
             $this->assertEquals($val, $newobject->$key, 'class: '.$classname.'->'.$key);
         }
+    }
+
+    /**
+     * Data provider for ELIS entiries where timemodified and timecreated are not set by default
+     * @return array An array of parameters
+     */
+    public function dataprovider_timecreated_timemodified_object() {
+        return array(
+                array(
+                        'course',
+                        array(
+                            'name' => 'Test Course 101 2',
+                            'code' => 'code',
+                            'idnumber' => '__c_c_test101 2',
+                            'syllabus' => 'syllabus',
+                            'documents' => 'documents',
+                            'lengthdescription' => 'month',
+                            'length' => 12,
+                            'credits' => '5',
+                            'completion_grade' => 90,
+                            'environmentid' => 1,
+                            'cost' => '99.99',
+                            'version' => '0.99a'
+                        ),
+                ),
+                array(
+                        'curriculum',
+                        array(
+                            'idnumber' => '__c_c_test101 2',
+                            'name' => 'Test Program 101 2',
+                            'description' => 'Description for Justin\'s program!',
+                            'reqcredits' => 10.5,
+                            'iscustom' => 1,
+                            'timetocomplete' => 'time value',
+                            'frequency' => '1 month',
+                            'priority' => 99
+                        ),
+                ),
+                array(
+                        'track',
+                        array(
+                            'curid' => 1,
+                            'idnumber' => '__c_t_test101 2',
+                            'name' => 'Test Track 101 2',
+                            'description' => 'Track description',
+                            'startdate' => time() - 180 * DAYSECS,
+                            'enddate' => time() + 30 * DAYSECS,
+                            'defaulttrack' => 1,
+                        ),
+                ),
+        );
+    }
+
+    /**
+     * Test data class setting the timecreated and time modified
+     * @dataProvider dataprovider_timecreated_timemodified_object
+     * @param string $classname the ELIS entity class name
+     * @param string $dataset the ELIS entity sample data
+     */
+    public function test_dataclass_timecreated_timemodified_course($classname, $dataset) {
+        global $DB;
+        $this->load_csv_data_timemodified_timecreated();
+        $this->resetAfterTest(true);
+
+        $entityobject = new $classname($dataset);
+        $entityobject->save();
+
+        $dbobject = $DB->get_record($classname::TABLE, array('id' => $entityobject->id));
+        // Assert timecreated and timemodified are not equal to zero and that the are equal to each other
+        $this->assertNotEquals(0, $dbobject->timecreated);
+        $this->assertNotEquals(0, $dbobject->timemodified);
+        $this->assertEquals($dbobject->timecreated, $dbobject->timemodified);
+
+        // Force a wait of 1 seconds to simulate some human input dealy
+        sleep(1);
+        $entityobject = new $classname($dbobject);
+        $entityobject->name = 'changed name';
+        $entityobject->save();
+
+        $dbobject = $DB->get_record($classname::TABLE, array('id' => $entityobject->id));
+        // Assert timecreated and timemodified are not equal to zero and that the are NOT equal to each other
+        $this->assertNotEquals(0, $dbobject->timecreated);
+        $this->assertNotEquals(0, $dbobject->timemodified);
+        $this->assertNotEquals($dbobject->timecreated, $dbobject->timemodified);
     }
 }

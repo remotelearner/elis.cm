@@ -160,6 +160,10 @@ class notifications extends pm_page {
             }
             pm_set_config('notify_curriculumrecurrence_message', $configdata->notify_curriculumrecurrence_message);
             configpage::config_set_value($configdata, 'notify_curriculumrecurrence_days', 0);
+
+            configpage::config_set_value($configdata, 'notify_addedtowaitlist_user', 1);
+            configpage::config_set_value($configdata, 'notify_enroledfromwaitlist_user', 1);
+            configpage::config_set_value($configdata, 'notify_incompletecourse_user', 1);
         }
 
         $configform->display();

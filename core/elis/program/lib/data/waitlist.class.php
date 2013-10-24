@@ -117,7 +117,7 @@ class waitlist extends elis_data_object {
 
     /**
      * Gets students for a waitlist
-     * 
+     *
      * @param int $clsid
      * @param string $sort
      * @param string $dir
@@ -303,19 +303,22 @@ class waitlist extends elis_data_object {
 
         $student->save();
 
-        if (!isset($message)) {
-            $a = new stdClass;
-            $a->idnum = $class->idnumber;
-            $subject = get_string('nowenroled', self::LANG_FILE, $a);
-            $message = get_string('nowenroled', self::LANG_FILE, $a);
+        // Send notification, if enabled.
+        $sendnotification = (!empty(elis::$config->elis_program->notify_enroledfromwaitlist_user)) ? true : false;
+        if ($sendnotification === true) {
+            if (!isset($message)) {
+                $a = new stdClass;
+                $a->idnum = $class->idnumber;
+                $subject = get_string('nowenroled', self::LANG_FILE, $a);
+                $message = get_string('nowenroled', self::LANG_FILE, $a);
+            }
+
+            $cuser = new user($this->userid);
+            $cuser->load();
+            $from = get_admin();
+
+            notification::notify($message, $cuser, $from);
         }
-
-        $cuser = new user($this->userid);
-        $user = $cuser->get_moodleuser();
-        $from = get_admin();
-
-        notification::notify($message, $user, $from);
-        //email_to_user($user, $from, $subject, $message);
 
         $this->delete();
     }
@@ -342,7 +345,8 @@ class waitlist extends elis_data_object {
 
         parent::save();
 
-        if ($new) {
+        $sendnotification = (!empty(elis::$config->elis_program->notify_addedtowaitlist_user)) ? true : false;
+        if ($new && $sendnotification === true) {
             $subject = get_string('waitlist', self::LANG_FILE);
             $pmclass = new pmclass($this->classid);
             $sparam = new stdClass;
@@ -350,10 +354,10 @@ class waitlist extends elis_data_object {
             $message = get_string('added_to_waitlist_message', self::LANG_FILE, $sparam);
 
             $cuser = new user($this->userid);
-            $user = $cuser->get_moodleuser();
+            $cuser->load();
             $from = get_admin();
 
-            notification::notify($message, $user, $from);
+            notification::notify($message, $cuser, $from);
             //email_to_user($user, $from, $subject, $message); // *TBD*
         }
     }

@@ -47,11 +47,11 @@ class cmform extends moodleform {
      * Method to add ELIS entity's custom fields to entity forms
      *
      * @param string $entity        ELIS entity name: Eg. 'curriculum', 'track', 'course', 'class', 'cluster', 'user'
-     * @param string $edit_cap      The required edit capability
-     * @param string $view_cap      The required view capability
-     * @param string $parent_entity The entity name of the parent object (optional)
+     * @param string $editcap      The required edit capability
+     * @param string $viewcap      The required view capability
+     * @param string $parententity The entity name of the parent object (optional)
      */
-    function add_custom_fields($entity, $edit_cap, $view_cap, $parent_entity = '') {
+    function add_custom_fields($entity, $editcap, $viewcap, $parententity = '') {
         $mform  = &$this->_form;
         $fields = field::get_for_context_level($entity);
         $fields = $fields ? $fields : array();
@@ -62,13 +62,13 @@ class cmform extends moodleform {
                 $contextlevel = context_elis_helper::get_level_from_name($entity);
                 $contextclass = context_elis_helper::get_class_for_level($contextlevel);
                 $context      = $contextclass::instance($this->_customdata['obj']->id);
-            } else if (isset($this->_customdata['obj']->parent) && $parent_entity != '') {
+            } else if (isset($this->_customdata['obj']->parent) && $parententity != '') {
                 // ELIS-6498 -- Specify the parent entity type to get the correct parent context instance as we are
                 // adding a new "child" entity
-                $contextlevel = context_elis_helper::get_level_from_name($parent_entity);
+                $contextlevel = context_elis_helper::get_level_from_name($parententity);
                 $contextclass = context_elis_helper::get_class_for_level($contextlevel);
                 $context      = $contextclass::instance($this->_customdata['obj']->parent);
-            } else if (isset($this->_customdata['obj']->courseid) && $parent_entity == 'course') {
+            } else if (isset($this->_customdata['obj']->courseid) && $parententity == 'course') {
                 // ELIS-6498 -- Special handling of the course -> class hierarchy is required here
                 $context = context_elis_course::instance($this->_customdata['obj']->courseid);
             } else {
@@ -87,15 +87,15 @@ class cmform extends moodleform {
                 continue;
             }
 
-            //capabilities for editing / viewing this context
+            // Capabilities for editing / viewing this context
+            if (manual_field_is_view_or_editable($field, $context, $editcap, $viewcap, $entity, $this->_customdata['obj']->id) != MANUAL_FIELD_NO_VIEW_OR_EDIT) {
 
-            if (manual_field_is_view_or_editable($field, $context, $edit_cap, $view_cap) != MANUAL_FIELD_NO_VIEW_OR_EDIT) {
                 if ($lastcat != $rec->categoryid) {
                     $lastcat = $rec->categoryid;
                     $mform->addElement('header', "category_{$lastcat}", htmlspecialchars($rec->categoryname));
                 }
 
-                manual_field_add_form_element($this, $mform, $context, $this->_customdata, $field, true, $edit_cap, $view_cap, $entity);
+                manual_field_add_form_element($this, $mform, $context, $this->_customdata, $field, true, $editcap, $viewcap, $entity, $this->_customdata['obj']->id);
             }
         }
     }
