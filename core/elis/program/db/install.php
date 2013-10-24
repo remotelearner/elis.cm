@@ -41,4 +41,9 @@ function xmldb_elis_program_install() {
 
     // Migrate dataroot files
     pm_migrate_certificate_files();
+
+    // These notifications are default-on.
+    pm_set_config('notify_addedtowaitlist_user', 1);
+    pm_set_config('notify_enroledfromwaitlist_user', 1);
+    pm_set_config('notify_incompletecourse_user', 1);
 }

@@ -45,6 +45,7 @@ $string['health_duplicatedesc'] = 'There were {$a} duplicate enrollments records
 $string['health_duplicatesoln'] = '<p>Run the script fix_duplicate_enrolments.php to remove all duplicate enrollment records.</p>';
 $string['moodleenrol_subj'] = 'Ready to enroll in {$a->idnumber}.';
 $string['notice_usertrack_deleted'] = 'Unenrolled the user from track: {$a->trackid}';
+$string['notifications_waitlist_enroled'] = 'The are enrolled from a waitlist.';
 $string['notifyclassenrolmessage'] = 'Message template for class instance enrollment';
 $string['notifyclassnotstarteddays'] = 'Number of days after enrollment to send message';
 $string['notifytrackenrolmessage'] = 'Message template for track enrollment';

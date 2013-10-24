@@ -188,8 +188,8 @@
         <FIELD NAME="iscustom" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="reqcredits" NEXT="timecreated"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="iscustom" NEXT="timemodified"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="timecreated" NEXT="timetocomplete"/>
-        <FIELD NAME="timetocomplete" TYPE="char" LENGTH="64" NOTNULL="true" DEFAULT="0y" SEQUENCE="false" PREVIOUS="timemodified" NEXT="frequency"/>
-        <FIELD NAME="frequency" TYPE="char" LENGTH="64" NOTNULL="true" DEFAULT="0y" SEQUENCE="false" PREVIOUS="timetocomplete" NEXT="priority"/>
+        <FIELD NAME="timetocomplete" TYPE="char" LENGTH="64" NOTNULL="true" SEQUENCE="false" PREVIOUS="timemodified" NEXT="frequency"/>
+        <FIELD NAME="frequency" TYPE="char" LENGTH="64" NOTNULL="true" SEQUENCE="false" PREVIOUS="timetocomplete" NEXT="priority"/>
         <FIELD NAME="priority" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="frequency"/>
       </FIELDS>
       <KEYS>
