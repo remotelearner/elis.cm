@@ -202,6 +202,15 @@ class pmclasspage extends managementpage {
     }
 
     function can_do_default() {
+        if (($id = $this->optional_param('id', 0, PARAM_INT)) > 0) {
+            $crspg = new coursepage(array('id' => $id));
+            if ($crspg->_has_capability('elis/program:class_create', $id)) {
+                return true;
+            }
+            $parentclusterid = $this->optional_param('parent_clusterid', 0, PARAM_INT);
+            $contexts = pmclasspage::get_contexts('elis/program:class_view');
+            return pmclass_count_records('', '', $id, false, $contexts, $parentclusterid) > 0;
+        }
         $contexts = pmclasspage::get_contexts('elis/program:class_view');
         return !$contexts->is_empty();
     }
@@ -311,8 +320,9 @@ class pmclasspage extends managementpage {
             $columns[$sort]['sortable'] = $dir;
         }
 
-        $items    = pmclass_get_listing($sort, $dir, $page*$perpage, $perpage, $namesearch, $alpha, $id, false, pmclasspage::get_contexts('elis/program:class_view'), $parent_clusterid);
-        $numitems = pmclass_count_records($namesearch, $alpha, $id, false, pmclasspage::get_contexts('elis/program:class_view'), $parent_clusterid);
+        $contexts = pmclasspage::get_contexts('elis/program:class_view');
+        $items    = pmclass_get_listing($sort, $dir, $page * $perpage, $perpage, $namesearch, $alpha, $id, false, $contexts, $parent_clusterid);
+        $numitems = pmclass_count_records($namesearch, $alpha, $id, false, $contexts, $parent_clusterid);
 
         pmclasspage::get_contexts('elis/program:class_edit');
         pmclasspage::get_contexts('elis/program:class_delete');

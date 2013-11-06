@@ -36,12 +36,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
- *
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
  */
 
 defined('MOODLE_INTERNAL') || die();
@@ -815,16 +813,19 @@ function pm_notify_track_assign_handler($eventdata){
     return true;
 }
 
-/*
+/**
  * Takes an instructor assignment event and propagates and appropriate
  * course role assignment back to moodle based on the configured default role
- *
- * @param  stdClass  $eventdata  The appropriate crlm_class_instructor record
  * @uses   $CFG
  * @uses   $DB
+ *
+ * @param  stdClass  $eventdata  The appropriate crlm_class_instructor record
+ * @return bool always returns true
  */
 function pm_notify_instructor_assigned_handler($eventdata) {
     global $CFG, $DB;
+
+    require_once elispm::lib('data/user.class.php');
 
     // ELIS-4684: RLIP can pass overriding role in $eventdata
     if (empty($eventdata->roleshortname) || !($roleid = $DB->get_field('role', 'id', array('shortname' => $eventdata->roleshortname)))) {
@@ -848,22 +849,36 @@ function pm_notify_instructor_assigned_handler($eventdata) {
     }
 
     // retrieve the Moodle course's context
-    if (!$course_context = get_context_instance(CONTEXT_COURSE, $moodlecourseid)) {
+    $coursecontext = context_course::instance($moodlecourseid);
+    if (!$coursecontext) {
         return true;
     }
 
     // retrieve the appropriate Moodle user based on the event's curriculum admin user
-    if (!$instructor = cm_get_moodleuser($eventdata->userid)) {
+    // Retrieve the Moodle user
+    $cmuser = new user();
+    $cmuser->id = $eventdata->userid;
+    $instructor = $cmuser->get_moodleuser();
+
+    if (!$instructor) {
         return true;
     }
 
     // make sure the Moodle user does not already have a Non-Editing Teacher, Teacher or Admin role in the course
-    if (has_capability('moodle/course:viewhiddenactivities', $course_context, $instructor->id)) {
+    if (has_capability('moodle/course:viewhiddenactivities', $coursecontext, $instructor->id)) {
         return true;
     }
 
-    // assign the Moodle user to the instructor role
-    role_assign($roleid, $instructor->id, $course_context->id);
+    // Enrol the user in the course and assign the instructor role
+    if (!is_enrolled($coursecontext, $instructor, '', true)) {
+        $course = new stdClass();
+        $course->id = $coursecontext->instanceid;
+
+        $plugin = enrol_get_plugin('elis');
+        $enrolinstance = $plugin->get_or_create_instance($course);
+        $plugin->enrol_user($enrolinstance, $instructor->id, $roleid);
+    }
+
     return true;
 }
 
@@ -873,57 +888,73 @@ function pm_notify_instructor_assigned_handler($eventdata) {
  * Moodle course role assignments
  *
  * @param  stdClass  $eventdata  The appropriate crlm_class_instructor record
+ * @return bool always returns true
  */
 function pm_notify_instructor_unassigned_handler($eventdata) {
 
     global $CFG, $DB;
 
-    //make sure users in some roles are identified as course managers
+    require_once elispm::lib('data/user.class.php');
+
+    // make sure users in some roles are identified as course managers
     if(empty($CFG->coursecontact)) {
         return true;
     }
 
-    //create the curriculum administration class
+    // create the curriculum administration class
     try {
         if(!$pmclass = new pmclass($eventdata->classid)) {
             return true;
         }
     } catch (dml_missing_record_exception $e) {
-        //record does not exists, so no need to sync
+        // record does not exists, so no need to sync
         return true;
     }
 
-    //ensure that the class is tied to a Moodle course
+    // ensure that the class is tied to a Moodle course
     $moodlecourseid = $pmclass->get_moodle_course_id();
 
-    if(empty($moodlecourseid)) {
+    if (empty($moodlecourseid)) {
         return true;
     }
 
-    //retrieve the context for the Moodle course
-    if(!$course_context = get_context_instance(CONTEXT_COURSE, $moodlecourseid)) {
+    // retrieve the context for the Moodle course
+    $coursecontext = context_course::instance($moodlecourseid);
+    if (!$coursecontext) {
         return true;
     }
 
-    //make sure the Moodle course is not tied to other curriculum administration classes
-    if($DB->count_records(classmoodlecourse::TABLE, array('moodlecourseid'=> $moodlecourseid)) != 1) {
+    // make sure the Moodle course is not tied to other curriculum administration classes
+    if ($DB->count_records(classmoodlecourse::TABLE, array('moodlecourseid' => $moodlecourseid)) != 1) {
         return true;
     }
 
-    //retrieve the Moodle user
-    if(!$instructor = cm_get_moodleuser($eventdata->userid)) {
+    // Retrieve the Moodle user
+    $cmuser = new user();
+    $cmuser->id = $eventdata->userid;
+    $instructor = $cmuser->get_moodleuser();
+
+    if (!$instructor) {
         return true;
     }
 
-    //go through all applicable roles to see if we can remove them from the Moodle side of things
+    // Go through all applicable roles to see if we can remove them from the Moodle side of things
     $roleids = explode(',', $CFG->coursecontact);
 
-    foreach($roleids as $roleid) {
-        //unassign the role if found
-        if(user_has_role_assignment($instructor->id, $roleid, $course_context->id)) {
-            role_unassign($roleid, $instructor->id, $course_context->id);
+    $course = new stdClass();
+    $course->id = $coursecontext->instanceid;
+
+    // Loop through each of the course contact roles, check if they have the role assignment, unenroll them and remove it
+    foreach ($roleids as $roleid) {
+        $hasroleassignment = user_has_role_assignment($instructor->id, $roleid, $coursecontext->id);
+
+        if ($hasroleassignment) {
+            // This method  unenrolls and removes all of the user's roles from the course @see role_unassign_all()
+            $plugin = enrol_get_plugin('elis');
+            $enrolinstance = $plugin->get_or_create_instance($course);
+            $plugin->unenrol_user($enrolinstance, $instructor->id);
         }
     }
+
     return true;
 }
-
