@@ -64,8 +64,8 @@ abstract class enginepage extends pm_page {
      *
      * @return bool True if the user has permission to use the edit action
      */
-    function can_do_edit() {
-        return $this->can_do_default();
+    public function can_do_edit() {
+        return has_capability('elis/program:'.$this->type.'_edit', $this->get_context());
     }
 
     /**
@@ -74,7 +74,7 @@ abstract class enginepage extends pm_page {
      * @return bool True if the user has permission to use the cachedelete action
      */
     function can_do_cachedelete() {
-        return $this->can_do_default();
+        return $this->can_do_edit();
     }
 
     /**
@@ -83,7 +83,7 @@ abstract class enginepage extends pm_page {
      * @return bool True if the user has permission to use the delete action
      */
     function can_do_delete() {
-        return $this->can_do_default();
+        return $this->can_do_edit();
     }
 
     /**
@@ -92,7 +92,7 @@ abstract class enginepage extends pm_page {
      * @return bool True if the user has permission to use the default action
      */
     function can_do_default() {
-        return has_capability('elis/program:'. $this->type .'_edit', $this->get_context());
+        return has_capability('elis/program:'.$this->type.'_view', $this->get_context());
     }
 
     /**
@@ -209,9 +209,11 @@ abstract class enginepage extends pm_page {
         $parent_template->build_navbar_view();
         $this->_navbar = $parent_template->navbar;
 
-        //add a link to the first role screen where you select a role
         $id = $this->required_param('id', PARAM_INT);
-        $page = $this->get_new_page(array('id' => $id), true);
+        $curclass = get_class($this);
+        $pageclass = str_replace('status', '', $curclass);
+        $enginepg = ($pageclass == $curclass) ? $this : new $pageclass();
+        $page = $enginepg->get_new_page(array('id' => $id), true);
         $this->navbar->add(get_string('results_engine', self::LANG_FILE), $page->url);
     }
 
@@ -281,6 +283,9 @@ abstract class enginepage extends pm_page {
      */
     function do_default() {
         $form = $this->get_engine_form();
+        if (!$this->can_do_edit()) {
+            $form->freeze();
+        }
         $this->_form = $form;
         $this->display('default');
     }
@@ -580,6 +585,15 @@ class course_enginepage extends enginepage {
      * @return bool True if the user has permission to use the default action
      */
     function can_do_default() {
+        return has_capability('elis/program:course_view', $this->get_context());
+    }
+
+    /**
+     * Check if the user can do the edit actions
+     *
+     * @return bool True if the user has permission to use the edit actions
+     */
+    public function can_do_edit() {
         return has_capability('elis/program:course_edit', $this->get_context());
     }
 }

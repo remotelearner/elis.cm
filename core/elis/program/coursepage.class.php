@@ -29,6 +29,7 @@ defined('MOODLE_INTERNAL') || die();
 require_once elis::lib('data/data_filter.class.php');
 require_once elispm::lib('data/course.class.php');
 require_once elispm::lib('data/coursetemplate.class.php');
+require_once elispm::lib('data/pmclass.class.php');
 require_once elispm::lib('managementpage.class.php');
 require_once elispm::lib('contexts.php');
 require_once elispm::file('curriculumcoursepage.class.php');
@@ -100,12 +101,27 @@ class coursepage extends managementpage {
         $showcoursecerttab = $showcoursecerttab &&
                                  empty(elis::$config->elis_program->disablecoursecertificates);
 
+        $numclasses = 1;
+        if (($id = $this->optional_param('id', 0, PARAM_INT)) > 0 && !$this->_has_capability('elis/program:class_create', $id)) {
+
+            $parentclusterid = $this->optional_param('parent_clusterid', 0, PARAM_INT);
+            $numclasses = pmclass_count_records('', '', $id, false, pmclasspage::get_contexts('elis/program:class_view'), $parentclusterid);
+        }
+
         $this->tabs = array(
         array('tab_id' => 'view', 'page' => get_class($this), 'params' => array('action' => 'view'), 'name' => get_string('detail', 'elis_program'), 'showtab' => true),
         array('tab_id' => 'edit', 'page' => get_class($this), 'params' => array('action' => 'edit'), 'name' => get_string('edit', 'elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'edit'),
 
         // allow users to view the classes associated with this course
-        array('tab_id' => 'pmclasspage', 'page' => 'pmclasspage', 'params' => array('action' => 'default'), 'name' => get_string('course_classes', 'elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'class'),
+        array(
+            'tab_id'     => 'pmclasspage',
+            'page'       => 'pmclasspage',
+            'params'     => array('action' => 'default'),
+            'name'       => get_string('course_classes', 'elis_program'),
+            'showtab'    => $numclasses > 0,
+            'showbutton' => $numclasses > 0,
+            'image'      => 'class'
+        ),
         array('tab_id' => 'elem', 'page' => get_class($this), 'params' => array('action' => 'lelem'), 'name' => get_string('completion_elements', 'elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'grades'),
         array('tab_id' => 'coursecurriculumpage', 'page' => 'coursecurriculumpage', 'name' => get_string('course_curricula', 'elis_program'), 'showtab' => true, 'showbutton' => true, 'image' => 'curriculum'),
         array('tab_id' => 'course_rolepage', 'page' => 'course_rolepage', 'name' => get_string('roles', 'role'), 'showtab' => true, 'showbutton' => false, 'image' => 'tag'),
@@ -116,7 +132,7 @@ class coursepage extends managementpage {
             'page' => 'course_certificatepage',
             'name' => get_string('certificate_settings', 'elis_program'),
             'showtab' => $showcoursecerttab,
-            'showbutton' => true,
+            'showbutton' => $showcoursecerttab,
             'image' => 'certificate'
         ),
         array('tab_id' => 'delete', 'page' => get_class($this), 'params' => array('action' => 'delete'), 'name' => get_string('delete_label', 'elis_program'), 'showbutton' => true, 'image' => 'delete'),
