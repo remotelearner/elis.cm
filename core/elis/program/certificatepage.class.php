@@ -367,6 +367,15 @@ class course_certificatepage extends certificatepage {
      * @return bool True if the user has permission to use the default action
      */
     public function can_do_default() {
+        return has_capability('elis/program:course_view', $this->get_context());
+    }
+
+    /**
+     * Check if the user can do edits
+     *
+     * @return bool True if the user has permission to do edits
+     */
+    public function can_do_edit() {
         return has_capability('elis/program:course_edit', $this->get_context());
     }
 
@@ -397,6 +406,9 @@ class course_certificatepage extends certificatepage {
         $form = new certificateform($target->url, array('nosettingfound' => $nosettingfound));
 
         $form->set_data($params);
+        if (!$this->can_do_edit()) {
+            $form->freeze();
+        }
         $this->_form = $form;
         $this->display('default');
     }

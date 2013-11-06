@@ -147,7 +147,7 @@ abstract class enginestatuspage extends enginepage {
      *
      * @see enginepage::build_navbar_default()
      */
-    function build_navbar_default() {
+    public function build_navbar_default($who = null) {
         parent::build_navbar_default();
 
         $id = $this->required_param('id', PARAM_INT);
@@ -175,6 +175,13 @@ abstract class enginestatuspage extends enginepage {
         $table->define_columns($this->columns);
         $table->define_headers($this->headers);
         $table->define_baseurl($page->url);
+        if (method_exists($this, 'table_filter')) {
+            $filter = $this->table_filter();
+            if (isset($filter['where'])) {
+                $this->where = $filter['where'].' AND '.$this->where;
+                $params = array_merge($filter['where_parameters'], $params);
+            }
+        }
         $table->set_sql($this->fields, $this->from, $this->where, $params);
         $table->set_count_sql($this->count, $params);
         $table->sortable(true, $this->sort);
@@ -288,7 +295,20 @@ class course_enginestatuspage extends enginestatuspage {
      * @return bool True if the user has permission to use the default action
      */
     function can_do_default() {
-        return has_capability('elis/program:course_edit', $this->get_context());
+        return has_capability('elis/program:course_view', $this->get_context());
+    }
+
+    /**
+     * Method to return sql filter for table
+     * @return array the filter sql and sql parameters
+     */
+    public function table_filter() {
+        $contexts = pmclasspage::get_contexts('elis/program:class_view');
+        if ($contexts != null) {
+            $filterobj = $contexts->get_filter('id', 'class');
+            return $filterobj->get_sql(false, 'cc');
+        }
+        return array('FALSE', array());
     }
 }
 
