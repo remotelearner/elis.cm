@@ -46,7 +46,7 @@ abstract class deepsight_action_instructor_assignedit_base extends deepsight_act
      * @return bool Whether the user has permission.
      */
     protected function can_manage_assoc($classid, $userid) {
-        return instructor::can_manage_assoc($classid, $userid);
+        return instructor::can_manage_assoc($userid, $classid);
     }
 
     /**
@@ -346,6 +346,6 @@ class deepsight_action_instructor_unassign extends deepsight_action_confirm {
      * @return bool Whether the user has permission.
      */
     protected function can_manage_assoc($classid, $userid) {
-        return instructor::can_manage_assoc($classid, $userid);
+        return instructor::can_manage_assoc($userid, $classid);
     }
 }

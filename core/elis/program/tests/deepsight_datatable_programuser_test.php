@@ -262,7 +262,7 @@ class deepsight_datatable_programuser_testcase extends deepsight_datatable_searc
         $table->set_programid($tableprogramid);
 
         foreach ($expectedresults as &$result) {
-            $result['canunassign'] = '0';
+            $result['canunassign'] = '1';
         }
 
         $actualresults = $table->get_search_results(array(), array(), 0, 20);

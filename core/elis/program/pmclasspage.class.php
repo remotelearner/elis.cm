@@ -201,6 +201,11 @@ class pmclasspage extends managementpage {
         return false;
     }
 
+    public function can_do_enrol() {
+        $id = $this->required_param('id', PARAM_INT);
+        return static::can_enrol_into_class($id);
+    }
+
     function can_do_default() {
         if (($id = $this->optional_param('id', 0, PARAM_INT)) > 0) {
             $crspg = new coursepage(array('id' => $id));

@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -28,17 +27,19 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once elispm::file('form/selectionform.class.php');
 
+/**
+ * The form element for bulk user actions page.
+ */
 class bulkuserform extends selectionform {
+    /**
+     * Defines items in the form.
+     */
     function definition() {
         global $CFG;
 
         $mform =& $this->_form;
-
-        $actions = array('inactive' => get_string('mark_inactive', 'elis_program'),
-                         'delete' => get_string('delete', 'elis_program'));
-        $mform->addElement('select', 'do', get_string('withselectedusers'), $actions);
+        $mform->addElement('select', 'do', get_string('withselectedusers'), $this->_customdata);
 
         parent::definition();
     }
 }
-

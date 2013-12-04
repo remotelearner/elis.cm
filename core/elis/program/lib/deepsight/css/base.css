@@ -680,14 +680,16 @@ body.ie8 .deepsight_actionpanel label.buttonset.on {
     position: absolute;
     top: 0;
     left: 0;
+    z-index: 999;
+    width: 90%;
+    margin-left: -45%;
+    margin-top: 20px;
+}
+.deepsight_modal_inner {
     background-color: #000;
     background-color: rgba(0, 0, 0, 0.8);
-    z-index: 100;
     color: #fff;
-    width: 74%;
     padding: 20px;
-    margin-left: -37%;
-    margin-top: 20px;
     border: 1px solid rgba(255, 255, 255, 0.6);
     border-radius: 10px;
     box-shadow: 0 0 10px #666;
@@ -779,7 +781,7 @@ body.ie8 .deepsight_modal .buttonset input.checked + label {
     width: 200px;
     display: inline-block;
 }
-.deepsight_modal.loading {
+.deepsight_modal.loading .deepsight_modal_inner {
     background-image: url('./img/rlrotate_big_transblack.gif');
     background-repeat: no-repeat;
     background-position: center center;

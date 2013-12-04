@@ -58,6 +58,17 @@ class deepsight_datatable_trackuser_base extends deepsight_datatable_user {
         $opts['multiselect'] = true;
         return $opts;
     }
+
+    /**
+     * Gets filter sql for permissions.
+     * @return array An array consisting of additional WHERE conditions, and parameters.
+     */
+    protected function get_filter_sql_permissions() {
+        $elementtype = 'track';
+        $elementid = $this->trackid;
+        $elementid2clusterscallable = 'clustertrack::get_clusters';
+        return $this->get_filter_sql_permissions_elementuser($elementtype, $elementid, $elementid2clusterscallable);
+    }
 }
 
 /**
@@ -88,6 +99,30 @@ class deepsight_datatable_trackuser_assigned extends deepsight_datatable_trackus
         $joinsql[] = 'JOIN {'.usertrack::TABLE.'} trkass ON trkass.trackid='.$this->trackid.' AND trkass.userid = element.id';
         return $joinsql;
     }
+
+    /**
+     * Removes assigned users, controls display permissions.
+     * @param array $filters An array of requested filter data. Formatted like [filtername]=>[data].
+     * @return array An array consisting of the SQL WHERE clause, and the parameters for the SQL.
+     */
+    protected function get_filter_sql(array $filters) {
+        list($filtersql, $filterparams) = parent::get_filter_sql($filters);
+
+        $additionalfilters = array();
+
+        // Add permissions.
+        list($permadditionalfilters, $permadditionalparams) = $this->get_filter_sql_permissions();
+        $additionalfilters = array_merge($additionalfilters, $permadditionalfilters);
+        $filterparams = array_merge($filterparams, $permadditionalparams);
+
+        // Add our additional filters.
+        if (!empty($additionalfilters)) {
+            $filtersql = (!empty($filtersql))
+                    ? $filtersql.' AND '.implode(' AND ', $additionalfilters) : 'WHERE '.implode(' AND ', $additionalfilters);
+        }
+
+        return array($filtersql, $filterparams);
+    }
 }
 
 /**
@@ -117,17 +152,6 @@ class deepsight_datatable_trackuser_available extends deepsight_datatable_tracku
         $joinsql = parent::get_join_sql($filters);
         $joinsql[] = 'LEFT JOIN {'.usertrack::TABLE.'} trkass ON trkass.trackid='.$this->trackid.' AND trkass.userid = element.id';
         return $joinsql;
-    }
-
-    /**
-     * Gets filter sql for permissions.
-     * @return array An array consisting of additional WHERE conditions, and parameters.
-     */
-    protected function get_filter_sql_permissions() {
-        $elementtype = 'track';
-        $elementid = $this->trackid;
-        $elementid2clusterscallable = 'clustertrack::get_clusters';
-        return $this->get_filter_sql_permissions_elementuser_available($elementtype, $elementid, $elementid2clusterscallable);
     }
 
     /**
