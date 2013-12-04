@@ -112,7 +112,7 @@ class studentpage extends deepsightpage {
      */
     public function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
-        $pmclasspage = new pmclasspage(array('id' => $id));
+        $pmclasspage = new pmclasspage(array('id' => $id, 'action' => 'enrol'));
         return $pmclasspage->can_do();
     }
 

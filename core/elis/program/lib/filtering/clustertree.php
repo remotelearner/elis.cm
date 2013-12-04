@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2012 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage pm-filtering
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -660,6 +659,7 @@ class generalized_filter_clustertree extends generalized_filter_type {
 
         //dropdown / cluster tree state storage
         $mform->addElement('hidden', $this->_uniqueid .'_usingdropdown');
+        $mform->setType($this->_uniqueid.'_usingdropdown', PARAM_RAW);
         // Must use addHelpButton() to NOT open help link on page, but in popup!
         $mform->addHelpButton($this->_uniqueid .'_dropdown', $this->_filterhelp[0], $this->_filterhelp[2] /* , $this->_filterhelp[1] */); // TBV
 
@@ -691,10 +691,13 @@ class generalized_filter_clustertree extends generalized_filter_type {
 
         //list of explicitly selected elements
         $mform->addElement('hidden', $this->_uniqueid .'_listing');
+        $mform->setType($this->_uniqueid.'_listing', PARAM_RAW);
         //list of selected and unexpanded elements
         $mform->addElement('hidden', $this->_uniqueid .'_unexpanded');
+        $mform->setType($this->_uniqueid.'_unexpanded', PARAM_RAW);
         //list of explicitly unselected elements
         $mform->addElement('hidden', $this->_uniqueid .'_clrunexpanded');
+        $mform->setType($this->_uniqueid.'_clrunexpanded', PARAM_RAW);
 
         $mform->addElement('button', $this->_uniqueid.'_toggle', '');
 
@@ -880,4 +883,3 @@ class generalized_filter_clustertree extends generalized_filter_type {
     }
 
 }
-

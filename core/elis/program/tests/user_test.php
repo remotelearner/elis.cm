@@ -145,6 +145,7 @@ class user_testcase extends elis_database_test {
      */
     public function test_canupdaterecordandsynctomoodle() {
         global $DB;
+        require_once(elispm::lib('lib.php'));
         $this->load_csv_data();
 
         // Read a record.
@@ -165,6 +166,7 @@ class user_testcase extends elis_database_test {
         // Check the Moodle user.
         $retr = $DB->get_record('user', array('id' => 100));
         profile_load_data($retr);
+        fix_moodle_profile_fields($retr);
         $this->assertEquals($src->firstname, $retr->firstname);
         $this->assertEquals($src->lastname, $retr->lastname);
 
@@ -223,7 +225,8 @@ class user_testcase extends elis_database_test {
      * Test that modifying a Moodle user also updates the corresponding PM user.
      */
     public function test_modifyingmoodleuserupdatespmuser() {
-        global $DB;
+        global $CFG, $DB;
+        require_once($CFG->dirroot.'/admin/tool/uploaduser/locallib.php');
         $this->load_csv_data();
 
         // Update a record.
@@ -235,7 +238,9 @@ class user_testcase extends elis_database_test {
         $src->profile_field_sometextfrompm = 'bla';
         $DB->update_record('user', $src);
         $mdluser = $DB->get_record('user', array('id' => 100));
-        profile_save_data($src);
+        $mcopy = clone($src);
+        $mcopy = uu_pre_process_custom_profile_data($mcopy);
+        profile_save_data($mcopy);
         events_trigger('user_updated', $mdluser);
 
         // Read the PM user and compare.

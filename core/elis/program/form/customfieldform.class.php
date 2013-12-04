@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -73,6 +72,7 @@ class customfieldform extends cmform {
         $form->addElement('select', 'categoryid', get_string('profilecategory', 'admin'), $choices);
 
         $form->addElement('htmleditor', 'description', get_string('profiledescription', 'admin'));
+        $form->setType('description', PARAM_CLEAN);
         //$form->addHelpButton('description', 'helptext');
 
         $choices = array(
@@ -130,6 +130,7 @@ class customfieldform extends cmform {
         $form->addElement('html', '</fieldset>');
 
         $form->addElement('hidden', 'defaultdata_radio'); // *REQUIRED* place-hoolder!!!
+        $form->setType('defaultdata_radio', PARAM_TEXT);
         $form->addElement('html', '<fieldset class="accesshide" id="datatype_radio">');
         $form->addElement('html', '</fieldset>');
 

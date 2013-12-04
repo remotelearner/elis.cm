@@ -3,7 +3,7 @@
  * Form used for editing / displaying a course
  *
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,11 +18,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -60,6 +59,7 @@ class cmCourseForm extends cmform {
         $mform =& $this->_form;
 
         $mform->addElement('hidden', 'id');
+        $mform->setType('id', PARAM_INT);
 
         $mform->addElement('text', 'name', get_string('course_name', 'elis_program') . ':');
         $mform->setType('name', PARAM_TEXT);
@@ -115,6 +115,7 @@ class cmCourseForm extends cmform {
 
         $mform->addElement('html', '<br />');
         $mform->addElement('hidden', 'templateclass', 'moodlecourseurl', array('id' => 'id_templateclass'));
+        $mform->setType('templateclass', PARAM_TEXT);
         if (empty($locationlabel) || optional_param('action', '', PARAM_CLEAN) != 'view') {
             $mform->addElement('text', 'locationlabel', get_string('coursetemplate', 'elis_program'), array('readonly' => 'readonly', 'value' => $locationlabel));
             $mform->setType('locationlabel', PARAM_TEXT);
@@ -126,10 +127,14 @@ class cmCourseForm extends cmform {
 
         if (empty($id)) {
             $mform->addElement('hidden', 'location', '', array('id'=>'id_location'));
+            $mform->setType('location', PARAM_INT);
             $mform->addElement('hidden', 'temptype', '', array('id'=>'tempid'));
+            $mform->setType('temptype', PARAM_INT);
         } else {
             $mform->addElement('hidden', 'location', $template->location, array('id'=>'id_location'));
+            $mform->setType('location', PARAM_INT);
             $mform->addElement('hidden', 'tempid', $template->id, array('id'=>'tempid'));
+            $mform->setType('tempid', PARAM_INT);
         }
 
         $templateButtons = array();
@@ -227,7 +232,9 @@ class completionform extends cmform {
         $mform =& $this->_form;
 
         $mform->addElement('hidden', 'id');
+        $mform->setType('id', PARAM_INT);
         $mform->addElement('hidden', 'elemid');
+        $mform->setType('elemid', PARAM_INT);
 
         $options = array(
             'lockcourse' => 1,

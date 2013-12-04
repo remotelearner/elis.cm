@@ -61,6 +61,17 @@ class deepsight_datatable_programuser_base extends deepsight_datatable_user {
         $opts['multiselect'] = true;
         return $opts;
     }
+
+    /**
+     * Gets filter sql for permissions.
+     * @return array An array consisting of additional WHERE conditions, and parameters.
+     */
+    protected function get_filter_sql_permissions() {
+        $elementtype = 'program';
+        $elementid = $this->programid;
+        $elementid2clusterscallable = 'clustercurriculum::get_clusters';
+        return $this->get_filter_sql_permissions_elementuser($elementtype, $elementid, $elementid2clusterscallable);
+    }
 }
 
 /**
@@ -144,17 +155,6 @@ class deepsight_datatable_programuser_assigned extends deepsight_datatable_progr
     }
 
     /**
-     * Gets filter sql for permissions.
-     * @return array An array consisting of additional WHERE conditions, and parameters.
-     */
-    protected function get_filter_sql_permissions() {
-        $elementtype = 'program';
-        $elementid = $this->programid;
-        $elementid2clusterscallable = 'clustercurriculum::get_clusters';
-        return $this->get_filter_sql_permissions_elementuser_available($elementtype, $elementid, $elementid2clusterscallable);
-    }
-
-    /**
      * Limits results according to permissions.
      * @param array $filters An array of requested filter data. Formatted like [filtername]=>[data].
      * @return array An array consisting of the SQL WHERE clause, and the parameters for the SQL.
@@ -208,17 +208,6 @@ class deepsight_datatable_programuser_available extends deepsight_datatable_prog
         $joinsql[] = 'LEFT JOIN {'.curriculumstudent::TABLE.'} currass
                            ON currass.curriculumid='.$this->programid.' AND currass.userid = element.id';
         return $joinsql;
-    }
-
-    /**
-     * Gets filter sql for permissions.
-     * @return array An array consisting of additional WHERE conditions, and parameters.
-     */
-    protected function get_filter_sql_permissions() {
-        $elementtype = 'program';
-        $elementid = $this->programid;
-        $elementid2clusterscallable = 'clustercurriculum::get_clusters';
-        return $this->get_filter_sql_permissions_elementuser_available($elementtype, $elementid, $elementid2clusterscallable);
     }
 
     /**

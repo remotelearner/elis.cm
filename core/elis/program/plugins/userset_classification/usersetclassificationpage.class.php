@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * Copyright (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage curriculummanagement
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -42,15 +41,17 @@ class usersetclassificationform extends cmform {
         $mform = &$this->_form;
 
         $mform->addElement('hidden', 'id');
-        $mform->setType('hidden', PARAM_INT);
+        $mform->setType('id', PARAM_INT);
 
         $shortname = $mform->addElement('text', 'shortname', get_string('shortname', 'pmplugins_userset_classification'));
+        $mform->setType('shortname', PARAM_TEXT);
         if(empty($this->_customdata['obj'])) {
             $mform->addRule('shortname', $strrequired, 'required', null, 'client');
         } else {
             $shortname->freeze();
         }
         $mform->addElement('text', 'name', get_string('name', 'pmplugins_userset_classification'));
+        $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', $strrequired, 'required', null, 'client');
 
         $mform->addElement('advcheckbox', 'param_autoenrol_curricula', get_string('autoenrol_curricula', 'pmplugins_userset_classification'));

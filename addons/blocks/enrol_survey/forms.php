@@ -157,6 +157,9 @@ class survey_form extends moodleform {
 
             if (!empty($type)) {
                 $mform->addElement($type, $k, $q, $extra);
+                if ($type === 'text' || $type === 'textarea') {
+                    $mform->setType($k, PARAM_RAW);
+                }
             }
         }
 
@@ -165,7 +168,9 @@ class survey_form extends moodleform {
         $group[] =& $mform->createElement('submit', 'update', get_string('update', 'block_enrol_survey'));
         $group[] =& $mform->createElement('cancel');
         $mform->addElement('hidden', 'courseid', $this->_customdata->courseid);
+        $mform->setType('courseid', PARAM_INT);
         $mform->addElement('hidden', 'mymoodle', $this->_customdata->mymoodle);
+        $mform->setType('mymoodle', PARAM_INT);
         $mform->addGroup($group, 'form_buttons', '', array('&nbsp;'), false);
     }
 }

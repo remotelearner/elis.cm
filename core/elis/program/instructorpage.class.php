@@ -105,9 +105,7 @@ class instructorpage extends deepsightpage {
      * @return bool Whether the user has access.
      */
     public function can_do_default() {
-        $id = $this->required_param('id', PARAM_INT);
-        $pmclasspage = new pmclasspage(array('id' => $id));
-        return $pmclasspage->can_do();
+        return $this->can_do_add();
     }
 
     /**

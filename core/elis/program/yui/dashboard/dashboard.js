@@ -56,17 +56,20 @@ YUI.add('moodle-elis_program-dashboard', function(Y) {
          */
         initializer : function(params) {
             // Create the element and set attributes
-            var showhidecompletebutton = Y.Node.create('<input>');
-            showhidecompletebutton.setAttribute('type', 'button');
-            showhidecompletebutton.setAttribute('value', params.buttonlabel);
-            showhidecompletebutton.setAttribute('name', params.nameattr);
+            var showhidecompletebutton = Y.Node.create('<input type="button" />').getDOMNode();
+
+            // Set attributes
+            showhidecompletebutton.value = params.buttonlabel;
+            showhidecompletebutton.name = params.nameattr;
 
             // Add event listening
             var handlerparams = {'hidelabel': params.hidetext, 'showlabel': params.showtext, 'element': params.element};
-            showhidecompletebutton.on('click', this.toggle_visible, this, handlerparams);
 
             var elementnode = Y.one('#'+params.addbefore);
             elementnode.ancestor().insertBefore(showhidecompletebutton, elementnode);
+
+            showhidecompletebutton = Y.one('input[name="'+params.nameattr+'"]');
+            showhidecompletebutton.on('click', this.toggle_visible, this, handlerparams);
         },
 
         /**
@@ -223,23 +226,31 @@ YUI.add('moodle-elis_program-dashboard', function(Y) {
          */
         initializer : function(params) {
             // Create the element and set attributes
-            var showhidecompletebutton = Y.Node.create('<input>');
-            showhidecompletebutton.setAttribute('type', 'button');
-            showhidecompletebutton.setAttribute('value', params.buttonlabel);
-            showhidecompletebutton.setAttribute('name', params.nameattr);
-            showhidecompletebutton.setAttribute('id', params.nameattr);
+            var showhidecompletebutton = Y.Node.create('<input type="button" />');
+            // Get the DOM node, used to change the element attributes. Needed for IE8
+            var showhidecompletebuttondom = showhidecompletebutton.getDOMNode();
+
+            var elementnode = Y.one('#'+params.addbefore);
+
+            // Insert element into the DOM
+            elementnode.ancestor().insertBefore(showhidecompletebuttondom, elementnode);
+
+            // Set attributes
+            showhidecompletebuttondom.value = params.buttonlabel;
+            showhidecompletebuttondom.name = params.nameattr;
+            showhidecompletebuttondom.id = params.nameattr;
 
             if (params.displayed) {
                 // Allow for the button to be displayed
-                showhidecompletebutton.setAttribute('style', '');
+                showhidecompletebutton.show();
             } else {
                 // Hide the button via css
-                showhidecompletebutton.setAttribute('style', 'hide');
+                showhidecompletebutton.hide();
             }
 
             if ('false' == params.enabled) {
                 // Set the disabled attribute to grey it out
-                showhidecompletebutton.setAttribute('disabled', 'disabled');
+                showhidecompletebuttondom.disabled = true;
             }
 
             // Add event listening
@@ -251,9 +262,6 @@ YUI.add('moodle-elis_program-dashboard', function(Y) {
             };
 
             showhidecompletebutton.on('click', this.toggle_completed_courses, this, handlerparams);
-
-            var elementnode = Y.one('#'+params.addbefore);
-            elementnode.ancestor().insertBefore(showhidecompletebutton, elementnode);
 
             // Add event listener to anchor tags
             var currlinknode = Y.one('#'+params.element).one('a[name='+params.element+']');
@@ -306,13 +314,13 @@ YUI.add('moodle-elis_program-dashboard', function(Y) {
                 data = 'curriculum-na';
             } else {
                 // Specific program
-                buttonname = 'curriculum' + handlerparam.element + 'completedbutton';
+                buttonname = handlerparam.element+'completedbutton';
                 data = 'curriculum-' + handlerparam.element;
             }
 
             // Set an object similar to a normal event to fake out toggleCompletedCoruses
             var e = new Object();
-            e.target = Y.one('input[type=button],[name='+buttonname+']');
+            e.target = Y.one('input[type=button][name='+buttonname+']');
 
             // Call the toggle-via-button method
             this.toggle_completed_courses(e, handlerparam);

@@ -1546,6 +1546,7 @@ $.fn.deepsight_datatable = function(options) {
      */
     this.render_modal = function(html, cssclass) {
         var mainposition = main.position();
+        var mainoffset = main.offset();
 
         var modalblocker = $('<div style="position:absolute;background-color:rgba(255,255,255,0.6);"></div>');
         modalblocker.css({
@@ -1557,7 +1558,10 @@ $.fn.deepsight_datatable = function(options) {
         main.after(modalblocker);
 
         var modalcssclass = (typeof(cssclass) != 'undefined') ? cssclass : '';
-        var modal = $('<div class="deepsight_modal '+modalcssclass+'" style=""></div>').click(function(e) { e.stopPropagation(); });
+        var modal = $('<div class="deepsight_modal_inner" style="margin-left:'+mainoffset.left+'px"></div>').click(function(e) { e.stopPropagation(); });
+
+        modal.wrap('<div class="deepsight_modal '+modalcssclass+'" style="left:50%;top:'+mainoffset.top+'px"></div>');
+        modal = modal.parent();
 
         modal.remove_modal = function(e) {
             if (typeof(e) != 'undefined') {
@@ -1568,23 +1572,23 @@ $.fn.deepsight_datatable = function(options) {
             $(document).unbind('click', main.remove_modal);
         }
 
+        modal.render_text = function(html) {
+            this.children('.deepsight_modal_inner').html(html);
+            return this;
+        }
+
         modal.render_error = function(msg) {
             var errorhtml = '<div class="errormessage">'+opts.lang_errormessage+'<br /><br />'+opts.lang_error+msg+'</div>';
-            this.html(errorhtml);
+            this.children('.deepsight_modal_inner').html(errorhtml);
         }
 
         var modalclose = $('<div class="closebutton">X</div>').click(modal.remove_modal);
         $(document).bind('click', modal.remove_modal);
 
-        modal.append(modalclose);
-        modal.append(html);
+        modal.children('.deepsight_modal_inner').append(modalclose);
+        modal.children('.deepsight_modal_inner').append(html);
 
-        modal.css({
-            left: '50%',
-            top: mainposition.top+'px'
-        });
-
-        main.after(modal);
+        $('body').append(modal);
         return modal;
     }
 

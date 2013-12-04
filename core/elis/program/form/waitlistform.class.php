@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * Copyright (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -44,8 +43,11 @@ class waitlistaddform extends cmform {
 
             foreach($student_list as $student) {
                 $mform->addElement('hidden', 'userid[' . $student->userid . ']', $student->userid);
+                $mform->setType('userid['.$student->userid.']', PARAM_INT);
                 $mform->addElement('hidden', 'classid[' . $student->userid . ']', $student->classid);
+                $mform->setType('classid['.$student->userid.']', PARAM_INT);
                 $mform->addElement('hidden', 'enrolmenttime[' . $student->userid . ']', $student->enrolmenttime);
+                $mform->setType('enrolmenttime['.$student->userid.']', PARAM_INT);
 
                 $enrol_options = array();
                 $enrol_options[] = $mform->createElement('radio', 'enrol[' . $student->userid . ']', '', get_string('yes'), 1);
@@ -55,8 +57,11 @@ class waitlistaddform extends cmform {
 
                 if(has_capability('elis/program:overrideclasslimit', $context)) {
                     $mform->addElement('hidden', 'grade[' . $student->userid . ']', $student->grade);
+                    $mform->setType('grade['.$student->userid.']', PARAM_INT);
                     $mform->addElement('hidden', 'credits[' . $student->credits . ']', $student->credits);
+                    $mform->setType('credits['.$student->credits.']', PARAM_INT);
                     $mform->addElement('hidden', 'locked[' . $student->locked . ']', $student->locked);
+                    $mform->setType('locked['.$student->locked.']', PARAM_INT);
 
                     $enrol_options[] = $mform->createElement('radio', 'enrol[' . $student->userid . ']', '', get_string('over_enrol', 'elis_program'), 2);
                 }
@@ -70,8 +75,11 @@ class waitlistaddform extends cmform {
 
             foreach($student_id as $id=>$student) {
                 $mform->addElement('hidden', 'userid[' . $id . ']');
+                $mform->setType('userid['.$id.']', PARAM_INT);
                 $mform->addElement('hidden', 'classid[' . $id . ']');
+                $mform->setType('classid['.$id.']', PARAM_INT);
                 $mform->addElement('hidden', 'enrolmenttime[' . $id . ']');
+                $mform->setType('enrolmenttime['.$id.']', PARAM_INT);
 
                 $enrol_options = array();
                 $enrol_options[] = $mform->createElement('radio', 'enrol[' . $id . ']', '', get_string('yes'), 1);
@@ -89,6 +97,7 @@ class waitlistaddform extends cmform {
         }
 
         $mform->addElement('hidden', 'id');
+        $mform->setType('id', PARAM_INT);
 
         $mform->addElement('submit', 'submitbutton', 'Save');
     }
@@ -101,6 +110,7 @@ class waitlisteditform extends selectionform {
         $mform =& $this->_form;
 
         $mform->addElement('hidden', 'id');
+        $mform->setType('id', PARAM_INT);
         $actions = array('remove' => get_string('remove'),
                          'overenrol' => get_string('over_enrol', 'elis_program'));
         $mform->addElement('select', 'do', get_string('withselectedusers'), $actions);
@@ -108,4 +118,3 @@ class waitlisteditform extends selectionform {
         parent::definition();
     }
 }
-

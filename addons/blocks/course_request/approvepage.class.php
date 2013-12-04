@@ -600,10 +600,12 @@ class pending_request_deny_form extends moodleform {
         $request = $this->_customdata;
 
         $mform->addElement('hidden', 'request');
+        $mform->setType('request', PARAM_INT);
 
         $title =& $mform->createElement('text', 'title', get_string('title', 'block_course_request'));
         $title->freeze();
         $mform->addElement($title);
+        $mform->setType('title', PARAM_RAW);
 
         $mform->addElement('static', 'spacer', '');
 
@@ -688,6 +690,7 @@ class pending_request_approve_form extends create_form {
 
         // for storing the request id
         $mform->addElement('hidden', 'request');
+        $mform->setType('request', PARAM_INT);
 
         $this->add_course_info();
 

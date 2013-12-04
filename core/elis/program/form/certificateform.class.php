@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage curriculummanagement
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -41,9 +40,13 @@ class certificateform extends cmform {
         $mform =& $this->_form;
 
         $mform->addElement('hidden', 'id');
+        $mform->setType('id', PARAM_INT);
         $mform->addElement('hidden', 'rec_id');
+        $mform->setType('rec_id', PARAM_INT);
         $mform->addElement('hidden', 'entity_id');
+        $mform->setType('entity_id', PARAM_INT);
         $mform->addElement('hidden', 'entity_type');
+        $mform->setType('entity_type', PARAM_TEXT);
 
         if (!empty($this->_customdata['nosettingfound'])) {
             $mform->addElement('header', 'nosettingfound', get_string('nosettingfound', 'elis_program'));

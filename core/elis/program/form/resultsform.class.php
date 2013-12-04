@@ -19,7 +19,7 @@
  * @package    elis_program
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -170,7 +170,9 @@ class cmEngineForm extends cmform {
         $mform->addElement('header', 'activationrules', $activationrules);
 
         $mform->addElement('hidden', 'rid', $this->_customdata['rid']);
+        $mform->setType('rid', PARAM_INT);
         $mform->addElement('hidden', 'contextid', $this->_customdata['contextid']);
+        $mform->setType('contextid', PARAM_INT);
 
         $attributes = array('onchange' => 'toggleform(this);', 'group' => null);
         $active= array();
@@ -223,7 +225,7 @@ class cmEngineForm extends cmform {
 
         $mform->setType('locked', PARAM_BOOL);
         $mform->addElement('html', '</fieldset>');
-
+        $mform->setType('days', PARAM_TEXT);
 
         $mform->addElement('html', '<fieldset class="engineform">');
         $mform->addElement('html', '<legend>'. $criterion .'</legend>');
@@ -268,8 +270,11 @@ class cmEngineForm extends cmform {
         }
 
         $mform->addElement('hidden', 'aid');
+        $mform->setType('aid', PARAM_INT);
         $mform->addElement('hidden', 'actioncache');
+        $mform->setType('actioncache', PARAM_TEXT);
         $mform->addElement('hidden', 'result_type_id', $this->_customdata['actiontype'], 'id="result_type_id"');
+        $mform->setType('result_type_id', PARAM_INT);
 
         $mform->addElement('html', '<fieldset class="engineform">');
 
@@ -548,6 +553,7 @@ class cmEngineForm extends cmform {
 
         $attributes = array('id' => $this->prefixes[$type] .'_cache');
         $mform->addElement('hidden', $this->prefixes[$type] .'_cache', '', $attributes);
+        $mform->setType($this->prefixes[$type].'_cache', PARAM_TEXT);
 
         $attributes = array('border' => '1', 'id' => "{$typename}_selection_table");
         $tablehtml = html_writer::start_tag('table', $attributes);
@@ -653,6 +659,8 @@ class cmEngineForm extends cmform {
 
             // Add minimum, maximum and delete to field group
             $mform->addGroup($group, "{$prefix}{$i}_score", '', '', false);
+            $mform->setType("{$prefix}{$i}_min", PARAM_TEXT);
+            $mform->setType("{$prefix}{$i}_max", PARAM_TEXT);
 
             $tablehtml = html_writer::end_tag('td');
             $tablehtml .= html_writer::start_tag('td', array('style' => 'text-align:center;'));
@@ -668,6 +676,7 @@ class cmEngineForm extends cmform {
 
                 // Need to add 2 hidden elements - 1 for Moodle forms and 1 For dynamic table.
                 $mform->addElement('hidden', "{$prefix}{$i}_selected", $data->selected);
+                $mform->setType("{$prefix}{$i}_selected", PARAM_TEXT);
 
                 $attributes     = array('id' => "{$prefix}{$i}_label");
                 $attributes = array('size' => 20, 'value' => $name, 'disabled' => 'disabled');
@@ -745,6 +754,7 @@ class cmEngineForm extends cmform {
                         $mform->addElement('select', "{$prefix}{$i}_value", '', $options, $attributes);
                     } else {
                         $mform->addElement('text', "{$prefix}{$i}_value", '', $attributes);
+                        $mform->setType("{$prefix}{$i}_value", PARAM_TEXT);
                     }
 
                     if ($data->value != '') {

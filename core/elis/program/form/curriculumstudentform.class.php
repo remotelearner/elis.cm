@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -37,9 +36,13 @@ class assigncurriculumform extends selectionform {
         $mform =& $this->_form;
 
         $mform->addElement('hidden', 'id');
+        $mform->setType('id', PARAM_INT);
         $mform->addElement('hidden', '_assign', 'assign');
+        $mform->setType('_assign', PARAM_TEXT);
         $mform->addElement('hidden', 's', 'stucur');
+        $mform->setType('s', PARAM_TEXT);
         $mform->addElement('hidden', '_selection');
+        $mform->setType('_selection', PARAM_TEXT);
         $this->add_action_buttons(false, $this->get_submit_button_name());
     }
 }
@@ -53,9 +56,13 @@ class unassigncurriculumform extends selectionform {
         $mform =& $this->_form;
 
         $mform->addElement('hidden', 'id');
+        $mform->setType('id', PARAM_INT);
         $mform->addElement('hidden', '_assign', 'unassign');
+        $mform->setType('_assign', PARAM_TEXT);
         $mform->addElement('hidden', 's', 'stucur');
+        $mform->setType('s', PARAM_TEXT);
         $mform->addElement('hidden', '_selection');
+        $mform->setType('_selection', PARAM_TEXT);
         $this->add_action_buttons(false, $this->get_submit_button_name());
     }
 }
@@ -72,9 +79,13 @@ class assignstudentform extends selectionform {
 
         if (curriculumpage::can_enrol_into_curriculum($id)) {
             $mform->addElement('hidden', 'id');
+            $mform->setType('id', PARAM_INT);
             $mform->addElement('hidden', '_assign', 'assign');
+            $mform->setType('_assign', PARAM_TEXT);
             $mform->addElement('hidden', 's', 'curstu');
+            $mform->setType('s', PARAM_TEXT);
             $mform->addElement('hidden', '_selection');
+            $mform->setType('_selection', PARAM_TEXT);
             $this->add_action_buttons(false, $this->get_submit_button_name());
         }
     }
@@ -92,9 +103,13 @@ class unassignstudentform extends selectionform {
 
         if (curriculumpage::can_enrol_into_curriculum($id)) {
             $mform->addElement('hidden', 'id');
+            $mform->setType('id', PARAM_INT);
             $mform->addElement('hidden', '_assign', 'unassign');
+            $mform->setType('_assign', PARAM_TEXT);
             $mform->addElement('hidden', 's', 'curstu');
+            $mform->setType('s', PARAM_TEXT);
             $mform->addElement('hidden', '_selection');
+            $mform->setType('_selection', PARAM_TEXT);
             $this->add_action_buttons(false, $this->get_submit_button_name());
         }
     }

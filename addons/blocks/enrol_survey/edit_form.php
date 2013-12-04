@@ -30,7 +30,7 @@ class block_enrol_survey_edit_form extends block_edit_form {
     protected function specific_definition($mform) {
 
         $mform->addElement('text', 'config_title', get_string('config_title', 'block_enrol_survey'));
-
+        $mform->setType('config_title', PARAM_TEXT);
         $availableintervals = array(
             0        => get_string('never'),
             HOURSECS => get_string('hour'),

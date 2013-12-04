@@ -2,7 +2,7 @@
 /**
  *  ELIS(TM): Enterprise Learning Intelligence Suite
  *
- *  Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ *  Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,11 +17,10 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- *  @package    elis
- *  @subpackage programmanagement
+ *  @package    elis_program
  *  @author     Remote-Learner.net Inc
- *  @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- *  @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ *  @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ *  @copyright  (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  */
 
 defined('MOODLE_INTERNAL') || die();
@@ -47,7 +46,9 @@ class cmCurriculaForm extends cmform {
         $mform =& $this->_form;
 
         $mform->addElement('hidden', 'id');
+        $mform->setType('id', PARAM_INT);
         $mform->addElement('hidden', 'courseid');
+        $mform->setType('courseid', PARAM_INT);
 
         $mform->addElement('text', 'idnumber', get_string('curriculum_idnumber', 'elis_program') . ':');
         $mform->setType('idnumber', PARAM_TEXT);
@@ -94,6 +95,7 @@ class cmCurriculaForm extends cmform {
             $mform->addHelpButton('frequency', 'curriculaform:expiration', 'elis_program');
         } else {
             $mform->addElement('hidden', 'frequency');
+            $mform->setType('frequency', PARAM_TEXT);
         }
 
         //$mform->addElement('html', '<small>' . get_string('tips_time_to_redo', 'elis_program') . '</small><br /><br />');

@@ -2,7 +2,7 @@
 /*
 *  ELIS(TM): Enterprise Learning Intelligence Suite
 *
-*  Copyright (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+*  Copyright (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
 *
 *  This program is free software: you can redistribute it and/or modify
 *  it under the terms of the GNU General Public License as published by
@@ -17,11 +17,10 @@
 *  You should have received a copy of the GNU General Public License
 *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
-*  @package    elis
-*  @subpackage curriculummanagement
+*  @package    elis_program
 *  @author     Remote-Learner.net Inc
-*  @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
-*  @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+*  @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+*  @copyright  (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
 */
 
 defined('MOODLE_INTERNAL') || die();
@@ -46,12 +45,15 @@ class usersetform extends cmform {
         $mform = &$this->_form;
 
         $mform->addElement('hidden', 'id');
+        $mform->setType('id', PARAM_INT);
 
         $mform->addElement('text', 'name', get_string('userset_name', 'elis_program'));
+        $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', get_string('required'), 'required', NULL, 'client');
         $mform->addHelpButton('name', 'userset_name', 'elis_program');
 
         $mform->addElement('textarea', 'display', get_string('userset_description', 'elis_program'), array('cols'=>40, 'rows'=>2));
+        $mform->setType('display', PARAM_CLEAN);
         $mform->addHelpButton('display', 'userset_description', 'elis_program');
 
         $current_cluster_id = (isset($this->_customdata['obj']->id)) ? $this->_customdata['obj']->id : '';
@@ -115,4 +117,3 @@ class usersetdeleteform extends cmform {
         $this->add_action_buttons();
     }
 }
-?>

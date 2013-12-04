@@ -49,6 +49,7 @@ class enrol_elis_edit_form extends moodleform {
         $mform->setDefault('roleid', $plugin->get_config('roleid'));
 
         $mform->addElement('hidden', 'courseid');
+        $mform->setType('courseid', PARAM_INT);
 
         $this->add_action_buttons(true, ($instance->id ? null : get_string('addinstance', 'enrol')));
 

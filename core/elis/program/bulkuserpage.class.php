@@ -3,7 +3,7 @@
  * Page for bulk user actions.
  *
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,11 +18,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -37,6 +36,9 @@ require_once CURMAN_DIRLOCATION . '/lib/table.class.php';
 require_once CURMAN_DIRLOCATION . '/lib/contexts.php';
 *** */
 
+/**
+ * Bulk user action page.
+ */
 class bulkuserpage extends selectionpage {
     var $pagename    = 'bulkuser';
     var $section     = 'admn';
@@ -57,6 +59,15 @@ class bulkuserpage extends selectionpage {
         return !$contexts->is_empty();
     }
 
+    /**
+     * Determine whether the current user can delete users.
+     * @return bool Whether the user has permission or not
+     */
+    public function can_do_delete() {
+        $contexts = bulkuserpage::get_contexts('elis/program:user_delete');
+        return !$contexts->is_empty();
+    }
+
     function get_title_default() {
         return get_string('userbulk', 'admin');
     }
@@ -65,8 +76,18 @@ class bulkuserpage extends selectionpage {
         return $this->navbar->add(get_string('userbulk', 'admin'), $this->url);
     }
 
-    function get_selection_form() {
-        return new bulkuserform();
+    /**
+     * Generate the bulk user form object.
+     * @return object Bulk user form object
+     */
+    protected function get_selection_form() {
+        $customdata = array('inactive' => get_string('mark_inactive', 'elis_program'));
+
+        if ($this->can_do_delete()) {
+            $customdata['delete'] = get_string('delete', 'elis_program');
+        }
+
+        return new bulkuserform(null, $customdata);
     }
 
     function get_selection_filter() {
@@ -334,7 +355,8 @@ class no_moodle_user_filter extends user_filter_type {
      * @return string the filtering condition or null if the filter is disabled
      */
     function get_sql_filter($data) {
-        $sql = "(NOT EXISTS (SELECT _u.id FROM {user} _u WHERE _u.idnumber = {$this->_field}))";
+        $sql = "(NOT EXISTS (SELECT _u.id FROM {user} _u WHERE _u.idnumber = {crlm_user}.{$this->_field})
+              OR NOT EXISTS (SELECT _um.id FROM {crlm_user_moodle} _um WHERE _um.cuserid = {crlm_user}.id))";
         return array($sql, array());
     }
 

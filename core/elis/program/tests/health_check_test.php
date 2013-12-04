@@ -96,13 +96,13 @@ class user_activity_health_testcase extends elis_database_test {
         $prevdone = 0;
         $prevtogo = 1501;
         $prevstart = 0;
+        $etlobj = new etl_user_activity(0, false);
         do {
             $realtime = time();
             ob_start();
-            user_activity_etl_cron();
-            $state = user_activity_task_init(false);
+            $etlobj->cron();
             ob_end_clean();
-            $lasttime = (int)$state['starttime'];
+            $lasttime = (int)$etlobj->state['starttime'];
             $recordsdone = $DB->count_records_select('log', "time < $lasttime");
             $recordstogo = $DB->count_records_select('log', "time >= $lasttime");
             /*

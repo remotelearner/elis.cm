@@ -117,6 +117,7 @@ class create_form extends moodleform {
         // indicate that course name is required
         $label = '<span class="required">'.get_string('title', 'block_course_request').'*</span>';
         $mform->addElement('text', 'title', $label);
+        $mform->setType('title', PARAM_RAW);
         // only needed for new courses
         $mform->disabledIf('title', 'courseid', 'gt', '0');
 
@@ -214,12 +215,15 @@ class create_form extends moodleform {
         $mform->addElement('text', 'first', get_string('firstname', 'block_course_request'));
         $mform->addRule('first', get_string('required'), 'required', NULL, 'server');
         $mform->setDefault('first', $USER->firstname);
+        $mform->setType('first', PARAM_TEXT);
         $mform->addElement('text', 'last', get_string('lastname', 'block_course_request'));
         $mform->addRule('last', get_string('required'), 'required', NULL, 'server');
         $mform->setDefault('last', $USER->lastname);
+        $mform->setType('last', PARAM_TEXT);
         $mform->addElement('text', 'email', get_string('email', 'block_course_request'));
         $mform->addRule('email', get_string('required'), 'required', NULL, 'server');
         $mform->setDefault('email', $USER->email);
+        $mform->setType('email', PARAM_TEXT);
     }
 
     /**
@@ -294,6 +298,7 @@ class create_form extends moodleform {
 
                 $required_flag = empty($manual_params['required']) ? 0 : 1;
                 $mform->addElement('hidden','fieldisrequired_'.$element_name.'_'.$contextlevel_name, $required_flag);
+                $mform->setType('fieldisrequired_'.$element_name.'_'.$contextlevel_name, PARAM_INT);
 
             }
         }
