@@ -81,6 +81,7 @@ class cmform extends moodleform {
         require_once(elis::plugin_file('elisfields_manual', 'custom_fields.php'));
 
         $lastcat = null;
+        $entityid = (isset($this->_customdata['obj']->id)) ? $this->_customdata['obj']->id : 0;
         foreach ($fields as $rec) {
             $field = new field($rec);
             if (!isset($field->owners['manual'])) {
@@ -88,14 +89,14 @@ class cmform extends moodleform {
             }
 
             // Capabilities for editing / viewing this context
-            if (manual_field_is_view_or_editable($field, $context, $editcap, $viewcap, $entity, $this->_customdata['obj']->id) != MANUAL_FIELD_NO_VIEW_OR_EDIT) {
+            if (manual_field_is_view_or_editable($field, $context, $editcap, $viewcap, $entity, $entityid) != MANUAL_FIELD_NO_VIEW_OR_EDIT) {
 
                 if ($lastcat != $rec->categoryid) {
                     $lastcat = $rec->categoryid;
                     $mform->addElement('header', "category_{$lastcat}", htmlspecialchars($rec->categoryname));
                 }
 
-                manual_field_add_form_element($this, $mform, $context, $this->_customdata, $field, true, $editcap, $viewcap, $entity, $this->_customdata['obj']->id);
+                manual_field_add_form_element($this, $mform, $context, $this->_customdata, $field, true, $editcap, $viewcap, $entity, $entityid);
             }
         }
     }

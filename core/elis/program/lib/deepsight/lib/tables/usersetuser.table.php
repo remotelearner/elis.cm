@@ -60,7 +60,7 @@ class deepsight_datatable_usersetuser_base extends deepsight_datatable_user {
     }
 
     /**
-     * A get_filter_sql_permissions_elementuser_available compatible version of userset::get_allowed_clusters
+     * A get_filter_sql_permissions_elementuser compatible version of userset::get_allowed_clusters
      * @param int $usersetid The userset whose parents we care about.
      */
     public static function get_allowed_clusters($usersetid) {
@@ -73,6 +73,17 @@ class deepsight_datatable_usersetuser_base extends deepsight_datatable_user {
         } else {
             return array();
         }
+    }
+
+    /**
+     * Gets filter sql for permissions.
+     * @return array An array consisting of additional WHERE conditions, and parameters.
+     */
+    protected function get_filter_sql_permissions() {
+        $elementtype = 'userset';
+        $elementid = $this->usersetid;
+        $elementid2clusterscallable = 'deepsight_datatable_usersetuser_base::get_allowed_clusters';
+        return $this->get_filter_sql_permissions_elementuser($elementtype, $elementid, $elementid2clusterscallable);
     }
 }
 
@@ -160,6 +171,32 @@ class deepsight_datatable_usersetuser_assigned extends deepsight_datatable_users
                            AND clstass.userid = element.id';
         return $joinsql;
     }
+
+    /**
+     * Removes assigned users, controls display permissions.
+     * @param array $filters An array of requested filter data. Formatted like [filtername]=>[data].
+     * @return array An array consisting of the SQL WHERE clause, and the parameters for the SQL.
+     */
+    protected function get_filter_sql(array $filters) {
+        global $USER;
+
+        list($filtersql, $filterparams) = parent::get_filter_sql($filters);
+
+        $additionalfilters = array();
+
+        // Add permissions.
+        list($permadditionalfilters, $permadditionalparams) = $this->get_filter_sql_permissions();
+        $additionalfilters = array_merge($additionalfilters, $permadditionalfilters);
+        $filterparams = array_merge($filterparams, $permadditionalparams);
+
+        // Add our additional filters.
+        if (!empty($additionalfilters)) {
+            $filtersql = (!empty($filtersql))
+                    ? $filtersql.' AND '.implode(' AND ', $additionalfilters) : 'WHERE '.implode(' AND ', $additionalfilters);
+        }
+
+        return array($filtersql, $filterparams);
+    }
 }
 
 /**
@@ -191,17 +228,6 @@ class deepsight_datatable_usersetuser_available extends deepsight_datatable_user
                            ON clstass.clusterid='.$this->usersetid.'
                            AND clstass.userid = element.id';
         return $joinsql;
-    }
-
-    /**
-     * Gets filter sql for permissions.
-     * @return array An array consisting of additional WHERE conditions, and parameters.
-     */
-    protected function get_filter_sql_permissions() {
-        $elementtype = 'userset';
-        $elementid = $this->usersetid;
-        $elementid2clusterscallable = 'deepsight_datatable_usersetuser_available::get_allowed_clusters';
-        return $this->get_filter_sql_permissions_elementuser_available($elementtype, $elementid, $elementid2clusterscallable);
     }
 
     /**

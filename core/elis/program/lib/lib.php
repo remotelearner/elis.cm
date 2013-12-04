@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * Copyright (C) 2008-2013 Remote Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
@@ -1069,6 +1068,7 @@ function pm_moodle_user_to_pm($mu) {
     require_once(elispm::lib('data/usermoodle.class.php'));
     require_once(elis::lib('data/data_filter.class.php'));
     require_once($CFG->dirroot . '/user/profile/lib.php');
+    require_once(elis::lib('lib.php'));
 
     if (!isset($mu->id)) {
         return true;
@@ -1196,6 +1196,7 @@ function pm_moodle_user_to_pm($mu) {
 
     // synchronize custom profile fields
     profile_load_data($mu);
+    fix_moodle_profile_fields($mu);
     $fields = field::get_for_context_level(CONTEXT_ELIS_USER);
     $fields = $fields ? $fields : array();
     require_once(elis::plugin_file('elisfields_moodle_profile', 'custom_fields.php'));

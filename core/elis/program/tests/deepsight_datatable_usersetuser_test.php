@@ -236,7 +236,13 @@ class deepsight_datatable_usersetuser_testcase extends deepsight_datatable_searc
      * @param int $expectedtotal The expected number of total results.
      */
     public function test_assigned_shows_assigned_users($associations, $tableusersetid, $expectedresults, $expectedtotal) {
-        global $DB;
+        global $DB, $USER;
+
+        $userbackup = $USER;
+
+        // Set up permissions.
+        $USER = $this->setup_permissions_test();
+        $this->give_permission_for_context($USER->id, 'elis/program:userset_enrol', context_system::instance());
 
         foreach ($associations as $association) {
             $clusterassignment = new clusterassignment($association);
@@ -245,7 +251,7 @@ class deepsight_datatable_usersetuser_testcase extends deepsight_datatable_searc
 
         foreach ($expectedresults as $expectedresultindex => $expecteddata) {
             if (!isset($expectedresults[$expectedresultindex]['canunassign'])) {
-                $expectedresults[$expectedresultindex]['canunassign'] = '0';
+                $expectedresults[$expectedresultindex]['canunassign'] = '1';
             }
         }
 
@@ -254,6 +260,8 @@ class deepsight_datatable_usersetuser_testcase extends deepsight_datatable_searc
 
         $actualresults = $table->get_search_results(array(), array(), 0, 20);
         $this->assert_search_results($expectedresults, $expectedtotal, $actualresults);
+
+        $USER = $userbackup;
     }
 
     /**

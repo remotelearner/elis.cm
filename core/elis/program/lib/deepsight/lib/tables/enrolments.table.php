@@ -152,6 +152,35 @@ class deepsight_datatable_enrolments extends deepsight_datatable_user {
     }
 
     /**
+     * Gets filter sql for permissions.
+     * @return array An array consisting of additional WHERE conditions, and parameters.
+     */
+    protected function get_filter_sql_permissions() {
+        $elementtype = 'class';
+        $elementid = $this->classid;
+        $elementid2clusterscallable = 'deepsight_datatable_enrolments::getclustersforclass';
+        return $this->get_filter_sql_permissions_elementuser($elementtype, $elementid, $elementid2clusterscallable);
+    }
+
+    /**
+     * Get an array of allowed clusters for a class that can be passed to get_filter_sql_permissions_elementuser()
+     * @param int $classid The classid to get clusters for.
+     * @return array An array of objects
+     */
+    public static function getclustersforclass($classid) {
+        $clusters = pmclass::get_allowed_clusters($classid);
+        $return = array();
+        foreach ($clusters as $i => $cluster) {
+            if (is_numeric($cluster)) {
+                $return[] = (object)array('clusterid' => $cluster);
+            } else if ($cluster instanceof userset) {
+                $return[] = (object)array('clusterid' => $cluster->id);
+            }
+        }
+        return $return;
+    }
+
+    /**
      * Removes instructors and waitlisted users, and adds permission limits, if applicable.
      *
      * @param array $filters An array of requested filter data. Formatted like [filtername]=>[data].
@@ -160,35 +189,21 @@ class deepsight_datatable_enrolments extends deepsight_datatable_user {
     protected function get_filter_sql(array $filters) {
         list($filtersql, $filterparams) = parent::get_filter_sql($filters);
 
-        // Remove instructors and waitlisted users.
-        $wheresql = 'WHERE classid = '.$this->classid.' AND userid=element.id) IS NULL';
-        $instructorfilter = '(SELECT id FROM {crlm_class_instructor} '.$wheresql;
-        $waitlistfilter = '(SELECT id FROM {crlm_wait_list} '.$wheresql;
+        $additionalfilters = array(
+            '(SELECT id FROM {crlm_class_instructor} WHERE classid = '.$this->classid.' AND userid=element.id) IS NULL',
+            '(SELECT id FROM {crlm_wait_list} WHERE classid = '.$this->classid.' AND userid=element.id) IS NULL',
+        );
 
-        $filtersql = (!empty($filtersql))
-            ? $filtersql.' AND '.$instructorfilter.' AND '.$waitlistfilter
-            : 'WHERE '.$instructorfilter.' AND '.$waitlistfilter;
+        // Permissions.
+        list($permadditionalfilters, $permadditionalparams) = $this->get_filter_sql_permissions();
+        $additionalfilters = array_merge($additionalfilters, $permadditionalfilters);
+        $filterparams = array_merge($filterparams, $permadditionalparams);
 
-        // Permissions limits.
-        $cpage = new pmclasspage();
-        $permissionssql = '';
-        if (!$cpage->_has_capability('elis/program:class_enrol', $this->classid)) {
-            // Perform SQL filtering for the more "conditional" capability.
-            $allowedclusters = pmclass::get_allowed_clusters($this->classid);
-            if (empty($allowedclusters)) {
-                $permissionssql .= '0=1 ';
-            } else {
-                $clusterfilter = implode(',', $allowedclusters);
-                // TBD.
-                $permissionssqlselect = "SELECT userid FROM {".clusterassignment::TABLE."} WHERE clusterid IN ({$clusterfilter})";
-                $permissionssql .= 'element.id IN ('.$permissionssqlselect.') ';
-            }
-        }
-
-        if (!empty($permissionssql)) {
+        // Add our additional filters.
+        if (!empty($additionalfilters)) {
             $filtersql = (!empty($filtersql))
-                ? $filtersql.' AND '.$permissionssql
-                : 'WHERE '.$permissionssql;
+                    ? $filtersql.' AND '.implode(' AND ', $additionalfilters)
+                    : 'WHERE '.implode(' AND ', $additionalfilters);
         }
 
         return array($filtersql, $filterparams);

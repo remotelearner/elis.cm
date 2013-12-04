@@ -476,7 +476,7 @@ $.fn.deepsight_action_enroledit = function(options) {
 
             var actions = JSON.stringify($(this).find('input.action').serializeArray());
 
-            modal.html('<h1>'+opts.lang_working+'</h1>').addClass('loading');
+            modal.render_text('<h1>'+opts.lang_working+'</h1>').addClass('loading');
 
             // do actions
             $.ajax({

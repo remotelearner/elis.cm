@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
@@ -355,8 +354,9 @@ class user extends data_object_with_custom_fields {
      */
     function synchronize_moodle_user($tomoodle = true, $createnew = false, $strict_match = true) {
         global $CFG;
-
+        require_once($CFG->dirroot.'/admin/tool/uploaduser/locallib.php');
         require_once(elispm::lib('data/usermoodle.class.php'));
+        require_once elis::lib('lib.php');
 
         static $mu_loop_detect = array();
 
@@ -460,6 +460,7 @@ class user extends data_object_with_custom_fields {
             // synchronize profile fields
             $origrec = clone($record);
             profile_load_data($origrec);
+            fix_moodle_profile_fields($origrec);
             $fields = field::get_for_context_level(CONTEXT_ELIS_USER);
             $mfields = $this->_db->get_records('user_info_field', array(), '', 'shortname');
             $fields = $fields ? $fields : array();
@@ -483,6 +484,8 @@ class user extends data_object_with_custom_fields {
                     }
                 }
             }
+
+            $record = uu_pre_process_custom_profile_data($record);
             profile_save_data($record);
 
             if ($muserid) {
@@ -1163,7 +1166,7 @@ class user extends data_object_with_custom_fields {
                             array(
                                     array(
                                         'addbefore' => 'curriculum'.$curricula['id'].'script',
-                                        'divid' => 'curriculum'.$curricula['id'].'completedbutton',
+                                        'nameattr' => 'curriculum-'.$curricula['id'].'completedbutton',
                                         'buttonlabel' => get_string('showcompletedcourses', 'elis_program'),
                                         'hidetext' => get_string('hidecompletedcourses', 'elis_program'),
                                         'showtext' => get_string('showcompletedcourses', 'elis_program'),

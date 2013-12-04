@@ -248,7 +248,13 @@ class deepsight_datatable_trackuser_testcase extends deepsight_datatable_searchr
      * @param int $expectedtotal The expected number of total results.
      */
     public function test_assigned_shows_assigned_users($associations, $tabletrackid, $expectedresults, $expectedtotal) {
-        global $DB;
+        global $DB, $USER;
+
+        $userbackup = $USER;
+
+        // Set up permissions.
+        $USER = $this->setup_permissions_test();
+        $this->give_permission_for_context($USER->id, 'elis/program:track_enrol', context_system::instance());
 
         foreach ($associations as $association) {
             $usertrack = new usertrack($association);
@@ -260,6 +266,8 @@ class deepsight_datatable_trackuser_testcase extends deepsight_datatable_searchr
 
         $actualresults = $table->get_search_results(array(), array(), 0, 20);
         $this->assert_search_results($expectedresults, $expectedtotal, $actualresults);
+
+        $USER = $userbackup;
     }
 
     /**
@@ -666,5 +674,8 @@ class deepsight_datatable_trackuser_testcase extends deepsight_datatable_searchr
 
         // Verify.
         $this->assert_search_results($expectedresults, $expectedtotal, $actualresults);
+
+        // Restore user.
+        $USER = $userbackup;
     }
 }

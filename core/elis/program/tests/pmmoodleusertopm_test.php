@@ -156,7 +156,8 @@ class pm_moodle_user_to_pm_testcase extends elis_database_test {
      * @return object The created moodle user database object.
      */
     protected function set_up_muser($mfield) {
-        global $DB;
+        global $CFG, $DB;
+        require_once($CFG->dirroot.'/admin/tool/uploaduser/locallib.php');
 
         $user = new stdClass;
         $user->auth = 'manual';
@@ -174,6 +175,7 @@ class pm_moodle_user_to_pm_testcase extends elis_database_test {
         $user->$profilefieldprop = 'onetwothree';
 
         $user->id = $DB->insert_record('user', $user);
+        $user = uu_pre_process_custom_profile_data($user);
         profile_save_data($user);
         return $user;
     }
