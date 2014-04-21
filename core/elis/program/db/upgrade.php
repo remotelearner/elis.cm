@@ -516,8 +516,9 @@ function xmldb_elis_program_upgrade($oldversion=0) {
         }
 
         // Force a re-synchronization of ELIS class grade data
-        require_once($CFG->dirroot .'/elis/program/lib/lib.php');
-        pm_synchronize_moodle_class_grades();
+        require_once(elispm::lib('moodlesync.class.php'));
+        $sync = new moodlesync();
+        $sync->synchronize_moodle_class_grades();
 
         upgrade_plugin_savepoint($result, 2012032700, 'elis', 'program');
     }

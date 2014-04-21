@@ -40,7 +40,7 @@ class cmform extends moodleform {
     }
 
     function freeze() {
-        $this->_form->freeze();
+        $this->_form->hardFreezeAllVisibleExcept(array());
     }
 
     /**

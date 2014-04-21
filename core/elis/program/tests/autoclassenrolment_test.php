@@ -58,6 +58,7 @@ class autoclassenrolment_testcase extends elis_database_test {
     public function test_enrolled_course_user_syncstoclass() {
         global $CFG, $DB;
         require_once(elispm::lib('lib.php'));
+        require_once(elispm::lib('moodlesync.class.php'));
 
         // Set up import data.
         $this->load_csv_data();
@@ -73,7 +74,8 @@ class autoclassenrolment_testcase extends elis_database_test {
         role_assign($roleid, 100, $crsctx->id);
 
         // Attempt the sync.
-        pm_synchronize_moodle_class_grades();
+        $sync = new moodlesync();
+        $sync->synchronize_moodle_class_grades();
 
         // Make sure the student record was created.
         $student = student::find();

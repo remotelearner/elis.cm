@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -165,16 +164,17 @@ class instructor extends elis_data_object {
      * This could be extended to allow for application specific editing, for example
      * a Moodle interface to its formslib.
      *
-     * @param $formid string A suffix to put on all 'id' and index for all 'name' attributes.
-     *                       This should be unique if being used more than once in a form.
-     * @param $extraclass string Any extra class information to add to the output.
-     * @uses $CFG
-     * @uses $OUTPUT
+     * @param int $classid The class ID.
+     * @param string $sort Field to sort on.
+     * @param string $dir Direction of sort.
+     * @param int $page The page to start at.
+     * @param int $perpage Number of records per page.
+     * @param string $namesearch Search string for item name.
+     * @param string $alpha Start initial of item name filter.
      * @return string The form HTML, without the form.
      */
-    function edit_form_html($classid, $sort = 'name', $dir = 'ASC', $page = 0,
-                            $perpage = 30, $namesearch = '', $alpha = '') {
-        global $CFG, $OUTPUT, $SESSION, $PAGE; // ^^^ set new non-zero default for $perpage
+    public function edit_form_html($classid, $sort = 'name', $dir = 'ASC', $page = 0, $perpage = 30, $namesearch = '', $alpha = '') {
+        global $CFG, $OUTPUT, $SESSION, $PAGE;
         $action = optional_param('action', '', PARAM_ALPHA);
         $this->classid = $classid;
         $output = '';
@@ -295,7 +295,7 @@ class instructor extends elis_data_object {
 
                         case 'name':
                         case 'idnumber':
-                        case 'description';
+                        case 'description':
                             $tabobj->{$column} = $user->{$column};
                             break;
 
