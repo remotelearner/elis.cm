@@ -3,7 +3,7 @@
  * Common page class for role assignments
  *
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,11 +18,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage curriculummanagement
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -40,6 +39,14 @@ abstract class rolepage extends associationpage2 {
     public function __construct($params = null) {
         parent::__construct($params);
         $this->section = $this->get_parent_page()->section;
+    }
+
+    /**
+     * Return the context that the page is related to.
+     * @return object The current context object.
+     */
+    protected function _get_page_context() {
+        return $this->get_context();
     }
 
     abstract protected function get_context();
@@ -463,13 +470,17 @@ abstract class rolepage extends associationpage2 {
 class curriculum_rolepage extends rolepage {
     var $pagename = 'currole';
 
+    /**
+     * Return the context that the page is related to.
+     * @return object The current program rolepage context object.
+     */
     protected function get_context() {
-        if (!isset($this->context)) {
+        if (!isset($this->_context)) {
             $id = $this->required_param('id', PARAM_INT);
             $context_instance = context_elis_program::instance($id);
             $this->set_context($context_instance);
         }
-        return $this->context;
+        return $this->_context;
     }
 
     protected function get_parent_page() {
@@ -487,14 +498,18 @@ class curriculum_rolepage extends rolepage {
 class track_rolepage extends rolepage {
     var $pagename = 'trkrole';
 
+    /**
+     * Return the context that the page is related to.
+     * @return object The current track rolepage context object.
+     */
     protected function get_context() {
-        if (!isset($this->context)) {
+        if (!isset($this->_context)) {
             $id = $this->required_param('id', PARAM_INT);
 
             $context_instance = context_elis_track::instance($id);
             $this->set_context($context_instance);
         }
-        return $this->context;
+        return $this->_context;
     }
 
     protected function get_parent_page() {
@@ -515,14 +530,18 @@ class track_rolepage extends rolepage {
 class course_rolepage extends rolepage {
     var $pagename = 'crsrole';
 
+    /**
+     * Return the context that the page is related to.
+     * @return object The current course rolepage context object.
+     */
     protected function get_context() {
-        if (!isset($this->context)) {
+        if (!isset($this->_context)) {
             $id = $this->required_param('id', PARAM_INT);
 
             $context_instance = context_elis_course::instance($id);
             $this->set_context($context_instance);
         }
-        return $this->context;
+        return $this->_context;
     }
 
     protected function get_parent_page() {
@@ -540,14 +559,18 @@ class course_rolepage extends rolepage {
 class class_rolepage extends rolepage {
     var $pagename = 'clsrole';
 
+    /**
+     * Return the context that the page is related to.
+     * @return object The current class rolepage context object.
+     */
     protected function get_context() {
-        if (!isset($this->context)) {
+        if (!isset($this->_context)) {
             $id = $this->required_param('id', PARAM_INT);
 
             $context_instance = context_elis_class::instance($id);
             $this->set_context($context_instance);
         }
-        return $this->context;
+        return $this->_context;
     }
 
     protected function get_parent_page() {
@@ -565,14 +588,18 @@ class class_rolepage extends rolepage {
 class user_rolepage extends rolepage {
     var $pagename = 'usrrole';
 
+    /**
+     * Return the context that the page is related to.
+     * @return object The current user rolepage context object.
+     */
     protected function get_context() {
-        if (!isset($this->context)) {
+        if (!isset($this->_context)) {
             $id = $this->required_param('id', PARAM_INT);
 
             $context_instance = context_elis_user::instance($id);
             $this->set_context($context_instance);
         }
-        return $this->context;
+        return $this->_context;
     }
 
     protected function get_parent_page() {
@@ -590,14 +617,18 @@ class user_rolepage extends rolepage {
 class cluster_rolepage extends rolepage {
     var $pagename = 'clstrole';
 
+    /**
+     * Return the context that the page is related to.
+     * @return object The current userset rolepage context object.
+     */
     protected function get_context() {
-        if (!isset($this->context)) {
+        if (!isset($this->_context)) {
             $id = $this->required_param('id', PARAM_INT);
 
             $context_instance = context_elis_userset::instance($id);
             $this->set_context($context_instance);
         }
-        return $this->context;
+        return $this->_context;
     }
 
     protected function get_parent_page() {

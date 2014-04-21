@@ -393,4 +393,39 @@ class elis_program_datagenerator extends elis_datagenerator{
         $info->id = $this->db->insert_record(curriculumcourse::TABLE, $info);
         return $info;
     }
+
+    /**
+     * Assign an ELIS class to a moodle course.
+     *
+     * @param int $pmclassid The ID of an ELIS class.
+     * @param int $moodlecourseid The ID of a Moodle course.
+     * @return object The resulting database record.
+     */
+    public function assign_pmclass_to_moodlecourse($pmclassid, $moodlecourseid) {
+        require_once(elispm::lib('data/classmoodlecourse.class.php'));
+        $info = (object)array(
+            'classid' => $pmclassid,
+            'moodlecourseid' => $moodlecourseid
+        );
+        $info->id = $this->db->insert_record(classmoodlecourse::TABLE, $info);
+        return $info;
+    }
+
+    /**
+     * Assign an ELIS user to a moodle user.
+     *
+     * @param int $euserid The ID of an ELIS user.
+     * @param int $muserid The ID of a Moodle user.
+     * @return object The resulting database record.
+     */
+    public function assign_euser_to_muser($euserid, $muserid, $idnumber) {
+        require_once(elispm::lib('data/usermoodle.class.php'));
+        $info = (object)array(
+            'cuserid' => $euserid,
+            'muserid' => $muserid,
+            'idnumber' => $idnumber
+        );
+        $info->id = $this->db->insert_record(usermoodle::TABLE, $info);
+        return $info;
+    }
 }
