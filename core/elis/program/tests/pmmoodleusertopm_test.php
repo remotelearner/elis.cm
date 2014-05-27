@@ -189,8 +189,17 @@ class pm_moodle_user_to_pm_testcase extends elis_database_test {
         $fields = $this->set_up_custom_fields();
         $mu = $this->set_up_muser($fields['m']);
 
+        // Ensure that if Moodle user is not confirmed, sync does not occur.
+        $result = $DB->update_record('user', array('id' => $mu->id, 'confirmed' => 0));
+        $mu = $DB->get_record('user', array('id' => $mu->id));
         $result = pm_moodle_user_to_pm($mu);
+        $cu = $DB->get_record('crlm_user', array('username' => $mu->username));
+        $this->assertEmpty($cu);
 
+        // Set the user back to being confirmed.
+        $result = $DB->update_record('user', array('id' => $mu->id, 'confirmed' => 1));
+        $mu = $DB->get_record('user', array('id' => $mu->id));
+        $result = pm_moodle_user_to_pm($mu);
         $this->assertTrue($result);
 
         // Get ELIS user.

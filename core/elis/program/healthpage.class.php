@@ -3,7 +3,7 @@
  * Health check for ELIS.  Based heavily on /admin/health.php.
  *
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,11 +18,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -206,17 +205,18 @@ class crlm_health_check_base {
 
 global $core_health_checks;
 $core_health_checks = array(
-    'cron_lastruntimes_check',
-    'health_duplicate_enrolments',
-    'health_stale_cm_class_moodle',
-    'health_curriculum_course',
-    'health_user_sync',
-    'cluster_orphans_check',
-    'track_classes_check',
-    'completion_export_check',
-    'dangling_completion_locks',
-    'duplicate_course_los',
-    );
+        'cron_lastruntimes_check',
+        'health_duplicate_enrolments',
+        'health_stale_cm_class_moodle',
+        'health_curriculum_course',
+        'health_user_sync',
+        'cluster_orphans_check',
+        'track_classes_check',
+        'completion_export_check',
+        'dangling_completion_locks',
+        'duplicate_course_los',
+        'duplicate_usertracks',
+);
 
 /**
  * Checks for duplicate CM enrolment records.
@@ -776,3 +776,60 @@ class duplicate_course_los extends crlm_health_check_base {
     }
 }
 
+/**
+ * Checks for duplicate usertrack records.
+ */
+class duplicate_usertracks extends crlm_health_check_base {
+    var $count;
+
+    /**
+     * Constructor.
+     */
+    public function __construct() {
+        global $DB;
+        $tablename = usertrack::TABLE;
+        $sql = "SELECT COUNT(ut1.id) FROM {".$tablename."} ut1, {".$tablename."} ut2 WHERE ut1.id > ut2.id AND ut1.userid = ut2.userid AND ut1.trackid = ut2.trackid";
+        $this->count = $DB->get_field_sql($sql);
+    }
+
+    /**
+     * Check for problem existence.
+     * @return int Count of duplicates found.
+     */
+    public function exists() {
+        return($this->count > 0);
+    }
+
+    /**
+     * Problem severity.
+     * @return string Severity of the problem.
+     */
+    public function severity() {
+        return healthpage::SEVERITY_SIGNIFICANT;
+    }
+
+    /**
+     * Problem title.
+     * @return string Title of the problem.
+     */
+    public function title() {
+        return get_string('health_dupusertrack', 'elis_program');
+    }
+
+    /**
+     * Problem description.
+     * @return string Description of the problem.
+     */
+    public function description() {
+        return get_string('health_dupusertrackdesc', 'elis_program', array('count' => $this->count, 'name' => usertrack::TABLE));
+    }
+
+    /**
+     * Problem solution.
+     * @return string Solution to the problem.
+     */
+    public function solution() {
+        global $CFG;
+        return get_string('health_dupusertracksoln', 'elis_program', array('name' => usertrack::TABLE, 'wwwroot' => $CFG->wwwroot));
+    }
+}

@@ -210,7 +210,7 @@ function userset_moodle_profile_update($cluster) {
         $newfield = optional_param("profile_field{$i}", 0, PARAM_INT);
         if ($newfield) {
             /// convert checkbox values from 'on' and '' to 1 and 0
-            $new[$newfield] = optional_param("profile_value{$i}", '', PARAM_CLEAN);
+            $new[$newfield] = optional_param("profile_value{$i}", '', PARAM_TEXT);
             if('checkbox' == $DB->get_field('user_info_field', 'datatype', array('id' => $newfield))) {
                 $new[$newfield] = empty($new[$newfield]) ? 0 : 1;
             }

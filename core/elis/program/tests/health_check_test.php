@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    elis_program
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -143,5 +143,50 @@ class user_activity_health_testcase extends elis_database_test {
 
         $duplicateprofilecheck = new duplicate_moodle_profile();
         $this->assertEquals(get_string('health_dupmoodleprofiledesc', 'elis_program', 3), $duplicateprofilecheck->description());
+    }
+
+    /**
+     * Test for duplicate usertrack records.
+     */
+    public function test_duplicateusertrackdata() {
+        global $CFG, $DB;
+        require_once(elispm::lib('data/usertrack.class.php'));
+
+        $dataset = $this->createCsvDataSet(array(
+            usertrack::TABLE => elis::component_file('program', 'tests/fixtures/usertrack_trackassignment_listing.csv')
+        ));
+        $this->loadDataSet($dataset);
+
+        // Drop the table index so that we can insert a duplicate record.
+        $table = new xmldb_table(usertrack::TABLE);
+        $index = new xmldb_index('userid_trackid_ix', XMLDB_INDEX_UNIQUE, array('userid', 'trackid'));
+        $dbman = $DB->get_manager();
+        if ($dbman->index_exists($table, $index)) {
+            $dbman->drop_index($table, $index);
+        }
+
+        // Should not report any duplicates.
+        $duplicatecheck = new duplicate_usertracks();
+        $this->assertEquals(0, $duplicatecheck->count);
+
+        // Insert a duplicate record.
+        $record = new stdClass();
+        $record->userid = 100;
+        $record->trackid = 1;
+        $DB->insert_record(usertrack::TABLE, $record);
+
+        // Should report duplicates.
+        $duplicatecheck = new duplicate_usertracks();
+        $this->assertGreaterThan(0, $duplicatecheck->count);
+
+        // Remove duplicate records.
+        pm_fix_duplicate_usertrack_records();
+
+        // Should not report any duplicates.
+        $duplicatecheck = new duplicate_usertracks();
+        $this->assertEquals(0, $duplicatecheck->count);
+
+        // Put the index back.
+        $dbman->add_index($table, $index);
     }
 }

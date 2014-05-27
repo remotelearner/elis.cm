@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -154,18 +153,18 @@ class curriculum extends data_object_with_custom_fields {
 
     /**
      * Check for any curriculum completed nags that need to be handled.
+     * @return boolean True if successful, otherwise false.
      */
     public static function check_for_completed_nags() {
         global $CFG, $DB;
 
-        /// Completed curricula:
-
-        $select  = 'SELECT cce.id as id, cce.credits AS curcredits,
+        // Completed curricula:
+        $select  = 'SELECT cce.id as id, cce.credits AS curcredits, cce.completetime AS clscomplete,
                     cur.id as curid, cur.reqcredits as reqcredits,
                     cca.id as curassid, cca.userid, cca.curriculumid, cca.completed, cca.timecompleted,
                     cca.credits, cca.locked, cca.timecreated, cca.timemodified, cca.timeexpired,
-                    ccc.courseid as courseid ';
-        /// >* This will return ALL class enrolment records for a user's curriculum assignment.
+                    ccc.courseid as courseid, ccc.required AS crsrequired ';
+        // >* This will return ALL class enrolment records for a user's curriculum assignment.
         $from    = 'FROM {'.curriculumstudent::TABLE.'} cca ';
         $join    = 'INNER JOIN {'.user::TABLE.'} cu ON cu.id = cca.userid
                     INNER JOIN {'.curriculum::TABLE.'} cur ON cca.curriculumid = cur.id
@@ -173,35 +172,33 @@ class curriculum extends data_object_with_custom_fields {
                     INNER JOIN {'.course::TABLE.'} cco ON cco.id = ccc.courseid
                     INNER JOIN {'.pmclass::TABLE.'} ccl ON ccl.courseid = cco.id
                     INNER JOIN {'.student::TABLE.'} cce ON (cce.classid = ccl.id) AND (cce.userid = cca.userid) ';
-        /// >*
+        // >*
         $where   = 'WHERE (cca.completed = 0) AND (cce.completestatusid != '.STUSTATUS_NOTCOMPLETE.') ';
         $order   = 'ORDER BY cur.id, cca.id ASC ';
-        //$groupby = "GROUP BY cca.id HAVING numcredits > cur.reqcredits "; /// The "HAVING" clause limits the returns to completed CURRICULA only.
-        $groupby = '';
-        $sql     = $select . $from . $join . $where . $groupby . $order;
+        $sql     = $select.$from.$join.$where.$order;
 
         $curassid = 0;
         $curid = 0;
         $numcredits = 0;
-        $reqcredits = 10000;    /// Initially so a completion event is not triggered.
+        $reqcredits = 10000; // Initially so a completion event is not triggered.
         $requiredcourseids = array();
         $checkcourses = $requiredcourseids;
         $context = false;
-//        $curasstempl = new curriculumstudent(); // used just for its properties.
-//        $studenttempl = new student(); // used just for its properties.
-        $timenow = time();
+        $timenow = 0;
+        $timerun = time();
         $secondsinaday = 60 * 60 * 24;
 
         $rs = $DB->get_recordset_sql($sql);
         if ($rs) {
             foreach ($rs as $rec) {
-                /// Loop through enrolment records grouped by curriculum and curriculum assignments,
-                /// counting the credits achieved and looking for all required courses to be complete.
-                /// Load a new curriculum assignment
+                // Loop through enrolment records grouped by curriculum and curriculum assignments,
+                // counting the credits achieved and looking for all required courses to be complete.
+                // Load a new curriculum assignment.
                 if ($curassid != $rec->curassid) {
-                    /// Check for completion - all credits have been earned and all required courses completed
+                    // Check for completion - all credits have been earned and all required courses completed.
                     if ($curassid && ($numcredits >= $reqcredits) && empty($checkcourses)) {
-                        $currstudent->complete($timenow, $numcredits, 1);
+                        $currstudent->complete($timenow ? $timenow : $timerun, $numcredits, 1);
+                        $timenow = 0;
                     }
 
                     $curassid = $rec->curassid;
@@ -212,8 +209,11 @@ class curriculum extends data_object_with_custom_fields {
                     $checkcourses = $requiredcourseids;
                 }
 
+                if (!empty($rec->crsrequired) && $rec->clscomplete > $timenow) {
+                    $timenow = $rec->clscomplete;
+                }
 
-                /// Get a new list of required courses.
+                // Get a new list of required courses.
                 if ($curid != $rec->curid) {
                     $curid = $rec->curid;
                     $reqcredits = $rec->reqcredits;
@@ -224,7 +224,7 @@ class curriculum extends data_object_with_custom_fields {
                     $checkcourses = $requiredcourseids;
                 }
 
-                /// Track data for completion...
+                // Track data for completion...
                 $numcredits += $rec->curcredits;
                 if (isset($checkcourses[$rec->courseid])) {
                     unset($checkcourses[$rec->courseid]);
@@ -232,22 +232,21 @@ class curriculum extends data_object_with_custom_fields {
             }
         }
 
-        /// Check for last record completion - all credits have been earned and all required courses completed
+        // Check for last record completion - all credits have been earned and all required courses completed.
         if ($curassid && ($numcredits >= $reqcredits) && empty($checkcourses)) {
-            $currstudent->complete($timenow, $numcredits, 1);
+            $currstudent->complete($timenow ? $timenow : $timerun, $numcredits, 1);
         }
 
         $sendtouser       = elis::$config->elis_program->notify_curriculumnotcompleted_user;
         $sendtorole       = elis::$config->elis_program->notify_curriculumnotcompleted_role;
         $sendtosupervisor = elis::$config->elis_program->notify_curriculumnotcompleted_supervisor;
 
-        /// If nobody receives a notification, we're done.
+        // If nobody receives a notification, we're done.
         if (!$sendtouser && !$sendtorole && !$sendtosupervisor) {
             return true;
         }
 
-        /// Incomplete curricula:
-
+        // Incomplete curricula:
         $select  = 'SELECT cca.id as id, cca.userid, cca.curriculumid, cca.completed, cca.timecompleted, cca.credits,
                     cca.locked, cca.timecreated, cca.certificatecode, cca.timemodified, cur.id as curid,
                     cur.timetocomplete as timetocomplete ';
@@ -258,34 +257,28 @@ class curriculum extends data_object_with_custom_fields {
                     cnl.event = \'curriculum_notcompleted\' ';
         $where   = 'WHERE (cca.completed = 0) AND (cur.timetocomplete != \'\') AND (cur.timetocomplete NOT LIKE \'0h, 0d, 0w, 0m, 0y%\') AND cnl.id IS NULL ';
         $order   = 'ORDER BY cur.id, cca.id ASC ';
-        $groupby = '';
-        $sql     = $select . $from . $join . $where . $groupby . $order;
+        $sql     = $select.$from.$join.$where.$order;
 
         $context = false;
-//        $curasstempl = new curriculumstudent(); // used just for its properties.
-//        $studenttempl = new student(); // used just for its properties.
         $timenow = time();
         $secondsinaday = 60 * 60 * 24;
 
         $rs = $DB->get_recordset_sql($sql);
         if ($rs) {
             foreach ($rs as $rec) {
-                /// Loop through curriculum assignments checking for nags.
+                // Loop through curriculum assignments checking for nags.
                 $deltad = new datedelta($rec->timetocomplete);
 
-                /// Need to fit this into the SQL instead.
+                // Need to fit this into the SQL instead.
                 $reqcompletetime = $rec->timecreated + $deltad->gettimestamp();
 
-                /// If no time to completion set, it has no completion restriction.
-                if ($reqcompletetime  == 0) {
+                // If no time to completion set, it has no completion restriction.
+                if ($reqcompletetime == 0) {
                     continue;
                 }
 
                 $daysfrom = ($reqcompletetime - $timenow) / $secondsinaday;
                 if ($daysfrom <= elis::$config->elis_program->notify_curriculumnotcompleted_days) {
-//                    $curstudent = new curriculumstudent($rec);
-                    mtrace("Triggering curriculum_notcompleted event.\n");
-//                    events_trigger('curriculum_notcompleted', $curstudent);
                     events_trigger('curriculum_notcompleted', $rec);
                 }
             }
