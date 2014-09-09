@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanager
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -624,6 +623,9 @@ $string['health_duplicatesoln'] = '<p>Run the script fix_duplicate_enrolments.ph
 $string['health_dupmoodleprofile'] = 'Duplicate Moodle profile field records';
 $string['health_dupmoodleprofiledesc'] = 'There were {$a} duplicate Moodle profile field records.';
 $string['health_dupmoodleprofilesoln'] = 'Run the script {$a}/fix_duplicate_moodle_profile.php to remove all duplicate profile field records.';
+$string['health_dupusertrack'] = 'Duplicate user track records';
+$string['health_dupusertrackdesc'] = 'There are {$a->count} duplicate records in the ELIS {$a->name} table.';
+$string['health_dupusertracksoln'] = '<p>Run the script to remove all duplicate records in {$a->name}.<br /><a href="{$a->wwwroot}/elis/program/scripts/fix_duplicate_usertracks.php">Fix this now</a></p>';
 $string['health_stale'] = 'Stale PM Class Instance - Moodle course description record';
 $string['health_staledesc'] = 'There were {$a->count} records in the {$a->table} table referencing nonexistent ELIS class instances.';
 $string['health_stalesoln'] = 'These records need to be removed from the database.<br/>Suggested SQL:';

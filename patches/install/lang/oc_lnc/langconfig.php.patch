@@ -1,0 +1,13 @@
+diff --git a/install/lang/oc_lnc/langconfig.php b/install/lang/oc_lnc/langconfig.php
+index bbfa5e7..76d9f63 100644
+--- a/install/lang/oc_lnc/langconfig.php
++++ b/install/lang/oc_lnc/langconfig.php
+@@ -30,6 +30,6 @@
+ 
+ defined('MOODLE_INTERNAL') || die();
+ 
+-$string['parentlanguage'] = '';
++$string['parentlanguage'] = 'fr';
+ $string['thisdirection'] = 'ltr';
+-$string['thislanguage'] = 'Occitan-Lengadocian';
++$string['thislanguage'] = 'Lengadocian';

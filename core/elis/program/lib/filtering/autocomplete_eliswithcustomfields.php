@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis-program
- * @subpackage filtering
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -45,6 +44,9 @@ class generalized_filter_autocomplete_eliswithcustomfields extends generalized_f
     protected $custom_fields = array();
     protected $instance_fields = array();
     protected $forced_custom_vals = array();
+
+    /** @var bool|null $cache_config_allowed null if not yet set */
+    protected $cache_config_allowed = null;
 
     /**
      * Loads the $options array into class properties
@@ -281,6 +283,62 @@ class generalized_filter_autocomplete_eliswithcustomfields extends generalized_f
     }
 
     /**
+     * Checks whether the current user can configure the filter.
+     * @return boolean Whether the user can configure the filter.
+     */
+    public function config_allowed() {
+        global $DB;
+        if (parent::config_allowed()) {
+            return true;
+        }
+
+        if (is_null($this->cache_config_allowed)) {
+            $select = 'SELECT i.id';
+            $joins = array(
+                'JOIN {context} c ON c.instanceid = i.id AND c.contextlevel = '.$this->contextlevel
+            );
+            $from = 'FROM {'.$this->instancetable.'} i '.implode(' ', $joins);
+
+            // Construct permissions SQL filter.
+            $search = array();
+            $contextname = $this->context_level_map[$this->contextlevel];
+            $permsfilter = array();
+            $permparams = array();
+
+            // Obtain all course contexts where this user can view reports.
+            $contexts = get_contexts_by_capability_for_user(
+                    $contextname,
+                    $this->parent_report_instance->access_capability,
+                    $this->parent_report_instance->userid
+            );
+            $filterobj = $contexts->get_filter('i.id', $contextname);
+            $filtersql = $filterobj->get_sql(false, '');
+
+            if (isset($filtersql['where'])) {
+                $permsfilter[] = $filtersql['where'];
+                $permparams = $filtersql['where_parameters'];
+                if (!is_array($permparams)) {
+                    $permparams = array();
+                }
+            }
+
+            if (!empty($permsfilter)) {
+                $search[] = '('.implode(') OR (', $permsfilter).')';
+            }
+
+            $where = '';
+            if (!empty($search)) {
+                $where = 'WHERE ('.implode(') AND (', $search).')';
+            }
+
+            // Assemble + run the query.
+            $sql = $select.' '.$from.' '.$where;
+            $this->cache_config_allowed = $DB->record_exists_sql($sql, $permparams);
+        }
+        return $this->cache_config_allowed;
+    }
+
+    /**
      * Gets the autocomplete search SQL for the autocomplete UI
      * Note that this is the SQL used to select a value, not the SQL used in the report SQL
      * @param string $q The query string
@@ -289,102 +347,102 @@ class generalized_filter_autocomplete_eliswithcustomfields extends generalized_f
     public function get_search_results($q) {
         global $CFG, $DB, $USER;
 
-        $q = explode(' ',$q);
+        $q = explode(' ', $q);
 
 
-        //get enabled instance and custom fields
-        $display_instance_fields = $this->get_display_instance_fields();
-        $search_instance_fields = $this->get_search_instance_fields();
+        // Get enabled instance and custom fields.
+        $displayinstancefields = $this->get_display_instance_fields();
+        $searchinstancefields = $this->get_search_instance_fields();
 
-        $display_custom_fields = $this->get_display_custom_fields();
-        $search_custom_fields = $this->get_search_custom_fields();
+        $displaycustomfields = $this->get_display_custom_fields();
+        $searchcustomfields = $this->get_search_custom_fields();
 
-        $configured_forced_custom_vals = $this->get_configured_forced_custom_vals();
+        $configuredforcedcustomvals = $this->get_configured_forced_custom_vals();
 
-        if (empty($search_custom_fields) && empty($search_instance_fields)) {
-            echo get_string('filt_autoc_no_fields_enabled','elis_core');
+        if (empty($searchcustomfields) && empty($searchinstancefields)) {
+            echo get_string('filt_autoc_no_fields_enabled', 'elis_core');
             die();
         }
 
-        //assemble SELECT
+        // Assemble SELECT.
         $select = array('i.id');
-        foreach ($display_instance_fields as $field => $label) {
+        foreach ($displayinstancefields as $field => $label) {
             $select[] = 'i.'.$field;
         }
-        foreach ($display_custom_fields as $field_info) {
-            $select[] = 'f'.$field_info['fieldid'].'.data as '.strtolower($field_info['shortname']);
+        foreach ($displaycustomfields as $fieldinfo) {
+            $select[] = 'f'.$fieldinfo['fieldid'].'.data as '.strtolower($fieldinfo['shortname']);
         }
-        $select = 'SELECT '.implode(',',$select);
+        $select = 'SELECT '.implode(',', $select);
 
 
-        //assemble FROM/JOINs
+        // Assemble FROM/JOINs.
         $joins = array(
             'JOIN {context} c ON c.instanceid=i.id AND c.contextlevel='.$this->contextlevel
         );
-        foreach ($display_custom_fields as $field_info) {
-            $table = $this->custom_fields_data_tables[$field_info['datatype']];
-            $alias = 'f'.$field_info['fieldid'];
-            $joins[] = ' LEFT JOIN {'.$table.'} '.$alias.' ON '.$alias.'.contextid=c.id AND '.$alias.'.fieldid='.$field_info['fieldid'];
+        foreach ($displaycustomfields as $fieldinfo) {
+            $table = $this->custom_fields_data_tables[$fieldinfo['datatype']];
+            $alias = 'f'.$fieldinfo['fieldid'];
+            $joins[] = ' LEFT JOIN {'.$table.'} '.$alias.' ON '.$alias.'.contextid=c.id AND '.$alias.'.fieldid='.$fieldinfo['fieldid'];
         }
 
-        foreach ($this->forced_custom_vals as $field_shortname => $forced_val) {
-            if (isset($this->custom_fields[$field_shortname]) && !isset($display_custom_fields[$field_shortname])) {
-                $field_info = $this->custom_fields[$field_shortname];
-                $table = $this->custom_fields_data_tables[$field_info['datatype']];
-                $alias = 'f'.$field_info['fieldid'];
-                $joins[] = ' LEFT JOIN {'.$table.'} '.$alias.' ON '.$alias.'.contextid=c.id AND '.$alias.'.fieldid='.$field_info['fieldid'];
+        foreach ($this->forced_custom_vals as $fieldshortname => $forcedval) {
+            if (isset($this->custom_fields[$fieldshortname]) && !isset($displaycustomfields[$fieldshortname])) {
+                $fieldinfo = $this->custom_fields[$fieldshortname];
+                $table = $this->custom_fields_data_tables[$fieldinfo['datatype']];
+                $alias = 'f'.$fieldinfo['fieldid'];
+                $joins[] = ' LEFT JOIN {'.$table.'} '.$alias.' ON '.$alias.'.contextid=c.id AND '.$alias.'.fieldid='.$fieldinfo['fieldid'];
             }
         }
 
         if ($this->config_allowed() !== true) {
-            foreach ($configured_forced_custom_vals as $field_shortname => $field_info) {
-                if (!isset($this->custom_fields[$field_shortname]) && !isset($display_custom_fields[$field_shortname])) {
-                    $table = $this->custom_fields_data_tables[$field_info['datatype']];
-                    $alias = 'f'.$field_info['fieldid'];
-                    $joins[] = ' LEFT JOIN {'.$table.'} '.$alias.' ON '.$alias.'.contextid=c.id AND '.$alias.'.fieldid='.$field_info['fieldid'];
+            foreach ($configuredforcedcustomvals as $fieldshortname => $fieldinfo) {
+                if (!isset($this->custom_fields[$fieldshortname]) && !isset($displaycustomfields[$fieldshortname])) {
+                    $table = $this->custom_fields_data_tables[$fieldinfo['datatype']];
+                    $alias = 'f'.$fieldinfo['fieldid'];
+                    $joins[] = ' LEFT JOIN {'.$table.'} '.$alias.' ON '.$alias.'.contextid=c.id AND '.$alias.'.fieldid='.$fieldinfo['fieldid'];
                 }
             }
         }
 
-        $from = 'FROM {'.$this->instancetable.'} i '.implode(' ',$joins);
+        $from = 'FROM {'.$this->instancetable.'} i '.implode(' ', $joins);
 
 
-        //assemble WHERE
+        // Assemble WHERE.
         $search = array();
-        $search_params = array();
-        foreach ($q as $i => $q_word) {
+        $searchparams = array();
+        foreach ($q as $i => $qword) {
 
-            //add search SQL for each instance field
-            $search_by_field = array();
-            foreach ($search_instance_fields as $field => $label) {
-                $search_by_field[] = 'i.'.$field.' LIKE ?';
-                $search_params[] = '%'.$q_word.'%';
+            // Add search SQL for each instance field.
+            $searchbyfield = array();
+            foreach ($searchinstancefields as $field => $label) {
+                $searchbyfield[] = 'i.'.$field.' LIKE ?';
+                $searchparams[] = '%'.$qword.'%';
             }
 
-            //add search SQL for each custom field
-            foreach ($search_custom_fields as $field_info) {
-                $search_by_field[] = 'f'.$field_info['fieldid'].'.data LIKE ?';
-                $search_params[] = '%'.$q_word.'%';
+            // Add search SQL for each custom field.
+            foreach ($searchcustomfields as $fieldinfo) {
+                $searchbyfield[] = 'f'.$fieldinfo['fieldid'].'.data LIKE ?';
+                $searchparams[] = '%'.$qword.'%';
             }
 
-            $search[] = implode(' OR ',$search_by_field);
+            $search[] = implode(' OR ', $searchbyfield);
         }
 
-        //get code-forced custom vals
-        foreach ($this->forced_custom_vals as $field_shortname => $forced_val) {
-            if (isset($this->custom_fields[$field_shortname])) {
-                $field_info = $this->custom_fields[$field_shortname];
-                $search[] = 'f'.$field_info['fieldid'].'.data = ?';
-                $search_params[] = $forced_val;
+        // Get code-forced custom vals.
+        foreach ($this->forced_custom_vals as $fieldshortname => $forcedval) {
+            if (isset($this->custom_fields[$fieldshortname])) {
+                $fieldinfo = $this->custom_fields[$fieldshortname];
+                $search[] = 'f'.$fieldinfo['fieldid'].'.data = ?';
+                $searchparams[] = $forcedval;
             }
         }
 
-        //get configured forced custom vals
+        // Get configured forced custom vals.
         if ($this->config_allowed() !== true) {
-            foreach ($configured_forced_custom_vals as $field_shortname => $field_info) {
-                if (isset($USER->profile[$field_shortname])) {
-                    $search[] = 'f'.$field_info['fieldid'].'.data = ?';
-                    $search_params[] = $USER->profile[$field_shortname];
+            foreach ($configuredforcedcustomvals as $fieldshortname => $fieldinfo) {
+                if (isset($USER->profile[$fieldshortname])) {
+                    $search[] = 'f'.$fieldinfo['fieldid'].'.data = ?';
+                    $searchparams[] = $USER->profile[$fieldshortname];
                 }
             }
         }
@@ -393,52 +451,44 @@ class generalized_filter_autocomplete_eliswithcustomfields extends generalized_f
             $search[] = $this->_restriction_sql;
         }
 
-        //CONSTRUCT PERMISSIONS SQL FILTER
+        // Construct permissions SQL filter.
         $contextname = $this->context_level_map[$this->contextlevel];
-        $perms_filter = array();
-        $perm_params = array();
+        $permsfilter = array();
+        $permparams = array();
 
-        // obtain all course contexts where this user can view reports
-
+        // Obtain all course contexts where this user can view reports.
         $contexts = get_contexts_by_capability_for_user(
                 $contextname,
                 $this->parent_report_instance->access_capability,
                 $this->parent_report_instance->userid
         );
-        $filter_obj = $contexts->get_filter('id', $contextname);
-        $filter_sql = $filter_obj->get_sql(false, '');
+        $filterobj = $contexts->get_filter('i.id', $contextname);
+        $filtersql = $filterobj->get_sql(false, '');
 
-        if (isset($filter_sql['where'])) {
-            $perms_filter[] = $filter_sql['where'];
-            $perm_params = $filter_sql['where_parameters'];
-        }
+        if (isset($filtersql['where'])) {
+            $permsfilter[] = $filtersql['where'];
+            $permparams = $filtersql['where_parameters'];
+            if (!is_array($permparams)) {
+                $permparams = array();
+            }
 
-        if (!is_array($perm_params)) {
-            $perm_params = array();
-        }
-
-        if ($contextname === 'user') {
             // ELIS-5807 -- Always be sure to include the user accessing the filter in the results!
-            if ($cm_user_id = cm_get_crlmuserid($USER->id)) {
-                $perms_filter[] = 'i.id = "'.$cm_user_id.'"';
+            if ($contextname === 'user' && $cmuserid = cm_get_crlmuserid($USER->id)) {
+                $permsfilter[] = 'i.id = ?';
+                $permparams[] = $cmuserid;
             }
-            /*if ($cm_user_id = cm_get_crlmuserid($USER->id)) {
-                $wherestr .= ' OR {'.$found_filter->options['table'].'}.id = :self_user_id';
-                $params   += array('self_user_id' => $cm_user_id);
-            }
-            */
         }
 
-        if (empty($perms_filter)) {
-            $search[] = '('.implode(') OR (',$perms_filter).')';
+        if (!empty($permsfilter)) {
+            $search[] = '('.implode(') OR (', $permsfilter).')';
         }
-        $where = 'WHERE ('.implode(') AND (',$search).')';
+        $where = 'WHERE ('.implode(') AND (', $search).')';
 
-        //assemble + run the query
+        // Assemble + run the query.
         $sql = $select.' '.$from.' '.$where.' GROUP BY i.id LIMIT 0,20';
-        $params = array_merge($search_params,$perm_params);
+        $params = array_merge($searchparams, $permparams);
 
-        return $DB->get_records_sql($sql,$params);
+        return $DB->get_records_sql($sql, $params);
     }
 
     /**

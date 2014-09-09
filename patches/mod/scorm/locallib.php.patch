@@ -1,0 +1,18 @@
+diff --git a/mod/scorm/locallib.php b/mod/scorm/locallib.php
+index cee66df..6de7026 100644
+--- a/mod/scorm/locallib.php
++++ b/mod/scorm/locallib.php
+@@ -603,11 +603,8 @@ function scorm_get_sco_runtime($scormid, $scoid, $userid, $attempt=1) {
+     global $DB;
+ 
+     $timedata = new stdClass();
+-    $params = array('userid' => $userid, 'scormid' => $scormid, 'attempt' => $attempt);
+-    if (!empty($scoid)) {
+-        $params['scoid'] = $scoid;
+-    }
+-    $tracks = $DB->get_records('scorm_scoes_track', $params, "timemodified ASC");
++    $sql = !empty($scoid) ? "userid=$userid AND scormid=$scormid AND scoid=$scoid AND attempt=$attempt" : "userid=$userid AND scormid=$scormid AND attempt=$attempt";
++    $tracks = $DB->get_records_select('scorm_scoes_track', "$sql ORDER BY timemodified ASC");
+     if ($tracks) {
+         $tracks = array_values($tracks);
+     }

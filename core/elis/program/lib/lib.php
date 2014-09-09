@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    elis_program
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -390,6 +390,9 @@ function pm_migrate_moodle_users($setidnumber = false, $fromtime = 0, $mdluserid
 /**
  * Migrate a single Moodle user to the Program Management system.  Will
  * only do this for users who have an idnumber set.
+ *
+ * @param object $mu Moodle user object
+ * @return boolean Whether user was synchronized or not
  */
 function pm_moodle_user_to_pm($mu) {
     global $CFG, $DB;
@@ -408,9 +411,9 @@ function pm_moodle_user_to_pm($mu) {
     // re-fetch, in case this is from a stale event
     $mu = $DB->get_record('user', array('id' => $mu->id));
 
-    if (user_not_fully_set_up($mu)) {
-        //prevent the sync if a bare-bones user record is being created
-        //by create_user_record
+    if (user_not_fully_set_up($mu) || !$mu->confirmed) {
+        // Prevent the sync if a bare-bones user record is being created by create_user_record
+        // or Moodle user has not yet been confirmed.
         return true;
     }
 
@@ -1512,6 +1515,24 @@ function pm_fix_duplicate_pm_users() {
 
     // Drop the temp table
     $result = $result && $DB->execute("DROP TABLE {crlm_user_idnumber_temp}");
+
+    return $result;
+}
+
+/**
+ * Remove duplicates entries in the usertrack table.
+ * @return boolean True on success, otherwise false.
+ */
+function pm_fix_duplicate_usertrack_records() {
+    global $CFG, $DB;
+
+    require_once($CFG->dirroot.'/lib/ddllib.php');
+    require_once(elispm::lib('data/usertrack.class.php'));
+
+    // Remove any duplicate records that have the same userid and trackid.
+    $tablename = usertrack::TABLE;
+    $sql = "DELETE ut1 FROM {".$tablename."} ut1, {".$tablename."} ut2 WHERE ut1.id > ut2.id AND ut1.userid = ut2.userid AND ut1.trackid = ut2.trackid";
+    $result = $DB->execute($sql);
 
     return $result;
 }
