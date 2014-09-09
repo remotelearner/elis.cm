@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis-program
- * @subpackage filtering
+ * @package    elis_program
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -45,6 +44,9 @@ class generalized_filter_autocomplete_eliswithcustomfields extends generalized_f
     protected $custom_fields = array();
     protected $instance_fields = array();
     protected $forced_custom_vals = array();
+
+    /** @var bool|null $cache_config_allowed null if not yet set */
+    protected $cache_config_allowed = null;
 
     /**
      * Loads the $options array into class properties
@@ -281,6 +283,62 @@ class generalized_filter_autocomplete_eliswithcustomfields extends generalized_f
     }
 
     /**
+     * Checks whether the current user can configure the filter.
+     * @return boolean Whether the user can configure the filter.
+     */
+    public function config_allowed() {
+        global $DB;
+        if (parent::config_allowed()) {
+            return true;
+        }
+
+        if (is_null($this->cache_config_allowed)) {
+            $select = 'SELECT i.id';
+            $joins = array(
+                'JOIN {context} c ON c.instanceid = i.id AND c.contextlevel = '.$this->contextlevel
+            );
+            $from = 'FROM {'.$this->instancetable.'} i '.implode(' ', $joins);
+
+            // Construct permissions SQL filter.
+            $search = array();
+            $contextname = $this->context_level_map[$this->contextlevel];
+            $permsfilter = array();
+            $permparams = array();
+
+            // Obtain all course contexts where this user can view reports.
+            $contexts = get_contexts_by_capability_for_user(
+                    $contextname,
+                    $this->parent_report_instance->access_capability,
+                    $this->parent_report_instance->userid
+            );
+            $filterobj = $contexts->get_filter('i.id', $contextname);
+            $filtersql = $filterobj->get_sql(false, '');
+
+            if (isset($filtersql['where'])) {
+                $permsfilter[] = $filtersql['where'];
+                $permparams = $filtersql['where_parameters'];
+                if (!is_array($permparams)) {
+                    $permparams = array();
+                }
+            }
+
+            if (!empty($permsfilter)) {
+                $search[] = '('.implode(') OR (', $permsfilter).')';
+            }
+
+            $where = '';
+            if (!empty($search)) {
+                $where = 'WHERE ('.implode(') AND (', $search).')';
+            }
+
+            // Assemble + run the query.
+            $sql = $select.' '.$from.' '.$where;
+            $this->cache_config_allowed = $DB->record_exists_sql($sql, $permparams);
+        }
+        return $this->cache_config_allowed;
+    }
+
+    /**
      * Gets the autocomplete search SQL for the autocomplete UI
      * Note that this is the SQL used to select a value, not the SQL used in the report SQL
      * @param string $q The query string
@@ -404,7 +462,7 @@ class generalized_filter_autocomplete_eliswithcustomfields extends generalized_f
                 $this->parent_report_instance->access_capability,
                 $this->parent_report_instance->userid
         );
-        $filterobj = $contexts->get_filter('id', $contextname);
+        $filterobj = $contexts->get_filter('i.id', $contextname);
         $filtersql = $filterobj->get_sql(false, '');
 
         if (isset($filtersql['where'])) {

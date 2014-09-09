@@ -325,7 +325,9 @@ class block_curr_admin extends block_base {
         $this->content->text = $tree->convert_to_markup();
         $this->content->footer = '';
 
-        $PAGE->requires->yui_module('moodle-elis_program-menuitem', 'M.elis_program.init_menuitem', array($tree->get_js_object(), $CFG->httpswwwroot), null, true);
+        if ($this->is_empty() !== true) {
+            $PAGE->requires->yui_module('moodle-elis_program-menuitem', 'M.elis_program.init_menuitem', array($tree->get_js_object(), $CFG->httpswwwroot), null, true);
+        }
         return $this->content;
     }
 
