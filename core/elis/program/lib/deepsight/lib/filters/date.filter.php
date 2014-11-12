@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    elis_program
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2013 onwards Remote-Learner.net Inc (http://www.remote-learner.net)
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
  *
  */
@@ -102,6 +102,10 @@ class deepsight_filter_date extends deepsight_filter_standard {
             reset($this->fields);
             $field = key($this->fields);
             $sql = $field.' >= '.$starttimestamp.' AND '.$field.' <= '.$endtimestamp;
+            if (substr($field, 0, 3) == 'cf_') {
+                $fielddefault = substr($field, 0, -5).'_default.data';
+                $sql .= ' OR ('.$field.' IS NULL AND '.$fielddefault.' >= '.$starttimestamp.' AND '.$fielddefault.' <= '.$endtimestamp.')';
+            }
             return array($sql, array());
         } else {
             return array('', array());

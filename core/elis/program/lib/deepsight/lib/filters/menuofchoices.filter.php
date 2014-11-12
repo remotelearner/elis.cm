@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    elis_program
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2013 onwards Remote-Learner.net Inc (http://www.remote-learner.net)
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
  *
  */
@@ -105,10 +105,12 @@ class deepsight_filter_menuofchoices extends deepsight_filter_standard {
             }
             reset($this->fields);
             $field = key($this->fields);
-            return array(
-                $field.' IN ('.implode(',', array_fill(0, count($data), '?')).')',
-                $params
-            );
+            $sql = $field.' IN ('.implode(',', array_fill(0, count($data), '?')).')';
+            if (substr($field, 0, 3) == 'cf_') {
+                $sql .= 'OR ('.$field.' IS NULL AND '.substr($field, 0, -5).'_default.data IN ('.implode(',', array_fill(0, count($data), '?')).'))';
+                $params = array_merge($params, $params);
+            }
+            return array($sql, $params);
         }
     }
 

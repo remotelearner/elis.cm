@@ -89,6 +89,7 @@ $string['available_course_prerequisites'] = 'Available Course Description Prereq
 $string['availablecourses'] = 'Program Overview';
 
 $string['badusername'] = 'Specified username already exists, or must be specified or generated.';
+$string['badusersetname'] = 'Specified Userset name already exists.';
 $string['badidnumber'] = 'Specified ID number already exists.';
 $string['badidnumbermoodle'] = 'Specified ID number already exists in Moodle.';
 // TBD: associationpage.class.php::get_title_default()

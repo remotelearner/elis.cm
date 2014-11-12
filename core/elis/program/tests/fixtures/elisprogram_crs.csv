@@ -1,0 +1,6 @@
+id,name,code,idnumber,syllabus,documents,lengthdescription,length,credits,environmentid,cost,version
+100,Test Course Description Alpha,_test_course_alpha,_test_course_alpha,Syllabus0,Documents0,"Length Description",5,1,1,100,1
+101,Test Course Description Beta,_test_course_beta,_test_course_beta,Syllabus0,Documents0,"Length Description",5,1,1,100,1
+102,Test Course Description Not In Program,_test_course_code_not_in_program,_test_course_code_not_in_program,Syllabus0,Documents0,"Length Description",5,1,1,100,1
+103,Test Course Description Auto Enroll,_test_course_auto_enroll,_test_course_auto_enroll,Syllabus0,Documents0,"Length Description",5,1,1,100,1
+104,Test Course Description Auto Enroll No Prereq,_auto_enroll_fail_prereq,_auto_enroll_fail_prereq,Syllabus0,Documents0,"Length Description",5,1,1,100,1

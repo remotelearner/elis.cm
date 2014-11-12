@@ -238,4 +238,150 @@ class pmclass_testcase extends elis_database_test {
             $this->assertFalse($realaccret);
         }
     }
+
+    /**
+     * Data provider for test method test_pmclass_can_enrol_from_waitlist()
+     * @return array Parameters for test method
+     *               format: array(
+     *                   array(pmclassdata),
+     *                   count_enroled,
+     *                   expected can_enrol_from_waitlist()
+     *               )
+     */
+    public function dataprovider_pmclass_can_enrol_from_waitlist() {
+        return array(
+            // Var enrol_from_waitlist not set, no maxstudents set - default values.
+            'noenrolfromwaitlist_nomaxstudents' => array(
+                    array(
+                        'enrol_from_waitlist' => 0,
+                        'maxstudents' => null,
+                    ),
+                    2,
+                    false
+            ),
+            // Var enrol_from_waitlist not set, maxstudents set with low current enrollment.
+            'noenrolfromwaitlist_maxstudentsset_lowenrolment' => array(
+                    array(
+                        'enrol_from_waitlist' => 0,
+                        'maxstudents' => 2,
+                    ),
+                    1,
+                    false
+            ),
+            // Var enrol_from_waitlist not set, maxstudents set with high enrollment.
+            'noenrolfromwaitlist_maxstudentsset_highenrolment' => array(
+                    array(
+                        'enrol_from_waitlist' => 0,
+                        'maxstudents' => 2,
+                    ),
+                    2,
+                    false
+            ),
+            // Var enrol_from_waitlist set, maxstudents not set.
+            'enrolfromwaitlist_maxstudentsnotset' => array(
+                    array(
+                        'enrol_from_waitlist' => 1,
+                        'maxstudents' => 0
+                    ),
+                    1,
+                    true
+            ),
+            // Var enrol_from_waitlist set, maxstudents set high.
+            'enrolfromwaitlist_maxstudentssethigh' => array(
+                    array(
+                        'enrol_from_waitlist' => 1,
+                        'maxstudents' => 2
+                    ),
+                    1,
+                    true
+            ),
+            // Var enrol_from_waitlist set, maxstudents set low.
+            'enrolfromwaitlist_maxstudentssetlow' => array(
+                    array(
+                        'enrol_from_waitlist' => 1,
+                        'maxstudents' => 2,
+                    ),
+                    2,
+                    false
+            )
+        );
+    }
+
+    /**
+     * Method to test pmclass:can_enrol_from_waitlist()
+     * @dataProvider dataprovider_pmclass_can_enrol_from_waitlist
+     * @param array $pmclassdata Data to pass to pmclass contructor
+     * @param int $countenrolled The number enrolled to return from the mocked count_enroled function.
+     * @param boolean $expected The expected result.
+     */
+    public function test_pmclass_can_enrol_from_waitlist($pmclassdata, $countenrolled, $expected) {
+        // Create a stub for the pm class with count_enroled ready to override.
+        $pmclass = $this->getMockBuilder('pmclass')
+                        ->setMethods(array('count_enroled'))
+                        ->getMock();
+        // Iterate through the instance field-value pairs and set them.
+        foreach ($pmclassdata as $key => $value) {
+            $pmclass->$key = $value;
+        }
+        // Create a mock method for the count_enroled function.
+        $pmclass->expects($this->any())
+                ->method('count_enroled')
+                ->will($this->returnValue($countenrolled));
+        // Run the test.
+        $answer = $pmclass->can_enrol_from_waitlist();
+        $this->assertEquals($expected, $answer);
+    }
+
+    /**
+     * Data provider for test method test_pmclass_can_enrol_from_waitlist()
+     * @return array Parameters for test method
+     *               format: array(
+     *                  classid
+     *                  userid,
+     *                  expected result
+     *               )
+     */
+    public function dataprovider_check_user_prerequisite_status() {
+        return array(
+            // Class has prerequisites and specified user meets all of the prerequisites.
+            'meetsallprerequistites' => array(200, 603, true),
+            // Class has prerequisites and specified user does not meet all of the prerequisites.
+            'doesnotmeetsallprerequistites' => array(200, 606, false),
+            // Class is in a program but has no prerequisites.
+            'noprogramprerequistites' => array(202, 605, true),
+            // Class is not in a program and thus has no prerequisites.
+            'notinprogram' => array(203, 605, true)
+        );
+    }
+
+    /**
+     * Test the check_user_prerequisite_status function.
+     * @dataProvider dataprovider_check_user_prerequisite_status
+     * @param int $classid The class instance to check against.
+     * @param int $userid The number enrolled to return from the mocked count_enroled function.
+     * @param boolean $expected The expected result.
+     */
+    public function test_check_user_prerequisite_status($classid, $userid, $expected) {
+        // Load the data sets.
+        $dataset = $this->createCsvDataSet(array(
+            curriculum::TABLE => elispm::file('tests/fixtures/elisprogram_pgm.csv'),
+            curriculumstudent::TABLE => elispm::file('tests/fixtures/elisprogram_pgm_assign.csv'),
+            course::TABLE => elispm::file('tests/fixtures/elisprogram_crs.csv'),
+            pmclass::TABLE => elispm::file('tests/fixtures/elisprogram_cls.csv'),
+            curriculumcourse::TABLE =>elispm::file('tests/fixtures/elisprogram_pgm_crs.csv'),
+            user::TABLE => elispm::file('tests/fixtures/elisprogram_usr.csv'),
+            student::TABLE => elispm::file('tests/fixtures/elisprogram_cls_enrol.csv'),
+            waitlist::TABLE => elispm::file('tests/fixtures/elisprogram_waitlist.csv'),
+            courseprerequisite::TABLE => elispm::file('tests/fixtures/elisprogram_prereq.csv'),
+        ));
+        $this->loadDataSet($dataset);
+        // Load the first Course Description's Class Instance.
+        $classinstance = new pmclass($classid);
+        $classinstance->load();
+
+        // Call the function to test.
+        $answer = $classinstance->check_user_prerequisite_status($userid);
+        $this->assertEquals($expected, $answer);
+    }
+
 }

@@ -388,13 +388,25 @@ function pm_migrate_moodle_users($setidnumber = false, $fromtime = 0, $mdluserid
 }
 
 /**
- * Migrate a single Moodle user to the Program Management system.  Will
- * only do this for users who have an idnumber set.
+ * Event handler to migrate a single Moodle user to the Program Management system.
+ * Will only do this for users who have an idnumber set.
  *
  * @param object $mu Moodle user object
  * @return boolean Whether user was synchronized or not
  */
-function pm_moodle_user_to_pm($mu) {
+function pm_moodle_user_to_pm_event($mu) {
+    return pm_moodle_user_to_pm($mu, true);
+}
+
+/**
+ * Migrate a single Moodle user to the Program Management system.  Will
+ * only do this for users who have an idnumber set.
+ *
+ * @param object $mu Moodle user object
+ * @param boolean $ineventhandler true if called from event handler, false otherwise (default)
+ * @return boolean Whether user was synchronized or not
+ */
+function pm_moodle_user_to_pm($mu, $ineventhandler = false) {
     global $CFG, $DB;
     require_once($CFG->dirroot.'/lib/moodlelib.php');
     require_once(elis::lib('data/customfield.class.php'));
@@ -554,7 +566,7 @@ function pm_moodle_user_to_pm($mu) {
     try {
         $cu->save(false);
     } catch (Exception $ex) {
-        if (in_cron()) {
+        if ($ineventhandler || in_cron()) {
             mtrace(get_string('record_not_created_reason', 'elis_program',
                         array('message' => $ex->getMessage() ." [{$mu->id}]")));
             return false;

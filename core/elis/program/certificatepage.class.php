@@ -325,6 +325,12 @@ class course_certificatepage extends certificatepage {
     public $type     = 'course';
 
     /**
+     *
+     * @var string The section this page belongs to.
+     */
+    public $section = 'curr';
+
+    /**
      * This function returns (or sets if not already initialized) a context object for the course description
      * @return object Course description context ojbect
      */

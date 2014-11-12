@@ -84,7 +84,13 @@ class usersetform extends cmform {
     }
 
     public function validation($data, $files) {
+        global $DB;
         $errors = parent::validation($data, $files);
+
+        if ($DB->record_exists_select(userset::TABLE, 'name = ? AND id <> ?', array($data['name'], $data['id']))) {
+            $errors['name'] = get_string('badusersetname', 'elis_program');
+        }
+
         $errors += parent::validate_custom_fields($data, 'cluster');
         return $errors;
     }
