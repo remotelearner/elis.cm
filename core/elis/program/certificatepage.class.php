@@ -63,7 +63,7 @@ abstract class certificatepage extends pm_page {
      * @var object The form object for this page.
      */
     protected $_form;
-
+    
     /**
      * Constructor method for certificatepage class, this sets the section instance
      * variable to the parent class section instance variable
@@ -323,6 +323,12 @@ class course_certificatepage extends certificatepage {
      * @var string The type of certificate.
      */
     public $type     = 'course';
+
+    /**
+     *
+     * @var string The section this page belongs to.
+     */
+    public $section = 'curr';
 
     /**
      * This function returns (or sets if not already initialized) a context object for the course description

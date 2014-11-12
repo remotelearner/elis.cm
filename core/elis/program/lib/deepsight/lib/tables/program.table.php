@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    elis_program
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2013 onwards Remote-Learner.net Inc (http://www.remote-learner.net)
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
  *
  */
@@ -117,7 +117,7 @@ class deepsight_datatable_program extends deepsight_datatable_standard {
      * @return array The transformed result.
      */
     protected function results_row_transform(array $row) {
-        return $row;
+        return parent::results_row_transform($row);
     }
 
     /**
@@ -141,12 +141,8 @@ class deepsight_datatable_program extends deepsight_datatable_standard {
         $joinsql = parent::get_join_sql($filters);
         $activecustomfields = array_intersect_key($this->custom_fields, $filters);
         if (!empty($activecustomfields)) {
-            $joinsql[] = 'JOIN {context} ctx ON ctx.instanceid = element.id AND ctx.contextlevel='.CONTEXT_ELIS_PROGRAM;
-            foreach ($activecustomfields as $fieldname => $field) {
-                $customfieldjoin = 'LEFT JOIN {elis_field_data_'.$field->datatype.'} '.$fieldname.' ON ';
-                $customfieldjoin .= $fieldname.'.contextid = ctx.id AND '.$fieldname.'.fieldid='.$field->id;
-                $joinsql[] = $customfieldjoin;
-            }
+            $joinsql[] = 'JOIN {context} ctx ON ctx.instanceid = element.id AND ctx.contextlevel = '.CONTEXT_ELIS_PROGRAM;
+            $joinsql = array_merge($joinsql, $this->get_custom_field_joins($activecustomfields));
         }
         return $joinsql;
     }

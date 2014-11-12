@@ -1,0 +1,8 @@
+id,username,password,idnumber,firstname,lastname,email,city,state,postalcode,country,language
+600,user_zebra,password,34333,User,Zebra,user_zebra@example.com,Greensboro,NC,27408,US,en
+601,user_young,password,34334,User,Young,user_young@example.com,Greensboro,NC,27408,US,en
+602,user_xray,password,34335,User,Xray,user_xray@example.com,Greensboro,NC,27408,US,en
+603,user_wilson,password,34336,User,Wilson,user_wilson@example.com,Greensboro,NC,27408,US,en
+604,user_victor,password,34337,User,Victor,user_victor@example.com,Greensboro,NC,27408,US,en
+605,user_union,password,34338,User,Union,user_union@example.com,Greensboro,NC,27408,US,en
+606,user_tango,password,34339,User,Tango,user_tango@example.com,Greensboro,NC,27408,US,en

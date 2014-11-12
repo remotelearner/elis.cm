@@ -174,25 +174,29 @@ class waitlist extends elis_data_object {
         return $DB->get_recordset_sql($sql, $params, $startrec, $perpage);
     }
 
+    /**
+     * After a student passes a course, this function checks to see if the next student
+     * in the waitlist can be enrolled automatically.
+     * @param student $enrolment the student object.
+     * @return boolean true if student enrolled from waitlist, false otherwise.
+     */
     public static function check_autoenrol_after_course_completion($enrolment) {
         if ($enrolment->completestatusid != STUSTATUS_NOTCOMPLETE) {
             $pmclass = new pmclass($enrolment->classid);
             $pmclass->load();
-
-            if ((empty($pmclass->maxstudents) || $pmclass->maxstudents > student::count_enroled($pmclass->id)) && !empty($pmclass->enrol_from_waitlist)) {
-                $wlst = waitlist::get_next($enrolment->classid);
-                if (!empty($wlst)) {
-                    $crsid = $pmclass->course->id;
-                    foreach ($pmclass->course->curriculumcourse as $curcrs) {
-                        if ($curcrs->courseid == $crsid && $curcrs->prerequisites_satisfied($wlst->userid)) {
-                            $wlst->enrol();
-                        }
+            // Check to see if we should try to enroll from the waitlist.
+            if ($pmclass->can_enrol_from_waitlist()) {
+                // Fetch the next users in the waitlist.
+                $wlst = static::get_next($enrolment->classid);
+                foreach ($wlst as $nextstudent) {
+                    if ($pmclass->check_user_prerequisite_status($nextstudent->userid)) {
+                        $nextstudent->enrol();
+                        return true;
                     }
                 }
             }
         }
-
-        return true;
+        return false;
     }
 
     /**
@@ -362,21 +366,13 @@ class waitlist extends elis_data_object {
         }
     }
 
+    /**
+     * Method to return ordered listing of students on waitlist for specified class
+     * @param int $clsid The Class Instance id
+     * @return recordset Ordered listing of waitlist objects for class.
+     */
     public static function get_next($clsid) {
-        global $DB;
-        $select = 'SELECT * ';
-        $from   = 'FROM {'. waitlist::TABLE .'} wlst ';
-        $where  = 'WHERE wlst.classid = ? ';
-        $order  = 'ORDER BY wlst.position ASC LIMIT 0,1';
-        $sql = $select . $from . $where . $order;
-        $nextStudent = $DB->get_records_sql($sql, array($clsid));
-
-        if (!empty($nextStudent)) {
-            $nextStudent = current($nextStudent);
-            $nextStudent = new waitlist($nextStudent);
-        }
-
-        return $nextStudent;
+        return static::find(new field_filter('classid', $clsid), array('position' => 'ASC'));
     }
 
     public static function delete_for_user($id) {

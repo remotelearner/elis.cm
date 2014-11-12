@@ -166,29 +166,72 @@ class waitlist_testcase extends elis_database_test {
     }
 
     /**
-     * Test the autoenrol after course completion function.
+     * Data provider for test method test_check_autoenrol_after_course_completion()
+     * @return array Parameters for test method
+     *               format: array(
+     *                      completion status,
+     *                      student enrollment id,
+     *                      autoenrol enabled flag,
+     *                      expected outcome
+     *               )
      */
-    public function test_check_autoenrol_after_course_completion() {
+    public function dataprovider_check_autoenrol_after_course_completion() {
+        return array(
+            // Completion status is not complete.
+            'studentnotcomplete' => array(STUSTATUS_NOTCOMPLETE, 704, 1, false),
+            // Course complete, class has a waitlist, meets prereq, auto_enroll off.
+            'waitlist_meetsprereqs_autoenroloff' => array(STUSTATUS_PASSED, 704, 0, false),
+            // Course complete, class has a waitlist, meets prereq, auto_enroll on.
+            'waitlist_meetsprereqs_autoenrolon' => array(STUSTATUS_PASSED, 704, 1, true),
+            // Course complete, class has a waitlist, fails prereq, auto_enroll off.
+            'waitlist_failsprereqs_autoenroloff' => array(STUSTATUS_PASSED, 706, 0, false),
+            // Course complete, class has a waitlist, fails prereq, auto_enroll on.
+            'waitlist_failsprereqs_autoenrolon' => array(STUSTATUS_PASSED, 706, 1, false),
+            // Course complete, class has no waitlist, meets prereq, auto_enroll off.
+            'nowaitlist_meetsprereqs_autoenroloff' => array(STUSTATUS_PASSED, 705, 0, false),
+            // Course complete, class has no waitlist, meets prereq, auto_enroll on.
+            'nowaitlist_meetsprereqs_autoenrolon' => array(STUSTATUS_PASSED, 705, 1, false),
+            // Course complete, class has no waitlist, fails prereq, auto_enroll off.
+            'nowaitlist_failsprereqs_autoenroloff' => array(STUSTATUS_PASSED, 707, 0, false),
+            // Course complete, class has no waitlist, fails prereq, auto_enroll on.
+            'nowaitlist_failsprereqs_autoenrolon' => array(STUSTATUS_PASSED, 707, 1, false),
+        );
+    }
+
+    /**
+     * Test the check_user_prerequisite_status function.
+     * @dataProvider dataprovider_check_autoenrol_after_course_completion
+     * @param int $completionstatus completionstatus setting.
+     * @param int $enrollid the student enrolment record id.
+     * @param int $enableautoenroll Flag whether to enable autoenrol.
+     * @param boolean $expected The expected result.
+     */
+    public function test_check_autoenrol_after_course_completion($completionstatus, $enrollid, $enableautoenroll, $expected) {
+        // Load the data sets.
         $dataset = $this->createCsvDataSet(array(
-            course::TABLE => elis::component_file('program', 'tests/fixtures/pmcourse.csv'),
-            pmclass::TABLE => elis::component_file('program', 'tests/fixtures/pmclass.csv'),
-            user::TABLE => elis::component_file('program', 'tests/fixtures/pmuser.csv'),
-            student::TABLE => elis::component_file('program', 'tests/fixtures/student.csv'),
-            waitlist::TABLE => elis::component_file('program', 'tests/fixtures/waitlist2.csv'),
+            curriculum::TABLE => elispm::file('tests/fixtures/elisprogram_pgm.csv'),
+            curriculumstudent::TABLE => elispm::file('tests/fixtures/elisprogram_pgm_assign.csv'),
+            course::TABLE => elispm::file('tests/fixtures/elisprogram_crs.csv'),
+            pmclass::TABLE => elispm::file('tests/fixtures/elisprogram_cls.csv'),
+            curriculumcourse::TABLE => elispm::file('tests/fixtures/elisprogram_pgm_crs.csv'),
+            user::TABLE => elispm::file('tests/fixtures/elisprogram_usr.csv'),
+            student::TABLE => elispm::file('tests/fixtures/elisprogram_cls_enrol.csv'),
+            waitlist::TABLE => elispm::file('tests/fixtures/elisprogram_waitlist.csv'),
+            courseprerequisite::TABLE => elispm::file('tests/fixtures/elisprogram_prereq.csv'),
         ));
         $this->loadDataSet($dataset);
+        // Load the enrollment object.
+        $enrollment = new student($enrollid);
+        $enrollment->load();
+        $enrollment->completestatusid = $completionstatus;
 
-        $class = new pmclass(100);
-        $class->load();
-        $class->maxstudents = 2;
-        $class->enrol_from_waitlist = 1;
-        $class->save();
-
-        $student = new student(array('userid' => 103, 'classid' => 100));
-        $student->completestatusid = STUSTATUS_PASSED;
-        $student->save();
-
-        $return = waitlist::check_autoenrol_after_course_completion($student);
-        $this->assertTrue($return);
+        // Load the Class Object so that we can set the auto_enrol_waitlist.
+        $pmclass = new pmclass($enrollment->classid);
+        $pmclass->load();
+        $pmclass->enrol_from_waitlist = $enableautoenroll;
+        $pmclass->save();
+        // Run the test.
+        $return = waitlist::check_autoenrol_after_course_completion($enrollment);
+        $this->assertEquals($expected, $return);
     }
 }

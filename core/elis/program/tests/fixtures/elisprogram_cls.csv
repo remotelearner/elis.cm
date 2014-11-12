@@ -1,0 +1,9 @@
+id,courseid,idnumber,maxstudents,enrol_from_waitlist
+200,100,_test_class_instance_alpha,2,1
+201,100,_test_class_instance_beta,0,0
+202,101,_test_class_instance_charlie,0,1
+203,102,_test_class_instance_not_in_program,0,1
+204,103,_test_class_auto_enroll1,0,1
+205,103,_test_class_auto_enroll2,2,1
+206,104,_test_class_fail_prereq1,2,1
+207,104,_test_class_fail_prereq2,2,1

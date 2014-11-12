@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    elis_program
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2013 onwards Remote-Learner.net Inc (http://www.remote-learner.net)
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
  *
  */
@@ -47,8 +47,12 @@ class deepsight_filter_textsearch extends deepsight_filter_standard {
             foreach ($words as $word) {
                 $wordsql = array();
                 foreach ($this->fields as $fieldname => $label) {
-                    $wordsql[] = $fieldname.' LIKE ?';
+                    $iscustom = (substr($fieldname, 0, 3) == 'cf_');
+                    $wordsql[] = $fieldname.' LIKE ?'.($iscustom ? ' OR ('.$fieldname.' IS NULL AND '.substr($fieldname, 0, -5).'_default.data LIKE ?)' : '');
                     $params[] ='%'.$word.'%';
+                    if ($iscustom) {
+                        $params[] ='%'.$word.'%';
+                    }
                 }
                 $sql[] = '('.implode(' OR ', $wordsql).')';
             }

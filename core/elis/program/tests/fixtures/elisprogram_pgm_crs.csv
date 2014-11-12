@@ -1,0 +1,5 @@
+id,curriculumid,courseid,required,frequency,timeperiod,position,timecreated,timemodified
+300,1,100,0,0,year,0,0,0
+301,1,101,0,0,year,0,0,0
+302,2,103,0,0,year,0,0,0
+303,2,104,0,0,year,0,0,0

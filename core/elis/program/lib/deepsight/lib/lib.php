@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    elis_program
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2013 onwards Remote-Learner.net Inc (http://www.remote-learner.net)
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
  *
  */
@@ -642,7 +642,17 @@ abstract class deepsight_filter_standard implements deepsight_filter {
     public function get_select_fields() {
         $displayfields = array();
         foreach ($this->field_aliases as $field => $fieldalias) {
-            $displayfields[] = $field.' AS '.$fieldalias;
+            if (substr($field, 0, 3) == 'cf_') {
+                $basetable = substr($field, 0, -5);
+                $fielddefault = $basetable.'_default.data';
+                $displayfields[] = "
+                        (CASE
+                            WHEN {$field} IS NULL THEN {$fielddefault}
+                            ELSE {$field}
+                         END) AS ".str_replace('.', '_', $field);
+            } else {
+                $displayfields[] = $field.' AS '.$fieldalias;
+            }
         }
         return $displayfields;
     }
@@ -1089,7 +1099,6 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
      *
      * Sets the internal $this->custom_fields array with the returned field information, and returns an array of filters
      * for each custom field found.
-     * NOTE: This will only look for filterable custom fields, which at the moment are "char" or "text" fields.
      *
      * @param int $contextlevel The context level of the fields we want. i.e. CONTEXT_ELIS_USER, CONTEXT_ELIS_CLASS, etc.
      * @return array An array of deepsight_filter objects for each found filterable field.
@@ -1103,7 +1112,7 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
                   FROM {elis_field} field
                   JOIN {elis_field_contextlevels} ctx ON ctx.fieldid = field.id
                   JOIN {elis_field_owner} owner ON owner.fieldid = field.id AND plugin = "manual"
-                 WHERE (field.datatype="char" OR field.datatype="text") AND ctx.contextlevel=?';
+                 WHERE field.datatype != "bool" AND ctx.contextlevel = ?';
         $customfields = $this->DB->get_recordset_sql($sql, array($contextlevel));
         foreach ($customfields as $field) {
             $field->params = @unserialize($field->params);
@@ -1111,6 +1120,7 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
                 $field->params = array();
             }
 
+            $field->shortname = strtolower($field->shortname); // TBD: Moodle DB API converting them to lower case so we must too to get value!
             $filtername = 'cf_'.$field->shortname;
             $fielddata[$filtername] = $field;
 
@@ -1125,6 +1135,8 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
                 }
                 $filtermenu->set_choices(array_combine($choices, $choices));
                 $fieldfilters[] = $filtermenu;
+            } else if (isset($field->params['control']) && $field->params['control'] === 'datetime') {
+                $fieldfilters[] = new deepsight_filter_date($this->DB, $filtername, $field->name, $filterfielddata);
             } else {
                 $fieldfilters[] = new deepsight_filter_textsearch($this->DB, $filtername, $field->name, $filterfielddata);
             }
@@ -1693,6 +1705,26 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
     }
 
     /**
+     * Gets custom field join conditions
+     *
+     * @param array $activecustomfields the custom field data array
+     * @return array An array consisting of the custom field joins SQL.
+     */
+    protected function get_custom_field_joins($activecustomfields) {
+        $joinsql = array();
+        foreach ($activecustomfields as $fieldname => $field) {
+            $datatable = ($field->datatype == 'datetime') ? 'int' : $field->datatype;
+            $customfieldjoin = 'LEFT JOIN {elis_field_data_'.$datatable.'} '.$fieldname.' ON ';
+            $customfieldjoin .= $fieldname.'.contextid = ctx.id AND '.$fieldname.'.fieldid = '.$field->id;
+            $customfieldjoin .= '
+                LEFT JOIN {elis_field_data_'.$datatable.'} '.$fieldname.'_default ON ';
+            $customfieldjoin .= $fieldname.'_default.contextid IS NULL AND '.$fieldname.'_default.fieldid = '.$field->id;
+            $joinsql[] = $customfieldjoin;
+        }
+        return $joinsql;
+    }
+
+    /**
      * Gets an array of fields to include in the search SQL's SELECT clause.
      *
      * Pulls information from $this->fixed_columns, and each filter's get_select_fields() function.
@@ -1706,7 +1738,17 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
     protected function get_select_fields(array $filters) {
         $selectfields = array('element.id AS element_id');
         foreach ($this->fixed_columns as $field => $label) {
-            $selectfields[] = $field.' AS '.str_replace('.', '_', $field);
+            if (substr($field, 0, 3) == 'cf_') {
+                $basetable = substr($field, 0, -5);
+                $fielddefault = $basetable.'_default.data';
+                $selectfields[] = "
+                        (CASE
+                            WHEN {$field} IS NULL THEN {$fielddefault}
+                            ELSE {$field}
+                         END) AS ".str_replace('.', '_', $field);
+            } else {
+                $selectfields[] = $field.' AS '.str_replace('.', '_', $field);
+            }
         }
 
         foreach ($filters as $filtername => $data) {
@@ -1899,5 +1941,21 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
         }
 
         return array($additionalfilters, $additionalparams);
+    }
+
+    /**
+     * results_row_transform() method to transform custom datetime fields
+     *
+     * @param array $row An array for a single result.
+     * @return array The transformed result.
+     */
+    protected function results_row_transform(array $row) {
+        foreach ($this->custom_fields as $fieldname => $field) {
+            $elem = $fieldname.'_data';
+            if (isset($row[$elem]) && isset($field->params['control']) && $field->params['control'] == 'datetime') {
+                $row[$elem] = ds_process_displaytime($row[$elem]);
+            }
+        }
+        return $row;
     }
 }

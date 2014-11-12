@@ -376,12 +376,12 @@ class customfieldform extends cmform {
                 $editsql = "AND ef.id != {$fid}";
             }
 
-            $sql = "SELECT ef.id
-                    FROM {".field::TABLE."} ef
-                    INNER JOIN {".field_contextlevel::TABLE."} cl ON ef.id = cl.fieldid
-                    WHERE ef.shortname = ?
-                    AND cl.contextlevel = ?
-                    {$editsql}";
+            $sql = 'SELECT ef.id
+                      FROM {'.field::TABLE.'} ef
+                INNER JOIN {'.field_contextlevel::TABLE."} cl ON ef.id = cl.fieldid
+                     WHERE LOWER(ef.shortname) = LOWER(?)
+                           AND cl.contextlevel = ?
+                           {$editsql}";
 
             $params =  array($data['shortname'], $contextlevel);
 
